@@ -1,0 +1,161 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7298260475796766344
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4165020235201758335}
+  - component: {fileID: 1288805964158003576}
+  - component: {fileID: 6274437948778424993}
+  - component: {fileID: 1367319488078994550}
+  - component: {fileID: 3527541241530880652}
+  - component: {fileID: 1753427159742384806}
+  m_Layer: 0
+  m_Name: Component_Controller
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4165020235201758335
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7298260475796766344}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1288805964158003576
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7298260475796766344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5aad590f5d65b9e46901e03c20809575, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lockOnRange: 15
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  useComponentBasedTargeting: 1
+  gizmosColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  showDebugInfo: 1
+--- !u!114 &6274437948778424993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7298260475796766344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40597c2b497a1bf48b71ef156d088f18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hotbarSlots:
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  quickslots:
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  - quantity: 1
+    consumeOnUse: 1
+  activeHotbarSlot: 0
+  debugHotbar: 0
+--- !u!114 &1367319488078994550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7298260475796766344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f0859b46ed3f334aae1c41e574368df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugState: 0
+--- !u!114 &3527541241530880652
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7298260475796766344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5aad590f5d65b9e46901e03c20809575, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lockOnRange: 15
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  useComponentBasedTargeting: 1
+  gizmosColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  showDebugInfo: 1
+--- !u!114 &1753427159742384806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7298260475796766344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d2e08df8d313b46872214cbf5de80e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  walkSpeed: 2
+  runSpeed: 4
+  sprintSpeed: 6
+  backpedalSpeed: 1.5
+  strafeSpeed: 3
+  rotationSpeed: 10
+  acceleration: 8
+  deceleration: 10
+  useBasicStamina: 1
+  maxStamina: 100
+  staminaRegenRate: 20
+  sprintStaminaCost: 15
+  cameraTransform: {fileID: 0}
+  cameraController: {fileID: 0}
+  moveXParam: MoveX
+  moveZParam: MoveZ
+  isRunningParam: IsRunning
+  isLockedOnParam: IsLockedOn

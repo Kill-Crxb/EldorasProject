@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 598fc2bd468b9ad4396de2fb256e8fc9, type: 3}
+  m_Name: Katana
+  m_EditorClassIdentifier: 
+  weaponName: Katana
+  weaponType: 1
+  damage: 10
+  attackSpeed: 1.2
+  reach: 2
+  lightAttackStamina: 15
+  heavyAttackStamina: 30
+  blockStamina: 5
+  canBlock: 1
+  canParry: 1
+  hasCombos: 1
+  maxComboCount: 3
+  weaponModel: {fileID: 6413440490822234159, guid: e713ecc4b5eb6d644b99c0ff244e82e7, type: 3}
+  weaponSocket: {fileID: 0}
+  attackEffect: {fileID: 0}
+  attackSounds:
+  - {fileID: 8300000, guid: b6de19bee2316014584e7ce86dc2a2ac, type: 3}
