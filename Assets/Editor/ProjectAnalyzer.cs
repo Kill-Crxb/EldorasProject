@@ -157,9 +157,7 @@ namespace ProjectAnalysis
             // Analyze classes for integration points
             // IMPROVED: Better pattern to detect top-level vs nested classes
             var lines = content.Split('\n');
-            int braceDepth = 0;
-            bool inNamespace = false;
-            int namespaceDepth = 0;
+      
 
             var classMatches = Regex.Matches(content, @"public\s+(?:abstract\s+)?class\s+(\w+)(?:\s*:\s*([^{]+))?");
 

@@ -6091,8 +6091,6 @@ MonoBehaviour:
   currentState: 0
   targetDetection: {fileID: 0}
   stateUpdater: {fileID: 0}
-  debugVisualizer: {fileID: 0}
-  debugMode: 0
   currentTarget: {fileID: 0}
 --- !u!114 &1137342170
 MonoBehaviour:
@@ -6198,8 +6196,6 @@ MonoBehaviour:
   backawaySpeed: 1
   approachSpeed: 2
   facingAngleThreshold: 45
-  showAttackDebug: 0
-  showMovementDebug: 0
 --- !u!1 &1139676984
 GameObject:
   m_ObjectHideFlags: 0
