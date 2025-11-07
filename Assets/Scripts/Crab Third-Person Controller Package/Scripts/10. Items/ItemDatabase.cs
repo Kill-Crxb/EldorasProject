@@ -17,7 +17,7 @@ public class ItemDatabase : MonoBehaviour
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(transform.root.gameObject);
             InitializeDatabase();
         }
         else

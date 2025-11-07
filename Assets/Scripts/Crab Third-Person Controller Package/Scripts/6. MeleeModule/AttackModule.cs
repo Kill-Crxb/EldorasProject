@@ -1,8 +1,19 @@
-﻿// AttackModule - Simplified Version with Animation Events
+﻿// AttackModule - Enhanced Version with Full NPC Animation Support
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using CrabThirdPerson.Character;
 
+/// <summary>
+/// Handles light and heavy attacks with combo support
+/// Works for both Players (with ThirdPersonController) and NPCs (standalone)
+/// 
+/// IMPROVEMENTS:
+/// - Better NPC animator handling with fallback search
+/// - Cached animator reference for performance
+/// - Improved animation parameter management for NPCs
+/// - Clear separation of player/NPC logic paths
+/// </summary>
 public class AttackModule : MonoBehaviour, IMeleeSubModule
 {
     [Header("Attack Settings")]
@@ -23,6 +34,7 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
     [Header("Animation Parameters")]
     [SerializeField] private string attackParam = "Attack";
     [SerializeField] private string heavyAttackParam = "HeavyAttack";
+    [SerializeField] private string comboCountParam = "ComboCount";
 
     [Header("Input Buffer Settings")]
     [SerializeField] private float inputBufferDuration = 0.5f;
@@ -33,9 +45,10 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
 
     // Parent reference
     private MeleeModule parentMelee;
-    private ThirdPersonController controller; // CAN BE NULL FOR NPCs
+    private ThirdPersonController controller; // NULL for NPCs
     private ComboModule comboModule;
     private WeaponModule weaponModule;
+    private Animator animator; // Cached animator reference (for NPCs)
 
     // Attack state
     private bool isAttacking;
@@ -78,6 +91,12 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
         comboModule = parentMelee.Combo;
         weaponModule = parentMelee.WeaponModule;
 
+        // Cache animator reference for NPCs
+        if (controller == null)
+        {
+            CacheAnimatorReference();
+        }
+
         if (weaponModule != null)
         {
             weaponModule.OnWeaponChanged += OnWeaponChanged;
@@ -86,6 +105,63 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
                 UpdateWeaponStats(weaponModule.CurrentWeapon);
             }
         }
+    }
+
+    /// <summary>
+    /// Cache animator reference for NPCs (performance optimization)
+    /// Priority: Brain→ModelModule (correct) -> ComponentsInParent (fallback)
+    /// </summary>
+    void CacheAnimatorReference()
+    {
+        // PRIORITY 1: Use Brain → ModelModule (most reliable for modular architecture)
+        if (parentMelee != null && parentMelee.Brain != null)
+        {
+            var modelModule = parentMelee.Brain.GetModule<ModelModule>();
+            if (modelModule != null)
+            {
+                animator = modelModule.ModelAnimator;
+
+                if (animator != null)
+                {
+                    if (debugAttacks)
+                        Debug.Log($"[AttackModule] Found Animator via ModelModule: {animator.gameObject.name}");
+                    return;
+                }
+            }
+        }
+
+        // FALLBACK 1: Try self (unlikely but check anyway)
+        animator = GetComponent<Animator>();
+        if (animator != null)
+        {
+            if (debugAttacks)
+                Debug.Log($"[AttackModule] Found Animator on self: {animator.gameObject.name}");
+            return;
+        }
+
+        // FALLBACK 2: Try immediate parent
+        if (transform.parent != null)
+        {
+            animator = transform.parent.GetComponent<Animator>();
+            if (animator != null)
+            {
+                if (debugAttacks)
+                    Debug.Log($"[AttackModule] Found Animator on parent: {animator.gameObject.name}");
+                return;
+            }
+        }
+
+        // FALLBACK 3: Search up hierarchy (last resort)
+        animator = GetComponentInParent<Animator>();
+        if (animator != null)
+        {
+            if (debugAttacks)
+                Debug.Log($"[AttackModule] Found Animator in parent hierarchy: {animator.gameObject.name}");
+            return;
+        }
+
+        // Failed to find animator
+        Debug.LogWarning($"[AttackModule] No Animator found for NPC on {gameObject.name}. Animation triggers will not work!");
     }
 
     public void UpdateSubModule()
@@ -186,7 +262,7 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
     {
         // NPCs don't have stamina/controller - AI manages timing
         if (controller == null)
-            return true;
+            return !isAttacking; // Simple check for NPCs
 
         // Player validation with stamina
         return controller.CurrentStamina >= GetAttackStaminaCost() &&
@@ -197,7 +273,7 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
     {
         // NPCs don't have stamina/controller - AI manages timing  
         if (controller == null)
-            return true;
+            return !isAttacking; // Simple check for NPCs
 
         // Player validation with stamina
         return controller.CurrentStamina >= GetHeavyAttackStaminaCost() &&
@@ -234,22 +310,24 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
         canCombo = false; // Will be enabled by animation event
         hasQueuedAttack = false;
 
-        // Animation events will handle combo counting
         string animParam = isHeavyAttack ? heavyAttackParam : attackParam;
 
-        // Trigger animation on controller if available, otherwise use parent's animator
+        // PLAYER PATH: Use ThirdPersonController
         if (controller != null)
         {
             controller.TriggerAnimation(animParam);
         }
+        // NPC PATH: Use cached animator
+        else if (animator != null)
+        {
+            animator.SetTrigger(animParam);
+
+            if (debugAttacks)
+                Debug.Log($"[AttackModule] NPC triggered animation: {animParam}");
+        }
         else
         {
-            // For NPCs, get animator from parent
-            var animator = GetComponentInParent<Animator>();
-            if (animator != null)
-            {
-                animator.SetTrigger(animParam);
-            }
+            Debug.LogWarning($"[AttackModule] Cannot trigger animation - no animator available!");
         }
 
         OnAttackBegin?.Invoke();
@@ -313,18 +391,18 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
         // Update animator with new combo count
         int comboCount = comboModule?.CurrentComboCount ?? 1;
 
+        // PLAYER PATH
         if (controller != null)
         {
-            controller.SetAnimationInt("ComboCount", comboCount);
+            controller.SetAnimationInt(comboCountParam, comboCount);
         }
-        else
+        // NPC PATH
+        else if (animator != null)
         {
-            // For NPCs
-            var animator = GetComponentInParent<Animator>();
-            if (animator != null)
-            {
-                animator.SetInteger("ComboCount", comboCount);
-            }
+            animator.SetInteger(comboCountParam, comboCount);
+
+            if (debugAttacks)
+                Debug.Log($"[AttackModule] NPC combo count updated: {comboCount}");
         }
     }
 
@@ -481,6 +559,7 @@ public class AttackModule : MonoBehaviour, IMeleeSubModule
         GUILayout.Label($"Combo Count: {comboModule?.CurrentComboCount ?? 0}");
         GUILayout.Label($"Buffer Count: {inputBuffer.Count}");
         GUILayout.Label($"Has Queued: {hasQueuedAttack}");
+        GUILayout.Label($"Animator: {(animator != null ? animator.gameObject.name : "NULL")}");
         GUILayout.EndArea();
     }
 

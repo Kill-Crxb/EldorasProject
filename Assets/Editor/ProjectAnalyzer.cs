@@ -19,6 +19,7 @@ namespace ProjectAnalysis
         private bool showEventDetails = true;
         private bool showAnimationParameters = true;
         private bool showDependencies = true;
+        private bool includeNestedClasses = false; // NEW: Toggle for nested classes
 
         [MenuItem("Tools/Project Integration Analyzer")]
         public static void ShowWindow()
@@ -56,6 +57,10 @@ namespace ProjectAnalysis
             showAnimationParameters = EditorGUILayout.Toggle("Show Animation Parameters", showAnimationParameters);
             showDependencies = EditorGUILayout.Toggle("Show Module Dependencies", showDependencies);
 
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Component Counting:", EditorStyles.boldLabel);
+            includeNestedClasses = EditorGUILayout.Toggle("Include Nested Classes", includeNestedClasses);
+
             EditorGUILayout.Space(10);
 
             if (GUILayout.Button("Analyze Integration Points", GUILayout.Height(30)))
@@ -92,7 +97,8 @@ namespace ProjectAnalysis
                 showMethodSignatures,
                 showEventDetails,
                 showAnimationParameters,
-                showDependencies
+                showDependencies,
+                includeNestedClasses
             );
         }
     }
@@ -102,20 +108,24 @@ namespace ProjectAnalysis
         private readonly Dictionary<string, ModuleInfo> modules = new Dictionary<string, ModuleInfo>();
         private readonly List<string> interfaces = new List<string>();
         private readonly Dictionary<string, List<string>> animationParameters = new Dictionary<string, List<string>>();
+        private int totalScriptFiles = 0; // NEW: Track actual script files
+        private HashSet<string> processedFiles = new HashSet<string>(); // NEW: Track processed files
 
         public string GenerateIntegrationReport(string folder, bool showIntegration, bool showMethods,
-            bool showEvents, bool showAnimation, bool showDependencies)
+            bool showEvents, bool showAnimation, bool showDependencies, bool includeNested)
         {
-            ScanFolder(folder, showIntegration, showMethods, showEvents, showAnimation, showDependencies);
+            ScanFolder(folder, showIntegration, showMethods, showEvents, showAnimation, showDependencies, includeNested);
             return BuildIntegrationReport();
         }
 
         private void ScanFolder(string folder, bool showIntegration, bool showMethods, bool showEvents,
-            bool showAnimation, bool showDependencies)
+            bool showAnimation, bool showDependencies, bool includeNested)
         {
             modules.Clear();
             interfaces.Clear();
             animationParameters.Clear();
+            totalScriptFiles = 0;
+            processedFiles.Clear();
 
             string fullPath = Path.Combine(Application.dataPath, folder.Replace("Assets/", ""));
 
@@ -126,15 +136,17 @@ namespace ProjectAnalysis
             }
 
             string[] scriptFiles = Directory.GetFiles(fullPath, "*.cs", SearchOption.AllDirectories);
+            totalScriptFiles = scriptFiles.Length; // Count actual .cs files
 
             foreach (string filePath in scriptFiles)
             {
-                AnalyzeScriptForIntegration(filePath, showIntegration, showMethods, showEvents, showAnimation, showDependencies);
+                processedFiles.Add(Path.GetFileName(filePath));
+                AnalyzeScriptForIntegration(filePath, showIntegration, showMethods, showEvents, showAnimation, showDependencies, includeNested);
             }
         }
 
         private void AnalyzeScriptForIntegration(string filePath, bool showIntegration, bool showMethods,
-            bool showEvents, bool showAnimation, bool showDependencies)
+            bool showEvents, bool showAnimation, bool showDependencies, bool includeNested)
         {
             string content = File.ReadAllText(filePath);
             string fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -143,18 +155,36 @@ namespace ProjectAnalysis
             ExtractInterfaces(content, fileName);
 
             // Analyze classes for integration points
-            var classMatches = Regex.Matches(content, @"public\s+class\s+(\w+)(?:\s*:\s*([^{]+))?");
+            // IMPROVED: Better pattern to detect top-level vs nested classes
+            var lines = content.Split('\n');
+            int braceDepth = 0;
+            bool inNamespace = false;
+            int namespaceDepth = 0;
+
+            var classMatches = Regex.Matches(content, @"public\s+(?:abstract\s+)?class\s+(\w+)(?:\s*:\s*([^{]+))?");
+
             foreach (Match match in classMatches)
             {
                 string className = match.Groups[1].Value;
                 string inheritance = match.Groups[2].Value.Trim();
+
+                // NEW: Check if this is a nested class
+                int matchPosition = match.Index;
+                bool isNested = IsNestedClass(content, matchPosition);
+
+                // Skip nested classes unless includeNested is true
+                if (isNested && !includeNested)
+                {
+                    continue;
+                }
 
                 var moduleInfo = new ModuleInfo
                 {
                     Name = className,
                     FileName = fileName,
                     Inheritance = ParseInheritance(inheritance),
-                    Category = CategorizeClass(className, inheritance, content)
+                    Category = CategorizeClass(className, inheritance, content),
+                    IsNestedClass = isNested // NEW: Mark if nested
                 };
 
                 if (showIntegration) ExtractIntegrationPoints(content, moduleInfo);
@@ -163,8 +193,33 @@ namespace ProjectAnalysis
                 if (showAnimation) ExtractAnimationIntegration(content, moduleInfo, className);
                 if (showDependencies) ExtractDependencies(content, moduleInfo);
 
-                modules[className] = moduleInfo;
+                // Use fileName.className as key for nested classes to avoid conflicts
+                string key = isNested ? $"{fileName}.{className}" : className;
+                modules[key] = moduleInfo;
             }
+        }
+
+        // NEW: Helper method to detect if a class is nested
+        private bool IsNestedClass(string content, int classPosition)
+        {
+            // Count opening braces before this class declaration
+            string beforeClass = content.Substring(0, classPosition);
+
+            // Remove string literals and comments to avoid counting braces in them
+            beforeClass = Regex.Replace(beforeClass, @"""[^""\\]*(?:\\.[^""\\]*)*""", "");
+            beforeClass = Regex.Replace(beforeClass, @"//[^\n]*", "");
+            beforeClass = Regex.Replace(beforeClass, @"/\*.*?\*/", "", RegexOptions.Singleline);
+
+            int openBraces = beforeClass.Count(c => c == '{');
+            int closeBraces = beforeClass.Count(c => c == '}');
+            int braceDepth = openBraces - closeBraces;
+
+            // If brace depth > 1, it's nested (namespace = 1, nested class > 1)
+            // Account for namespace brace
+            var namespaceMatches = Regex.Matches(beforeClass, @"namespace\s+[\w\.]+\s*\{");
+            int namespaceCount = namespaceMatches.Count;
+
+            return braceDepth > namespaceCount;
         }
 
         private void ExtractInterfaces(string content, string fileName)
@@ -185,10 +240,14 @@ namespace ProjectAnalysis
 
                 string interfaceInfo = $"**{interfaceName}** (in {fileName})";
                 if (!string.IsNullOrEmpty(inheritance))
+                {
                     interfaceInfo += $" : {inheritance}";
+                }
 
                 if (methods.Any())
+                {
                     interfaceInfo += $"\n  - Methods: {string.Join(", ", methods)}";
+                }
 
                 interfaces.Add(interfaceInfo);
             }
@@ -196,140 +255,166 @@ namespace ProjectAnalysis
 
         private List<string> ParseInheritance(string inheritance)
         {
-            if (string.IsNullOrEmpty(inheritance)) return new List<string>();
+            if (string.IsNullOrWhiteSpace(inheritance)) return new List<string>();
 
             return inheritance.Split(',')
-                .Select(s => s.Trim())
-                .Where(s => !string.IsNullOrEmpty(s))
+                .Select(i => i.Trim())
+                .Where(i => !string.IsNullOrEmpty(i))
                 .ToList();
         }
 
         private string CategorizeClass(string className, string inheritance, string content)
         {
-            if (className.Contains("Module") || inheritance.Contains("IPlayerModule"))
-                return "Core Module";
-
-            if (inheritance.Contains("ICombatSubModule"))
-                return "Combat Sub-Module";
-
-            if (className.Contains("Controller") && !className.Contains("CharacterController"))
+            // More accurate categorization
+            if (className.Contains("Controller") && !className.Contains("Debug"))
                 return "Controller";
 
-            if ((className.Contains("Effects") || className.Contains("Sounds")) && inheritance.Contains("MonoBehaviour"))
+            if (inheritance.Contains("IPlayerModule") || inheritance.Contains("IBrainModule"))
+                return "Core Module";
+
+            if (inheritance.Contains("IMeleeSubModule"))
+                return "Combat Sub-Module";
+
+            if (className.Contains("Effects") || className.Contains("Sounds"))
                 return "Companion Script";
 
-            if (className.Contains("Stats") || className.Contains("RPG"))
-                return "Stats System";
+            if (inheritance.Contains("ISystemCoordinator") || className.Contains("Coordinator"))
+                return "System Coordinator";
 
             if (className.Contains("Camera"))
                 return "Camera System";
 
-            if (className.Contains("UI"))
+            if (className.Contains("Adapter"))
+                return "Adapter";
+
+            if (className.Contains("UI") && !className.Contains("Debug"))
                 return "UI System";
 
-            if (className.Contains("Weapon") || className.Contains("Hit"))
+            if (className.Contains("Stats") || className.Contains("RPG"))
+                return "Stats System";
+
+            if (className.Contains("Weapon") && !className.Contains("Module"))
                 return "Weapon System";
+
+            if (className.Contains("AI") || className.Contains("NPC"))
+                return "AI/NPC System";
+
+            if (className.Contains("Faction"))
+                return "Faction System";
+
+            if (className.Contains("Inventory") || className.Contains("Item") || className.Contains("Equipment"))
+                return "Inventory System";
+
+            if (className.Contains("Grid"))
+                return "Grid System";
 
             return "Component";
         }
 
         private void ExtractIntegrationPoints(string content, ModuleInfo moduleInfo)
         {
-            // Brain integration
-            if (content.Contains("brain.GetModule"))
+            // brain.GetModule calls
+            var getModulePattern = @"brain\.GetModule<(\w+)>\(\)";
+            var moduleMatches = Regex.Matches(content, getModulePattern);
+
+            foreach (Match match in moduleMatches)
             {
-                var brainCalls = Regex.Matches(content, @"brain\.GetModule<(\w+)>\(\)");
-                foreach (Match match in brainCalls)
+                moduleInfo.IntegrationPoints.Add($"Gets module: {match.Groups[1].Value}");
+            }
+
+            // brain method calls
+            var brainMethodPattern = @"brain\.(\w+)\(";
+            var brainMatches = Regex.Matches(content, brainMethodPattern);
+
+            foreach (Match match in brainMatches)
+            {
+                string method = match.Groups[1].Value;
+                if (method != "GetModule" && method != "GetComponent")
                 {
-                    moduleInfo.IntegrationPoints.Add($"Gets module: {match.Groups[1].Value}");
+                    moduleInfo.IntegrationPoints.Add($"Uses brain method: {method}()");
                 }
             }
 
-            if (content.Contains("brain.Get"))
-            {
-                var brainMethods = Regex.Matches(content, @"brain\.(\w+)\(");
-                foreach (Match match in brainMethods)
-                {
-                    if (!match.Groups[1].Value.StartsWith("GetModule"))
-                        moduleInfo.IntegrationPoints.Add($"Uses brain method: {match.Groups[1].Value}()");
-                }
-            }
+            // Controller method calls
+            var controllerPattern = @"(?:controller|thirdPersonController)\.(\w+)\(";
+            var controllerMatches = Regex.Matches(content, controllerPattern);
 
-            // Controller integration
-            if (content.Contains("controller."))
+            foreach (Match match in controllerMatches)
             {
-                var controllerCalls = Regex.Matches(content, @"controller\.(\w+)\(");
-                foreach (Match match in controllerCalls)
-                {
-                    moduleInfo.IntegrationPoints.Add($"Uses controller: {match.Groups[1].Value}()");
-                }
+                moduleInfo.IntegrationPoints.Add($"Uses controller: {match.Groups[1].Value}()");
             }
 
             // Event subscriptions
-            var eventSubscriptions = Regex.Matches(content, @"(\w+)\.(\w+)\s*\+=\s*(\w+)");
-            foreach (Match match in eventSubscriptions)
+            var eventPattern = @"(\w+)\.(\w+)\s*\+=";
+            var eventMatches = Regex.Matches(content, eventPattern);
+
+            foreach (Match match in eventMatches)
             {
                 moduleInfo.IntegrationPoints.Add($"Subscribes to: {match.Groups[1].Value}.{match.Groups[2].Value}");
             }
 
-            // Interface implementations
-            foreach (var impl in moduleInfo.Inheritance)
+            // Interface implementation
+            foreach (var iface in moduleInfo.Inheritance)
             {
-                if (impl.StartsWith("I") && impl != "IEnumerator")
-                    moduleInfo.IntegrationPoints.Add($"Implements: {impl}");
+                if (iface.StartsWith("I") && iface.Length > 1 && char.IsUpper(iface[1]))
+                {
+                    moduleInfo.IntegrationPoints.Add($"Implements: {iface}");
+                }
             }
         }
 
         private void ExtractPublicAPI(string content, ModuleInfo moduleInfo)
         {
-            // Public methods with full signatures
-            var methodPattern = @"public\s+([\w<>\[\]]+)\s+(\w+)\s*\(([^)]*)\)";
-            var matches = Regex.Matches(content, methodPattern);
+            // Public methods
+            var methodPattern = @"public\s+(?:virtual\s+|override\s+|static\s+)?(\w+(?:<[^>]+>)?)\s+(\w+)\s*\([^)]*\)";
+            var methodMatches = Regex.Matches(content, methodPattern);
 
-            foreach (Match match in matches)
+            foreach (Match match in methodMatches)
             {
                 string returnType = match.Groups[1].Value;
                 string methodName = match.Groups[2].Value;
-                string parameters = match.Groups[3].Value.Trim();
 
-                if (methodName == moduleInfo.Name) continue; // Skip constructors
+                // Skip properties and special methods
+                if (methodName == "get" || methodName == "set") continue;
 
-                string signature = $"{returnType} {methodName}({parameters})";
-                moduleInfo.PublicMethods.Add(signature);
+                moduleInfo.PublicMethods.Add($"{returnType} {methodName}()");
             }
 
             // Public properties
-            var propertyPattern = @"public\s+([\w<>\[\]]+)\s+(\w+)\s*\{\s*([^}]+)\}";
-            var propMatches = Regex.Matches(content, propertyPattern);
+            var propPattern = @"public\s+(\w+(?:<[^>]+>)?)\s+(\w+)\s*\{\s*get";
+            var propMatches = Regex.Matches(content, propPattern);
 
             foreach (Match match in propMatches)
             {
-                string propType = match.Groups[1].Value;
+                string type = match.Groups[1].Value;
                 string propName = match.Groups[2].Value;
-                string accessors = match.Groups[3].Value;
-
-                moduleInfo.PublicProperties.Add($"{propType} {propName} {{ {accessors.Trim()} }}");
+                moduleInfo.PublicProperties.Add($"{type} {propName}");
             }
 
             // Public fields
-            var fieldPattern = @"(?:\[[^\]]*\]\s*)*public\s+([\w<>\[\]]+)\s+(\w+)\s*[=;]";
+            var fieldPattern = @"public\s+(\w+(?:<[^>]+>)?)\s+(\w+)\s*(?:=|;)";
             var fieldMatches = Regex.Matches(content, fieldPattern);
 
             foreach (Match match in fieldMatches)
             {
-                string fieldType = match.Groups[1].Value;
+                string type = match.Groups[1].Value;
                 string fieldName = match.Groups[2].Value;
-                moduleInfo.PublicFields.Add($"{fieldType} {fieldName}");
+
+                // Skip if it looks like it might be a property or method
+                if (!type.Contains("(") && !fieldName.Contains("("))
+                {
+                    moduleInfo.PublicFields.Add($"{type} {fieldName}");
+                }
             }
         }
 
         private void ExtractEventDetails(string content, ModuleInfo moduleInfo)
         {
             // Event declarations
-            var eventPattern = @"public\s+(?:static\s+)?event\s+([\w<>\[\]]+)\s+(\w+)";
-            var matches = Regex.Matches(content, eventPattern);
+            var eventPattern = @"public\s+event\s+(\w+(?:<[^>]+>)?)\s+(\w+)";
+            var eventMatches = Regex.Matches(content, eventPattern);
 
-            foreach (Match match in matches)
+            foreach (Match match in eventMatches)
             {
                 string eventType = match.Groups[1].Value;
                 string eventName = match.Groups[2].Value;
@@ -337,55 +422,50 @@ namespace ProjectAnalysis
             }
 
             // Event invocations
-            var invokePattern = @"(\w+)?.Invoke\(";
+            var invokePattern = @"(\w+)\?\s*\.Invoke\(";
             var invokeMatches = Regex.Matches(content, invokePattern);
 
             foreach (Match match in invokeMatches)
             {
-                if (!string.IsNullOrEmpty(match.Groups[1].Value))
-                    moduleInfo.EventInvocations.Add(match.Groups[1].Value);
+                moduleInfo.EventInvocations.Add(match.Groups[1].Value);
             }
         }
 
         private void ExtractAnimationIntegration(string content, ModuleInfo moduleInfo, string className)
         {
-            var animParams = new List<string>();
-
-            // SetAnimation calls
-            var setAnimPattern = @"SetAnimation(?:Bool|Int|Float|Trigger)\s*\(\s*[""']([^""']+)[""']";
-            var matches = Regex.Matches(content, setAnimPattern);
-
-            foreach (Match match in matches)
+            // Animation parameter sets
+            var animPatterns = new[]
             {
-                string paramName = match.Groups[1].Value;
-                animParams.Add(paramName);
-                moduleInfo.AnimationParameters.Add(paramName);
+                @"SetAnimation(?:Bool|Int|Float|Trigger)\([""'](\w+)[""']",
+                @"animator\.Set(?:Bool|Integer|Float|Trigger)\([""'](\w+)[""']"
+            };
+
+            var foundParams = new HashSet<string>();
+
+            foreach (var pattern in animPatterns)
+            {
+                var matches = Regex.Matches(content, pattern);
+                foreach (Match match in matches)
+                {
+                    foundParams.Add(match.Groups[1].Value);
+                }
             }
 
-            // animator.Set calls
-            var animatorPattern = @"animator\.Set(?:Bool|Int|Float|Trigger)\s*\(\s*[""']([^""']+)[""']";
-            var animatorMatches = Regex.Matches(content, animatorPattern);
+            moduleInfo.AnimationParameters.AddRange(foundParams);
 
-            foreach (Match match in animatorMatches)
+            if (foundParams.Any() && !animationParameters.ContainsKey(className))
             {
-                string paramName = match.Groups[1].Value;
-                animParams.Add(paramName);
-                moduleInfo.AnimationParameters.Add(paramName);
-            }
-
-            if (animParams.Any())
-            {
-                animationParameters[className] = animParams.Distinct().ToList();
+                animationParameters[className] = foundParams.ToList();
             }
         }
 
         private void ExtractDependencies(string content, ModuleInfo moduleInfo)
         {
-            // Required components
-            var requirePattern = @"\[RequireComponent\(typeof\((\w+)\)\)\]";
-            var matches = Regex.Matches(content, requirePattern);
+            // Requires attribute
+            var requiresPattern = @"\[RequireComponent\(typeof\((\w+)\)\)\]";
+            var requiresMatches = Regex.Matches(content, requiresPattern);
 
-            foreach (Match match in matches)
+            foreach (Match match in requiresMatches)
             {
                 moduleInfo.Dependencies.Add($"Requires: {match.Groups[1].Value}");
             }
@@ -417,13 +497,22 @@ namespace ProjectAnalysis
             report.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             report.AppendLine();
 
-            // Summary
+            // IMPROVED: More accurate summary
+            var topLevelModules = modules.Values.Where(m => !m.IsNestedClass).ToList();
+            var nestedClasses = modules.Values.Where(m => m.IsNestedClass).ToList();
+
             report.AppendLine("## Project Summary");
+            report.AppendLine($"- **Total Script Files (.cs)**: {totalScriptFiles}");
             report.AppendLine($"- **Total Components Analyzed**: {modules.Count}");
-            report.AppendLine($"- **Core Modules**: {modules.Count(m => m.Value.Category == "Core Module")}");
-            report.AppendLine($"- **Combat Sub-Modules**: {modules.Count(m => m.Value.Category == "Combat Sub-Module")}");
-            report.AppendLine($"- **Companion Scripts**: {modules.Count(m => m.Value.Category == "Companion Script")}");
-            report.AppendLine($"- **Controllers**: {modules.Count(m => m.Value.Category == "Controller")}");
+            report.AppendLine($"  - Top-Level Classes: {topLevelModules.Count}");
+            report.AppendLine($"  - Nested Classes: {nestedClasses.Count}");
+            report.AppendLine($"- **Core Modules**: {topLevelModules.Count(m => m.Category == "Core Module")}");
+            report.AppendLine($"- **Combat Sub-Modules**: {topLevelModules.Count(m => m.Category == "Combat Sub-Module")}");
+            report.AppendLine($"- **Companion Scripts**: {topLevelModules.Count(m => m.Category == "Companion Script")}");
+            report.AppendLine($"- **System Coordinators**: {topLevelModules.Count(m => m.Category == "System Coordinator")}");
+            report.AppendLine($"- **Controllers**: {topLevelModules.Count(m => m.Category == "Controller")}");
+            report.AppendLine($"- **Adapters**: {topLevelModules.Count(m => m.Category == "Adapter")}");
+            report.AppendLine($"- **AI/NPC Systems**: {topLevelModules.Count(m => m.Category == "AI/NPC System")}");
             report.AppendLine($"- **Interfaces Found**: {interfaces.Count}");
             report.AppendLine();
 
@@ -448,7 +537,9 @@ namespace ProjectAnalysis
 
                 foreach (var module in category.OrderBy(m => m.Name))
                 {
-                    report.AppendLine($"### {module.Name}");
+                    // Mark nested classes
+                    string nameDisplay = module.IsNestedClass ? $"{module.Name} (nested in {module.FileName})" : module.Name;
+                    report.AppendLine($"### {nameDisplay}");
                     report.AppendLine($"**File**: {module.FileName}.cs");
 
                     if (module.Inheritance.Any())
@@ -565,6 +656,7 @@ namespace ProjectAnalysis
         public string FileName { get; set; }
         public List<string> Inheritance { get; set; } = new List<string>();
         public string Category { get; set; }
+        public bool IsNestedClass { get; set; } // NEW: Track if nested
         public List<string> IntegrationPoints { get; set; } = new List<string>();
         public List<string> PublicMethods { get; set; } = new List<string>();
         public List<string> PublicProperties { get; set; } = new List<string>();

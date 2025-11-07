@@ -130,7 +130,7 @@ public class PlayerFactionHandler : MonoBehaviour, IPlayerInfoHandler
     {
         if (FactionManager.Instance != null)
         {
-            return FactionManager.Instance.GetFactionName(playerFaction);
+            return FactionManager.GetFactionName(playerFaction);
         }
         return playerFaction.ToString();
     }

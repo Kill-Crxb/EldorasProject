@@ -54,16 +54,24 @@ public enum EquipmentSlot
 /// </summary>
 public enum WeaponType
 {
-    None,
+    // Manufactured weapons (Humanoids)
     Sword,
     Axe,
-    Mace,
-    Dagger,
     Bow,
     Staff,
+    Dagger,
+    Spear,
+    Hammer,
     Shield,
-    TwoHanded,
-    Unarmed
+
+    // Natural weapons (Animals)
+    Claw,
+    Teeth,
+    Horn,
+    Tail,
+    Wing,
+    Stinger,
+    Tentacle
 }
 
 /// <summary>

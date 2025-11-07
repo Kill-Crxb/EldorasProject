@@ -1,45 +1,19 @@
 ﻿using UnityEngine;
 
 /// <summary>
-/// Adapter that bridges RPGResources to the universal damage system.
-/// Implements IHealthProvider to provide health management for damage calculations.
-/// 
-/// Design:
-/// - Translates RPGResources health system to universal health interface
-/// - Auto-discovers RPGResources from Brain
-/// - Handles damage application and healing
-/// - Works with universal DamageIn module
-/// 
-/// Usage:
-/// 1. Add to entity (as child of Component_Damage or Component_Brain)
-/// 2. Automatically discovers RPGResources
-/// 3. DamageIn finds this adapter automatically
+/// Adapter that connects DamageIn to RPGResources.
+/// Searches for RPGResources from the Brain level (not from local position).
 /// </summary>
 public class RPGHealthAdapter : MonoBehaviour, IHealthProvider
 {
-    [Header("Adapter Settings")]
-    [SerializeField] private bool debugAdapter = false;
+    [Header("Manual Reference (Optional)")]
+    [SerializeField] private RPGResources resources;
 
-    [Header("Death Settings")]
-    [SerializeField] private bool canDie = true;
-    [SerializeField] private float minHealth = 0f;
-
-    [Header("Manual References (Optional)")]
-    [SerializeField] private RPGResources rpgResources;
+    [Header("Debug")]
+    [SerializeField] private bool debugLogs = false;
 
     private ControllerBrain brain;
     private bool isInitialized = false;
-    private bool isDead = false;
-
-    // === Events ===
-
-    /// <summary>Fired when health changes</summary>
-    public event System.Action<float, float> OnHealthChanged; // (current, max)
-
-    /// <summary>Fired when entity dies</summary>
-    public event System.Action OnDied;
-
-    // === Lifecycle ===
 
     void Awake()
     {
@@ -50,138 +24,156 @@ public class RPGHealthAdapter : MonoBehaviour, IHealthProvider
     {
         if (isInitialized) return;
 
-        // Find Brain
+        // Find the Brain (should be parent of Component_Damage)
         brain = GetComponentInParent<ControllerBrain>();
         if (brain == null)
         {
-            Debug.LogError($"[RPGHealthAdapter] No ControllerBrain found in parent! " +
-                          "Adapter must be child of Brain.");
+            Debug.LogError($"[RPGHealthAdapter] No ControllerBrain found in parent hierarchy!");
             return;
         }
 
-        // Auto-discover RPGResources if not manually assigned
-        if (rpgResources == null)
+        // If no manual reference, search from Brain level
+        if (resources == null)
         {
-            rpgResources = brain.RPGResources;
+            // Search DOWN from Brain to find RPGResources
+            resources = brain.GetComponentInChildren<RPGResources>();
         }
 
-        if (rpgResources == null)
+        if (resources != null)
         {
-            Debug.LogError($"[RPGHealthAdapter] No RPGResources found on {brain.name}! " +
-                          "Cannot manage health.");
-            return;
+            if (debugLogs)
+            {
+                Debug.Log($"[RPGHealthAdapter] ✓ Found RPGResources: {resources.name}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[RPGHealthAdapter] ✗ Could not find RPGResources! " +
+                           "DamageIn will not function properly.");
         }
 
         isInitialized = true;
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGHealthAdapter] Initialized on {brain.name} " +
-                     $"(Health: {rpgResources.CurrentHealth}/{rpgResources.MaxHealth})");
-        }
     }
 
     // === IHealthProvider Implementation ===
 
-    public void ApplyDamage(float amount)
-    {
-        if (!ValidateResources()) return;
-
-        if (isDead && canDie)
-        {
-            if (debugAdapter)
-                Debug.Log("[RPGHealthAdapter] Already dead, ignoring damage.");
-            return;
-        }
-
-        float healthBefore = rpgResources.CurrentHealth;
-
-        // Apply damage through RPGResources
-        rpgResources.ModifyHealth(-amount);
-
-        // Clamp to minimum health if needed
-        if (rpgResources.CurrentHealth < minHealth)
-        {
-            // Set health to minimum by modifying the difference
-            float diff = minHealth - rpgResources.CurrentHealth;
-            rpgResources.ModifyHealth(diff);
-        }
-
-        float healthAfter = rpgResources.CurrentHealth;
-        float actualDamage = healthBefore - healthAfter;
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGHealthAdapter] Damage applied: {actualDamage:F1} " +
-                     $"(Health: {healthAfter:F1}/{rpgResources.MaxHealth:F1})");
-        }
-
-        // Fire health changed event
-        OnHealthChanged?.Invoke(healthAfter, rpgResources.MaxHealth);
-
-        // Check for death
-        if (canDie && healthAfter <= minHealth && !isDead)
-        {
-            HandleDeath();
-        }
-    }
-
-    public void ApplyHealing(float amount)
-    {
-        if (!ValidateResources()) return;
-
-        if (isDead && canDie)
-        {
-            if (debugAdapter)
-                Debug.Log("[RPGHealthAdapter] Cannot heal while dead.");
-            return;
-        }
-
-        float healthBefore = rpgResources.CurrentHealth;
-
-        // Apply healing through RPGResources
-        rpgResources.ModifyHealth(amount);
-
-        float healthAfter = rpgResources.CurrentHealth;
-        float actualHealing = healthAfter - healthBefore;
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGHealthAdapter] Healing applied: {actualHealing:F1} " +
-                     $"(Health: {healthAfter:F1}/{rpgResources.MaxHealth:F1})");
-        }
-
-        // Fire health changed event
-        OnHealthChanged?.Invoke(healthAfter, rpgResources.MaxHealth);
-    }
-
     public float GetCurrentHealth()
     {
-        if (!ValidateResources()) return 0f;
-        return rpgResources.CurrentHealth;
+        if (!ValidateResources())
+        {
+            if (debugLogs)
+                Debug.LogWarning("[RPGHealthAdapter] No resources available, returning 0");
+            return 0f;
+        }
+
+        return resources.CurrentHealth;
     }
 
     public float GetMaxHealth()
     {
-        if (!ValidateResources()) return 100f;
-        return rpgResources.MaxHealth;
+        if (!ValidateResources())
+        {
+            if (debugLogs)
+                Debug.LogWarning("[RPGHealthAdapter] No resources available, returning 100");
+            return 100f;
+        }
+
+        return resources.MaxHealth;
     }
 
     public float GetHealthPercentage()
     {
-        if (!ValidateResources()) return 0f;
-        return rpgResources.HealthPercentage; // Changed from GetHealthPercentage()
+        if (!ValidateResources())
+        {
+            return 1f;
+        }
+
+        return resources.HealthPercentage;
     }
 
     public bool IsAlive()
     {
-        if (!canDie) return true;
-        if (!ValidateResources()) return false;
+        if (!ValidateResources())
+        {
+            return true; // Assume alive if no resources
+        }
 
-        return !isDead && rpgResources.CurrentHealth > minHealth;
+        return resources.CurrentHealth > 0f;
     }
 
-    // === Helper Methods ===
+    public void ApplyDamage(float damage)
+    {
+        if (!ValidateResources())
+        {
+            Debug.LogError("[RPGHealthAdapter] Cannot apply damage - no resources!");
+            return;
+        }
+
+        resources.ModifyHealth(-damage);
+
+        if (debugLogs)
+        {
+            Debug.Log($"[RPGHealthAdapter] Applied {damage:F1} damage. " +
+                     $"Health: {resources.CurrentHealth:F1}/{resources.MaxHealth:F1}");
+        }
+    }
+
+    public void ApplyHealing(float healing)
+    {
+        if (!ValidateResources())
+        {
+            Debug.LogError("[RPGHealthAdapter] Cannot apply healing - no resources!");
+            return;
+        }
+
+        resources.ModifyHealth(healing);
+
+        if (debugLogs)
+        {
+            Debug.Log($"[RPGHealthAdapter] Applied {healing:F1} healing. " +
+                     $"Health: {resources.CurrentHealth:F1}/{resources.MaxHealth:F1}");
+        }
+    }
+
+    public void SetHealth(float value)
+    {
+        if (!ValidateResources())
+        {
+            Debug.LogError("[RPGHealthAdapter] Cannot set health - no resources!");
+            return;
+        }
+
+        // Calculate the difference and apply as healing/damage
+        float currentHealth = resources.CurrentHealth;
+        float difference = value - currentHealth;
+
+        if (difference != 0)
+        {
+            resources.ModifyHealth(difference);
+
+            if (debugLogs)
+            {
+                Debug.Log($"[RPGHealthAdapter] Set health to {value:F1}. " +
+                         $"Health: {resources.CurrentHealth:F1}/{resources.MaxHealth:F1}");
+            }
+        }
+    }
+
+    public void SetHealthToMax()
+    {
+        if (!ValidateResources())
+        {
+            Debug.LogError("[RPGHealthAdapter] Cannot set health to max - no resources!");
+            return;
+        }
+
+        resources.SetHealthToMax();
+
+        if (debugLogs)
+        {
+            Debug.Log($"[RPGHealthAdapter] Health set to max: {resources.MaxHealth:F1}");
+        }
+    }
 
     private bool ValidateResources()
     {
@@ -190,160 +182,86 @@ public class RPGHealthAdapter : MonoBehaviour, IHealthProvider
             Initialize();
         }
 
-        if (rpgResources == null)
-        {
-            Debug.LogWarning("[RPGHealthAdapter] RPGResources not available!");
-            return false;
-        }
-
-        return true;
-    }
-
-    private void HandleDeath()
-    {
-        isDead = true;
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGHealthAdapter] {brain.name} has died!");
-        }
-
-        OnDied?.Invoke();
-    }
-
-    /// <summary>
-    /// Revive this entity (set health above minimum and clear death flag)
-    /// </summary>
-    public void Revive(float healthAmount)
-    {
-        if (!ValidateResources()) return;
-
-        isDead = false;
-        // Changed: Use ModifyHealth to set to specific value
-        rpgResources.ModifyHealth(healthAmount - rpgResources.CurrentHealth);
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGHealthAdapter] {brain.name} revived with {healthAmount:F1} health!");
-        }
-
-        OnHealthChanged?.Invoke(rpgResources.CurrentHealth, rpgResources.MaxHealth);
-    }
-
-    /// <summary>
-    /// Set health to full
-    /// </summary>
-    public void FullHeal()
-    {
-        if (!ValidateResources()) return;
-
-        rpgResources.SetHealthToMax(); // This method DOES exist in RPGResources
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGHealthAdapter] {brain.name} fully healed!");
-        }
-
-        OnHealthChanged?.Invoke(rpgResources.CurrentHealth, rpgResources.MaxHealth);
-    }
-
-    /// <summary>
-    /// Set invulnerable (cannot die)
-    /// </summary>
-    public void SetInvulnerable(bool invulnerable)
-    {
-        canDie = !invulnerable;
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGHealthAdapter] {brain.name} invulnerability: {invulnerable}");
-        }
+        return resources != null;
     }
 
     // === Inspector Helpers ===
 
-    [ContextMenu("Debug: Show Health Info")]
-    private void DebugShowHealthInfo()
+    [ContextMenu("Debug: Show Current Health")]
+    private void DebugShowHealth()
     {
         if (!Application.isPlaying)
         {
-            Debug.Log("[Adapter] Only works in Play Mode!");
+            Debug.LogWarning("[RPGHealthAdapter] Debug only works in Play Mode!");
             return;
         }
 
-        if (!ValidateResources())
-        {
-            Debug.LogError("[Adapter] Cannot show health - validation failed!");
-            return;
-        }
-
-        Debug.Log($"=== RPG Health Adapter ===\n" +
-                  $"Entity: {brain.name}\n" +
-                  $"Current Health: {GetCurrentHealth():F1}\n" +
-                  $"Max Health: {GetMaxHealth():F1}\n" +
-                  $"Health %: {GetHealthPercentage():P0}\n" +
-                  $"Alive: {IsAlive()}\n" +
-                  $"Can Die: {canDie}\n" +
-                  $"Is Dead: {isDead}");
+        Debug.Log($"=== [RPGHealthAdapter] Current Health ===\n" +
+                  $"Current: {GetCurrentHealth():F1}\n" +
+                  $"Max: {GetMaxHealth():F1}\n" +
+                  $"Percentage: {GetHealthPercentage():P0}\n" +
+                  $"Alive: {IsAlive()}");
     }
 
-    [ContextMenu("Test: Take 25 Damage")]
-    private void TestTakeDamage()
+    [ContextMenu("Debug: Show Component Paths")]
+    private void DebugShowPaths()
     {
         if (!Application.isPlaying)
         {
-            Debug.LogWarning("[Adapter] Test only works in Play Mode!");
+            Debug.LogWarning("[RPGHealthAdapter] Debug only works in Play Mode!");
             return;
         }
 
-        ApplyDamage(25f);
+        Debug.Log($"=== [RPGHealthAdapter] Component Paths ===\n" +
+                  $"This Adapter: {GetFullPath(transform)}\n" +
+                  $"Brain: {(brain != null ? GetFullPath(brain.transform) : "NOT FOUND")}\n" +
+                  $"RPGResources: {(resources != null ? GetFullPath(resources.transform) : "NOT FOUND")}");
     }
 
-    [ContextMenu("Test: Heal 50 HP")]
-    private void TestHeal()
+    [ContextMenu("Test: Apply 10 Damage")]
+    private void TestApplyDamage()
     {
         if (!Application.isPlaying)
         {
-            Debug.LogWarning("[Adapter] Test only works in Play Mode!");
+            Debug.LogWarning("[RPGHealthAdapter] Test only works in Play Mode!");
             return;
         }
 
-        ApplyHealing(50f);
+        ApplyDamage(10f);
     }
 
-    [ContextMenu("Test: Full Heal")]
-    private void TestFullHeal()
+    [ContextMenu("Test: Apply 25 Healing")]
+    private void TestApplyHealing()
     {
         if (!Application.isPlaying)
         {
-            Debug.LogWarning("[Adapter] Test only works in Play Mode!");
+            Debug.LogWarning("[RPGHealthAdapter] Test only works in Play Mode!");
             return;
         }
 
-        FullHeal();
+        ApplyHealing(25f);
     }
 
-    [ContextMenu("Test: Kill Entity")]
-    private void TestKill()
+    [ContextMenu("Test: Set Health To Max")]
+    private void TestSetHealthToMax()
     {
         if (!Application.isPlaying)
         {
-            Debug.LogWarning("[Adapter] Test only works in Play Mode!");
+            Debug.LogWarning("[RPGHealthAdapter] Test only works in Play Mode!");
             return;
         }
 
-        ApplyDamage(9999f);
+        SetHealthToMax();
     }
 
-    [ContextMenu("Test: Revive with 50 HP")]
-    private void TestRevive()
+    private string GetFullPath(Transform t)
     {
-        if (!Application.isPlaying)
+        string path = t.name;
+        while (t.parent != null)
         {
-            Debug.LogWarning("[Adapter] Test only works in Play Mode!");
-            return;
+            t = t.parent;
+            path = t.name + "/" + path;
         }
-
-        Revive(50f);
+        return path;
     }
 }

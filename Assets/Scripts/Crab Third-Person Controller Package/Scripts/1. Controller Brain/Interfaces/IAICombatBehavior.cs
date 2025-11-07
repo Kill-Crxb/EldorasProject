@@ -1,10 +1,10 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// Interface for AI combat behavior modules
 /// Allows different combat styles (melee, ranged, magic) to be swapped
-/// Step 1.9: Added ExecuteAttack() for AIModule combat state implementation
+/// 
+/// FIXED VERSION: Complete interface with all required methods for AIModule integration
 /// </summary>
 public interface IAICombatBehavior
 {
@@ -22,12 +22,14 @@ public interface IAICombatBehavior
 
     // State checks
     bool CanEnterCombat();
+    bool CanAttack();                           // ← ADDED: Required by AIStateUpdater and AIDebugVisualizer
     bool ShouldExitCombat(Transform target);
 
     // State transitions
     void OnCombatEnter(Transform target);
     void OnCombatExit();
 
-    // ⭐ STEP 1.9: Execute attack on cooldown timer
-    void ExecuteAttack();
+    // Attack execution
+    void ExecuteAttack();                       // ← Parameterless version for interface
+    void ExecuteAttack(Transform target);       // ← Target-aware version (preferred)
 }

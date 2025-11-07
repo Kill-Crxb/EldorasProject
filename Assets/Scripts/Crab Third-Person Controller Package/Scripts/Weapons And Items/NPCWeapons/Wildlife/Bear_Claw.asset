@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 598fc2bd468b9ad4396de2fb256e8fc9, type: 3}
+  m_Name: Bear_Claw
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: Bear Claw
+  weaponType: 8
+  category: 1
+  damage: 10
+  attackSpeed: 0.9
+  reach: 2
+  isNaturalWeapon: 1
+  preferredSocketName: 
+  lightAttackStamina: 10
+  heavyAttackStamina: 20
+  blockStamina: 5
+  canBlock: 1
+  canParry: 1
+  hasCombos: 1
+  maxComboCount: 3
+  weaponModel: {fileID: 5441998966177520039, guid: 25a8934ce095be54390ce1b706e40e9a, type: 3}
+  weaponSocket: {fileID: 0}
+  attackEffect: {fileID: 0}
+  attackSounds: []

@@ -5,25 +5,6 @@ using RPG.Factions;
 
 namespace RPG.NPC.UI
 {
-    /// <summary>
-    /// World-space nameplate that displays NPC name, level, and faction relationship.
-    /// Auto-follows NPC position and rotates to face camera.
-    /// Color-coded based on faction relationship to player.
-    /// 
-    /// Hierarchy Setup:
-    /// NPCNameplate (this script + Canvas)
-    /// └── Content (Panel with VerticalLayoutGroup)
-    ///     ├── NameText (TextMeshProUGUI)
-    ///     ├── LevelText (TextMeshProUGUI)
-    ///     └── HealthBarPanel (optional)
-    ///         ├── Background (Image)
-    ///         └── Fill (Image - Filled type)
-    /// 
-    /// Usage:
-    /// 1. Create nameplate prefab with this component
-    /// 2. Assign to NPCModule's nameplatePrefab field
-    /// 3. NPCModule will automatically create and initialize it
-    /// </summary>
     [RequireComponent(typeof(Canvas))]
     public class NPCNameplate : MonoBehaviour
     {
@@ -41,44 +22,42 @@ namespace RPG.NPC.UI
 
         [Header("Level Color Coding")]
         [SerializeField] private bool useLevelColorCoding = true;
-        [SerializeField] private int levelDifferenceForGreen = -5;  // 5+ levels below player = green
-        [SerializeField] private int levelDifferenceForRed = 5;     // 5+ levels above player = red
-        [SerializeField] private Color easyLevelColor = new Color(0.5f, 1f, 0.5f);    // Green (easy)
-        [SerializeField] private Color normalLevelColor = Color.white;                 // White (normal)
-        [SerializeField] private Color hardLevelColor = new Color(1f, 0.5f, 0.5f);    // Red (hard)
-        [SerializeField] private Color skullLevelColor = new Color(1f, 0.2f, 0.2f);   // Bright red (skull level)
+        [SerializeField] private int levelDifferenceForGreen = -5;
+        [SerializeField] private int levelDifferenceForRed = 5;
+        [SerializeField] private Color easyLevelColor = new Color(0.5f, 1f, 0.5f);
+        [SerializeField] private Color normalLevelColor = Color.white;
+        [SerializeField] private Color hardLevelColor = new Color(1f, 0.5f, 0.5f);
+        [SerializeField] private Color skullLevelColor = new Color(1f, 0.2f, 0.2f);
 
         [Header("Debug")]
         [SerializeField] private bool enableDebugLogs = false;
 
-        // Cached references
         private Transform npcTransform;
         private Camera mainCamera;
         private Canvas canvas;
+        private ControllerBrain targetPlayer;
 
-        // NPC data
         private string npcName;
         private int npcLevel;
         private FactionType npcFaction;
         private FactionRelationship cachedRelationship;
 
-        // Health tracking
         private float currentHealthPercent = 1f;
         private float targetHealthPercent = 1f;
+
+        private bool hasRefreshedAfterStart = false;
 
         private void Awake()
         {
             canvas = GetComponent<Canvas>();
             mainCamera = Camera.main;
 
-            // Setup canvas for world space
             if (canvas != null)
             {
                 canvas.renderMode = RenderMode.WorldSpace;
                 canvas.worldCamera = mainCamera;
             }
 
-            // Hide health bar initially if set to not show
             if (!showHealthBar && healthBarPanel != null)
             {
                 healthBarPanel.SetActive(false);
@@ -87,7 +66,6 @@ namespace RPG.NPC.UI
 
         private void Start()
         {
-            // Validate references
             if (nameText == null)
             {
                 Debug.LogError("[NPCNameplate] Name Text not assigned!", this);
@@ -106,19 +84,27 @@ namespace RPG.NPC.UI
 
         private void LateUpdate()
         {
-            // Update position to follow NPC
+            if (!hasRefreshedAfterStart && Time.frameCount > 5)
+            {
+                FactionType playerFaction = GetPlayerFaction();
+
+                if (playerFaction != FactionType.Player || Time.frameCount > 10)
+                {
+                    hasRefreshedAfterStart = true;
+                    UpdateDisplay();
+                }
+            }
+
             if (npcTransform != null)
             {
                 transform.position = npcTransform.position + nameplateOffset;
             }
 
-            // Always face camera
             if (alwaysFaceCamera && mainCamera != null)
             {
                 transform.rotation = Quaternion.LookRotation(transform.position - mainCamera.transform.position);
             }
 
-            // Smooth health bar updates
             if (showHealthBar && healthBarFill != null && currentHealthPercent != targetHealthPercent)
             {
                 currentHealthPercent = Mathf.Lerp(currentHealthPercent, targetHealthPercent, Time.deltaTime * healthBarUpdateSpeed);
@@ -126,22 +112,13 @@ namespace RPG.NPC.UI
             }
         }
 
-        #region Public API
-
-        /// <summary>
-        /// Initialize the nameplate with NPC data.
-        /// Called by NPCModule during initialization.
-        /// </summary>
-        /// <param name="npcTransform">The NPC's root transform to follow</param>
-        /// <param name="npcName">Display name</param>
-        /// <param name="npcLevel">NPC level</param>
-        /// <param name="npcFaction">NPC's faction for color coding</param>
-        public void Initialize(Transform npcTransform, string npcName, int npcLevel, FactionType npcFaction)
+        public void Initialize(Transform npcTransform, string npcName, int npcLevel, FactionType npcFaction, ControllerBrain targetPlayer = null)
         {
             this.npcTransform = npcTransform;
             this.npcName = npcName;
             this.npcLevel = npcLevel;
             this.npcFaction = npcFaction;
+            this.targetPlayer = targetPlayer;
 
             UpdateDisplay();
 
@@ -151,29 +128,25 @@ namespace RPG.NPC.UI
             }
         }
 
-        /// <summary>
-        /// Update the nameplate display with current information.
-        /// Call this when faction relationship or other data changes.
-        /// </summary>
         public void UpdateDisplay()
         {
-            // Get relationship to player
-            cachedRelationship = FactionManager.GetRelationship(npcFaction, FactionType.Player);
+            FactionType playerFaction = GetPlayerFaction();
+
+            cachedRelationship = FactionManager.GetRelationship(npcFaction, playerFaction);
             Color relationshipColor = FactionColors.GetRelationshipColor(cachedRelationship);
 
-            // Update name text
+            Debug.Log($"<color=magenta>[NPCNameplate] {npcName}: NPC Faction={npcFaction}, Player Faction={playerFaction}, Relationship={cachedRelationship}, Color={relationshipColor}</color>");
+
             if (nameText != null)
             {
                 nameText.text = npcName;
                 nameText.color = relationshipColor;
             }
 
-            // Update level text
             if (levelText != null)
             {
                 levelText.text = $"(Lv.{npcLevel})";
 
-                // Apply level color coding if enabled
                 if (useLevelColorCoding)
                 {
                     levelText.color = GetLevelColor();
@@ -184,41 +157,28 @@ namespace RPG.NPC.UI
                 }
             }
 
-            // Update health bar color to match faction
             if (showHealthBar && healthBarFill != null)
             {
                 healthBarFill.color = relationshipColor;
             }
         }
 
-        /// <summary>
-        /// Update the health bar display (0.0 to 1.0).
-        /// Call this when NPC takes damage or heals.
-        /// </summary>
-        /// <param name="healthPercent">Current health as percentage (0-1)</param>
         public void UpdateHealth(float healthPercent)
         {
             targetHealthPercent = Mathf.Clamp01(healthPercent);
 
-            // Show health bar when damaged, hide when full
             if (showHealthBar && healthBarPanel != null)
             {
                 healthBarPanel.SetActive(healthPercent < 1f);
             }
         }
 
-        /// <summary>
-        /// Update the NPC's level and refresh display.
-        /// </summary>
         public void UpdateLevel(int newLevel)
         {
             npcLevel = newLevel;
             UpdateDisplay();
         }
 
-        /// <summary>
-        /// Update the NPC's name and refresh display.
-        /// </summary>
         public void UpdateName(string newName)
         {
             npcName = newName;
@@ -228,19 +188,12 @@ namespace RPG.NPC.UI
             }
         }
 
-        /// <summary>
-        /// Update the NPC's faction and refresh display.
-        /// Call this when NPC changes faction dynamically.
-        /// </summary>
         public void UpdateFaction(FactionType newFaction)
         {
             npcFaction = newFaction;
             UpdateDisplay();
         }
 
-        /// <summary>
-        /// Show or hide the entire nameplate.
-        /// </summary>
         public void SetVisible(bool visible)
         {
             if (canvas != null)
@@ -249,68 +202,98 @@ namespace RPG.NPC.UI
             }
         }
 
-        /// <summary>
-        /// Set the nameplate offset from NPC position.
-        /// Useful for differently sized NPCs.
-        /// </summary>
         public void SetOffset(Vector3 offset)
         {
             nameplateOffset = offset;
         }
 
-        /// <summary>
-        /// Get current cached faction relationship
-        /// </summary>
+        public void SetTargetPlayer(ControllerBrain player)
+        {
+            targetPlayer = player;
+            UpdateDisplay();
+        }
+
         public FactionRelationship GetCachedRelationship()
         {
             return cachedRelationship;
         }
 
-        #endregion
+        private FactionType GetPlayerFaction()
+        {
+            ControllerBrain playerBrain = null;
 
-        #region Level Color Coding
+            if (targetPlayer != null)
+            {
+                playerBrain = targetPlayer;
+            }
+            else
+            {
+                var allBrains = FindObjectsByType<ControllerBrain>(FindObjectsSortMode.None);
 
-        /// <summary>
-        /// Get the appropriate color for the level text based on player level difference.
-        /// Green = Easy, White = Normal, Red = Hard, Bright Red = Skull
-        /// </summary>
+                foreach (var brain in allBrains)
+                {
+                    var playerInfo = brain.GetModule<PlayerInfoModule>();
+                    if (playerInfo != null)
+                    {
+                        playerBrain = brain;
+                        break;
+                    }
+                }
+
+                if (playerBrain == null)
+                {
+                    if (enableDebugLogs)
+                    {
+                        Debug.LogWarning("[NPCNameplate] Could not find local player's ControllerBrain");
+                    }
+                    return FactionType.Player;
+                }
+            }
+
+            var info = playerBrain.GetModule<PlayerInfoModule>();
+            if (info != null)
+            {
+                if (info.FactionHandler != null)
+                {
+                    FactionType faction = info.GetPlayerFaction();
+                    return faction;
+                }
+                else if (enableDebugLogs)
+                {
+                    Debug.LogWarning("[NPCNameplate] PlayerInfoModule.FactionHandler is NULL (not initialized yet)");
+                }
+            }
+
+            return FactionType.Player;
+        }
+
         private Color GetLevelColor()
         {
-            // Get player level
             int playerLevel = GetPlayerLevel();
 
             int levelDifference = npcLevel - playerLevel;
 
-            // Skull level (10+ levels above player) - extremely dangerous
             if (levelDifference >= 10)
             {
                 return skullLevelColor;
             }
-            // Hard level (5-9 levels above) - challenging
             else if (levelDifference >= levelDifferenceForRed)
             {
                 return hardLevelColor;
             }
-            // Easy level (5+ levels below) - trivial
             else if (levelDifference <= levelDifferenceForGreen)
             {
                 return easyLevelColor;
             }
-            // Normal level (within ±4 levels) - appropriate challenge
             else
             {
                 return normalLevelColor;
             }
         }
 
-        /// <summary>
-        /// Get player level for comparison.
-        /// Tries to find PlayerInfoModule, falls back to default.
-        /// </summary>
         private int GetPlayerLevel()
         {
-            // Try to find player's brain and get level
-            var playerBrain = FindObjectOfType<ControllerBrain>();
+            var playerBrain = FindFirstObjectByType<ControllerBrain>();
             if (playerBrain != null)
             {
                 var playerInfo = playerBrain.GetComponentInChildren<PlayerInfoModule>();
@@ -320,13 +303,8 @@ namespace RPG.NPC.UI
                 }
             }
 
-            // Default to level 10 if player not found
             return 10;
         }
-
-        #endregion
-
-        #region Gizmos
 
         private void OnDrawGizmosSelected()
         {
@@ -337,7 +315,5 @@ namespace RPG.NPC.UI
                 Gizmos.DrawLine(npcTransform.position, npcTransform.position + nameplateOffset);
             }
         }
-
-        #endregion
     }
 }

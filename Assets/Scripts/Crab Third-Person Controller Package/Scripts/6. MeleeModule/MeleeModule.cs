@@ -69,7 +69,7 @@ public class MeleeModule : MonoBehaviour, IPlayerModule, IInputHandler
         InitializeSubModules();
         SubscribeToSubModuleEvents();
 
-       
+
     }
 
     public void UpdateModule()
@@ -197,8 +197,7 @@ public class MeleeModule : MonoBehaviour, IPlayerModule, IInputHandler
         // Forward to attack module
         attackModule?.Attack_On();
 
-        // Notify other systems
-        OnWeaponEnabled?.Invoke();
+        // NOTE: Removed OnWeaponEnabled broadcast - AttackModule already enables current weapon
 
         if (debugMelee)
             Debug.Log("MeleeModule: Weapon collision ENABLED via animation event");
@@ -213,8 +212,7 @@ public class MeleeModule : MonoBehaviour, IPlayerModule, IInputHandler
         // Forward to attack module
         attackModule?.Attack_Off();
 
-        // Notify other systems
-        OnWeaponDisabled?.Invoke();
+        // NOTE: Removed OnWeaponDisabled broadcast - AttackModule already disables current weapon
 
         if (debugMelee)
             Debug.Log("MeleeModule: Weapon collision DISABLED via animation event");
@@ -398,7 +396,7 @@ public class MeleeModule : MonoBehaviour, IPlayerModule, IInputHandler
     #endregion
 
     #region Debug
-     
+
     void OnDrawGizmosSelected()
     {
         if (!debugMelee) return;

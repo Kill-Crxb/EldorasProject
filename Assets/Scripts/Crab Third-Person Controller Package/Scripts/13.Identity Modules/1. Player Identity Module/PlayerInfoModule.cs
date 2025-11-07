@@ -37,9 +37,9 @@ public class PlayerInfoModule : MonoBehaviour, IPlayerModule, ISaveable
     // [SerializeField] private NPCRelationshipHandler npcHandler;
     // [SerializeField] private WorldUnlocksHandler unlocksHandler;
 
-    [Header("Network Settings (Future)")]
-    [SerializeField] private bool isNetworked = false;
-    [SerializeField] private bool isLocalPlayer = true;
+    // [Header("Network Settings (Future)")]
+    //[SerializeField] private bool isNetworked = false;
+    //[SerializeField] private bool isLocalPlayer = true;
 
     #endregion
 

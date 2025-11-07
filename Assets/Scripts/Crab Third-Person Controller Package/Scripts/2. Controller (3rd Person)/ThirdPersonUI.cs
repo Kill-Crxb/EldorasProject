@@ -1,4 +1,4 @@
-﻿// Core Third Person UI System - Adapts to available modules
+﻿// Core Third Person UI System - Fully integrated with RPG Resources
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,14 +8,31 @@ public class ThirdPersonUI : MonoBehaviour
     [SerializeField] private ThirdPersonController playerController;
     [SerializeField] private SimpleThirdPersonCamera cameraController;
 
+    [Header("Health UI")]
+    [SerializeField] private Slider healthBar;
+    [SerializeField] private Image healthFill;
+    [SerializeField] private Color healthColor = new Color(0.8f, 0.1f, 0.1f); // Dark red
+    [SerializeField] private Color lowHealthColor = new Color(1f, 0f, 0f); // Bright red
+    [SerializeField] private float lowHealthThreshold = 25f;
+    [SerializeField] private bool healthAlwaysVisible = true;
+
     [Header("Stamina UI")]
     [SerializeField] private Slider staminaBar;
     [SerializeField] private Image staminaFill;
     [SerializeField] private Color staminaColor = Color.yellow;
     [SerializeField] private Color lowStaminaColor = Color.red;
     [SerializeField] private float lowStaminaThreshold = 25f;
-    [SerializeField] private bool hideWhenFull = true;
-    [SerializeField] private float hideDelay = 2f;
+    [SerializeField] private bool hideStaminaWhenFull = true;
+    [SerializeField] private float staminaHideDelay = 2f;
+
+    [Header("Mana UI")]
+    [SerializeField] private Slider manaBar;
+    [SerializeField] private Image manaFill;
+    [SerializeField] private Color manaColor = new Color(0.2f, 0.4f, 1f); // Blue
+    [SerializeField] private Color lowManaColor = new Color(0.5f, 0f, 1f); // Purple
+    [SerializeField] private float lowManaThreshold = 25f;
+    [SerializeField] private bool hideManaWhenFull = true;
+    [SerializeField] private float manaHideDelay = 2f;
 
     [Header("Target Lock Indicator")]
     [SerializeField] private GameObject lockOnReticle;
@@ -24,40 +41,38 @@ public class ThirdPersonUI : MonoBehaviour
     [SerializeField] private Color lockOnColor = Color.white;
     [SerializeField] private float lockOnPulseSpeed = 2f;
 
-    [Header("Health UI (For Combat Package)")]
-    [SerializeField] private Slider healthBar;
-    [SerializeField] private Image healthFill;
-    [SerializeField] private Color healthColor = Color.red;
-    [SerializeField] private float currentHealth = 100f;
-    [SerializeField] private float maxHealth = 100f;
-
     [Header("Status Effects (For Future Packages)")]
     [SerializeField] private Transform statusEffectsParent;
     [SerializeField] private GameObject statusEffectPrefab;
 
     [Header("Module Detection")]
     [SerializeField] private bool autoDetectModules = true;
-    //[SerializeField] private bool debugModuleDetection = false;
+    [SerializeField] private bool debugResourceUpdates = false;
 
     // Private variables
     private float lastStaminaChangeTime;
     private float staminaHideTimer;
+    private float lastManaChangeTime;
+    private float manaHideTimer;
     private Camera playerCamera;
-    private CanvasGroup staminaCanvasGroup;
-    private CanvasGroup lockOnCanvasGroup;
+
+    // Canvas groups for fade effects
     private CanvasGroup healthCanvasGroup;
+    private CanvasGroup staminaCanvasGroup;
+    private CanvasGroup manaCanvasGroup;
+    private CanvasGroup lockOnCanvasGroup;
 
     // Module references (found automatically)
     private ControllerBrain brain;
+    private RPGResources rpgResources;
     private TargetLockModule targetLockModule;
     private AnimationStateModule animationStateModule;
-
 
     // Module availability flags
     private bool hasTargetLock;
     private bool hasAnimationState;
+    private bool hasRPGResources;
     private bool hasHotbar;
-    private bool hasHealthSystem; // For future combat/damage packages
 
     void Start()
     {
@@ -66,14 +81,12 @@ public class ThirdPersonUI : MonoBehaviour
 
     void Initialize()
     {
-        // Auto-find controller if not assigned - updated for new hierarchy
+        // Auto-find controller if not assigned
         if (playerController == null)
         {
-            // First try to find by tag
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
             {
-                // Look for Component_Brain -> Component_Controller -> ThirdPersonController
                 var brainTransform = player.transform.Find("Component_Brain");
                 if (brainTransform != null)
                 {
@@ -84,14 +97,12 @@ public class ThirdPersonUI : MonoBehaviour
                     }
                 }
 
-                // Fallback: search in all children
                 if (playerController == null)
                 {
                     playerController = player.GetComponentInChildren<ThirdPersonController>();
                 }
             }
 
-            // Ultimate fallback: search entire scene
             if (playerController == null)
             {
                 playerController = FindFirstObjectByType<ThirdPersonController>();
@@ -101,7 +112,6 @@ public class ThirdPersonUI : MonoBehaviour
         // Find SimpleThirdPersonCamera
         if (cameraController == null)
         {
-            // Look for Component_Camera -> SimpleThirdPersonCamera
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
             {
@@ -112,7 +122,6 @@ public class ThirdPersonUI : MonoBehaviour
                 }
             }
 
-            // Fallback: search entire scene
             if (cameraController == null)
             {
                 cameraController = FindFirstObjectByType<SimpleThirdPersonCamera>();
@@ -130,9 +139,16 @@ public class ThirdPersonUI : MonoBehaviour
         // Setup UI based on available modules
         SetupUIElements();
 
+        // Subscribe to RPG Resources events
+        SubscribeToEvents();
+
         // Initialize UI elements
+        if (hasRPGResources)
+        {
+            UpdateHealthBar();
+            UpdateManaBar();
+        }
         UpdateStaminaBar();
-        if (hasHealthSystem) UpdateHealthBar();
         if (hasTargetLock) UpdateLockOnIndicator();
     }
 
@@ -151,26 +167,74 @@ public class ThirdPersonUI : MonoBehaviour
             // Get modules from Brain
             targetLockModule = brain.TargetLock;
             animationStateModule = brain.AnimationState;
+            rpgResources = brain.GetModule<RPGResources>();
         }
         else
         {
             // Fallback: search in scene
             targetLockModule = FindFirstObjectByType<TargetLockModule>();
             animationStateModule = FindFirstObjectByType<AnimationStateModule>();
+            rpgResources = FindFirstObjectByType<RPGResources>();
         }
 
         // Set availability flags
         hasTargetLock = targetLockModule != null;
         hasAnimationState = animationStateModule != null;
+        hasRPGResources = rpgResources != null;
 
-        // Check for health system (combat/damage modules)
-        // This will be expanded when we add those packages
-        hasHealthSystem = false; // Default to false for core package
+        if (debugResourceUpdates)
+        {
+            Debug.Log($"[ThirdPersonUI] Module Detection: RPGResources={hasRPGResources}, TargetLock={hasTargetLock}");
+        }
+    }
+
+    void SubscribeToEvents()
+    {
+        if (rpgResources != null)
+        {
+            rpgResources.OnHealthChanged += HandleHealthChanged;
+            rpgResources.OnManaChanged += HandleManaChanged;
+            rpgResources.OnStaminaChanged += HandleStaminaChanged;
+            rpgResources.OnMaxValuesChanged += HandleMaxValuesChanged;
+
+            if (debugResourceUpdates)
+            {
+                Debug.Log("[ThirdPersonUI] Successfully subscribed to RPGResources events");
+            }
+        }
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe from events
+        if (rpgResources != null)
+        {
+            rpgResources.OnHealthChanged -= HandleHealthChanged;
+            rpgResources.OnManaChanged -= HandleManaChanged;
+            rpgResources.OnStaminaChanged -= HandleStaminaChanged;
+            rpgResources.OnMaxValuesChanged -= HandleMaxValuesChanged;
+        }
     }
 
     void SetupUIElements()
     {
-        // Setup stamina UI (always available in core)
+        // Setup health UI
+        if (healthBar != null)
+        {
+            healthCanvasGroup = healthBar.GetComponent<CanvasGroup>();
+            if (healthCanvasGroup == null)
+            {
+                healthCanvasGroup = healthBar.gameObject.AddComponent<CanvasGroup>();
+            }
+            healthBar.gameObject.SetActive(hasRPGResources);
+
+            if (healthFill != null)
+            {
+                healthFill.color = healthColor;
+            }
+        }
+
+        // Setup stamina UI (works with both RPGResources and ThirdPersonController)
         if (staminaBar != null)
         {
             staminaCanvasGroup = staminaBar.GetComponent<CanvasGroup>();
@@ -179,13 +243,30 @@ public class ThirdPersonUI : MonoBehaviour
                 staminaCanvasGroup = staminaBar.gameObject.AddComponent<CanvasGroup>();
             }
             staminaBar.gameObject.SetActive(true);
-        }
-        else
-        {
-           
+
+            if (staminaFill != null)
+            {
+                staminaFill.color = staminaColor;
+            }
         }
 
-        // Setup target lock UI (only if target lock module exists)
+        // Setup mana UI
+        if (manaBar != null)
+        {
+            manaCanvasGroup = manaBar.GetComponent<CanvasGroup>();
+            if (manaCanvasGroup == null)
+            {
+                manaCanvasGroup = manaBar.gameObject.AddComponent<CanvasGroup>();
+            }
+            manaBar.gameObject.SetActive(hasRPGResources);
+
+            if (manaFill != null)
+            {
+                manaFill.color = manaColor;
+            }
+        }
+
+        // Setup target lock UI
         if (lockOnReticle != null)
         {
             lockOnCanvasGroup = lockOnReticle.GetComponent<CanvasGroup>();
@@ -195,61 +276,135 @@ public class ThirdPersonUI : MonoBehaviour
             }
             lockOnReticle.SetActive(hasTargetLock);
         }
-        else if (hasTargetLock)
-        {
-          
-        }
-
-        // Setup health UI (only if health system exists)
-        if (healthBar != null)
-        {
-            healthCanvasGroup = healthBar.GetComponent<CanvasGroup>();
-            if (healthCanvasGroup == null)
-            {
-                healthCanvasGroup = healthBar.gameObject.AddComponent<CanvasGroup>();
-            }
-            healthBar.gameObject.SetActive(hasHealthSystem);
-        }
 
         // Hide status effects if no modules support them
         if (statusEffectsParent != null)
         {
-            statusEffectsParent.gameObject.SetActive(hasHealthSystem || hasHotbar);
-        }
-
-        // Check canvas setup
-        var canvas = GetComponentInParent<Canvas>();
-        if (canvas == null)
-        {
-          
+            statusEffectsParent.gameObject.SetActive(hasRPGResources || hasHotbar);
         }
     }
 
     void Update()
     {
-        // Always update stamina (core feature)
+        // Update stamina (works with or without RPGResources)
         UpdateStaminaBar();
         HandleStaminaVisibility();
 
-        // Only update module-specific UI if modules exist
+        // Update RPG Resources UI if available
+        if (hasRPGResources)
+        {
+            UpdateHealthBar();
+            UpdateManaBar();
+            HandleManaVisibility();
+        }
+
+        // Update target lock
         if (hasTargetLock)
         {
             UpdateLockOnIndicator();
         }
+    }
 
-        if (hasHealthSystem)
+    #region Event Handlers
+
+    void HandleHealthChanged(float current, float max)
+    {
+        if (debugResourceUpdates)
         {
-            UpdateHealthBar();
+            Debug.Log($"[ThirdPersonUI] Health changed: {current}/{max}");
+        }
+        UpdateHealthBar();
+    }
+
+    void HandleManaChanged(float current, float max)
+    {
+        if (debugResourceUpdates)
+        {
+            Debug.Log($"[ThirdPersonUI] Mana changed: {current}/{max}");
+        }
+        lastManaChangeTime = Time.time;
+        manaHideTimer = 0f;
+        UpdateManaBar();
+    }
+
+    void HandleStaminaChanged(float current, float max)
+    {
+        if (debugResourceUpdates)
+        {
+            Debug.Log($"[ThirdPersonUI] Stamina changed: {current}/{max}");
+        }
+        lastStaminaChangeTime = Time.time;
+        staminaHideTimer = 0f;
+        UpdateStaminaBar();
+    }
+
+    void HandleMaxValuesChanged(float maxHealth, float maxMana, float maxStamina)
+    {
+        if (debugResourceUpdates)
+        {
+            Debug.Log($"[ThirdPersonUI] Max values changed: HP={maxHealth}, MP={maxMana}, SP={maxStamina}");
+        }
+        UpdateHealthBar();
+        UpdateManaBar();
+        UpdateStaminaBar();
+    }
+
+    #endregion
+
+    #region Health Bar
+
+    void UpdateHealthBar()
+    {
+        if (healthBar == null || !hasRPGResources || rpgResources == null) return;
+
+        float current = rpgResources.CurrentHealth;
+        float max = rpgResources.MaxHealth;
+        float healthPercent = max > 0 ? current / max : 0f;
+
+        // Update slider value
+        healthBar.value = healthPercent;
+
+        // Update color based on health level
+        if (healthFill != null)
+        {
+            Color targetColor = healthPercent <= (lowHealthThreshold / 100f) ? lowHealthColor : healthColor;
+            healthFill.color = targetColor;
+        }
+
+        // Handle visibility
+        if (healthCanvasGroup != null && !healthAlwaysVisible)
+        {
+            healthCanvasGroup.alpha = healthPercent < 1f ? 1f : 0.5f;
         }
     }
 
+    #endregion
+
+    #region Stamina Bar
+
     void UpdateStaminaBar()
     {
-        if (staminaBar == null || playerController == null) return;
+        if (staminaBar == null) return;
 
-        float currentStamina = playerController.CurrentStamina;
-        float maxStamina = playerController.MaxStamina;
-        float staminaPercent = currentStamina / maxStamina;
+        float current, max, staminaPercent;
+
+        // Use RPGResources if available, otherwise fall back to ThirdPersonController
+        if (hasRPGResources && rpgResources != null)
+        {
+            current = rpgResources.CurrentStamina;
+            max = rpgResources.MaxStamina;
+        }
+        else if (playerController != null)
+        {
+            current = playerController.CurrentStamina;
+            max = playerController.MaxStamina;
+        }
+        else
+        {
+            return;
+        }
+
+        staminaPercent = max > 0 ? current / max : 0f;
 
         // Update slider value
         staminaBar.value = staminaPercent;
@@ -260,26 +415,101 @@ public class ThirdPersonUI : MonoBehaviour
             Color targetColor = staminaPercent <= (lowStaminaThreshold / 100f) ? lowStaminaColor : staminaColor;
             staminaFill.color = targetColor;
         }
-
-        // Track stamina changes for visibility
-        if (Mathf.Abs(staminaBar.value - staminaPercent) > 0.01f)
-        {
-            lastStaminaChangeTime = Time.time;
-        }
     }
 
-    void UpdateHealthBar()
+    void HandleStaminaVisibility()
     {
-        if (healthBar == null) return;
+        if (!hideStaminaWhenFull || staminaCanvasGroup == null) return;
 
-        float healthPercent = currentHealth / maxHealth;
-        healthBar.value = healthPercent;
+        float current, max;
+        bool isConsumingStamina = false;
 
-        if (healthFill != null)
+        if (hasRPGResources && rpgResources != null)
         {
-            healthFill.color = healthColor;
+            current = rpgResources.CurrentStamina;
+            max = rpgResources.MaxStamina;
+        }
+        else if (playerController != null)
+        {
+            current = playerController.CurrentStamina;
+            max = playerController.MaxStamina;
+            isConsumingStamina = playerController.IsSprinting;
+        }
+        else
+        {
+            return;
+        }
+
+        bool isFullStamina = Mathf.Approximately(current, max);
+
+        // Show if stamina is not full or if actively using stamina
+        if (!isFullStamina || isConsumingStamina)
+        {
+            staminaHideTimer = 0f;
+            staminaCanvasGroup.alpha = Mathf.Lerp(staminaCanvasGroup.alpha, 1f, 5f * Time.deltaTime);
+        }
+        else
+        {
+            staminaHideTimer += Time.deltaTime;
+
+            if (staminaHideTimer >= staminaHideDelay)
+            {
+                staminaCanvasGroup.alpha = Mathf.Lerp(staminaCanvasGroup.alpha, 0f, 2f * Time.deltaTime);
+            }
         }
     }
+
+    #endregion
+
+    #region Mana Bar
+
+    void UpdateManaBar()
+    {
+        if (manaBar == null || !hasRPGResources || rpgResources == null) return;
+
+        float current = rpgResources.CurrentMana;
+        float max = rpgResources.MaxMana;
+        float manaPercent = max > 0 ? current / max : 0f;
+
+        // Update slider value
+        manaBar.value = manaPercent;
+
+        // Update color based on mana level
+        if (manaFill != null)
+        {
+            Color targetColor = manaPercent <= (lowManaThreshold / 100f) ? lowManaColor : manaColor;
+            manaFill.color = targetColor;
+        }
+    }
+
+    void HandleManaVisibility()
+    {
+        if (!hideManaWhenFull || manaCanvasGroup == null || !hasRPGResources || rpgResources == null) return;
+
+        float current = rpgResources.CurrentMana;
+        float max = rpgResources.MaxMana;
+        bool isFullMana = Mathf.Approximately(current, max);
+
+        // Show if mana is not full
+        if (!isFullMana)
+        {
+            manaHideTimer = 0f;
+            manaCanvasGroup.alpha = Mathf.Lerp(manaCanvasGroup.alpha, 1f, 5f * Time.deltaTime);
+        }
+        else
+        {
+            manaHideTimer += Time.deltaTime;
+
+            if (manaHideTimer >= manaHideDelay)
+            {
+                manaCanvasGroup.alpha = Mathf.Lerp(manaCanvasGroup.alpha, 0f, 2f * Time.deltaTime);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Target Lock Indicator
 
     void UpdateLockOnIndicator()
     {
@@ -290,37 +520,30 @@ public class ThirdPersonUI : MonoBehaviour
 
         if (isLockedOn && target != null)
         {
-            // Show and position the lock-on reticle
             if (!lockOnReticle.activeInHierarchy)
             {
                 lockOnReticle.SetActive(true);
             }
 
-            // Convert world position to screen position
-            Vector3 targetPosition = target.position + Vector3.up * 1f; // Offset up a bit
+            Vector3 targetPosition = target.position + Vector3.up * 1f;
             Vector3 screenPos = playerCamera.WorldToScreenPoint(targetPosition);
 
-            // Check if target is in front of camera
             if (screenPos.z > 0)
             {
-                // Update reticle position
                 if (lockOnTransform != null)
                 {
                     lockOnTransform.position = screenPos;
                 }
 
-                // Pulse effect
                 if (lockOnImage != null)
                 {
                     float pulse = Mathf.Sin(Time.time * lockOnPulseSpeed) * 0.1f + 0.9f;
                     lockOnImage.color = new Color(lockOnColor.r, lockOnColor.g, lockOnColor.b, pulse);
 
-                    // Scale pulse
                     float scale = 1f + Mathf.Sin(Time.time * lockOnPulseSpeed * 0.5f) * 0.1f;
                     lockOnTransform.localScale = Vector3.one * scale;
                 }
 
-                // Fade in
                 if (lockOnCanvasGroup != null)
                 {
                     lockOnCanvasGroup.alpha = Mathf.Lerp(lockOnCanvasGroup.alpha, 1f, 5f * Time.deltaTime);
@@ -328,7 +551,6 @@ public class ThirdPersonUI : MonoBehaviour
             }
             else
             {
-                // Target behind camera, fade out
                 if (lockOnCanvasGroup != null)
                 {
                     lockOnCanvasGroup.alpha = Mathf.Lerp(lockOnCanvasGroup.alpha, 0f, 5f * Time.deltaTime);
@@ -337,7 +559,6 @@ public class ThirdPersonUI : MonoBehaviour
         }
         else
         {
-            // Hide lock-on reticle
             if (lockOnReticle.activeInHierarchy)
             {
                 if (lockOnCanvasGroup != null)
@@ -357,56 +578,20 @@ public class ThirdPersonUI : MonoBehaviour
         }
     }
 
-    void HandleStaminaVisibility()
+    #endregion
+
+    #region Public API
+
+    public void ForceShowStamina(float duration = 3f)
     {
-        if (!hideWhenFull || staminaCanvasGroup == null || playerController == null) return;
-
-        float currentStamina = playerController.CurrentStamina;
-        float maxStamina = playerController.MaxStamina;
-        bool isFullStamina = Mathf.Approximately(currentStamina, maxStamina);
-
-        // Check for stamina consumption (core features only)
-        bool isConsumingStamina = playerController.IsSprinting;
-
-        // Show if stamina is not full or if actively using stamina
-        if (!isFullStamina || isConsumingStamina)
-        {
-            staminaHideTimer = 0f;
-            staminaCanvasGroup.alpha = Mathf.Lerp(staminaCanvasGroup.alpha, 1f, 5f * Time.deltaTime);
-        }
-        else
-        {
-            // Start hide timer when stamina is full and not being used
-            staminaHideTimer += Time.deltaTime;
-
-            if (staminaHideTimer >= hideDelay)
-            {
-                staminaCanvasGroup.alpha = Mathf.Lerp(staminaCanvasGroup.alpha, 0f, 2f * Time.deltaTime);
-            }
-        }
+        lastStaminaChangeTime = Time.time;
+        staminaHideTimer = -duration;
     }
 
-    #region Public API (Health Management - For Future Combat Package)
-
-    public void SetHealth(float health)
+    public void ForceShowMana(float duration = 3f)
     {
-        currentHealth = Mathf.Clamp(health, 0, maxHealth);
-    }
-
-    public void SetMaxHealth(float maxHp)
-    {
-        maxHealth = maxHp;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-    }
-
-    public void DamageHealth(float damage)
-    {
-        SetHealth(currentHealth - damage);
-    }
-
-    public void HealHealth(float heal)
-    {
-        SetHealth(currentHealth + heal);
+        lastManaChangeTime = Time.time;
+        manaHideTimer = -duration;
     }
 
     public void ShowStatusEffect(string effectName, Sprite icon, float duration)
@@ -422,42 +607,22 @@ public class ThirdPersonUI : MonoBehaviour
         }
     }
 
-    public void ForceShowStamina(float duration = 3f)
-    {
-        lastStaminaChangeTime = Time.time;
-        staminaHideTimer = -duration;
-    }
-
-    #endregion
-
-    #region Module Integration Methods (For Future Packages)
-
-    // Method for Combat Package to enable health UI
-    public void EnableHealthSystem(bool enable = true)
-    {
-        hasHealthSystem = enable;
-        if (healthBar != null)
-        {
-            healthBar.gameObject.SetActive(enable);
-        }
-    }
-
-    // Method to refresh module detection (for runtime changes)
     public void RefreshModules()
     {
         DetectModules();
         SetupUIElements();
+        SubscribeToEvents();
     }
 
     #endregion
 
-    // Properties
-    public float CurrentHealth => currentHealth;
-    public float MaxHealth => maxHealth;
-    public float HealthPercent => currentHealth / maxHealth;
+    #region Properties
+
     public bool HasTargetLock => hasTargetLock;
-    public bool HasHealthSystem => hasHealthSystem;
+    public bool HasRPGResources => hasRPGResources;
     public bool HasHotbar => hasHotbar;
+
+    #endregion
 }
 
 // Status Effect UI Component (For Future Packages)

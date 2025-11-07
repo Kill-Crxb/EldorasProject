@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// Universal damage receiving module.
@@ -61,10 +61,10 @@ public class DamageIn : MonoBehaviour, IBrainModule
         this.brain = brain;
         entityTransform = brain.transform.parent ?? brain.transform;
 
-        // Try to find health adapter
+        // Try to find health adapter - SEARCH FROM BRAIN LEVEL
         if (healthAdapter == null)
         {
-            healthAdapter = GetComponentInChildren<IHealthProvider>() as MonoBehaviour;
+            healthAdapter = brain.GetComponentInChildren<IHealthProvider>() as MonoBehaviour;
         }
 
         if (healthAdapter != null && healthAdapter is IHealthProvider provider)
@@ -72,30 +72,30 @@ public class DamageIn : MonoBehaviour, IBrainModule
             healthProvider = provider;
             if (debugDamageReceived)
             {
-                Debug.Log($"[DamageIn] Health adapter found: {healthAdapter.GetType().Name}");
+                Debug.Log($"[DamageIn] ✓ Health adapter found: {healthAdapter.GetType().Name}");
             }
         }
         else
         {
-            Debug.LogWarning($"[DamageIn] No IHealthProvider found on {brain.name}. " +
+            Debug.LogWarning($"[DamageIn] ✗ No IHealthProvider found on {brain.name}. " +
                            "This entity cannot take damage!");
         }
 
-        // Try to find defense adapter (optional)
+        // Try to find defense adapter (optional) - SEARCH FROM BRAIN LEVEL
         if (defenseAdapter == null)
         {
-            defenseAdapter = GetComponentInChildren<IDefenseProvider>() as MonoBehaviour;
+            defenseAdapter = brain.GetComponentInChildren<IDefenseProvider>() as MonoBehaviour;
 
             // If no IDefenseProvider, try IDefenseCapability
             if (defenseAdapter == null)
             {
-                var defenseCapabilityComp = GetComponentInChildren<IDefenseCapability>() as MonoBehaviour;
+                var defenseCapabilityComp = brain.GetComponentInChildren<IDefenseCapability>() as MonoBehaviour;
                 if (defenseCapabilityComp != null)
                 {
                     defenseCapability = defenseCapabilityComp as IDefenseCapability;
                     if (debugDamageReceived)
                     {
-                        Debug.Log($"[DamageIn] Defense capability found: {defenseCapabilityComp.GetType().Name}");
+                        Debug.Log($"[DamageIn] ✓ Defense capability found: {defenseCapabilityComp.GetType().Name}");
                     }
                 }
             }
@@ -106,7 +106,7 @@ public class DamageIn : MonoBehaviour, IBrainModule
             defenseProvider = defProvider;
             if (debugDamageReceived)
             {
-                Debug.Log($"[DamageIn] Defense adapter found: {defenseAdapter.GetType().Name}");
+                Debug.Log($"[DamageIn] ✓ Defense adapter found: {defenseAdapter.GetType().Name}");
             }
         }
     }
@@ -299,5 +299,21 @@ public class DamageIn : MonoBehaviour, IBrainModule
 
         Debug.Log($"[DamageIn] {brain.name} Health: {CurrentHealth:F1}/{MaxHealth:F1} " +
                  $"({HealthPercentage:P0}) - Alive: {IsAlive}");
+    }
+
+    [ContextMenu("Debug: Show Adapters Status")]
+    private void DebugShowAdapters()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("[DamageIn] Debug only works in Play Mode!");
+            return;
+        }
+
+        Debug.Log($"=== [DamageIn] Adapters Status ===\n" +
+                  $"Brain: {(brain != null ? brain.name : "NOT FOUND")}\n" +
+                  $"Health Provider: {(healthProvider != null ? healthProvider.GetType().Name : "NOT FOUND")}\n" +
+                  $"Defense Provider: {(defenseProvider != null ? defenseProvider.GetType().Name : "NOT FOUND")}\n" +
+                  $"Defense Capability: {(defenseCapability != null ? defenseCapability.GetType().Name : "NOT FOUND")}");
     }
 }

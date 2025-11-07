@@ -331,7 +331,16 @@ public class RPGCoreStats : MonoBehaviour, IPlayerModule, ISaveable
     public System.Action<int, int> OnLevelChanged;
 
     #region IPlayerModule Implementation
-
+    void Awake()
+    {
+        // Initialize dictionaries in StatCalculation
+        mind.calculation.RecalculateFinalStat();
+        body.calculation.RecalculateFinalStat();
+        spirit.calculation.RecalculateFinalStat();
+        resilience.calculation.RecalculateFinalStat();
+        endurance.calculation.RecalculateFinalStat();
+        insight.calculation.RecalculateFinalStat();
+    }
     public void Initialize(ControllerBrain brain)
     {
         this.brain = brain;
@@ -345,6 +354,17 @@ public class RPGCoreStats : MonoBehaviour, IPlayerModule, ISaveable
         insight.calculation.OnStatChanged += (old, newVal) => OnStatChanged?.Invoke("Insight", old, newVal);
 
         isFullyInitialized = true;
+
+        // Force initial stat calculations
+        mind.calculation.RecalculateFinalStat();
+        body.calculation.RecalculateFinalStat();
+        spirit.calculation.RecalculateFinalStat();
+        resilience.calculation.RecalculateFinalStat();
+        endurance.calculation.RecalculateFinalStat();
+        insight.calculation.RecalculateFinalStat();
+
+        if (debugStats)
+            Debug.Log($"[RPGCoreStats] Initialized - Body: {body.FinalValue}, Endurance: {endurance.FinalValue}");
     }
 
     public void UpdateModule()

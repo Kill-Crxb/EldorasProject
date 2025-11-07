@@ -1,18 +1,11 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Melee combat behavior for AI - handles basic melee attacks with positioning and facing.
-/// Step 1.9: ExecuteAttack() method added for AIModule combat state.
-/// </summary>
 public class MeleeCombatBehavior : AICombatBehaviorModule
 {
     [Header("Melee Settings")]
     [SerializeField] private bool stopMovementInCombat = true;
     [SerializeField] private bool faceTargetBeforeAttack = true;
     [SerializeField] private float facingThreshold = 0.9f;
-
-    [Header("Debug")]
-    [SerializeField] private bool debugMode = false;
 
     private MeleeModule melee;
     private AttackModule cachedAttackModule;
@@ -68,16 +61,11 @@ public class MeleeCombatBehavior : AICombatBehaviorModule
         }
     }
 
-    /// <summary>
-    /// STEP 1.9: Execute attack - called by AIModule on cooldown timer
-    /// CHANGED: Removed 'override' keyword - implementing interface method
-    /// </summary>
-    public void ExecuteAttack()
+    public override void ExecuteAttack()
     {
         if (!isEnabled || cachedAttackModule == null)
             return;
 
-        // Check if can attack
         if (!cachedAttackModule.CanAttack())
         {
             if (debugMode)
@@ -87,7 +75,6 @@ public class MeleeCombatBehavior : AICombatBehaviorModule
             return;
         }
 
-        // Execute the attack
         cachedAttackModule.StartLightAttack();
         RecordAttack();
 

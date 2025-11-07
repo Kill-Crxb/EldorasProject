@@ -47,7 +47,6 @@ public class SaveSystemModule : MonoBehaviour, IPlayerModule
     [Header("Save Configuration")]
     [SerializeField] private bool autoSaveEnabled = true;
     [SerializeField] private float autoSaveInterval = 300f; // 5 minutes
-    [SerializeField] private int maxSaveSlots = 10;
     [SerializeField] private bool useModularFiles = true; // Individual JSON files per module
 
     [Header("Debug")]

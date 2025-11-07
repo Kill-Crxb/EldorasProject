@@ -1,33 +1,19 @@
 ﻿using UnityEngine;
 
 /// <summary>
-/// Adapter that bridges RPGSecondaryStats to the universal damage system.
-/// Implements ICombatStatsProvider to provide combat statistics for damage calculations.
-/// 
-/// Design:
-/// - Translates RPG stat system to universal combat interface
-/// - Auto-discovers RPGSecondaryStats from Brain
-/// - Allows different attack types (melee vs magic)
-/// - Works with universal DamageOut module
-/// 
-/// Usage:
-/// 1. Add to entity (as child of Component_Damage or Component_Brain)
-/// 2. Automatically discovers RPGSecondaryStats
-/// 3. DamageOut finds this adapter automatically
+/// Adapter that connects DamageOut to RPGSecondaryStats.
+/// Searches for RPGSecondaryStats from the Brain level (not from local position).
 /// </summary>
 public class RPGCombatStatsAdapter : MonoBehaviour, ICombatStatsProvider
 {
-    [Header("Adapter Settings")]
-    [SerializeField] private AttackType attackType = AttackType.Melee;
-    [SerializeField] private bool debugAdapter = false;
+    [Header("Manual Reference (Optional)")]
+    [SerializeField] private RPGSecondaryStats secondaryStats;
 
-    [Header("Manual References (Optional)")]
-    [SerializeField] private RPGSecondaryStats rpgStats;
+    [Header("Debug")]
+    [SerializeField] private bool debugLogs = false;
 
     private ControllerBrain brain;
     private bool isInitialized = false;
-
-    // === Lifecycle ===
 
     void Awake()
     {
@@ -38,110 +24,144 @@ public class RPGCombatStatsAdapter : MonoBehaviour, ICombatStatsProvider
     {
         if (isInitialized) return;
 
-        // Find Brain
+        // Find the Brain (should be parent of Component_Damage)
         brain = GetComponentInParent<ControllerBrain>();
         if (brain == null)
         {
-            Debug.LogError($"[RPGCombatStatsAdapter] No ControllerBrain found in parent! " +
-                          "Adapter must be child of Brain.");
+            Debug.LogError($"[RPGCombatStatsAdapter] No ControllerBrain found in parent hierarchy!");
             return;
         }
 
-        // Auto-discover RPGSecondaryStats if not manually assigned
-        if (rpgStats == null)
+        // If no manual reference, search from Brain level
+        if (secondaryStats == null)
         {
-            rpgStats = brain.RPGSecondaryStats;
+            // Search DOWN from Brain to find RPGSecondaryStats
+            secondaryStats = brain.GetComponentInChildren<RPGSecondaryStats>();
         }
 
-        if (rpgStats == null)
+        if (secondaryStats != null)
         {
-            Debug.LogError($"[RPGCombatStatsAdapter] No RPGSecondaryStats found on {brain.name}! " +
-                          "Cannot provide combat stats.");
-            return;
+            if (debugLogs)
+            {
+                Debug.Log($"[RPGCombatStatsAdapter] ✓ Found RPGSecondaryStats: {secondaryStats.name}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[RPGCombatStatsAdapter] ✗ Could not find RPGSecondaryStats! " +
+                           "DamageOut will use default values.");
         }
 
         isInitialized = true;
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGCombatStatsAdapter] Initialized on {brain.name} " +
-                     $"(Attack Type: {attackType})");
-        }
     }
 
     // === ICombatStatsProvider Implementation ===
 
     public float GetAttackPower()
     {
-        if (!ValidateStats()) return 10f;
+        if (!ValidateStats())
+        {
+            if (debugLogs)
+                Debug.LogWarning("[RPGCombatStatsAdapter] No stats available, returning default power: 10");
+            return 10f; // Default fallback
+        }
 
-        float power = attackType == AttackType.Melee
-            ? rpgStats.MeleePowerFinal
-            : rpgStats.MagicPowerFinal;
+        // Get MeleePower from RPGSecondaryStats
+        float meleePower = secondaryStats.GetSecondaryStatFinalValue("MeleePower");
 
-        if (debugAdapter)
-            Debug.Log($"[Adapter] Attack Power: {power:F1}");
+        if (debugLogs)
+            Debug.Log($"[RPGCombatStatsAdapter] Attack Power: {meleePower:F1}");
 
-        return power;
+        return meleePower;
     }
 
     public float GetCriticalChance()
     {
-        if (!ValidateStats()) return 5f;
+        if (!ValidateStats())
+        {
+            if (debugLogs)
+                Debug.LogWarning("[RPGCombatStatsAdapter] No stats available, returning default crit chance: 5%");
+            return 5f; // Default 5% crit chance
+        }
 
-        float crit = attackType == AttackType.Melee
-            ? rpgStats.MeleeCritChanceFinal
-            : rpgStats.MagicCritChanceFinal;
+        float critChance = secondaryStats.GetSecondaryStatFinalValue("MeleeCritChance");
 
-        if (debugAdapter)
-            Debug.Log($"[Adapter] Crit Chance: {crit:F1}%");
+        if (debugLogs)
+            Debug.Log($"[RPGCombatStatsAdapter] Crit Chance: {critChance:F1}%");
 
-        return crit;
+        return critChance;
     }
 
     public float GetCriticalMultiplier()
     {
-        if (!ValidateStats()) return 1.5f;
+        if (!ValidateStats())
+        {
+            if (debugLogs)
+                Debug.LogWarning("[RPGCombatStatsAdapter] No stats available, returning default crit multiplier: 1.5x");
+            return 1.5f; // Default 150% crit damage
+        }
 
-        float critMult = attackType == AttackType.Melee
-            ? rpgStats.MeleeCritDamageFinal
-            : rpgStats.MagicCritDamageFinal;
+        float critDamage = secondaryStats.GetSecondaryStatFinalValue("MeleeCritDamage");
 
-        if (debugAdapter)
-            Debug.Log($"[Adapter] Crit Multiplier: {critMult:F2}x");
+        // Convert from percentage (e.g., 150) to multiplier (e.g., 1.5)
+        float critMultiplier = critDamage / 100f;
 
-        return critMult;
-    }
+        if (debugLogs)
+            Debug.Log($"[RPGCombatStatsAdapter] Crit Multiplier: x{critMultiplier:F2}");
 
-    public float GetArmorPenetration()
-    {
-        if (!ValidateStats()) return 0f;
-
-        float pen = attackType == AttackType.Melee
-            ? rpgStats.MeleePenetrationFinal
-            : rpgStats.MagicPenetrationFinal;
-
-        if (debugAdapter)
-            Debug.Log($"[Adapter] Armor Penetration: {pen:F1}");
-
-        return pen;
+        return critMultiplier;
     }
 
     public float GetArmor()
     {
-        if (!ValidateStats()) return 0f;
+        if (!ValidateStats())
+        {
+            if (debugLogs)
+                Debug.LogWarning("[RPGCombatStatsAdapter] No stats available, returning default armor: 0");
+            return 0f;
+        }
 
-        return rpgStats.ArmorFinal;
+        float armor = secondaryStats.GetSecondaryStatFinalValue("Armor");
+
+        if (debugLogs)
+            Debug.Log($"[RPGCombatStatsAdapter] Armor: {armor:F1}");
+
+        return armor;
+    }
+
+    public float GetArmorPenetration()
+    {
+        if (!ValidateStats())
+        {
+            if (debugLogs)
+                Debug.LogWarning("[RPGCombatStatsAdapter] No stats available, returning default penetration: 0");
+            return 0f;
+        }
+
+        float penetration = secondaryStats.GetSecondaryStatFinalValue("MeleePenetration");
+
+        if (debugLogs)
+            Debug.Log($"[RPGCombatStatsAdapter] Armor Penetration: {penetration:F1}");
+
+        return penetration;
     }
 
     public float GetMagicResistance()
     {
-        if (!ValidateStats()) return 0f;
+        if (!ValidateStats())
+        {
+            if (debugLogs)
+                Debug.LogWarning("[RPGCombatStatsAdapter] No stats available, returning default magic resist: 0");
+            return 0f;
+        }
 
-        return rpgStats.MagicResistanceFinal;
+        float magicResist = secondaryStats.GetSecondaryStatFinalValue("MagicResistance");
+
+        if (debugLogs)
+            Debug.Log($"[RPGCombatStatsAdapter] Magic Resistance: {magicResist:F1}");
+
+        return magicResist;
     }
-
-    // === Helper Methods ===
 
     private bool ValidateStats()
     {
@@ -150,74 +170,49 @@ public class RPGCombatStatsAdapter : MonoBehaviour, ICombatStatsProvider
             Initialize();
         }
 
-        if (rpgStats == null)
-        {
-            Debug.LogWarning("[RPGCombatStatsAdapter] RPGSecondaryStats not available!");
-            return false;
-        }
-
-        return true;
+        return secondaryStats != null;
     }
-
-    /// <summary>
-    /// Change attack type at runtime (e.g., when switching between melee and magic)
-    /// </summary>
-    public void SetAttackType(AttackType newType)
-    {
-        attackType = newType;
-
-        if (debugAdapter)
-        {
-            Debug.Log($"[RPGCombatStatsAdapter] Attack type changed to: {attackType}");
-        }
-    }
-
-    public AttackType GetAttackType() => attackType;
 
     // === Inspector Helpers ===
 
-    [ContextMenu("Debug: Show All Combat Stats")]
-    private void DebugShowAllStats()
+    [ContextMenu("Debug: Test Get Stats")]
+    private void DebugTestGetStats()
     {
         if (!Application.isPlaying)
         {
-            Debug.Log("[Adapter] Only works in Play Mode!");
+            Debug.LogWarning("[RPGCombatStatsAdapter] Test only works in Play Mode!");
             return;
         }
 
-        if (!ValidateStats())
-        {
-            Debug.LogError("[Adapter] Cannot show stats - validation failed!");
-            return;
-        }
-
-        Debug.Log($"=== RPG Combat Stats Adapter ({attackType}) ===\n" +
+        Debug.Log($"=== [RPGCombatStatsAdapter] Current Stats ===\n" +
                   $"Attack Power: {GetAttackPower():F1}\n" +
                   $"Crit Chance: {GetCriticalChance():F1}%\n" +
-                  $"Crit Multiplier: {GetCriticalMultiplier():F2}x\n" +
-                  $"Armor Penetration: {GetArmorPenetration():F1}\n" +
-                  $"Armor: {GetArmor():F1}\n" +
-                  $"Magic Resistance: {GetMagicResistance():F1}");
+                  $"Crit Multiplier: x{GetCriticalMultiplier():F2}");
     }
 
-    [ContextMenu("Switch to Melee")]
-    private void SwitchToMelee()
+    [ContextMenu("Debug: Show Component Paths")]
+    private void DebugShowPaths()
     {
-        SetAttackType(AttackType.Melee);
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("[RPGCombatStatsAdapter] Debug only works in Play Mode!");
+            return;
+        }
+
+        Debug.Log($"=== [RPGCombatStatsAdapter] Component Paths ===\n" +
+                  $"This Adapter: {GetFullPath(transform)}\n" +
+                  $"Brain: {(brain != null ? GetFullPath(brain.transform) : "NOT FOUND")}\n" +
+                  $"RPGSecondaryStats: {(secondaryStats != null ? GetFullPath(secondaryStats.transform) : "NOT FOUND")}");
     }
 
-    [ContextMenu("Switch to Magic")]
-    private void SwitchToMagic()
+    private string GetFullPath(Transform t)
     {
-        SetAttackType(AttackType.Magic);
+        string path = t.name;
+        while (t.parent != null)
+        {
+            t = t.parent;
+            path = t.name + "/" + path;
+        }
+        return path;
     }
-}
-
-/// <summary>
-/// Attack type determines which stats to use from RPGSecondaryStats
-/// </summary>
-public enum AttackType
-{
-    Melee,  // Uses MeleePower, MeleeCrit, etc.
-    Magic   // Uses MagicPower, MagicCrit, etc.
 }

@@ -112,7 +112,7 @@ public class InventoryGridController : MonoBehaviour
             image.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
         }
 
-     
+
         GridSlotBackground bg = bgObj.GetComponent<GridSlotBackground>();
         if (bg == null)
         {
@@ -130,7 +130,7 @@ public class InventoryGridController : MonoBehaviour
 
     private void ConnectToPlayerData()
     {
-        var brain = FindObjectOfType<ControllerBrain>();
+        var brain = FindFirstObjectByType<ControllerBrain>();
         if (brain != null)
         {
             playerItems = brain.GetModule<PlayerItemsModule>();

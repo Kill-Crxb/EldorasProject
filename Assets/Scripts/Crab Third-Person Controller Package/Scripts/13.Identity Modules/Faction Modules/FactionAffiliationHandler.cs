@@ -2,17 +2,12 @@ using UnityEngine;
 using RPG.Factions;
 
 /// <summary>
-/// Handles which faction this NPC belongs to.
-/// This is the NPC equivalent of FactionReputationHandler in PlayerInfo.
+/// SIMPLIFIED: Handles which faction this NPC belongs to.
 /// 
-/// Player: Tracks reputation WITH all factions
-/// NPC: Declares membership IN one faction
+/// Purpose: Store NPC faction membership for combat aggression checks
+/// Used by: AIModule for target detection
 /// 
-/// PHASE 2 ENHANCEMENTS:
-/// - Now uses FactionType enum instead of string IDs
-/// - Integrates with FactionManager for relationship queries
-/// - Provides nameplate color integration
-/// - Safe conversion from NPCFaction to FactionType
+/// Player equivalent: PlayerFactionHandler
 /// </summary>
 public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
 {
@@ -20,6 +15,7 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     [SerializeField] private bool isEnabled = true;
 
     [Header("Faction Membership")]
+    [Tooltip("Which faction does this NPC belong to?")]
     [SerializeField] private FactionType affiliatedFaction = FactionType.None;
 
     [Header("Behavior Settings")]
@@ -32,16 +28,11 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     [Tooltip("Defend other members of same faction")]
     [SerializeField] private bool defendsFactionMembers = true;
 
-    [Header("Visual Indicator (Optional)")]
-    [SerializeField] private bool showFactionIndicator = false;
-    [SerializeField] private GameObject factionIndicatorPrefab;
-
     [Header("Debug")]
     [SerializeField] private bool showDebugLogs = false;
 
     // References
     private NPCModule parentNPC;
-    private GameObject factionIndicator;
 
     // Properties
     public bool IsEnabled
@@ -67,12 +58,6 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
         if (affiliatedFaction == FactionType.None && parent.AppliedArchetype != null)
         {
             SetFactionFromArchetype(parent.AppliedArchetype);
-        }
-
-        // Set up visual indicator if enabled
-        if (showFactionIndicator && factionIndicatorPrefab != null)
-        {
-            CreateFactionIndicator();
         }
 
         if (showDebugLogs)
@@ -124,13 +109,34 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     // ========================================
 
     /// <summary>
-    /// Set faction from archetype configuration
-    /// Converts NPCFaction enum to FactionType using string matching (safe approach)
+    /// Set faction from archetype configuration.
+    /// Converts NPCFaction enum to FactionType using simple string matching.
     /// </summary>
     private void SetFactionFromArchetype(NPCArchetype archetype)
     {
-        // Convert NPCFaction to FactionType using string matching (safe for any enum values)
-        affiliatedFaction = ConvertNPCFactionToFactionType(archetype.faction);
+        // Get faction from archetype (assumes NPCArchetype has a 'faction' field)
+        // If your NPCArchetype uses NPCFaction enum, convert it:
+        string factionString = archetype.faction.ToString().ToLower();
+
+        // Match common patterns
+        if (factionString.Contains("wildlife") || factionString.Contains("beast"))
+            affiliatedFaction = FactionType.Wildlife;
+        else if (factionString.Contains("human"))
+            affiliatedFaction = FactionType.Humans;
+        else if (factionString.Contains("elf"))
+            affiliatedFaction = FactionType.Elves;
+        else if (factionString.Contains("dwarf"))
+            affiliatedFaction = FactionType.Dwarves;
+        else if (factionString.Contains("warlock"))
+            affiliatedFaction = FactionType.Warlocks;
+        else if (factionString.Contains("undead") || factionString.Contains("skeleton"))
+            affiliatedFaction = FactionType.Undead;
+        else if (factionString.Contains("bandit") || factionString.Contains("raider"))
+            affiliatedFaction = FactionType.Bandits;
+        else if (factionString.Contains("monster"))
+            affiliatedFaction = FactionType.Monsters;
+        else
+            affiliatedFaction = FactionType.Neutral; // Default
 
         // Apply archetype behavior settings
         aggressiveToHostileFactions = archetype.aggressiveToHostileFactions;
@@ -139,49 +145,7 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     /// <summary>
-    /// Convert NPCFaction enum to FactionType enum using string matching
-    /// This is safe even if enum values don't match exactly
-    /// </summary>
-    private FactionType ConvertNPCFactionToFactionType(NPCFaction npcFaction)
-    {
-        // Convert to string for comparison
-        string factionString = npcFaction.ToString().ToLower();
-
-        // Match common patterns
-        if (factionString.Contains("wildlife") || factionString.Contains("beast"))
-            return FactionType.Wildlife;
-
-        if (factionString.Contains("human"))
-            return FactionType.Humans;
-
-        if (factionString.Contains("elf") || factionString.Contains("elves"))
-            return FactionType.Elves;
-
-        if (factionString.Contains("dwarf") || factionString.Contains("dwarves"))
-            return FactionType.Dwarves;
-
-        if (factionString.Contains("warlock"))
-            return FactionType.Warlocks;
-
-        if (factionString.Contains("undead") || factionString.Contains("skeleton") || factionString.Contains("zombie"))
-            return FactionType.Undead;
-
-        if (factionString.Contains("bandit") || factionString.Contains("raider"))
-            return FactionType.Bandits;
-
-        if (factionString.Contains("monster"))
-            return FactionType.Monsters;
-
-        // Default to Neutral for unknown factions
-        if (showDebugLogs)
-        {
-            Debug.LogWarning($"[FactionAffiliationHandler] Unknown NPCFaction: {npcFaction}. Defaulting to Neutral.");
-        }
-        return FactionType.Neutral;
-    }
-
-    /// <summary>
-    /// Manually set faction (for dynamic faction changes)
+    /// Manually set faction (for dynamic faction changes).
     /// </summary>
     public void SetFaction(FactionType newFaction)
     {
@@ -194,11 +158,11 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     // ========================================
-    // Relationship Queries (PHASE 2 ENHANCED)
+    // Player Relationship Queries
     // ========================================
 
     /// <summary>
-    /// Get the relationship between this NPC's faction and the player's faction
+    /// Get the relationship between this NPC's faction and the player's faction.
     /// </summary>
     public FactionRelationship GetRelationshipToPlayer()
     {
@@ -206,8 +170,7 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     /// <summary>
-    /// Check if this NPC can interact with a player
-    /// Based on player's reputation with this NPC's faction
+    /// Check if this NPC can interact with a player (dialogue, trading, etc).
     /// </summary>
     public bool CanInteractWithPlayer(PlayerInfoModule playerInfo)
     {
@@ -225,19 +188,18 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
             return false; // Can't interact with hostile NPCs
         }
 
-        // TODO: Check player's reputation when fully integrated
-        // For now, allow interaction if not hostile
         return true;
     }
 
     /// <summary>
-    /// Check if this NPC is hostile to a player
+    /// Check if this NPC is hostile to the player.
+    /// Used by AIModule for target detection.
     /// </summary>
     public bool IsHostileToPlayer(PlayerInfoModule playerInfo = null)
     {
         if (!aggressiveToHostileFactions)
         {
-            return false; // Passive NPC
+            return false; // Passive NPC (won't attack even if faction is hostile)
         }
 
         // Use FactionManager to determine hostility
@@ -246,7 +208,7 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     /// <summary>
-    /// Check if this NPC is friendly to the player
+    /// Check if this NPC is friendly to the player.
     /// </summary>
     public bool IsFriendlyToPlayer(PlayerInfoModule playerInfo = null)
     {
@@ -255,7 +217,7 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     /// <summary>
-    /// Check if this NPC is neutral to the player
+    /// Check if this NPC is neutral to the player.
     /// </summary>
     public bool IsNeutralToPlayer(PlayerInfoModule playerInfo = null)
     {
@@ -264,7 +226,7 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     /// <summary>
-    /// Get the color that should be used for this NPC's nameplate
+    /// Get the color that should be used for this NPC's nameplate.
     /// </summary>
     public Color GetNameplateColor()
     {
@@ -273,11 +235,11 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     // ========================================
-    // NPC vs NPC Relationships (PHASE 2 ENHANCED)
+    // NPC vs NPC Relationships
     // ========================================
 
     /// <summary>
-    /// Get the relationship between this NPC and another NPC
+    /// Get the relationship between this NPC and another NPC.
     /// </summary>
     public FactionRelationship GetRelationshipToNPC(NPCModule otherNPC)
     {
@@ -290,7 +252,7 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     /// <summary>
-    /// Check if this NPC is allied with another NPC
+    /// Check if this NPC is allied with another NPC.
     /// </summary>
     public bool IsAllyOf(NPCModule otherNPC)
     {
@@ -309,7 +271,7 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
     }
 
     /// <summary>
-    /// Check if this NPC is enemy with another NPC
+    /// Check if this NPC is enemy with another NPC.
     /// </summary>
     public bool IsEnemyOf(NPCModule otherNPC)
     {
@@ -351,29 +313,6 @@ public class FactionAffiliationHandler : MonoBehaviour, INPCHandler
         if (otherFaction == null) return false;
 
         return affiliatedFaction == otherFaction.AffiliatedFaction;
-    }
-
-    // ========================================
-    // Visual Indicator
-    // ========================================
-
-    private void CreateFactionIndicator()
-    {
-        factionIndicator = Instantiate(factionIndicatorPrefab, transform);
-
-        // Position above NPC
-        var indicatorTransform = factionIndicator.transform;
-        indicatorTransform.localPosition = Vector3.up * 2.5f;
-
-        // Apply faction color
-        Color factionColor = FactionColors.GetFactionColor(affiliatedFaction);
-
-        // Apply to renderer if available
-        var renderer = factionIndicator.GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            renderer.material.color = factionColor;
-        }
     }
 
     // ========================================

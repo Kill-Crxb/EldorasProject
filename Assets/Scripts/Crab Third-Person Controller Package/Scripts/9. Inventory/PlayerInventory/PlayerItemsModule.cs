@@ -55,7 +55,7 @@ public class PlayerItemsModule : MonoBehaviour, IPlayerModule, ISaveable
         // Wait one frame for UI to initialize
         yield return null;
 
-        var slots = FindObjectsOfType<EquipmentSlotComponent>();
+        var slots = FindObjectsByType<EquipmentSlotComponent>(FindObjectsSortMode.None);
         foreach (var slot in slots)
         {
             RegisterEquipmentSlot(slot);

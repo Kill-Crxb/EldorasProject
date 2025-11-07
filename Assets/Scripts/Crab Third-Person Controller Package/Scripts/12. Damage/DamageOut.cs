@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// Universal damage calculation module.
@@ -41,10 +41,10 @@ public class DamageOut : MonoBehaviour, IBrainModule
         this.brain = brain;
         entityTransform = brain.transform.parent ?? brain.transform;
 
-        // Try to find combat stats adapter
+        // Try to find combat stats adapter - SEARCH FROM BRAIN LEVEL
         if (combatStatsAdapter == null)
         {
-            combatStatsAdapter = GetComponentInChildren<ICombatStatsProvider>() as MonoBehaviour;
+            combatStatsAdapter = brain.GetComponentInChildren<ICombatStatsProvider>() as MonoBehaviour;
         }
 
         if (combatStatsAdapter != null && combatStatsAdapter is ICombatStatsProvider provider)
@@ -52,12 +52,12 @@ public class DamageOut : MonoBehaviour, IBrainModule
             statsProvider = provider;
             if (debugDamageCalculations)
             {
-                Debug.Log($"[DamageOut] Initialized with adapter: {combatStatsAdapter.GetType().Name}");
+                Debug.Log($"[DamageOut] ✓ Initialized with adapter: {combatStatsAdapter.GetType().Name}");
             }
         }
         else
         {
-            Debug.LogWarning($"[DamageOut] No ICombatStatsProvider found on {brain.name}. " +
+            Debug.LogWarning($"[DamageOut] ✗ No ICombatStatsProvider found on {brain.name}. " +
                            "Damage calculations will use default values.");
         }
     }
@@ -229,5 +229,20 @@ public class DamageOut : MonoBehaviour, IBrainModule
             Debug.Log($"[DamageOut] Test damage: {result.finalDamage:F1} " +
                      $"(Crit: {result.isCriticalHit})");
         }
+    }
+
+    [ContextMenu("Debug: Show Adapter Status")]
+    private void DebugShowAdapter()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("[DamageOut] Debug only works in Play Mode!");
+            return;
+        }
+
+        Debug.Log($"=== [DamageOut] Adapter Status ===\n" +
+                  $"Brain: {(brain != null ? brain.name : "NOT FOUND")}\n" +
+                  $"Stats Provider: {(statsProvider != null ? statsProvider.GetType().Name : "NOT FOUND")}\n" +
+                  $"Adapter MonoBehaviour: {(combatStatsAdapter != null ? combatStatsAdapter.name : "NOT FOUND")}");
     }
 }
