@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
+  m_Name: BasicAttack2
+  m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
+  abilityId: BasicAttack2
+  abilityName: BasicAttack2
+  description: 
+  icon: {fileID: 0}
+  resourceType: 2
+  resourceCost: 10
+  cooldown: 0
+  castTime: 0.5
+  targetType: 1
+  range: 5
+  requiresLineOfSight: 1
+  damageEffects: []
+  damageOverTimeEffects: []
+  healEffects: []
+  healOverTimeEffects: []
+  knockbackEffects: []
+  movementEffects: []
+  animationTrigger: BasicAttack2
+  castEffectPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 0}
+  projectilePrefab: {fileID: 0}

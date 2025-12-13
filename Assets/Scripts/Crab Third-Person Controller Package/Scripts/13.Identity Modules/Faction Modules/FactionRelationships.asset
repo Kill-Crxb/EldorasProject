@@ -19,7 +19,7 @@ MonoBehaviour:
     notes: 
   - faction1: 1
     faction2: 3
-    relationship: 0
+    relationship: 2
     notes: 
   - faction1: 1
     faction2: 4
@@ -47,7 +47,7 @@ MonoBehaviour:
     notes: 
   - faction1: 2
     faction2: 3
-    relationship: 0
+    relationship: 2
     notes: 
   - faction1: 2
     faction2: 4
@@ -107,6 +107,10 @@ MonoBehaviour:
     notes: 
   - faction1: 2
     faction2: 8
+    relationship: 2
+    notes: 
+  - faction1: 8
+    faction2: 2
     relationship: 2
     notes: 
   defaultRelationship: 1

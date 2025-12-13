@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
+  m_Name: Bear_Bite
+  m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
+  abilityId: bear_bite
+  abilityName: Vicious Bite
+  description: A vicious bite that causes bleeding
+  icon: {fileID: 0}
+  resourceType: 2
+  resourceCost: 15
+  cooldown: 1.2
+  castTime: 0.15
+  targetType: 1
+  range: 2.5
+  requiresLineOfSight: 0
+  damageEffects:
+  - baseDamage: 65
+    damageType: 0
+    canCrit: 1
+  damageOverTimeEffects:
+  - duration: 5
+    tickInterval: 1
+    damagePerTick: 10
+    damageType: 0
+    canCrit: 0
+  healEffects: []
+  healOverTimeEffects: []
+  knockbackEffects: []
+  movementEffects: []
+  animationTrigger: Attack_Bite
+  castEffectPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 0}
+  projectilePrefab: {fileID: 0}

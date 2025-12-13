@@ -17,7 +17,7 @@ MonoBehaviour:
   category: 1
   damage: 15
   attackSpeed: 1.1
-  reach: 2
+  reach: 1
   isNaturalWeapon: 1
   preferredSocketName: 
   lightAttackStamina: 10

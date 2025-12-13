@@ -1,0 +1,633 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100812518683479516
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1142965389070393703}
+  - component: {fileID: 436552741580700439}
+  m_Layer: 0
+  m_Name: RPG_Core
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1142965389070393703
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100812518683479516}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8649259291888184640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &436552741580700439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100812518683479516}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cbcc69cf4832d84eaa1cb897ee9aafa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RPGCoreStats
+  mind:
+    displayName: Mind
+    description: Intelligence and magical power
+    displayColor: {r: 0, g: 1, b: 1, a: 1}
+    calculation:
+      baseValue: 10
+      coreStatsBonus: 0
+      itemsBonus: 0
+      talentsBonus: 0
+      buffsBonus: 0
+      percentageMultiplier: 1
+      finalStat: 0
+  body:
+    displayName: Body
+    description: Physical strength and power
+    displayColor: {r: 1, g: 0, b: 0, a: 1}
+    calculation:
+      baseValue: 10
+      coreStatsBonus: 0
+      itemsBonus: 0
+      talentsBonus: 0
+      buffsBonus: 0
+      percentageMultiplier: 1
+      finalStat: 0
+  spirit:
+    displayName: Spirit
+    description: Agility and dexterity
+    displayColor: {r: 0, g: 1, b: 0, a: 1}
+    calculation:
+      baseValue: 10
+      coreStatsBonus: 0
+      itemsBonus: 0
+      talentsBonus: 0
+      buffsBonus: 0
+      percentageMultiplier: 1
+      finalStat: 0
+  resilience:
+    displayName: Resilience
+    description: Defense and damage reduction
+    displayColor: {r: 0, g: 0, b: 1, a: 1}
+    calculation:
+      baseValue: 10
+      coreStatsBonus: 0
+      itemsBonus: 0
+      talentsBonus: 0
+      buffsBonus: 0
+      percentageMultiplier: 1
+      finalStat: 0
+  endurance:
+    displayName: Endurance
+    description: Vitality and stamina
+    displayColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+    calculation:
+      baseValue: 10
+      coreStatsBonus: 0
+      itemsBonus: 0
+      talentsBonus: 0
+      buffsBonus: 0
+      percentageMultiplier: 1
+      finalStat: 0
+  insight:
+    displayName: Insight
+    description: Wisdom and perception
+    displayColor: {r: 1, g: 0, b: 1, a: 1}
+    calculation:
+      baseValue: 10
+      coreStatsBonus: 0
+      itemsBonus: 0
+      talentsBonus: 0
+      buffsBonus: 0
+      percentageMultiplier: 1
+      finalStat: 0
+  debugStats: 0
+--- !u!1 &349681146410171152
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8876926659829641955}
+  - component: {fileID: 3914222562974680079}
+  m_Layer: 0
+  m_Name: RPG_SecondaryStats
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8876926659829641955
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349681146410171152}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8649259291888184640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3914222562974680079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349681146410171152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9204eb65e005bd3429f5ec6defbd1de2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RPGSecondaryStats
+  isEnabled: 1
+  debugStats: 0
+  logStatChanges: 0
+  enabledStats: -1
+  showMaskingInfo: 0
+  physicalPower:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  physicalSpeed:
+    baseValue: 1
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  physicalEfficiency:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  physicalReach:
+    baseValue: 1
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  physicalDuration:
+    baseValue: 1
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  physicalPenetration:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  magicalPower:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  magicalSpeed:
+    baseValue: 1
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  magicalEfficiency:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  magicalReach:
+    baseValue: 1
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  magicalDuration:
+    baseValue: 1
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  magicalPenetration:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  armor:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  resistance:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  evasion:
+    baseValue: 0
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  maxHealth:
+    baseValue: 100
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  regeneration:
+    baseValue: 100
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  maxStamina:
+    baseValue: 100
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  recovery:
+    baseValue: 120
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  maxMana:
+    baseValue: 50
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  recollection:
+    baseValue: 80
+    coreStatsBonus: 0
+    itemsBonus: 0
+    talentsBonus: 0
+    buffsBonus: 0
+    percentageMultiplier: 1
+    finalStat: 0
+  mindScaling:
+    physicalPower: 0
+    physicalSpeed: 0
+    physicalEfficiency: 0
+    physicalReach: 0
+    physicalDuration: 0
+    physicalPenetration: 0
+    magicalPower: 0
+    magicalSpeed: 0
+    magicalEfficiency: 0
+    magicalReach: 0
+    magicalDuration: 0
+    magicalPenetration: 0
+    armor: 0
+    resistance: 0
+    evasion: 0
+    maxHealth: 0
+    regeneration: 0
+    maxStamina: 0
+    recovery: 0
+    maxMana: 0
+    recollection: 0
+  bodyScaling:
+    physicalPower: 0
+    physicalSpeed: 0
+    physicalEfficiency: 0
+    physicalReach: 0
+    physicalDuration: 0
+    physicalPenetration: 0
+    magicalPower: 0
+    magicalSpeed: 0
+    magicalEfficiency: 0
+    magicalReach: 0
+    magicalDuration: 0
+    magicalPenetration: 0
+    armor: 0
+    resistance: 0
+    evasion: 0
+    maxHealth: 0
+    regeneration: 0
+    maxStamina: 0
+    recovery: 0
+    maxMana: 0
+    recollection: 0
+  spiritScaling:
+    physicalPower: 0
+    physicalSpeed: 0
+    physicalEfficiency: 0
+    physicalReach: 0
+    physicalDuration: 0
+    physicalPenetration: 0
+    magicalPower: 0
+    magicalSpeed: 0
+    magicalEfficiency: 0
+    magicalReach: 0
+    magicalDuration: 0
+    magicalPenetration: 0
+    armor: 0
+    resistance: 0
+    evasion: 0
+    maxHealth: 0
+    regeneration: 0
+    maxStamina: 0
+    recovery: 0
+    maxMana: 0
+    recollection: 0
+  resilienceScaling:
+    physicalPower: 0
+    physicalSpeed: 0
+    physicalEfficiency: 0
+    physicalReach: 0
+    physicalDuration: 0
+    physicalPenetration: 0
+    magicalPower: 0
+    magicalSpeed: 0
+    magicalEfficiency: 0
+    magicalReach: 0
+    magicalDuration: 0
+    magicalPenetration: 0
+    armor: 0
+    resistance: 0
+    evasion: 0
+    maxHealth: 0
+    regeneration: 0
+    maxStamina: 0
+    recovery: 0
+    maxMana: 0
+    recollection: 0
+  enduranceScaling:
+    physicalPower: 0
+    physicalSpeed: 0
+    physicalEfficiency: 0
+    physicalReach: 0
+    physicalDuration: 0
+    physicalPenetration: 0
+    magicalPower: 0
+    magicalSpeed: 0
+    magicalEfficiency: 0
+    magicalReach: 0
+    magicalDuration: 0
+    magicalPenetration: 0
+    armor: 0
+    resistance: 0
+    evasion: 0
+    maxHealth: 0
+    regeneration: 0
+    maxStamina: 0
+    recovery: 0
+    maxMana: 0
+    recollection: 0
+  insightScaling:
+    physicalPower: 0
+    physicalSpeed: 0
+    physicalEfficiency: 0
+    physicalReach: 0
+    physicalDuration: 0
+    physicalPenetration: 0
+    magicalPower: 0
+    magicalSpeed: 0
+    magicalEfficiency: 0
+    magicalReach: 0
+    magicalDuration: 0
+    magicalPenetration: 0
+    armor: 0
+    resistance: 0
+    evasion: 0
+    maxHealth: 0
+    regeneration: 0
+    maxStamina: 0
+    recovery: 0
+    maxMana: 0
+    recollection: 0
+  healthPerLevel: 2
+  manaPerLevel: 1.5
+  staminaPerLevel: 1
+  regenerationPerLevel: 3.3
+  recollectionPerLevel: 2.5
+  recoveryPerLevel: 4
+--- !u!1 &2671233865631104144
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4108164809846431060}
+  - component: {fileID: 6739174140948690928}
+  m_Layer: 0
+  m_Name: RPG_LevelingAllocation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4108164809846431060
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2671233865631104144}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8649259291888184640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6739174140948690928
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2671233865631104144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5436a790c4590d9449af51b77b36f428, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatAllocationSystem
+  playerLevel: 1
+  maxLevel: 30
+  unallocatedPoints: 0
+  coreStats: {fileID: 436552741580700439}
+  debugAllocation: 0
+--- !u!1 &3904022743412841422
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8649259291888184640}
+  - component: {fileID: 6253566149600257339}
+  m_Layer: 0
+  m_Name: Provider_Stats
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8649259291888184640
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3904022743412841422}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8876926659829641955}
+  - {fileID: 3515485554548336086}
+  - {fileID: 1142965389070393703}
+  - {fileID: 4108164809846431060}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6253566149600257339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3904022743412841422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21f201383fbd70b43b8d2bb849701255, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatsProviderCoordinator
+  combatStatsProvider: {fileID: 3914222562974680079}
+  resourcesProvider: {fileID: 2960969905723705029}
+--- !u!1 &5747078303732746869
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3515485554548336086}
+  - component: {fileID: 2960969905723705029}
+  m_Layer: 0
+  m_Name: RPG_Resource
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3515485554548336086
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5747078303732746869}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8649259291888184640}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2960969905723705029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5747078303732746869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07b8d522dfbe7054289422afadfdf780, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RPGResources
+  currentHealth: 0
+  currentMana: 0
+  currentStamina: 0
+  maxHealth: 0
+  maxMana: 0
+  maxStamina: 0
+  regeneration: 0
+  recollection: 0
+  recovery: 0
+  enableAutoRegeneration: 1
+  healthRegenRate: 1
+  manaRegenRate: 1
+  staminaRegenRate: 1
+  debugStats: 0
+  enabledResources: 7
+  showMaskingInfo: 0

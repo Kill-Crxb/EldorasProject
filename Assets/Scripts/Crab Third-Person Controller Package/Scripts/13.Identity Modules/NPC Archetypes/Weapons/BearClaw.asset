@@ -14,9 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   weaponName: Bear Claw
   weaponType: 9
+  category: 1
   damage: 25
   attackSpeed: 1.2
-  reach: 2
+  reach: 0.5
+  isNaturalWeapon: 0
+  preferredSocketName: 
   lightAttackStamina: 15
   heavyAttackStamina: 30
   blockStamina: 5

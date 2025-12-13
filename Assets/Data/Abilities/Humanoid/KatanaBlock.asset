@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68d466a83fa4f294f9b15ba8ca8d4c67, type: 3}
+  m_Name: KatanaBlock
+  m_EditorClassIdentifier: Assembly-CSharp::DefenseAbilityData
+  defenseId: katana_block
+  defenseName: Katana Guard
+  description: 
+  icon: {fileID: 0}
+  blockDamageReduction: 1
+  blockAngle: 120
+  parryWindowDuration: 0.2
+  parryDamageReduction: 1
+  parryEnablesCounter: 0
+  counterWindowDuration: 0
+  blockStaminaDrain: 8
+  parryStaminaCost: 5
+  blockStaminaCost: 10
+  parryRefundsStamina: 1
+  blockStartupTime: 0
+  blockAnimParam: IsBlocking
+  parryAnimTrigger: Parry
+  blockHitAnimTrigger: BlockHit
+  blockActivationVFX: {fileID: 0}
+  parrySuccessVFX: {fileID: 0}
+  blockImpactVFX: {fileID: 0}
+  requiredWeaponTypes: 
+  allowsUnarmed: 0

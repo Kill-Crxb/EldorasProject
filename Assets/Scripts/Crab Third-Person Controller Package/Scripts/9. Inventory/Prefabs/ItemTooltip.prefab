@@ -524,16 +524,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 3427443664449428583}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 86585eac6e6514d47b520cebac9ac730, type: 3}
+  m_Script: {fileID: 11500000, guid: 9e0e032cfde50364a8e77cfe22bb4ac7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemTooltip
-  itemNameText: {fileID: 2994882300637673207}
-  itemDescriptionText: {fileID: 6362564822183463139}
-  itemStatsText: {fileID: 3512404638182380114}
-  tooltipBackground: {fileID: 2600337315288351302}
-  layoutGroup: {fileID: 3404562411371379144}
-  offset: {x: 150, y: 10}
-  followSpeed: 100
+  nameText: {fileID: 2994882300637673207}
+  descriptionText: {fileID: 3512404638182380114}
+  backgroundImage: {fileID: 2600337315288351302}
+  offset: {x: 15, y: -15}
+  padding: 20
 --- !u!225 &6807039911592047785
 CanvasGroup:
   m_ObjectHideFlags: 0

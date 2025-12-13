@@ -21,5 +21,13 @@ MemoryCaptures/
 # OS-specific
 .DS_Store
 Thumbs.db
-Assets/ImportedAssets/ 
-Assets/ImportedAssets/ 
+Assets/ImportedAssets/
+Assets/Animations/
+Assets/Humanoid/
+Assets/Editor/
+Assets/Models/
+Assets/UnplacedSounds/
+Assets/TestingPrefabs/
+
+
+
