@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5ef78bf9c15a6943b9fd5a3db5ec398, type: 3}
+  m_Name: Test_Humanguy
+  m_EditorClassIdentifier: Assembly-CSharp::NPCArchetype
+  archetypeId: Test_Human_NPC
+  archetypeName: Human Testguy
+  faction: 10
+  npcType: 1
+  importance: 1
+  baseStats:
+    mind: 5
+    body: 5
+    spirit: 5
+    resilience: 5
+    endurance: 5
+    insight: 5
+    healthMultiplier: 1
+    damageMultiplier: 1
+  mainHandWeaponId: 
+  offHandWeaponId: 
+  abilities: []
+  loadoutConfig:
+    basicAttackSlot: {fileID: 11400000, guid: a5c3d3519479884429cd6c8a6e5c9e7f, type: 2}
+    qSlot: {fileID: 0}
+    zSlot: {fileID: 11400000, guid: b6d15fee2b8f85645b5e3453411b175d, type: 2}
+    xSlot: {fileID: 11400000, guid: 07cff39b7ab3d5c4795c323467df8942, type: 2}
+    cSlot: {fileID: 11400000, guid: d877a47744073f340bd1906f422a964c, type: 2}
+    vSlot: {fileID: 11400000, guid: ee4052ff40ef4024ab4ed696a73cd3ff, type: 2}
+  combatBehaviorClassName: HumanoidMeleeCombatBehavior
+  aiSystemType: 2
+  goapGoals:
+  - {fileID: 11400000, guid: 9c05eed46eeea554daf3ab05ad6c5b35, type: 2}
+  goapActions: []
+  goalSelectionMode: 1
+  useGoalCommitment: 1
+  minimumGoalDuration: 0.5
+  combatPersonality: 2
+  hiddenStats:
+    perception: 5
+    reflexes: 5
+    intelligence: 5
+    courage: 5
+  patrolMode: 0
+  patrolWaypoints: []
+  wanderRadius: 10
+  wanderCheckInterval: 30
+  requiredResources: 
+  visionRange: 15
+  visionAngle: 90
+  requireLineOfSight: 1
+  modelPool: []
+  randomizeModel: 1
+  useGenericName: 1
+  genericName: 
+  namePrefix: []
+  nameSuffix: []
+  aiBehaviorProfileId: 
+  aggressiveToHostileFactions: 1
+  assistsAlliedFactions: 0
+  defendsFactionMembers: 1
