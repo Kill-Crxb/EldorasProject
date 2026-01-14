@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63f1401dcb445534faca4def0618a012, type: 3}
+  m_Name: RPGBaseItemStats
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatSchema
+  statNamespace: item
+  description: Item base stats.
+  stats:
+  - statId: item.physdmg
+    displayName: Physical Damage
+    description: Base weapon physical damage
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.aps
+    displayName: Attack Speed
+    description: Base weapon attack speed
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.arp
+    displayName: Penetration
+    description: Base weapon penetration
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.critch
+    displayName: Crit Chance
+    description: Base weapon Crit Chance
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.cost
+    displayName: Cost
+    description: Base weapon resource cost
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.status
+    displayName: Status
+    description: Base weapon status buildup
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: Armor
+    displayName: New Stat
+    description: Base weapon status buildup
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized

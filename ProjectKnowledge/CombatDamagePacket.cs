@@ -101,5 +101,17 @@ public enum DamageType
 {
     Physical,   // Reduced by Armor
     Magical,    // Reduced by Magic Resistance
-    True        // Ignores all defenses
+    True,        // Ignores all defenses
+    Fire,       // Magical fire damage
+    Lightning,  // Magical lightning damage
+    Ice,        // Magical ice damage
+    Poison,     // DoT damage type
+    Holy,       // Divine damage
+    Aether,
+    Wind,
+    Water,
+    Earth,
+    Magma,
+    Crystal,
+    Nature
 }

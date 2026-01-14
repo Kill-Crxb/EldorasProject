@@ -2,11 +2,7 @@
 using TMPro;
 using System.Collections.Generic;
 
-/// <summary>
-/// Displays secondary stats in a scrollable list.
-/// Dynamically creates stat entries for each secondary stat.
-/// Use with ScrollRect + Vertical Layout Group for auto-spacing.
-/// </summary>
+
 public class SecondaryStatsUI : MonoBehaviour
 {
     [Header("Content Container")]
@@ -17,17 +13,16 @@ public class SecondaryStatsUI : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private ControllerBrain brain;
-    [SerializeField] private RPGSecondaryStats secondaryStats;
 
     [Header("Display Settings")]
-    [SerializeField] private bool showPhysicalStats = true;
-    [SerializeField] private bool showMagicalStats = true;
+    [SerializeField] private bool showCombatStats = true;
     [SerializeField] private bool showDefenseStats = true;
     [SerializeField] private bool showResourceStats = true;
 
     [Header("Debug")]
     [SerializeField] private bool debugUI = false;
 
+    private StatSystem statSystem;
     private bool isInitialized = false;
     private Dictionary<string, TextMeshProUGUI> statDisplays = new Dictionary<string, TextMeshProUGUI>();
 
@@ -60,20 +55,23 @@ public class SecondaryStatsUI : MonoBehaviour
             }
         }
 
-        if (brain != null)
+        if (brain == null)
         {
-            if (secondaryStats == null)
-                secondaryStats = brain.Stats?.SecondaryStats;
+            Debug.LogError("[SecondaryStatsUI] Missing ControllerBrain! Cannot initialize.");
+            return;
         }
 
-        if (secondaryStats == null)
+        // Get StatSystem (replaces old RPGSecondaryStats)
+        statSystem = brain.StatSystem;
+
+        if (statSystem == null)
         {
-            Debug.LogError("[SecondaryStatsUI] Missing RPGSecondaryStats! Cannot initialize.");
+            Debug.LogError("[SecondaryStatsUI] Missing StatSystem! Cannot initialize.");
             return;
         }
 
         // Subscribe to stat change events
-        secondaryStats.OnSecondaryStatChanged += OnSecondaryStatChanged;
+        statSystem.OnStatChanged += OnStatChanged;
 
         // Create stat displays
         CreateStatDisplays();
@@ -90,18 +88,22 @@ public class SecondaryStatsUI : MonoBehaviour
     void OnDestroy()
     {
         // Unsubscribe from events
-        if (secondaryStats != null)
-            secondaryStats.OnSecondaryStatChanged -= OnSecondaryStatChanged;
+        if (statSystem != null)
+            statSystem.OnStatChanged -= OnStatChanged;
     }
 
     #region Event Handlers
 
-    private void OnSecondaryStatChanged(string statName, float oldValue, float newValue)
+    private void OnStatChanged(string statId, float oldValue, float newValue)
     {
-        RefreshStat(statName);
+        // Refresh specific stat if it's being displayed
+        if (statDisplays.ContainsKey(statId))
+        {
+            RefreshStat(statId);
 
-        if (debugUI)
-            Debug.Log($"[SecondaryStatsUI] {statName} changed: {oldValue:F1} → {newValue:F1}");
+            if (debugUI)
+                Debug.Log($"[SecondaryStatsUI] {statId} changed: {oldValue:F1} → {newValue:F1}");
+        }
     }
 
     #endregion
@@ -126,46 +128,33 @@ public class SecondaryStatsUI : MonoBehaviour
         }
         statDisplays.Clear();
 
-        // Physical Combat Stats
-        if (showPhysicalStats)
+        // Combat Stats
+        if (showCombatStats)
         {
-            CreateStatEntry("Physical Power", "PhysicalPower");
-            CreateStatEntry("Physical Speed", "PhysicalSpeed");
-            CreateStatEntry("Physical Penetration", "PhysicalPenetration");
-        }
-
-        // Magical Combat Stats
-        if (showMagicalStats)
-        {
-            CreateStatEntry("Magical Power", "MagicalPower");
-            CreateStatEntry("Magical Speed", "MagicalSpeed");
-            CreateStatEntry("Magical Penetration", "MagicalPenetration");
+            CreateStatEntry("Attack Power", "combat.attack_power");
+            CreateStatEntry("Critical Chance", "combat.crit_chance");
+            CreateStatEntry("Critical Damage", "combat.crit_damage");
         }
 
         // Defense Stats
         if (showDefenseStats)
         {
-            CreateStatEntry("Armor", "Armor");
-            CreateStatEntry("Resistance", "Resistance");
-            CreateStatEntry("Evasion", "Evasion");
+            CreateStatEntry("Armor", "combat.armor");
         }
 
         // Resource Stats
         if (showResourceStats)
         {
-            CreateStatEntry("Max Health", "MaxHealth");
-            CreateStatEntry("Regeneration", "Regeneration");
-            CreateStatEntry("Max Stamina", "MaxStamina");
-            CreateStatEntry("Recovery", "Recovery");
-            CreateStatEntry("Max Mana", "MaxMana");
-            CreateStatEntry("Recollection", "Recollection");
+            CreateStatEntry("Max Health", "character.max_health");
+            CreateStatEntry("Max Stamina", "character.max_stamina");
+            CreateStatEntry("Max Mana", "character.max_mana");
         }
     }
 
     /// <summary>
     /// Create a single stat entry in the list
     /// </summary>
-    private void CreateStatEntry(string displayName, string statKey)
+    private void CreateStatEntry(string displayName, string statId)
     {
         GameObject entry;
 
@@ -195,7 +184,7 @@ public class SecondaryStatsUI : MonoBehaviour
 
         if (valueText != null)
         {
-            statDisplays[statKey] = valueText;
+            statDisplays[statId] = valueText;
         }
     }
 
@@ -241,7 +230,7 @@ public class SecondaryStatsUI : MonoBehaviour
     /// </summary>
     private void RefreshAllStats()
     {
-        if (secondaryStats == null) return;
+        if (statSystem == null) return;
 
         foreach (var kvp in statDisplays)
         {
@@ -252,12 +241,12 @@ public class SecondaryStatsUI : MonoBehaviour
     /// <summary>
     /// Refresh a specific stat display
     /// </summary>
-    private void RefreshStat(string statKey)
+    private void RefreshStat(string statId)
     {
-        if (secondaryStats == null || !statDisplays.ContainsKey(statKey)) return;
+        if (statSystem == null || !statDisplays.ContainsKey(statId)) return;
 
-        float value = secondaryStats.GetSecondaryStatFinalValue(statKey);
-        statDisplays[statKey].SetText(value.ToString("F1"));
+        float value = statSystem.GetValue(statId);
+        statDisplays[statId].SetText(value.ToString("F1"));
     }
 
     #endregion

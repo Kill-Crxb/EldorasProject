@@ -25,7 +25,7 @@ public class NPCModule : MonoBehaviour, IBrainModule
     //[SerializeField] private bool isNetworked = false;
     //[SerializeField] private bool isServerControlled = true;
 
-    private NPCConfigurationHandler configurationHandler;
+    private CharacterConfigurationHandler configurationHandler;
     private FactionAffiliationHandler factionHandler;
     private List<INPCHandler> handlers = new List<INPCHandler>();
     private ControllerBrain brain;
@@ -92,7 +92,7 @@ public class NPCModule : MonoBehaviour, IBrainModule
             handlers.Add(handler);
         }
 
-        configurationHandler = GetComponentInChildren<NPCConfigurationHandler>();
+        var configHandler = GetComponent<CharacterConfigurationHandler>();
         factionHandler = GetComponentInChildren<FactionAffiliationHandler>();
     }
 

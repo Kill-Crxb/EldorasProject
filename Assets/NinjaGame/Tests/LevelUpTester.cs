@@ -2,8 +2,9 @@
 using UnityEngine.UI;
 
 /// <summary>
-/// Debug utility for testing the stat allocation system.
+/// Debug utility for testing the RPG progression system.
 /// Attach to a UI panel with a button to trigger level ups.
+/// Phase 1.7b: Updated to use RPGSystem
 /// </summary>
 public class LevelUpTester : MonoBehaviour
 {
@@ -17,7 +18,8 @@ public class LevelUpTester : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private bool debugLogs = true;
 
-    private StatAllocationSystem statAllocation;
+    private RPGSystem rpgSystem; // Fixed: was statAllocation
+
     private bool isInitialized = false;
 
     void Start()
@@ -47,11 +49,11 @@ public class LevelUpTester : MonoBehaviour
             return;
         }
 
-        // Get stat allocation system
-        statAllocation = playerBrain.Stats?.Allocation;
-        if (statAllocation == null)
+        // Get RPGSystem module
+        rpgSystem = playerBrain.GetModule<RPGSystem>(); // Fixed: was StatAllocationSystem
+        if (rpgSystem == null)
         {
-            Debug.LogError("[LevelUpTester] StatAllocationSystem not found on player!", this);
+            Debug.LogError("[LevelUpTester] RPGSystem not found on player!", this); // Fixed: was StatAllocationSystem
             enabled = false;
             return;
         }
@@ -78,31 +80,35 @@ public class LevelUpTester : MonoBehaviour
 
         if (debugLogs)
         {
-            Debug.Log($"[LevelUpTester] Initialized - Current Level: {statAllocation.PlayerLevel}/{statAllocation.MaxLevel}");
+            Debug.Log($"[LevelUpTester] Initialized - Current Level: {rpgSystem.CurrentLevel}/{rpgSystem.MaxLevel}"); // Fixed: PlayerLevel -> CurrentLevel
         }
     }
 
     void OnLevelUpButtonClicked()
     {
-        if (statAllocation == null)
+        if (rpgSystem == null) // Fixed: was statAllocation
         {
-            Debug.LogError("[LevelUpTester] StatAllocationSystem is null!");
+            Debug.LogError("[LevelUpTester] RPGSystem is null!"); // Fixed: was StatAllocationSystem
             return;
         }
 
-        if (statAllocation.PlayerLevel >= statAllocation.MaxLevel)
+        if (rpgSystem.CurrentLevel >= rpgSystem.MaxLevel) // Fixed: PlayerLevel -> CurrentLevel
         {
-            Debug.LogWarning($"[LevelUpTester] Already at max level ({statAllocation.MaxLevel})!");
+            Debug.LogWarning($"[LevelUpTester] Already at max level ({rpgSystem.MaxLevel})!");
             return;
         }
 
-        int oldLevel = statAllocation.PlayerLevel;
-        bool success = statAllocation.LevelUp();
+        int oldLevel = rpgSystem.CurrentLevel; // Fixed: PlayerLevel -> CurrentLevel
 
-        if (success)
+        // RPGSystem uses AddXP instead of LevelUp()
+        // Calculate XP needed for next level and add it
+        int xpNeeded = rpgSystem.XPToNextLevel - rpgSystem.CurrentXP;
+        rpgSystem.AddXP(xpNeeded); // Fixed: Changed from LevelUp() to AddXP()
+
+        if (rpgSystem.CurrentLevel > oldLevel) // Fixed: PlayerLevel -> CurrentLevel
         {
-            Debug.Log($"[LevelUpTester] ✓ Level Up! {oldLevel} → {statAllocation.PlayerLevel}");
-            Debug.Log($"[LevelUpTester] Unallocated Points: {statAllocation.UnallocatedPoints}");
+            Debug.Log($"[LevelUpTester] ✓ Level Up! {oldLevel} → {rpgSystem.CurrentLevel}"); // Fixed: PlayerLevel -> CurrentLevel
+            Debug.Log($"[LevelUpTester] Unallocated Points: {rpgSystem.UnallocatedPoints}");
             UpdateButtonState();
         }
         else
@@ -113,9 +119,9 @@ public class LevelUpTester : MonoBehaviour
 
     void UpdateButtonState()
     {
-        if (levelUpButton == null || statAllocation == null) return;
+        if (levelUpButton == null || rpgSystem == null) return; // Fixed: was statAllocation
 
-        bool canLevelUp = statAllocation.PlayerLevel < statAllocation.MaxLevel;
+        bool canLevelUp = rpgSystem.CurrentLevel < rpgSystem.MaxLevel; // Fixed: PlayerLevel -> CurrentLevel
         levelUpButton.interactable = canLevelUp;
 
         // Update button text - try TextMeshProUGUI first, then UI.Text
@@ -125,11 +131,11 @@ public class LevelUpTester : MonoBehaviour
         string newText;
         if (canLevelUp)
         {
-            newText = $"LEVEL UP ({statAllocation.PlayerLevel}/{statAllocation.MaxLevel})";
+            newText = $"LEVEL UP ({rpgSystem.CurrentLevel}/{rpgSystem.MaxLevel})"; // Fixed: PlayerLevel -> CurrentLevel
         }
         else
         {
-            newText = $"MAX LEVEL ({statAllocation.MaxLevel})";
+            newText = $"MAX LEVEL ({rpgSystem.MaxLevel})";
         }
 
         if (tmpText != null)
@@ -168,9 +174,9 @@ public class LevelUpTester : MonoBehaviour
             return;
         }
 
-        if (statAllocation != null)
+        if (rpgSystem != null) // Fixed: was statAllocation
         {
-            statAllocation.SetLevel(1);
+            rpgSystem.SetLevel(1);
             Debug.Log("[LevelUpTester] Reset player to level 1");
             UpdateButtonState();
         }
@@ -185,9 +191,9 @@ public class LevelUpTester : MonoBehaviour
             return;
         }
 
-        if (statAllocation != null)
+        if (rpgSystem != null) // Fixed: was statAllocation
         {
-            statAllocation.SetLevel(10);
+            rpgSystem.SetLevel(10);
             Debug.Log("[LevelUpTester] Set player to level 10");
             UpdateButtonState();
         }
@@ -202,23 +208,29 @@ public class LevelUpTester : MonoBehaviour
             return;
         }
 
-        if (statAllocation == null || playerBrain == null) return;
+        if (rpgSystem == null || playerBrain == null) return; // Fixed: was statAllocation
 
         Debug.Log("=== PLAYER STATS ===");
-        Debug.Log($"Level: {statAllocation.PlayerLevel}/{statAllocation.MaxLevel}");
-        Debug.Log($"Unallocated Points: {statAllocation.UnallocatedPoints}");
-        Debug.Log($"Has Pending Changes: {statAllocation.HasPendingChanges}");
+        Debug.Log($"Level: {rpgSystem.CurrentLevel}/{rpgSystem.MaxLevel}"); // Fixed: PlayerLevel -> CurrentLevel
+        Debug.Log($"XP: {rpgSystem.CurrentXP}/{rpgSystem.XPToNextLevel}"); // Added XP display
+        Debug.Log($"Unallocated Points: {rpgSystem.UnallocatedPoints}");
+        Debug.Log($"Has Pending Changes: {rpgSystem.HasPendingChanges}");
 
-        var coreStats = playerBrain.Stats?.CoreStats;
-        if (coreStats != null)
+        // Use StatSystem API to display core stats
+        var statSystem = playerBrain.Stats;
+        if (statSystem != null)
         {
             Debug.Log($"\nCore Stats:");
-            Debug.Log($"  Mind: {coreStats.Mind.FinalValue}");
-            Debug.Log($"  Body: {coreStats.Body.FinalValue}");
-            Debug.Log($"  Spirit: {coreStats.Spirit.FinalValue}");
-            Debug.Log($"  Resilience: {coreStats.Resilience.FinalValue}");
-            Debug.Log($"  Endurance: {coreStats.Endurance.FinalValue}");
-            Debug.Log($"  Insight: {coreStats.Insight.FinalValue}");
+            Debug.Log($"  Mind: {statSystem.Mind}");
+            Debug.Log($"  Body: {statSystem.Body}");
+            Debug.Log($"  Spirit: {statSystem.Spirit}");
+            Debug.Log($"  Resilience: {statSystem.Resilience}");
+            Debug.Log($"  Endurance: {statSystem.Endurance}");
+            Debug.Log($"  Insight: {statSystem.Insight}");
+        }
+        else
+        {
+            Debug.LogWarning("[LevelUpTester] StatSystem not found!");
         }
     }
 

@@ -1,10 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
 
-/// <summary>
-/// Displays the 6 core stat values in the CoreStats panel.
-/// Updates automatically when stats change.
-/// </summary>
 public class CoreStatsUI : MonoBehaviour
 {
     [Header("Stat Value Displays")]
@@ -17,11 +13,11 @@ public class CoreStatsUI : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private ControllerBrain brain;
-    [SerializeField] private RPGCoreStats coreStats;
 
     [Header("Debug")]
     [SerializeField] private bool debugUI = false;
 
+    private StatSystem statSystem;
     private bool isInitialized = false;
 
     void Start()
@@ -56,20 +52,23 @@ public class CoreStatsUI : MonoBehaviour
             }
         }
 
-        if (brain != null)
+        if (brain == null)
         {
-            if (coreStats == null)
-                coreStats = brain.Stats?.CoreStats;
+            Debug.LogError("[CoreStatsUI] Missing ControllerBrain! Cannot initialize.");
+            return;
         }
 
-        if (coreStats == null)
+        // Get StatSystem (replaces old RPGCoreStats)
+        statSystem = brain.StatSystem;
+
+        if (statSystem == null)
         {
-            Debug.LogError("[CoreStatsUI] Missing RPGCoreStats! Cannot initialize.");
+            Debug.LogError("[CoreStatsUI] Missing StatSystem! Cannot initialize.");
             return;
         }
 
         // Subscribe to stat change events
-        coreStats.OnStatChanged += OnCoreStatChanged;
+        statSystem.OnStatChanged += OnStatChanged;
 
         // Initial display update
         RefreshAllStatDisplays();
@@ -83,18 +82,22 @@ public class CoreStatsUI : MonoBehaviour
     void OnDestroy()
     {
         // Unsubscribe from events
-        if (coreStats != null)
-            coreStats.OnStatChanged -= OnCoreStatChanged;
+        if (statSystem != null)
+            statSystem.OnStatChanged -= OnStatChanged;
     }
 
     #region Event Handlers
 
-    private void OnCoreStatChanged(string statName, float oldValue, float newValue)
+    private void OnStatChanged(string statId, float oldValue, float newValue)
     {
-        RefreshStatDisplay(statName);
+        // Only refresh if it's a core stat
+        if (statId.StartsWith("character."))
+        {
+            RefreshStatDisplay(statId);
 
-        if (debugUI)
-            Debug.Log($"[CoreStatsUI] {statName} changed: {oldValue:F0} → {newValue:F0}");
+            if (debugUI)
+                Debug.Log($"[CoreStatsUI] {statId} changed: {oldValue:F0} → {newValue:F0}");
+        }
     }
 
     #endregion
@@ -106,42 +109,49 @@ public class CoreStatsUI : MonoBehaviour
     /// </summary>
     private void RefreshAllStatDisplays()
     {
-        if (coreStats == null) return;
+        if (statSystem == null) return;
 
-        mindAmount?.SetText(coreStats.Mind.FinalValue.ToString("F0"));
-        bodyAmount?.SetText(coreStats.Body.FinalValue.ToString("F0"));
-        spiritAmount?.SetText(coreStats.Spirit.FinalValue.ToString("F0"));
-        insightAmount?.SetText(coreStats.Insight.FinalValue.ToString("F0"));
-        enduranceAmount?.SetText(coreStats.Endurance.FinalValue.ToString("F0"));
-        resilienceAmount?.SetText(coreStats.Resilience.FinalValue.ToString("F0"));
+        // Using generated properties (from StatSystem_Generated.cs)
+        mindAmount?.SetText(statSystem.Mind.ToString("F0"));
+        bodyAmount?.SetText(statSystem.Body.ToString("F0"));
+        spiritAmount?.SetText(statSystem.Spirit.ToString("F0"));
+        insightAmount?.SetText(statSystem.Insight.ToString("F0"));
+        enduranceAmount?.SetText(statSystem.Endurance.ToString("F0"));
+        resilienceAmount?.SetText(statSystem.Resilience.ToString("F0"));
+
+        // Alternative approach using string access:
+        // mindAmount?.SetText(statSystem.GetValue("character.mind").ToString("F0"));
+        // bodyAmount?.SetText(statSystem.GetValue("character.body").ToString("F0"));
+        // etc...
     }
 
     /// <summary>
     /// Refresh a specific stat display
     /// </summary>
-    private void RefreshStatDisplay(string statName)
+    private void RefreshStatDisplay(string statId)
     {
-        if (coreStats == null) return;
+        if (statSystem == null) return;
 
-        switch (statName.ToLower())
+        // Match against full stat ID
+        switch (statId)
         {
-            case "mind":
-                mindAmount?.SetText(coreStats.Mind.FinalValue.ToString("F0"));
+            case "character.mind":
+                mindAmount?.SetText(statSystem.Mind.ToString("F0"));
                 break;
-            case "body":
-                bodyAmount?.SetText(coreStats.Body.FinalValue.ToString("F0"));
+            case "character.body":
+                bodyAmount?.SetText(statSystem.Body.ToString("F0"));
                 break;
-            case "spirit":
-                spiritAmount?.SetText(coreStats.Spirit.FinalValue.ToString("F0"));
+            case "character.spirit":
+                spiritAmount?.SetText(statSystem.Spirit.ToString("F0"));
                 break;
-            case "insight":
-                insightAmount?.SetText(coreStats.Insight.FinalValue.ToString("F0"));
+            case "character.insight":
+                insightAmount?.SetText(statSystem.Insight.ToString("F0"));
                 break;
-            case "endurance":
-                enduranceAmount?.SetText(coreStats.Endurance.FinalValue.ToString("F0"));
+            case "character.endurance":
+                enduranceAmount?.SetText(statSystem.Endurance.ToString("F0"));
                 break;
-            case "resilience":
-                resilienceAmount?.SetText(coreStats.Resilience.FinalValue.ToString("F0"));
+            case "character.resilience":
+                resilienceAmount?.SetText(statSystem.Resilience.ToString("F0"));
                 break;
         }
     }

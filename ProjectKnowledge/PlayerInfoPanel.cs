@@ -1,6 +1,10 @@
 using UnityEngine;
 using TMPro;
 
+/// <summary>
+/// Displays player info (name, faction, level) in the UI.
+/// Phase 1.6 Days 7-8: Migrated to use direct module access instead of backward compatibility wrappers
+/// </summary>
 public class PlayerInfoPanel : MonoBehaviour
 {
     [Header("UI References")]
@@ -14,7 +18,7 @@ public class PlayerInfoPanel : MonoBehaviour
     private PlayerInfoModule playerInfo;
     private IdentityHandler identityHandler;
     private PlayerFactionHandler factionHandler;
-    private StatAllocationSystem statAllocation;
+    private RPGSystem RPGSystem;  
 
     private void Start()
     {
@@ -44,11 +48,11 @@ public class PlayerInfoPanel : MonoBehaviour
             Debug.LogError("PlayerInfoPanel: PlayerFactionHandler not found");
         }
 
-        // Get StatAllocationSystem to subscribe to level changes
-        statAllocation = playerBrain.Stats?.Allocation;
-        if (statAllocation != null)
+        // MIGRATED: Direct module access instead of backward compatibility wrapper
+        RPGSystem = playerBrain.GetModule<RPGSystem>();
+        if (RPGSystem != null)
         {
-            statAllocation.OnLevelChanged += OnLevelChanged;
+            RPGSystem.OnLevelChanged += OnLevelChanged;
         }
 
         UpdateDisplay();
@@ -57,9 +61,9 @@ public class PlayerInfoPanel : MonoBehaviour
     private void OnDestroy()
     {
         // Unsubscribe from events
-        if (statAllocation != null)
+        if (RPGSystem != null)
         {
-            statAllocation.OnLevelChanged -= OnLevelChanged;
+            RPGSystem.OnLevelChanged -= OnLevelChanged;
         }
     }
 
@@ -90,4 +94,4 @@ public class PlayerInfoPanel : MonoBehaviour
     {
         UpdateDisplay();
     }
-}
+} 

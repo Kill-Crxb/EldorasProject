@@ -5,6 +5,7 @@ using TMPro;
 /// Manages the stat allocation controls panel.
 /// Handles +/- buttons, confirm/cancel, and available points display.
 /// Disables entire panel when no points are available.
+/// Phase 1.7b: Updated to use RPGSystem
 /// </summary>
 public class StatAllocationUI : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class StatAllocationUI : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private ControllerBrain brain;
-    [SerializeField] private StatAllocationSystem allocation;
+    [SerializeField] private RPGSystem allocation;
 
     [Header("Display")]
     [SerializeField] private TextMeshProUGUI availablePointsText;
@@ -55,23 +56,22 @@ public class StatAllocationUI : MonoBehaviour
             }
         }
 
+        // Get RPGSystem module
         if (brain != null)
         {
             if (allocation == null)
-                allocation = brain.Stats?.Allocation;
+                allocation = brain.GetModule<RPGSystem>();
         }
 
         if (allocation == null)
         {
-            Debug.LogError("[StatAllocationUI] Missing StatAllocationSystem! Cannot initialize. " +
+            Debug.LogError("[StatAllocationUI] Missing RPGSystem! Cannot initialize. " +
                           $"Brain: {(brain != null ? "Found" : "NULL")}");
             return;
         }
 
-        // Subscribe to events
+        // Subscribe to events (FIXED: Only subscribe to events that exist)
         allocation.OnStatPointsChanged += OnUnallocatedPointsChanged;
-        allocation.OnChangesConfirmed += OnChangesConfirmed;
-        allocation.OnChangesCancelled += OnChangesCancelled;
         allocation.OnLevelChanged += OnLevelChanged;
 
         // Initial update
@@ -86,12 +86,10 @@ public class StatAllocationUI : MonoBehaviour
 
     void OnDestroy()
     {
-        // Unsubscribe from events
+        // Unsubscribe from events (FIXED: Only unsubscribe from events we subscribed to)
         if (allocation != null)
         {
             allocation.OnStatPointsChanged -= OnUnallocatedPointsChanged;
-            allocation.OnChangesConfirmed -= OnChangesConfirmed;
-            allocation.OnChangesCancelled -= OnChangesCancelled;
             allocation.OnLevelChanged -= OnLevelChanged;
         }
     }
@@ -101,25 +99,10 @@ public class StatAllocationUI : MonoBehaviour
     private void OnUnallocatedPointsChanged(int points)
     {
         UpdateAvailablePointsDisplay();
+        UpdateAllocationPanelState(); // Update panel state when points change
 
         if (debugUI)
             Debug.Log($"[StatAllocationUI] Unallocated points changed: {points}");
-    }
-
-    private void OnChangesConfirmed()
-    {
-        UpdateAllocationPanelState();
-
-        if (debugUI)
-            Debug.Log("[StatAllocationUI] Changes confirmed - panel may close");
-    }
-
-    private void OnChangesCancelled()
-    {
-        UpdateAllocationPanelState();
-
-        if (debugUI)
-            Debug.Log("[StatAllocationUI] Changes cancelled - panel may close");
     }
 
     private void OnLevelChanged(int oldLevel, int newLevel)
@@ -169,37 +152,37 @@ public class StatAllocationUI : MonoBehaviour
     public void AllocateMind()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] AllocateMind +");
-        allocation?.AllocateStatPoint("Mind");
+        allocation?.AllocateStatPoint("character.mind");
     }
 
     public void AllocateBody()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] AllocateBody +");
-        allocation?.AllocateStatPoint("Body");
+        allocation?.AllocateStatPoint("character.body");
     }
 
     public void AllocateSpirit()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] AllocateSpirit +");
-        allocation?.AllocateStatPoint("Spirit");
+        allocation?.AllocateStatPoint("character.spirit");
     }
 
     public void AllocateInsight()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] AllocateInsight +");
-        allocation?.AllocateStatPoint("Insight");
+        allocation?.AllocateStatPoint("character.insight");
     }
 
     public void AllocateEndurance()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] AllocateEndurance +");
-        allocation?.AllocateStatPoint("Endurance");
+        allocation?.AllocateStatPoint("character.endurance");
     }
 
     public void AllocateResilience()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] AllocateResilience +");
-        allocation?.AllocateStatPoint("Resilience");
+        allocation?.AllocateStatPoint("character.resilience");
     }
 
     #endregion
@@ -209,37 +192,37 @@ public class StatAllocationUI : MonoBehaviour
     public void DeallocateMind()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] DeallocateMind -");
-        allocation?.DeallocateStatPoint("Mind");
+        allocation?.DeallocateStatPoint("character.mind");
     }
 
     public void DeallocateBody()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] DeallocateBody -");
-        allocation?.DeallocateStatPoint("Body");
+        allocation?.DeallocateStatPoint("character.body");
     }
 
     public void DeallocateSpirit()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] DeallocateSpirit -");
-        allocation?.DeallocateStatPoint("Spirit");
+        allocation?.DeallocateStatPoint("character.spirit");
     }
 
     public void DeallocateInsight()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] DeallocateInsight -");
-        allocation?.DeallocateStatPoint("Insight");
+        allocation?.DeallocateStatPoint("character.insight");
     }
 
     public void DeallocateEndurance()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] DeallocateEndurance -");
-        allocation?.DeallocateStatPoint("Endurance");
+        allocation?.DeallocateStatPoint("character.endurance");
     }
 
     public void DeallocateResilience()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] DeallocateResilience -");
-        allocation?.DeallocateStatPoint("Resilience");
+        allocation?.DeallocateStatPoint("character.resilience");
     }
 
     #endregion
@@ -249,13 +232,25 @@ public class StatAllocationUI : MonoBehaviour
     public void ConfirmAllocation()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] Confirm button pressed");
-        allocation?.ConfirmChanges();
+
+        if (allocation != null && allocation.HasPendingChanges)
+        {
+            allocation.ConfirmChanges();
+            // OnStatPointsChanged event will trigger UI refresh
+            UpdateAllocationPanelState();
+        }
     }
 
     public void CancelAllocation()
     {
         if (debugUI) Debug.Log("[StatAllocationUI] Cancel button pressed");
-        allocation?.CancelChanges();
+
+        if (allocation != null && allocation.HasPendingChanges)
+        {
+            allocation.CancelChanges();
+            // OnStatPointsChanged event will trigger UI refresh
+            UpdateAllocationPanelState();
+        }
     }
 
     #endregion

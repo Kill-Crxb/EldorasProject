@@ -49,7 +49,7 @@ public class FateSystem : MonoBehaviour
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
-        abilityModule = brain.GetModuleImplementing<IAbilityProvider>();
+        abilityModule = brain.Abilities;
 
         if (abilityModule == null)
         {
@@ -219,7 +219,7 @@ public class FateSystem : MonoBehaviour
         }
 
         // Try to execute via AbilityModule
-        var abilityMod = abilityModule as AbilityModule;
+        var abilityMod = abilityModule as AbilitySystem;
         if (abilityMod != null)
         {
             // Find which slot has this ability

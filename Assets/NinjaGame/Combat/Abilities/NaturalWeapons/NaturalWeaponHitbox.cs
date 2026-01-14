@@ -36,7 +36,7 @@ public class NaturalWeaponHitbox : MonoBehaviour
     [SerializeField] private bool showGizmos = true;
 
     // References (set via Initialize or animation events)
-    private DamageModule damageModule;
+    private DamageSystem damageSystem;
     private IHealthProvider healthProvider;
     private ControllerBrain brain;
     private Collider hitboxCollider;
@@ -75,9 +75,9 @@ public class NaturalWeaponHitbox : MonoBehaviour
     /// Initialize the hitbox with required references.
     /// Call this from NPCModule or archetype setup.
     /// </summary>
-    public void Initialize(DamageModule damage, IHealthProvider health)
+    public void Initialize(DamageSystem damage, IHealthProvider health)
     {
-        damageModule = damage;
+        damageSystem = damage;
         healthProvider = health;
 
         if (debugHitbox)
@@ -170,9 +170,9 @@ public class NaturalWeaponHitbox : MonoBehaviour
         }
 
         // Execute ability effects on target
-        if (damageModule != null && healthProvider != null)
+        if (damageSystem != null && healthProvider != null)
         {
-            ability.Execute(damageable, damageModule, healthProvider, transform.root);
+            ability.Execute(damageable, damageSystem, healthProvider, transform.root);
 
             if (debugHitbox)
             {
@@ -186,7 +186,7 @@ public class NaturalWeaponHitbox : MonoBehaviour
     }
 
     /// <summary>
-    /// Get ability definition from the entity's AbilityModule.
+    /// Get ability definition from the entity's AbilitySystem.
     /// </summary>
     private AbilityDefinition GetAbilityById(string abilityId)
     {
@@ -196,17 +196,17 @@ public class NaturalWeaponHitbox : MonoBehaviour
             return null;
         }
 
-        var abilityModule = brain.GetModule<AbilityModule>();
-        if (abilityModule == null)
+        var abilitySystem = brain.Abilities;
+        if (abilitySystem == null)
         {
-            Debug.LogError($"[NaturalWeaponHitbox] No AbilityModule found on {brain.name}");
+            Debug.LogError($"[NaturalWeaponHitbox] No AbilitySystem found on {brain.name}");
             return null;
         }
 
-        var ability = abilityModule.GetAbility(abilityId);
+        var ability = abilitySystem.GetAbility(abilityId);
         if (ability == null)
         {
-            Debug.LogWarning($"[NaturalWeaponHitbox] Ability '{abilityId}' not found in AbilityModule");
+            Debug.LogWarning($"[NaturalWeaponHitbox] Ability '{abilityId}' not found in AbilitySystem");
         }
 
         return ability;

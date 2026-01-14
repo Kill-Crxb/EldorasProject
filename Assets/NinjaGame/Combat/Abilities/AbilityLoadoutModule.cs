@@ -1,11 +1,25 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
-/// Manages which abilities/combos are assigned to quickslots.
-/// Tracks combo progression for each slot.
-/// Handles ability swapping and loadout management.
+/// Ability Loadout Module - Manages ability quickslots and combo progression
+/// 
+/// UPDATED: Now uses IAbilityControlSource pattern (matches MovementSystem)
+/// 
+/// Control Source Integration:
+/// - Polls activeControlSource.GetAbilitySlotToTrigger() each frame
+/// - Supports runtime control source switching (possession, admin, testing)
+/// - Works with PlayerAbilityControlSource, AIAbilityControlSource, or InputModule
+/// 
+/// Responsibilities:
+/// - Quickslot assignments (Q/Z/X/C/V)
+/// - Basic attack chain
+/// - Defense ability slot
+/// - Combo progression tracking
+/// - Combo timeout handling
+/// - Ability execution triggering
 /// </summary>
 public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
 {
@@ -37,16 +51,25 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
     [Tooltip("Time window to continue combo before resetting")]
     [SerializeField] private float comboResetTime = 2f;
 
+    [Header("Control Sources")]
+    [Tooltip("Available ability control sources (auto-discovered if empty)")]
+    [SerializeField] private List<MonoBehaviour> controlSourceComponents;
+
     [Header("Debug")]
     [SerializeField] private bool debugLoadout = false;
 
     private ControllerBrain brain;
+    private AbilitySystem abilitySystem;
 
     // Track current combo index for each slot
     private Dictionary<string, int> comboIndices = new Dictionary<string, int>();
 
     // Track last use time for combo reset
     private Dictionary<string, float> lastUseTime = new Dictionary<string, float>();
+
+    // Control source management
+    private IAbilityControlSource activeControlSource;
+    private List<IAbilityControlSource> availableControlSources;
 
     public bool IsEnabled { get; set; } = true;
 
@@ -55,9 +78,27 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
     public event Action<string> OnComboReset; // slotKey
     public event Action<string, AbilitySlotData> OnSlotChanged; // slotKey, newSlotData
 
+    // ========================================
+    // Properties
+    // ========================================
+
+    public IAbilityControlSource ActiveControlSource => activeControlSource;
+    public ControllerBrain Brain => brain;
+
+    // ========================================
+    // IBrainModule Implementation
+    // ========================================
+
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
+
+        // Get AbilityModule reference
+        abilitySystem = brain.Abilities;
+        if (abilitySystem == null)
+        {
+            Debug.LogError("[AbilityLoadoutModule] AbilitySystem not found!");
+        }
 
         // Initialize combo tracking
         InitializeSlot("BasicAttack");
@@ -67,9 +108,16 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
         InitializeSlot("C");
         InitializeSlot("V");
 
+        // Setup control sources
+        SetupControlSources();
+
+        // Activate default control source
+        ActivateDefaultControlSource();
+
         if (debugLoadout)
         {
-            Debug.Log("[AbilityLoadoutModule] Initialized");
+            Debug.Log($"[AbilityLoadoutModule] Initialized on {brain.name}");
+            Debug.Log($"  Active Control: {activeControlSource?.SourceName ?? "NONE"}");
             LogLoadout();
         }
     }
@@ -78,9 +126,158 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
     {
         if (!IsEnabled) return;
 
+        // Update active control source
+        activeControlSource?.UpdateSource();
+
+        // Poll for ability input
+        string slot = activeControlSource?.GetAbilitySlotToTrigger();
+        if (!string.IsNullOrEmpty(slot))
+        {
+            TriggerAbilitySlot(slot);
+        }
+
         // Check for combo timeouts
         CheckComboTimeouts();
     }
+
+    // ========================================
+    // Control Source Management
+    // ========================================
+
+    private void SetupControlSources()
+    {
+        availableControlSources = new List<IAbilityControlSource>();
+
+        // Find all control sources in children
+        var sources = GetComponentsInChildren<IAbilityControlSource>();
+        availableControlSources.AddRange(sources);
+
+        // Also check serialized list (for manual assignment)
+        if (controlSourceComponents != null)
+        {
+            foreach (var component in controlSourceComponents)
+            {
+                if (component is IAbilityControlSource source && !availableControlSources.Contains(source))
+                {
+                    availableControlSources.Add(source);
+                }
+            }
+        }
+
+        // CRITICAL: Check if InputSystem implements IAbilityControlSource
+        var inputSystem = brain.GetModule<InputSystem>();
+        if (inputSystem is IAbilityControlSource inputAsControlSource && !availableControlSources.Contains(inputAsControlSource))
+        {
+            availableControlSources.Add(inputAsControlSource);
+
+            if (debugLoadout)
+                Debug.Log("[AbilityLoadoutModule] Found InputSystem as control source");
+        }
+
+        if (debugLoadout)
+        {
+            Debug.Log($"[AbilityLoadoutModule] Found {availableControlSources.Count} control sources:");
+            foreach (var source in availableControlSources)
+            {
+                Debug.Log($"  - {source.SourceName}");
+            }
+        }
+    }
+
+    private void ActivateDefaultControlSource()
+    {
+        // Find first enabled control source
+        foreach (var source in availableControlSources)
+        {
+            var monoBehaviour = source as MonoBehaviour;
+            if (monoBehaviour != null && monoBehaviour.enabled)
+            {
+                SetControlSource(source);
+                return;
+            }
+        }
+
+        Debug.LogWarning($"[AbilityLoadoutModule] No enabled control source found on {brain.name}");
+    }
+
+    /// <summary>
+    /// Switch to a different control source at runtime
+    /// This enables possession, pets, cutscenes, etc.
+    /// </summary>
+    public void SetControlSource(IAbilityControlSource newSource)
+    {
+        if (newSource == activeControlSource) return;
+
+        // Deactivate current source
+        if (activeControlSource != null)
+        {
+            activeControlSource.OnDeactivated();
+
+            if (debugLoadout)
+                Debug.Log($"[AbilityLoadoutModule] Deactivated: {activeControlSource.SourceName}");
+        }
+
+        // Activate new source
+        activeControlSource = newSource;
+
+        if (activeControlSource != null)
+        {
+            activeControlSource.OnActivated();
+
+            if (debugLoadout)
+                Debug.Log($"[AbilityLoadoutModule] Activated: {activeControlSource.SourceName}");
+        }
+    }
+
+    /// <summary>
+    /// Get control source by type
+    /// Useful for possession: SetControlSource(GetControlSource<AdminAbilityControlSource>())
+    /// </summary>
+    public T GetControlSource<T>() where T : class, IAbilityControlSource
+    {
+        return availableControlSources.OfType<T>().FirstOrDefault();
+    }
+
+    // ========================================
+    // Ability Triggering
+    // ========================================
+
+    /// <summary>
+    /// Trigger an ability from a slot
+    /// Called when control source returns a slot key
+    /// </summary>
+    public void TriggerAbilitySlot(string slotKey)
+    {
+        var ability = GetCurrentAbilityForSlot(slotKey);
+        if (ability == null)
+        {
+            if (debugLoadout)
+                Debug.LogWarning($"[AbilityLoadoutModule] No ability in slot {slotKey}");
+            return;
+        }
+
+        // Check if ability can be used
+        if (abilitySystem != null && abilitySystem.CanUseAbility(ability.abilityId))
+        {
+            abilitySystem.UseAbility(ability.abilityId);
+            MarkSlotUsed(slotKey);
+
+            // Advance combo after successful use
+            AdvanceCombo(slotKey);
+
+            if (debugLoadout)
+                Debug.Log($"[AbilityLoadoutModule] Triggered {ability.abilityName} from slot {slotKey}");
+        }
+        else
+        {
+            if (debugLoadout)
+                Debug.Log($"[AbilityLoadoutModule] Cannot use {ability.abilityName} (cooldown/resources)");
+        }
+    }
+
+    // ========================================
+    // Slot Management
+    // ========================================
 
     private void InitializeSlot(string slotKey)
     {
@@ -351,5 +548,24 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
         }
 
         return true;
+    }
+
+    // ========================================
+    // Debug Info
+    // ========================================
+
+    private void OnGUI()
+    {
+        if (!debugLoadout || !Application.isPlaying) return;
+
+        GUILayout.BeginArea(new Rect(10, 500, 300, 200));
+        GUILayout.Label("=== ABILITY LOADOUT ===");
+        GUILayout.Label($"Control: {activeControlSource?.SourceName ?? "NONE"}");
+        GUILayout.Label($"BasicAttack: {basicAttackChain?.slotName ?? "Empty"}");
+
+        var qAbility = GetCurrentAbilityForSlot("Q");
+        GUILayout.Label($"Q: {qAbility?.abilityName ?? "Empty"} [{GetComboProgressText("Q")}]");
+
+        GUILayout.EndArea();
     }
 }

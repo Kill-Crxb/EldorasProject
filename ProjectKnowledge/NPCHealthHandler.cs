@@ -15,7 +15,7 @@ public class NPCHealthHandler : MonoBehaviour, INPCHandler
     // Component references
     private NPCModule parentNPC;
     private ControllerBrain brain;
-    private DamageModule damageIn;
+    private DamageSystem damageIn;
     private IHealthProvider healthAdapter;
     private AISystem aiSystem; // UPDATED: Use AISystem instead of AIModule
 
@@ -47,7 +47,7 @@ public class NPCHealthHandler : MonoBehaviour, INPCHandler
         }
 
         // Find DamageModule component (should be under Component_Brain or Component_Damage)
-        damageIn = brain.GetComponentInChildren<DamageModule>();
+        damageIn = brain.GetComponentInChildren<DamageSystem>();
         if (damageIn == null)
         {
             Debug.LogError($"[NPCHealthHandler] {parent.NPCName}: No DamageModule found! " +

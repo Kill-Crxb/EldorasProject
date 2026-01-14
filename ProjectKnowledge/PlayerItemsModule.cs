@@ -1,4 +1,4 @@
-// PlayerItemsModule.cs - Clean data module for new three-layer system
+
 using UnityEngine;
 using System;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ public class PlayerItemsModule : MonoBehaviour, IPlayerModule, ISaveable, IInven
 
     // System references
     private ControllerBrain brain;
-    private RPGSecondaryStats statsSystem;
+    private StatSystem statSystem;
 
 
     // Properties
@@ -42,7 +42,7 @@ public class PlayerItemsModule : MonoBehaviour, IPlayerModule, ISaveable, IInven
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
-        statsSystem = brain.GetModule<RPGSecondaryStats>();
+        statSystem = brain.StatSystem; 
 
         StartCoroutine(RegisterEquipmentSlotsDelayed());
 
@@ -313,20 +313,21 @@ public class PlayerItemsModule : MonoBehaviour, IPlayerModule, ISaveable, IInven
     #endregion
 
     #region Stats Integration
+    // MIGRATED: Updated to use StatSystem instead of RPGSecondaryStats
 
     private void ApplyItemStats(ItemInstance item)
     {
-        if (statsSystem != null && item != null)
+        if (statSystem != null && item != null)
         {
-            item.ApplyToStatsSystem(statsSystem);
+            item.ApplyToStatsSystem(statSystem);
         }
     }
 
     private void RemoveItemStats(ItemInstance item)
     {
-        if (statsSystem != null && item != null)
+        if (statSystem != null && item != null)
         {
-            statsSystem.RemoveAllModifiersFromSource(item.instanceId);
+            statSystem.Engine.RemoveAllModifiersFromSource(item.instanceId);
         }
     }
 
@@ -342,33 +343,48 @@ public class PlayerItemsModule : MonoBehaviour, IPlayerModule, ISaveable, IInven
         {
             inventoryItems = inventoryItems.ToArray(),
             equippedItems = equippedItems,
-            version = 4
+            version = GetSaveVersion()
         };
-        return JsonUtility.ToJson(saveData, true);
+
+        return JsonUtility.ToJson(saveData);
     }
 
     public void LoadSaveData(string json)
     {
-        var saveData = JsonUtility.FromJson<PlayerItemsSaveData>(json);
-        if (saveData == null)
+        if (string.IsNullOrEmpty(json))
         {
-            if (debugOperations) Debug.LogWarning("Failed to load save data");
+            if (debugOperations)
+                Debug.LogWarning("PlayerItemsModule: Empty save data, starting fresh");
             return;
         }
 
-        // Clear existing data
+        var saveData = JsonUtility.FromJson<PlayerItemsSaveData>(json);
+
+        // Version check
+        if (saveData.version != GetSaveVersion())
+        {
+            Debug.LogWarning($"PlayerItemsModule: Save version mismatch (saved: {saveData.version}, current: {GetSaveVersion()})");
+        }
+
+        // Clear current data
         ClearAllItems();
 
         // Load inventory
         if (saveData.inventoryItems != null)
         {
-            inventoryItems = new List<ItemInstance>(saveData.inventoryItems);
+            foreach (var item in saveData.inventoryItems)
+            {
+                if (item != null)
+                {
+                    inventoryItems.Add(item);
+                }
+            }
         }
 
         // Load equipment
         if (saveData.equippedItems != null)
         {
-            for (int i = 0; i < saveData.equippedItems.Length && i < equippedItems.Length; i++)
+            for (int i = 0; i < Mathf.Min(saveData.equippedItems.Length, equippedItems.Length); i++)
             {
                 if (saveData.equippedItems[i] != null)
                 {
@@ -498,7 +514,7 @@ public class PlayerItemsModule : MonoBehaviour, IPlayerModule, ISaveable, IInven
         Debug.Log($"=== PlayerItemsModule Status ===");
         Debug.Log($"Inventory: {inventoryItems.Count}/{maxInventorySlots} slots used");
         Debug.Log($"Equipment: {equippedItems.Count(i => i != null)}/{equippedItems.Length} slots equipped");
-        Debug.Log($"Stats System: {(statsSystem != null ? "Connected" : "Missing")}");
+        Debug.Log($"Stats System: {(statSystem != null ? "Connected" : "Missing")}");
 
         // Show placed items
         Debug.Log($"\nPlaced Items:");

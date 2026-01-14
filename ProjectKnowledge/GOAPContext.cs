@@ -75,15 +75,15 @@ public class GOAPContext
         self = brain.transform;
 
         // Cache module references
-        abilityModule = brain.GetModuleImplementing<IAbilityProvider>();
-        movementSystem = brain.GetModule<MovementSystem>(); // UPDATED
+        abilityModule = brain.Abilities;
+        movementSystem = brain.Movement; // UPDATED
         healthModule = brain.GetModuleImplementing<IHealthProvider>();
         resourceModule = brain.GetModuleImplementing<IResourceProvider>();
         pathfinding = brain.GetModule<PathfindingModule>();
         perception = brain.GetModule<PerceptionModule>();
 
         if (abilityModule == null)
-            Debug.LogWarning("[GOAPContext] No IAbilityProvider found - abilities won't work");
+            Debug.LogWarning("[GOAPContext] No AbilitySystem found - abilities won't work");
         if (movementSystem == null)
             Debug.LogWarning("[GOAPContext] No MovementSystem found - movement won't work");
         if (healthModule == null)
@@ -171,7 +171,7 @@ public class GOAPContext
         // Check if ability is executing
         if (abilityModule != null)
         {
-            var abilityMod = abilityModule as AbilityModule;
+            var abilityMod = abilityModule as AbilitySystem;
             if (abilityMod != null)
                 newBusy |= abilityMod.IsExecuting;
         }
@@ -220,7 +220,7 @@ public class GOAPContext
         isBusy = false;
 
         // Force-clear ability execution
-        var abilityMod = abilityModule as AbilityModule;
+        var abilityMod = abilityModule as AbilitySystem;
         if (abilityMod != null)
         {
             abilityMod.CancelCurrentAbility();
@@ -242,7 +242,7 @@ public class GOAPContext
     {
         if (abilityModule == null) return false;
 
-        var abilityMod = abilityModule as AbilityModule;
+        var abilityMod = abilityModule as AbilitySystem;
         if (abilityMod == null) return false;
 
         return abilityMod.CanUseAbility(slotKey);

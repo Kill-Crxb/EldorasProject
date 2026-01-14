@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public enum MovementStyle
 {
@@ -15,6 +15,14 @@ public class ARPGLocomotionHandler : LocomotionHandler
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private float acceleration = 8f;
     [SerializeField] private float deceleration = 10f;
+
+    [Header("Walk/Run Toggle")]
+    [Tooltip("Enable walk/run toggle - tap sprint to toggle, hold sprint to sprint")]
+    [SerializeField] private bool enableWalkRunToggle = false;
+    [Tooltip("Start in walk mode (slower). If false, starts in run mode (faster)")]
+    [SerializeField] private bool startInWalkMode = false;
+    [Tooltip("Time window to detect tap vs hold (seconds)")]
+    [SerializeField] private float tapWindow = 0.3f;
 
     [Header("Lock-On / Strafe")]
     [SerializeField] private float strafeWalkSpeed = 1.5f;
@@ -39,6 +47,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
 
     // References
     private IAnimationProvider animationProvider;
+    private TargetLockModule targetLock;
 
     // State
     private Vector3 targetVelocity;
@@ -47,6 +56,11 @@ public class ARPGLocomotionHandler : LocomotionHandler
     private bool isSprinting;
     private bool isLockedOn;
     private bool abilityDashing; // Tracks if ability dash is active
+
+    // Walk/Run toggle state
+    private bool isInWalkMode;
+    private bool wasSprintingLastFrame;
+    private float sprintPressTime;
 
     // Jump
     private float lastGroundedTime;
@@ -57,13 +71,50 @@ public class ARPGLocomotionHandler : LocomotionHandler
     {
         base.Initialize(system);
         animationProvider = system.Brain.GetModuleImplementing<IAnimationProvider>();
+        targetLock = system.Brain.GetModule<TargetLockModule>();
+
+        // Initialize walk/run toggle state
+        isInWalkMode = startInWalkMode;
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"[ARPGLocomotion] Initialized - " +
+                     $"TargetLock: {(targetLock != null ? "Found" : "None")}, " +
+                     $"Speeds [W:{walkSpeed} R:{runSpeed} S:{sprintSpeed}]");
+        }
     }
 
     public override void ExecuteMovement(MovementInput input)
     {
         movementInput = input.MoveDirection;
-        isSprinting = input.Sprint;
-        isLockedOn = input.HasLookInput;
+
+        // Check actual target lock state (not just look input)
+        isLockedOn = targetLock != null && targetLock.IsLockedOn;
+
+        // Walk/Run toggle detection (if enabled) - do this FIRST to set sprintPressTime
+        if (enableWalkRunToggle)
+        {
+            HandleWalkRunToggle(input.Sprint);
+        }
+
+        // Handle sprint with tap window consideration
+        // Suppress sprint during brief taps to prevent animation flicker
+        if (enableWalkRunToggle)
+        {
+            // Only sprint if held longer than tap window
+            float heldDuration = input.Sprint ? (Time.time - sprintPressTime) : 0f;
+            isSprinting = input.Sprint && heldDuration >= tapWindow;
+
+            if (showDebugInfo && input.Sprint && !isSprinting)
+            {
+                Debug.Log($"[Sprint] Suppressed during tap window (held: {heldDuration:F3}s, need: {tapWindow:F3}s)");
+            }
+        }
+        else
+        {
+            // Walk toggle disabled - sprint works normally
+            isSprinting = input.Sprint;
+        }
 
         ApplyGravity();
 
@@ -109,6 +160,41 @@ public class ARPGLocomotionHandler : LocomotionHandler
         }
     }
 
+    /// <summary>
+    /// Handle walk/run toggle detection
+    /// Tap sprint key = toggle walk/run mode
+    /// Hold sprint key = sprint normally
+    /// </summary>
+    void HandleWalkRunToggle(bool sprintInput)
+    {
+        // Detect sprint key press (transition from not sprinting to sprinting)
+        if (sprintInput && !wasSprintingLastFrame)
+        {
+            sprintPressTime = Time.time;
+        }
+
+        // Detect sprint key release (transition from sprinting to not sprinting)
+        if (!sprintInput && wasSprintingLastFrame)
+        {
+            float pressDuration = Time.time - sprintPressTime;
+
+            // Tap detected - toggle walk/run mode
+            if (pressDuration < tapWindow)
+            {
+                isInWalkMode = !isInWalkMode;
+
+                if (showDebugInfo)
+                {
+                    float currentSpeed = isInWalkMode ? walkSpeed : runSpeed;
+                    Debug.Log($"[ARPGLocomotion] Walk/Run toggled to: {(isInWalkMode ? "WALK" : "RUN")} " +
+                             $"(speed: {currentSpeed:F2})");
+                }
+            }
+        }
+
+        wasSprintingLastFrame = sprintInput;
+    }
+
     // ============================
     // Movement
     // ============================
@@ -122,12 +208,23 @@ public class ARPGLocomotionHandler : LocomotionHandler
             float speed = GetMoveSpeed();
             targetVelocity = moveDir.normalized * speed;
 
+            if (showDebugInfo)
+            {
+                Debug.Log($"[HandleFreeMovement] MoveDir: {moveDir.magnitude:F2}, " +
+                         $"TargetSpeed: {speed:F2}, TargetVelocity: {targetVelocity.magnitude:F2}");
+            }
+
             Quaternion targetRot = Quaternion.LookRotation(moveDir);
             rootTransform.rotation = Quaternion.Lerp(
                 rootTransform.rotation,
                 targetRot,
                 rotationSpeed * Time.deltaTime
             );
+            // NOTE (Polish): Vector3.Lerp asymptotically approaches zero,
+            // leaving tiny residual velocities (eg. ~1e-7).
+            // This can cause very small non-zero MovementSpeed values in the animator.
+            // Safe to clamp currentVelocity or animation speed to zero during polish pass.
+
         }
         else
         {
@@ -143,6 +240,13 @@ public class ARPGLocomotionHandler : LocomotionHandler
             targetVelocity,
             lerp * Time.deltaTime
         );
+
+        if (showDebugInfo && Time.frameCount % 30 == 0) // Log every 30 frames
+        {
+            Debug.Log($"[Velocity] Current: {currentVelocity.magnitude:F2}, " +
+                     $"Target: {targetVelocity.magnitude:F2}, " +
+                     $"Lerp: {lerp:F2}");
+        }
 
         normalizedStrafeInput = Vector2.zero;
     }
@@ -185,20 +289,68 @@ public class ARPGLocomotionHandler : LocomotionHandler
             targetVelocity,
             acceleration * 1.5f * Time.deltaTime
         );
+
+        // NOTE (Polish): Vector3.Lerp asymptotically approaches zero,
+        // leaving tiny residual velocities (eg. ~1e-7).
+        // This can cause very small non-zero MovementSpeed values in the animator.
+        // Safe to clamp currentVelocity or animation speed to zero during polish pass.
     }
 
     float GetMoveSpeed()
     {
-        if (isSprinting) return sprintSpeed;
-        if (movementInput.magnitude > 0.5f) return runSpeed;
-        return walkSpeed;
+        float baseSpeed;
+        string speedType;
+
+        // Intent-based speed selection (not magnitude-based)
+        if (isSprinting)
+        {
+            baseSpeed = sprintSpeed;
+            speedType = "SPRINT";
+        }
+        else if (enableWalkRunToggle && isInWalkMode)
+        {
+            // Walk mode toggled on
+            baseSpeed = walkSpeed;
+            speedType = "WALK (toggled)";
+        }
+        else
+        {
+            // Default running
+            baseSpeed = runSpeed;
+            speedType = "RUN";
+        }
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"[GetMoveSpeed] Type: {speedType}, Speed: {baseSpeed:F2}, " +
+                     $"InputMag: {movementInput.magnitude:F2}, isSprinting: {isSprinting}, " +
+                     $"isInWalkMode: {isInWalkMode}");
+        }
+
+        return baseSpeed;
     }
 
     float GetStrafeSpeed()
     {
-        if (isSprinting) return strafeSprintSpeed;
-        if (movementInput.magnitude > 0.5f) return strafeRunSpeed;
-        return strafeWalkSpeed;
+        float baseSpeed;
+
+        // Intent-based speed selection (same as GetMoveSpeed)
+        if (isSprinting)
+        {
+            baseSpeed = strafeSprintSpeed;
+        }
+        else if (enableWalkRunToggle && isInWalkMode)
+        {
+            // Walk mode toggled on
+            baseSpeed = strafeWalkSpeed;
+        }
+        else
+        {
+            // Default running
+            baseSpeed = strafeRunSpeed;
+        }
+
+        return baseSpeed;
     }
 
     // ============================
@@ -268,12 +420,24 @@ public class ARPGLocomotionHandler : LocomotionHandler
 
     void UpdateAnimations()
     {
-        if (animationProvider == null) return;
+        if (animationProvider == null)
+        {
+            if (showDebugInfo)
+                Debug.LogWarning("[UpdateAnimations] AnimationProvider is NULL!");
+            return;
+        }
 
-        // Movement speed (normalized 0-1, clamped to prevent overshoot)
-        float normalizedSpeed = currentVelocity.magnitude / sprintSpeed;
-        normalizedSpeed = Mathf.Clamp01(normalizedSpeed);
-        animationProvider.SetFloat(movementSpeedParam, normalizedSpeed);
+        // VELOCITY-BASED ANIMATION (for smooth blending)
+        // Send actual velocity magnitude to animator
+        // The blend tree will smoothly interpolate between animation states
+        float speed = currentVelocity.magnitude;
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"[UpdateAnimations] Velocity: {speed:F2} → Sent to animator '{movementSpeedParam}'");
+        }
+
+        animationProvider.SetFloat(movementSpeedParam, speed);
 
         // Grounded state
         animationProvider.SetBool(isGroundedParam, movementSystem.IsGrounded);
@@ -285,6 +449,55 @@ public class ARPGLocomotionHandler : LocomotionHandler
         animationProvider.SetFloat(strafeXParam, normalizedStrafeInput.x);
         animationProvider.SetFloat(strafeYParam, normalizedStrafeInput.y);
     }
+
+    /*
+    /// <summary>
+    /// Calculate animation state based on input intent
+    /// Returns: 0 = Idle, 1 = Walk, 2 = Run, 3 = Sprint
+    /// 
+    /// NOTE: Currently unused - using velocity-based animation instead.
+    /// Kept for reference in case you want to switch back to discrete states.
+    /// </summary>
+    int GetAnimationSpeedFromIntent()
+    {
+        int result;
+        string reason;
+
+        // No input = Idle
+        if (movementInput.magnitude < 0.1f)
+        {
+            result = 0; // Idle
+            reason = $"No input (mag: {movementInput.magnitude:F3})";
+        }
+        // Sprinting
+        else if (isSprinting)
+        {
+            result = 3; // Sprint
+            reason = "Sprinting";
+        }
+        // Walk mode toggled on
+        else if (enableWalkRunToggle && isInWalkMode)
+        {
+            result = 1; // Walk
+            reason = "Walk mode toggled ON";
+        }
+        // Default running
+        else
+        {
+            result = 2; // Run
+            reason = "Default run mode";
+        }
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"[GetAnimationSpeedFromIntent] Result: {result}, Reason: {reason}, " +
+                     $"Input: {movementInput}, isSprinting: {isSprinting}, " +
+                     $"walkToggleEnabled: {enableWalkRunToggle}, isInWalkMode: {isInWalkMode}");
+        }
+
+        return result;
+    }
+    */
 
     // ============================
     // Ability Support (called by MovementEffect)
@@ -363,4 +576,26 @@ public class ARPGLocomotionHandler : LocomotionHandler
     /// Is an ability dash currently active?
     /// </summary>
     public bool IsAbilityDashing => abilityDashing;
+
+    /// <summary>
+    /// Is walk mode currently active? (slower movement when toggle is enabled)
+    /// </summary>
+    public bool IsInWalkMode => enableWalkRunToggle && isInWalkMode;
+
+    // ============================
+    // Debug / Testing
+    // ============================
+
+    [ContextMenu("Toggle Walk/Run Mode")]
+    void DebugToggleWalkRun()
+    {
+        if (!enableWalkRunToggle)
+        {
+            Debug.LogWarning("[ARPGLocomotion] Walk/Run toggle is disabled in Inspector!");
+            return;
+        }
+
+        isInWalkMode = !isInWalkMode;
+        Debug.Log($"[ARPGLocomotion] Manually toggled to: {(isInWalkMode ? "WALK" : "RUN")}");
+    }
 }

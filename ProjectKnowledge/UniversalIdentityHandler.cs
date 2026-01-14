@@ -7,7 +7,7 @@ using System;
 /// 
 /// Replaces old player-specific IdentityHandler.cs
 /// </summary>
-public class UniversalIdentityHandler : MonoBehaviour, IIdentityHandler
+public class UniversalIdentityHandler : MonoBehaviour, IIdentityHandler, IIdentityLevel
 {
     [Header("Handler Settings")]
     [SerializeField] private bool isEnabled = true;

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 /// Created as ScriptableObject or loaded from JSON.
 /// Example: "Wildlife + Beast + Soldier = Wolf"
 /// 
-/// UPDATED: Added GOAP goals and actions support
+/// Phase 1.7b: Added level scaling support for universal RPGSystem
 /// </summary>
 [CreateAssetMenu(fileName = "NPCArchetype", menuName = "RPG/NPC/Archetype")]
 public class NPCArchetype : ScriptableObject
@@ -22,6 +22,18 @@ public class NPCArchetype : ScriptableObject
 
     [Header("Stat Allocation")]
     public StatAllocation baseStats;
+
+    [Header("Level & Scaling")]
+    [Tooltip("Starting level for this archetype (can be overridden per-NPC via RPGSystem)")]
+    [Range(1, 30)]
+    public int baseLevel = 1;
+
+    [Tooltip("How much each core stat grows per level (0 = no scaling, 2 = +2 per level)")]
+    [Range(0f, 5f)]
+    public float statGrowthPerLevel = 2f;
+
+    [Tooltip("Use scaled growth curve (more realistic) vs linear growth")]
+    public bool useScaledGrowth = true;
 
     [Header("Equipment & Weapons")]
     public string mainHandWeaponId;     // "weapon_wolf_bite"
@@ -122,10 +134,7 @@ public class NPCArchetype : ScriptableObject
     public bool UsesGOAP => aiSystemType == AISystemType.GOAP;
 }
 
-/// <summary>
-/// Base stat allocation for NPCs
-/// Maps to RPGCoreStats
-/// </summary>
+
 [System.Serializable]
 public class StatAllocation
 {

@@ -10,26 +10,30 @@ public enum FeetContactType
 
 public class ControllerBrain : MonoBehaviour
 {
-    private const float BRAIN_GIZMO_HEIGHT = 3f;
-    private const float BRAIN_GIZMO_RADIUS = 0.5f;
-
     [Header("Root References")]
     [SerializeField] private Transform e_Root;
     [SerializeField] private Transform m_Root;
     [SerializeField] private Animator animator;
 
-    [Header("Systems (New Architecture)")]
+    [Header("Systems")]
     [Tooltip("Universal identity system (Player/NPC/Object)")]
     [SerializeField] private IdentitySystem identitySystem;
+    [Tooltip("RPG progression system (level, XP, stat allocation) - Player only")]
+    [SerializeField] private RPGSystem rpgSystem;
+    [Header("Systems")]
+    [SerializeField] private DamageSystem damageSystem;
     [Tooltip("Universal movement system (all entities)")]
     [SerializeField] private MovementSystem movementSystem;
     [Tooltip("Universal animation system (all entities)")]
     [SerializeField] private AnimationSystem animationSystem;
+    [Tooltip("Universal ability system (cooldowns, effects, execution)")]
+    [SerializeField] private AbilitySystem abilitySystem;
+    [Tooltip("Universal stat system (data-driven stats with formulas and modifiers)")]
+    [SerializeField] private StatSystem statSystem;
+    [Tooltip("Universal input system (keyboard/gamepad/AI/network control)")]
+    [SerializeField] private InputSystem inputSystem;
 
-    [Header("Provider Coordinators (Legacy - Gradual Migration)")]
-    [SerializeField] private StatsProviderCoordinator statsProviderCoordinator;
-    [SerializeField] private InputProviderCoordinator inputProviderCoordinator;
-    [SerializeField] private CombatProviderCoordinator combatProviderCoordinator;
+    [Header("Provider Coordinators (Legacy - Being Phased Out)")]
     [SerializeField] private InventoryProviderCoordinator inventoryProviderCoordinator;
     [SerializeField] private CameraCoordinator cameraCoordinator;
 
@@ -73,15 +77,17 @@ public class ControllerBrain : MonoBehaviour
         }
     }
 
-    // Systems (New Architecture)
+    // Systems
     public IdentitySystem Identity => identitySystem;
     public MovementSystem Movement => movementSystem;
     public AnimationSystem Animation => animationSystem;
+    public AbilitySystem Abilities => abilitySystem;
+    public StatSystem Stats => statSystem;
+    public RPGSystem RPG => rpgSystem;
+    public StatSystem StatSystem => statSystem; // Alias for consistency with migrated code
+    public DamageSystem Damage => damageSystem;
 
-    // Provider coordinators (Legacy)
-    public StatsProviderCoordinator StatsProvider => statsProviderCoordinator;
-    public InputProviderCoordinator InputProvider => inputProviderCoordinator;
-    public CombatProviderCoordinator CombatProvider => combatProviderCoordinator;
+    // Provider coordinators
     public InventoryProviderCoordinator InventoryProvider => inventoryProviderCoordinator;
     public CameraCoordinator CameraProvider => cameraCoordinator;
 
@@ -136,7 +142,7 @@ public class ControllerBrain : MonoBehaviour
     {
         bool allValid = true;
 
-        // Phase 1: Initialize Systems (New Architecture)
+        // Initialize Core Systems
         if (identitySystem != null && identitySystem is IBrainModule identityModule)
         {
             identityModule.Initialize(this);
@@ -146,116 +152,82 @@ public class ControllerBrain : MonoBehaviour
             Debug.LogWarning($"[{name}] No IdentitySystem assigned!", this);
         }
 
-        if (movementSystem != null && movementSystem is IBrainModule movementModule)
+        // NOTE: MovementSystem initialized later in InitializeModules() after InputSystem is ready
+        // NOTE: AnimationSystem initialized later in InitializeModules()
+
+        if (statSystem != null && statSystem is IBrainModule statModule)
         {
-            movementModule.Initialize(this);
-        }
-        else if (movementSystem == null)
-        {
-            Debug.LogWarning($"[{name}] No MovementSystem assigned!", this);
+            statModule.Initialize(this);
         }
 
-        if (animationSystem != null && animationSystem is IBrainModule animationModule)
-        {
-            animationModule.Initialize(this);
-        }
-        else if (animationSystem == null)
-        {
-            Debug.LogWarning($"[{name}] No AnimationSystem assigned!", this);
-        }
 
-        // Phase 2: Validate and initialize provider coordinators (Legacy)
-        if (statsProviderCoordinator == null)
-        {
-            Debug.LogError($"[{name}] StatsProviderCoordinator is REQUIRED!");
-            allValid = false;
-        }
-        else
-        {
-            statsProviderCoordinator.Initialize(this);
-            if (!statsProviderCoordinator.IsEnabled)
-                allValid = false;
-        }
+        // Validate and initialize provider coordinators (Legacy)
+        // NOTE: Input and Combat now handled by InputSystem and AbilitySystem
 
-        if (combatProviderCoordinator == null)
-        {
-            Debug.LogError($"[{name}] CombatProviderCoordinator is REQUIRED!");
-            allValid = false;
-        }
-        else
-        {
-            combatProviderCoordinator.Initialize(this);
-            if (!combatProviderCoordinator.IsEnabled)
-                allValid = false;
-        }
-
-        // Optional coordinators - Phase 1
+        // Optional coordinators (legacy - being phased out)
         inventoryProviderCoordinator?.Initialize(this);
-        inputProviderCoordinator?.Initialize(this);
 
-        // Phase 2: Build the central provider cache
+        // Build the central provider cache
         BuildProviderCache();
 
-        // Phase 3: Initialize child modules (they can now access the cache)
-        // Note: IdentitySystem no longer needs InitializeChildModules (not a coordinator)
-        statsProviderCoordinator?.InitializeChildModules();
-        combatProviderCoordinator?.InitializeChildModules();
+        // Initialize child modules (they can now access the cache)
         inventoryProviderCoordinator?.InitializeChildModules();
-        inputProviderCoordinator?.InitializeChildModules();
 
         if (!allValid)
         {
             Debug.LogError($"[{name}] Brain validation FAILED! Check missing provider slots above.");
-            enabled = false;
             return;
         }
     }
 
     void BuildProviderCache()
     {
-        // Cache IdentitySystem (New Architecture)
+        // Cache IdentitySystem
         if (identitySystem != null)
         {
             providerCache[typeof(IdentitySystem)] = identitySystem;
-
-            // Optional: Cache sub-components if needed by legacy code
-            // providerCache[typeof(IIdentityProvider)] = identitySystem;
         }
 
-        if (statsProviderCoordinator != null)
+        // Cache InputSystem (implements multiple interfaces)
+        if (inputSystem != null)
         {
-            providerCache[typeof(ICombatStatsProvider)] = statsProviderCoordinator.CombatStats;
-            providerCache[typeof(IHealthProvider)] = statsProviderCoordinator.Health;
-            providerCache[typeof(IResourceProvider)] = statsProviderCoordinator.Resources;
+            providerCache[typeof(InputSystem)] = inputSystem;
+            providerCache[typeof(IInputProvider)] = inputSystem;
+            providerCache[typeof(IMovementControlSource)] = inputSystem;
+            providerCache[typeof(IAbilityControlSource)] = inputSystem;
         }
 
-        if (combatProviderCoordinator != null)
+        // Cache AbilitySystem (replaces CombatProviderCoordinator.Ability)
+        if (abilitySystem != null)
         {
-            // REMOVED: IAttackProvider - deprecated, use IAbilityProvider
-            providerCache[typeof(IAbilityProvider)] = combatProviderCoordinator.Ability;
-            providerCache[typeof(IDefenseProvider)] = combatProviderCoordinator.Defense;
+            providerCache[typeof(AbilitySystem)] = abilitySystem;
+            providerCache[typeof(IAbilityProvider)] = abilitySystem;
         }
 
-        // New Systems (New Architecture)
+        // Cache AnimationSystem
         if (animationSystem != null)
         {
+            providerCache[typeof(AnimationSystem)] = animationSystem;
             providerCache[typeof(IAnimationProvider)] = animationSystem;
         }
 
+        // Cache MovementSystem
+        if (movementSystem != null)
+        {
+            providerCache[typeof(MovementSystem)] = movementSystem;
+        }
+
+        // Cache CameraCoordinator
         if (cameraCoordinator != null)
         {
             providerCache[typeof(ICameraProvider)] = cameraCoordinator;
         }
 
+        // Cache InventoryProviderCoordinator (legacy - being phased out)
         if (inventoryProviderCoordinator != null)
         {
             providerCache[typeof(IInventoryProvider)] = inventoryProviderCoordinator.Inventory;
             providerCache[typeof(IEquipmentProvider)] = inventoryProviderCoordinator.Equipment;
-        }
-
-        if (inputProviderCoordinator != null)
-        {
-            providerCache[typeof(IInputProvider)] = inputProviderCoordinator.Input;
         }
     }
 
@@ -313,6 +285,43 @@ public class ControllerBrain : MonoBehaviour
             physicsModules = physicsList.ToArray();
             inputHandlers = inputList.ToArray();
 
+            // CRITICAL: Ensure assigned system references are in update list
+            // (GetComponentsInChildren might miss them if they're disabled or in specific positions)
+            if (inputSystem != null && !updateList.Contains(inputSystem))
+            {
+                var tempList = new List<IBrainModule>(updateModules);
+                tempList.Add(inputSystem);
+                updateModules = tempList.ToArray();
+            }
+
+            if (movementSystem != null && !updateList.Contains(movementSystem))
+            {
+                var tempList = new List<IBrainModule>(updateModules);
+                tempList.Add(movementSystem);
+                updateModules = tempList.ToArray();
+            }
+
+            if (animationSystem != null && !updateList.Contains(animationSystem))
+            {
+                var tempList = new List<IBrainModule>(updateModules);
+                tempList.Add(animationSystem);
+                updateModules = tempList.ToArray();
+            }
+
+            if (statSystem != null && !updateList.Contains(statSystem))
+            {
+                var tempList = new List<IBrainModule>(updateModules);
+                tempList.Add(statSystem);
+                updateModules = tempList.ToArray();
+            }
+
+            if (identitySystem != null && !updateList.Contains(identitySystem))
+            {
+                var tempList = new List<IBrainModule>(updateModules);
+                tempList.Add(identitySystem);
+                updateModules = tempList.ToArray();
+            }
+
             Debug.Log($"[{name}] Module Lists: Update={updateModules.Length}, Physics={physicsModules.Length}, Input={inputHandlers.Length}");
         }
         catch (System.Exception ex)
@@ -331,9 +340,35 @@ public class ControllerBrain : MonoBehaviour
         if (cameraCoordinator != null)
             cameraCoordinator.Initialize(this);
 
-        // Initialize all active modules
+        // Initialize core systems in correct order
+        // InputSystem FIRST (needs PlayerInputControls from InitializeInputSystem)
+        if (inputSystem != null && inputSystem is IBrainModule inputModule)
+            inputModule.Initialize(this);
+
+        // MovementSystem SECOND (needs InputSystem as control source)
+        if (movementSystem != null && movementSystem is IBrainModule movementModule)
+            movementModule.Initialize(this);
+
+        // AnimationSystem THIRD
+        if (animationSystem != null && animationSystem is IBrainModule animationModule)
+            animationModule.Initialize(this);
+
+        // AbilitySystem FOURTH (needs InputSystem as control source)
+        if (abilitySystem != null && abilitySystem is IBrainModule abilityModule)
+            abilityModule.Initialize(this);
+
+        // Rebuild provider cache now that InputSystem is initialized
+        BuildProviderCache();
+
+        // Initialize remaining modules
         foreach (var module in updateModules)
         {
+            // Skip core systems - already initialized above
+            if (module == movementSystem || module == animationSystem ||
+                module == abilitySystem || module == inputSystem || module == statSystem || module == identitySystem)
+
+                continue;
+
             module.Initialize(this);
         }
 
@@ -388,16 +423,6 @@ public class ControllerBrain : MonoBehaviour
     {
         if (playerInputControls == null) return;
 
-        // DEPRECATED:         // Subscribe ThirdPersonController to movement inputs
-        // DEPRECATED:         var controller = GetComponentInChildren<ThirdPersonController>();
-        // DEPRECATED:         if (controller != null)
-        // DEPRECATED:         {
-        // DEPRECATED:             playerInputControls.Player.Move.performed += controller.OnMoveInput;
-        // DEPRECATED:             playerInputControls.Player.Move.canceled += controller.OnMoveInput;
-        // DEPRECATED:             playerInputControls.Player.Sprint.started += controller.OnSprintStarted;
-        // DEPRECATED:             playerInputControls.Player.Sprint.canceled += controller.OnSprintCanceled;
-        // DEPRECATED:         }
-
         // Subscribe all input handlers
         foreach (var handler in inputHandlers)
         {
@@ -409,15 +434,6 @@ public class ControllerBrain : MonoBehaviour
     {
         if (playerInputControls == null) return;
 
-        // DEPRECATED:         // Unsubscribe ThirdPersonController
-        // DEPRECATED:         var controller = GetComponentInChildren<ThirdPersonController>();
-        // DEPRECATED:         if (controller != null)
-        // DEPRECATED:         {
-        // DEPRECATED:             playerInputControls.Player.Move.performed -= controller.OnMoveInput;
-        // DEPRECATED:             playerInputControls.Player.Move.canceled -= controller.OnMoveInput;
-        // DEPRECATED:             playerInputControls.Player.Sprint.started -= controller.OnSprintStarted;
-        // DEPRECATED:             playerInputControls.Player.Sprint.canceled -= controller.OnSprintCanceled;
-        // DEPRECATED:         }
 
         // Unsubscribe all input handlers
         foreach (var handler in inputHandlers)
@@ -514,7 +530,6 @@ public class ControllerBrain : MonoBehaviour
     public PlayerInputControls GetInputControls() => playerInputControls;
 
     // Combat shortcuts
-    public ICombatStatsProvider CombatStats => GetProvider<ICombatStatsProvider>();
     public IHealthProvider Health => GetProvider<IHealthProvider>();
     public IResourceProvider Resources => GetProvider<IResourceProvider>();
     public IDefenseProvider Defense => GetProvider<IDefenseProvider>();
@@ -528,13 +543,8 @@ public class ControllerBrain : MonoBehaviour
     public Animator PlayerAnimator => EntityAnimator;
     public FeetDetectionModule FeetDetection => feetDetection;
 
-    // Stat module direct accessors
-    public RPGCoreStats RPGCoreStats => GetModule<RPGCoreStats>();
-    public RPGSecondaryStats RPGSecondaryStats => GetModule<RPGSecondaryStats>();
-    public RPGResources RPGResources => GetModule<RPGResources>();
 
-    // Old coordinator-style accessors (for migration)
-    public StatsWrapper Stats => new StatsWrapper(this);
+
     public CombatWrapper Combat => new CombatWrapper(this);
 
     #endregion
@@ -547,7 +557,21 @@ public class ControllerBrain : MonoBehaviour
     /// </summary>
     public T GetModule<T>() where T : class
     {
-        // Try provider cache first
+        // Check assigned system references FIRST (most reliable)
+        if (typeof(T) == typeof(InputSystem) && inputSystem != null)
+            return inputSystem as T;
+        if (typeof(T) == typeof(MovementSystem) && movementSystem != null)
+            return movementSystem as T;
+        if (typeof(T) == typeof(AnimationSystem) && animationSystem != null)
+            return animationSystem as T;
+        if (typeof(T) == typeof(AbilitySystem) && abilitySystem != null)
+            return abilitySystem as T;
+        if (typeof(T) == typeof(StatSystem) && statSystem != null)
+            return statSystem as T;
+        if (typeof(T) == typeof(IdentitySystem) && identitySystem != null)
+            return identitySystem as T;
+
+        // Try provider cache
         T provider = GetProvider<T>();
         if (provider != null)
             return provider;
@@ -559,40 +583,6 @@ public class ControllerBrain : MonoBehaviour
     #endregion
 
     #region Gizmos
-
-    void OnDrawGizmosSelected()
-    {
-        if (!IsInitialized) return;
-
-        Color brainColor = IsPlayer ? Color.blue : IsNPC ? Color.red : Color.gray;
-        if (IsGrounded)
-            brainColor = Color.Lerp(brainColor, Color.green, 0.5f);
-
-        Gizmos.color = brainColor;
-        Gizmos.DrawWireSphere(transform.position + Vector3.up * BRAIN_GIZMO_HEIGHT, BRAIN_GIZMO_RADIUS);
-
-        Gizmos.color = Color.yellow;
-        for (int i = 0; i < transform.childCount; i++)
-        {
-            var child = transform.GetChild(i);
-            if (child != null)
-            {
-                Gizmos.DrawLine(transform.position, child.position);
-            }
-        }
-
-        if (groundContacts.Count > 0)
-        {
-            Gizmos.color = Color.red;
-            foreach (var contact in groundContacts)
-            {
-                if (contact != null)
-                {
-                    Gizmos.DrawLine(transform.position, contact.transform.position);
-                }
-            }
-        }
-    }
     /// <summary>
     /// Refreshes the animator reference (call after model swap)
     /// </summary>
@@ -606,10 +596,6 @@ public class ControllerBrain : MonoBehaviour
             if (animator == null && e_Root != null)
                 animator = e_Root.GetComponentInChildren<Animator>();
 
-            if (animator != null)
-            {
-                Debug.Log($"[ControllerBrain] Animator reference refreshed: {animator.gameObject.name}");
-            }
         }
     }
     #endregion
@@ -627,10 +613,7 @@ public class StatsWrapper
         this.brain = brain;
     }
 
-    public RPGCoreStats CoreStats => brain.GetModule<RPGCoreStats>();
-    public RPGSecondaryStats SecondaryStats => brain.GetModule<RPGSecondaryStats>();
-    public RPGResources Resources => brain.GetModule<RPGResources>();
-    public StatAllocationSystem Allocation => brain.GetModule<StatAllocationSystem>();
+    public RPGSystem Allocation => brain.GetModule<RPGSystem>(); 
 }
 
 /// <summary>
@@ -645,6 +628,6 @@ public class CombatWrapper
         this.brain = brain;
     }
 
-    public DamageModule Damage => brain.GetModule<DamageModule>();
+    public DamageSystem Damage => brain.GetModule<DamageSystem>();
     public ActiveDefenseModule ActiveDefense => brain.GetModule<ActiveDefenseModule>();
 }

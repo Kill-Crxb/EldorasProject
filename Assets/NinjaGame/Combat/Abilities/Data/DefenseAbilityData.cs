@@ -1,14 +1,9 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
-/// Defines a defensive ability that can be assigned to the defense slot.
-/// Uses Sekiro-style unified blocking: hold to block, parry window at start.
-/// Different weapons have different parry windows and blocking efficiency.
-/// 
-/// Examples:
-/// - Katana: Short parry window (0.15s), high block efficiency (80% reduction)
-/// - Kunai: Long parry window (0.35s), low block efficiency (50% reduction)
-/// - Greatsword: Very short parry window (0.1s), very high block efficiency (90% reduction)
+/// Defines a defensive ability for dynamic resource-driven defense.
+/// Supports any number of resources (Stamina, Mana, Chaos, Faith, etc.)
 /// </summary>
 [CreateAssetMenu(fileName = "New Defense Ability", menuName = "RPG/Defense Ability")]
 public class DefenseAbilityData : ScriptableObject
@@ -21,53 +16,24 @@ public class DefenseAbilityData : ScriptableObject
     public Sprite icon;
 
     [Header("Block Effectiveness")]
-    [Tooltip("How much damage is blocked (0-1). 0.8 = 80% reduction")]
     [Range(0f, 1f)]
     public float blockDamageReduction = 0.7f;
-
-    [Tooltip("Angular coverage in degrees (e.g., 120 = blocks attacks from front 120 degrees)")]
     [Range(0f, 360f)]
     public float blockAngle = 120f;
 
     [Header("Parry Window (Sekiro-Style)")]
-    [Tooltip("Duration of parry window at start of block (0 = no parry)")]
     public float parryWindowDuration = 0.2f;
-
-    [Tooltip("Damage reduction during parry window (usually 1.0 = 100%)")]
     [Range(0f, 1f)]
     public float parryDamageReduction = 1.0f;
-
-    [Tooltip("Opens counter-attack window on successful parry")]
     public bool parryEnablesCounter = true;
-
-    [Tooltip("How long counter window stays open after successful parry")]
     public float counterWindowDuration = 0.8f;
 
-    [Header("Stamina Costs")]
-    [Tooltip("Stamina cost per second while blocking")]
-    public float blockStaminaDrain = 8f;
-
-    [Tooltip("Stamina cost when parrying an attack (instant)")]
-    public float parryStaminaCost = 5f;
-
-    [Tooltip("Stamina cost when blocking an attack (instant, per hit)")]
-    public float blockStaminaCost = 10f;
-
-    [Tooltip("If true, successful parry refunds parry stamina cost")]
-    public bool parryRefundsStamina = true;
-
     [Header("Timing")]
-    [Tooltip("Time before block becomes active after pressing button")]
     public float blockStartupTime = 0.05f;
 
     [Header("Animation Parameters")]
-    [Tooltip("Animation parameter for blocking (bool)")]
     public string blockAnimParam = "IsBlocking";
-
-    [Tooltip("Animation trigger for successful parry")]
     public string parryAnimTrigger = "Parry";
-
-    [Tooltip("Animation trigger when attack is blocked (not parried)")]
     public string blockHitAnimTrigger = "BlockHit";
 
     [Header("Effects & Feedback")]
@@ -76,11 +42,71 @@ public class DefenseAbilityData : ScriptableObject
     public GameObject blockImpactVFX;
 
     [Header("Weapon Requirements (Optional)")]
-    [Tooltip("If set, this defense requires specific weapon types")]
     public WeaponType[] requiredWeaponTypes;
-
-    [Tooltip("Can this defense be used without a weapon equipped?")]
     public bool allowsUnarmed = false;
+
+    [Header("Dynamic Resource Costs")]
+    [Tooltip("List of resources consumed while defending")]
+    public List<ResourceEntry> resourceCosts = new List<ResourceEntry>();
+
+    [System.Serializable]
+    public class ResourceEntry
+    {
+        public ResourceDefinition resource;
+        public float blockCost = 0f;      // Cost per blocked attack
+        public float parryCost = 0f;      // Cost per parried attack
+        public float blockDrain = 0f;     // Continuous drain per second
+        public float parryRefund = 0f;    // Refund amount on successful parry
+    }
+
+    #region Public Methods
+
+    /// <summary>
+    /// Returns all resources required by this defense
+    /// </summary>
+    public IEnumerable<ResourceDefinition> GetAllRequiredResources()
+    {
+        foreach (var entry in resourceCosts)
+            if (entry.resource != null)
+                yield return entry.resource;
+    }
+
+    /// <summary>
+    /// Get continuous drain per second for a resource
+    /// </summary>
+    public float GetResourceDrain(ResourceDefinition resource)
+    {
+        var entry = resourceCosts.Find(x => x.resource == resource);
+        return entry != null ? entry.blockDrain : 0f;
+    }
+
+    /// <summary>
+    /// Get cost for this resource when defending an incoming attack
+    /// </summary>
+    public float GetResourceCost(ResourceDefinition resource, bool isParry)
+    {
+        var entry = resourceCosts.Find(x => x.resource == resource);
+        if (entry == null) return 0f;
+        return isParry ? entry.parryCost : entry.blockCost;
+    }
+
+    /// <summary>
+    /// Check if this resource is refunded on successful parry
+    /// </summary>
+    public bool RefundsResource(ResourceDefinition resource)
+    {
+        var entry = resourceCosts.Find(x => x.resource == resource);
+        return entry != null && entry.parryRefund > 0f;
+    }
+
+    /// <summary>
+    /// Amount refunded for this resource on successful parry
+    /// </summary>
+    public float GetResourceRefund(ResourceDefinition resource)
+    {
+        var entry = resourceCosts.Find(x => x.resource == resource);
+        return entry != null ? entry.parryRefund : 0f;
+    }
 
     /// <summary>
     /// Calculate damage reduction based on whether attack was parried
@@ -88,14 +114,6 @@ public class DefenseAbilityData : ScriptableObject
     public float GetDamageReduction(bool isInParryWindow)
     {
         return isInParryWindow ? parryDamageReduction : blockDamageReduction;
-    }
-
-    /// <summary>
-    /// Get stamina cost for defending this attack
-    /// </summary>
-    public float GetStaminaCost(bool isInParryWindow)
-    {
-        return isInParryWindow ? parryStaminaCost : blockStaminaCost;
     }
 
     /// <summary>
@@ -107,11 +125,11 @@ public class DefenseAbilityData : ScriptableObject
             return true;
 
         foreach (var type in requiredWeaponTypes)
-        {
             if (type == weaponType)
                 return true;
-        }
 
         return false;
     }
+
+    #endregion
 }

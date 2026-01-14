@@ -3,6 +3,7 @@ using UnityEngine;
 
 public interface IDefenseProvider
 {
+
     bool IsBlocking();
     bool IsParrying();
     bool CanDefend();

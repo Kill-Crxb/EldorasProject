@@ -26,8 +26,8 @@ public class ParkourFPSLocomotionHandler : LocomotionHandler
     #region Physics Settings
 
     [Header("Ground Movement")]
-    [SerializeField] private float walkSpeed = 2f;         
-    [SerializeField] private float runSpeed = 5f;           
+    [SerializeField] private new float walkSpeed = 2f;
+    [SerializeField] private new float runSpeed = 5f;
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float groundAcceleration = 10f;
     [SerializeField] private float groundDrag = 6f;
@@ -304,11 +304,11 @@ public class ParkourFPSLocomotionHandler : LocomotionHandler
     {
         // Wall-run movement is handled by ParkourStateController
         // This just applies adhesion force to keep player on wall
-        
+
         // Get wall normal from ParkourStateController (would be injected or stored)
         // For now, approximate from velocity
         Vector3 wallNormal = Vector3.Cross(rb.linearVelocity.normalized, Vector3.up);
-        
+
         // Apply adhesion force toward wall
         rb.AddForce(-wallNormal * wallAdhesionForce, ForceMode.Force);
     }
@@ -427,14 +427,14 @@ public class ParkourFPSLocomotionHandler : LocomotionHandler
         animationProvider.SetFloat("VerticalVelocity", rb.linearVelocity.y);
 
         // State flags
-        animationProvider.SetBool("IsWallRunning", 
-            cachedLowerBodyState == LowerBodyState.WallRunningLeft || 
+        animationProvider.SetBool("IsWallRunning",
+            cachedLowerBodyState == LowerBodyState.WallRunningLeft ||
             cachedLowerBodyState == LowerBodyState.WallRunningRight);
-        
-        animationProvider.SetBool("IsClimbing", 
+
+        animationProvider.SetBool("IsClimbing",
             cachedLowerBodyState == LowerBodyState.WallClimbing);
-        
-        animationProvider.SetBool("IsSliding", 
+
+        animationProvider.SetBool("IsSliding",
             cachedPostureState == PostureState.Sliding);
     }
 
@@ -493,7 +493,7 @@ public class ParkourFPSLocomotionHandler : LocomotionHandler
         if (stateMachine != null)
         {
             Vector3 labelPos = rootTransform.position + Vector3.up * 3f;
-            
+
 #if UNITY_EDITOR
             string stateText = $"Lower: {cachedLowerBodyState}\nPosture: {cachedPostureState}";
             UnityEditor.Handles.Label(labelPos, stateText);

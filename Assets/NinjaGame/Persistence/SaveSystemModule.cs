@@ -109,16 +109,8 @@ public class SaveSystemModule : MonoBehaviour, IPlayerModule
         var saveables = brain.GetComponentsInChildren<ISaveable>();
         saveableModules.AddRange(saveables);
 
-      
 
-        if (brain.RPGCoreStats is ISaveable coreStatsSaveable)
-            saveableModules.Add(coreStatsSaveable);
 
-        if (brain.RPGSecondaryStats is ISaveable secondaryStatsSaveable)
-            saveableModules.Add(secondaryStatsSaveable);
-
-        if (brain.RPGResources is ISaveable resourcesSaveable)
-            saveableModules.Add(resourcesSaveable);
 
         // NEW: Check for unified PlayerItemsModule (replaces old inventory systems)
         var playerItemsModule = brain.GetModule<PlayerItemsModule>();
@@ -253,9 +245,8 @@ public class SaveSystemModule : MonoBehaviour, IPlayerModule
         // Core stats first, then unified player items (which handles both equipment and inventory), then resources
         var loadOrder = new string[]
         {
-            "RPGCoreStats",          // Foundation stats
-            "PlayerItems",           // NEW: Unified player items (equipment + inventory)
-            "RPGResources",          // Resource maximums (depends on equipment stats)
+            "StatSystem",            // MIGRATED: Unified stat system
+            "PlayerItems",           // Unified player items (equipment + inventory)
         };
 
         bool anyLoaded = false;
@@ -359,9 +350,8 @@ public class SaveSystemModule : MonoBehaviour, IPlayerModule
         // UPDATED: Apply data in dependency order for streamlined architecture
         var loadOrder = new string[]
         {
-            "RPGCoreStats",          // Foundation stats
-            "PlayerItems",           // NEW: Unified player items
-            "RPGResources",          // Resource maximums
+            "StatSystem",            // MIGRATED: Unified stat system
+            "PlayerItems",           // Unified player items (equipment + inventory)
         };
 
         bool anyLoaded = false;

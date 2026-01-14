@@ -3,6 +3,7 @@ using UnityEngine;
 /// <summary>
 /// Spawns NPCs using the archetype system.
 /// Attach to any GameObject to create a spawn point.
+/// Phase 1.7b: Updated to use CharacterConfigurationHandler
 /// </summary>
 public class NPCSpawner : MonoBehaviour
 {
@@ -25,6 +26,10 @@ public class NPCSpawner : MonoBehaviour
 
     [Tooltip("Delay between each spawn (in seconds)")]
     [SerializeField] private float spawnDelay = 0.5f;
+
+    [Header("Level Override (Optional)")]
+    [Tooltip("Override NPC level (-1 = use archetype base level)")]
+    [SerializeField] private int spawnLevel = -1;
 
     [Header("Advanced Settings")]
     [Tooltip("Random offset range for spawn position (0 = exact position)")]
@@ -79,7 +84,7 @@ public class NPCSpawner : MonoBehaviour
             spawnedEnemy.transform.SetParent(transform);
         }
 
-        // Apply archetype via NPCConfigurationHandler
+        // Apply archetype via CharacterConfigurationHandler
         ApplyArchetype(spawnedEnemy);
 
         currentSpawnCount++;
@@ -109,25 +114,31 @@ public class NPCSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Apply archetype to spawned enemy
+    /// Apply archetype to spawned enemy using CharacterConfigurationHandler
     /// </summary>
     private void ApplyArchetype(GameObject spawnedEnemy)
     {
-        // Find the NPCConfigurationHandler on the spawned enemy
-        var configHandler = spawnedEnemy.GetComponentInChildren<NPCConfigurationHandler>();
+        // Find the CharacterConfigurationHandler on the spawned enemy
+        var configHandler = spawnedEnemy.GetComponentInChildren<CharacterConfigurationHandler>();
 
         if (configHandler == null)
         {
-            Debug.LogError($"[NPCSpawner] No NPCConfigurationHandler found on spawned enemy! Make sure Enemy_Universal prefab has NPCConfigurationHandler component.");
+            Debug.LogError($"[NPCSpawner] No CharacterConfigurationHandler found on spawned enemy! " +
+                          "Make sure Enemy_Universal prefab has CharacterConfigurationHandler component.");
             return;
         }
 
-        // Set the archetype
-        configHandler.SetCustomArchetype(npcArchetype);
+        // Configure using new universal system
+        configHandler.Configure(new NPCConfig
+        {
+            archetype = npcArchetype,
+            overrideLevel = spawnLevel  // -1 = use archetype.baseLevel
+        });
 
         if (debugMode)
         {
-            Debug.Log($"[NPCSpawner] Applied archetype: {npcArchetype.archetypeName}");
+            string levelInfo = spawnLevel > 0 ? $" at level {spawnLevel}" : $" (base level {npcArchetype.baseLevel})";
+            Debug.Log($"[NPCSpawner] Applied archetype: {npcArchetype.archetypeName}{levelInfo}");
         }
     }
 

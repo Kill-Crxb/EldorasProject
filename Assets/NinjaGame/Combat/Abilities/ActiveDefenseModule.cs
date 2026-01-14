@@ -1,10 +1,13 @@
 ﻿using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 /// <summary>
-/// Modernized Active Defense Module
-/// Uses DefenseAbilityData for swappable defense mechanics.
-/// Integrates with AbilityLoadoutModule for automatic weapon-based defense swapping.
+/// Modernized Active Defense Module (fully dynamic)
+/// - Resource-agnostic: no hardcoded references
+/// - DefenseAbilityData drives all defense costs and effects
+/// - Integrates with AbilityLoadoutModule for weapon-based defense swapping
+/// - Can consume any ResourceDefinition dynamically
 /// </summary>
 public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
 {
@@ -45,6 +48,9 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
     public DefenseAbilityData CurrentDefense => cachedDefense ?? (cachedDefense = loadoutModule?.GetDefenseAbility());
     public float DefenseDuration => isDefenseActive ? Time.time - defenseStartTime : 0f;
 
+    // Dynamic resource cache (per defense ability)
+    private Dictionary<string, ResourceDefinition> defenseResourceCache = new();
+
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
@@ -66,8 +72,8 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
             return;
         }
 
-        // Cache the defense ability
         cachedDefense = loadoutModule.GetDefenseAbility();
+        CacheDefenseResources(cachedDefense);
 
         if (debugDefense)
             Debug.Log($"[ActiveDefenseModule] Initialized with defense: {cachedDefense?.defenseName ?? "None"}");
@@ -89,7 +95,7 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
     {
         if (inputProvider == null || CurrentDefense == null) return;
 
-        // Sekiro-style: Hold right-click to block
+        // Hold input to block
         if (inputProvider.BlockHeld && !isDefenseActive)
         {
             ActivateDefense();
@@ -106,11 +112,7 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
 
     private bool CanActivateDefense()
     {
-        if (CurrentDefense == null) return false;
-        if (isDefenseActive) return false;
-
-        // Sekiro-style blocking has no activation cost, only drain while active
-        // and costs on hit
+        if (CurrentDefense == null || isDefenseActive) return false;
         return true;
     }
 
@@ -120,19 +122,15 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
 
         isDefenseActive = true;
         defenseStartTime = Time.time;
-        isInParryWindow = false; // Will be set to true in UpdateParryWindow
+        isInParryWindow = false;
 
-        // Trigger block animation
+        // Trigger animation
         if (animationProvider != null && !string.IsNullOrEmpty(CurrentDefense.blockAnimParam))
-        {
             animationProvider.SetBool(CurrentDefense.blockAnimParam, true);
-        }
 
-        // Spawn activation VFX
+        // Spawn VFX
         if (CurrentDefense.blockActivationVFX != null)
-        {
             Instantiate(CurrentDefense.blockActivationVFX, transform.position, transform.rotation);
-        }
 
         OnDefenseActivated?.Invoke();
 
@@ -148,11 +146,8 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
         isInParryWindow = false;
         lastDefenseTime = Time.time;
 
-        // Update animation
         if (animationProvider != null && !string.IsNullOrEmpty(CurrentDefense.blockAnimParam))
-        {
             animationProvider.SetBool(CurrentDefense.blockAnimParam, false);
-        }
 
         OnDefenseDeactivated?.Invoke();
 
@@ -194,29 +189,30 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
         {
             float elapsed = Time.time - counterWindowStartTime;
             if (elapsed >= CurrentDefense.counterWindowDuration)
-            {
                 CloseCounterWindow();
-            }
         }
     }
 
     private void UpdateResourceDrain()
     {
-        if (!isDefenseActive) return;
-        if (CurrentDefense.blockStaminaDrain <= 0) return;
+        if (!isDefenseActive || CurrentDefense == null) return;
 
-        float drainAmount = CurrentDefense.blockStaminaDrain * Time.deltaTime;
-
-        if (resourceProvider != null)
+        foreach (var kvp in defenseResourceCache)
         {
-            if (!resourceProvider.HasResource(ResourceType.Stamina, drainAmount))
+            var def = kvp.Value;
+            float drainAmount = CurrentDefense.GetResourceDrain(def) * Time.deltaTime;
+
+            if (drainAmount <= 0) continue;
+
+            if (!resourceProvider.HasResource(def, drainAmount))
             {
-                // Out of stamina, force stop blocking
                 DeactivateDefense();
+                if (debugDefense)
+                    Debug.Log($"[ActiveDefenseModule] Out of {def.name} - defense broken!");
                 return;
             }
 
-            resourceProvider.ConsumeResource(ResourceType.Stamina, drainAmount);
+            resourceProvider.ConsumeResource(def, drainAmount);
         }
     }
 
@@ -228,51 +224,38 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
     {
         if (!isInParryWindow) return;
 
-        // Parry animation
         if (animationProvider != null && !string.IsNullOrEmpty(CurrentDefense.parryAnimTrigger))
-        {
             animationProvider.SetTrigger(CurrentDefense.parryAnimTrigger);
-        }
 
-        // Refund parry stamina cost if enabled
-        if (resourceProvider != null && CurrentDefense.parryRefundsStamina)
+        // Refund resources dynamically
+        foreach (var kvp in defenseResourceCache)
         {
-            resourceProvider.RestoreResource(ResourceType.Stamina, CurrentDefense.parryStaminaCost);
+            var def = kvp.Value;
+            if (CurrentDefense.RefundsResource(def))
+            {
+                resourceProvider.RestoreResource(def, CurrentDefense.GetResourceRefund(def));
+            }
         }
 
-        // Spawn parry success VFX
         if (CurrentDefense.parrySuccessVFX != null)
-        {
             Instantiate(CurrentDefense.parrySuccessVFX, transform.position, transform.rotation);
-        }
 
-        // Open counter window
         if (CurrentDefense.parryEnablesCounter)
-        {
             OpenCounterWindow();
-        }
 
         OnSuccessfulParry?.Invoke();
 
         if (debugDefense)
-        {
-            Debug.Log($"[ActiveDefenseModule] PARRY! (Window: {CurrentDefense.parryWindowDuration}s, " +
-                     $"Elapsed: {DefenseDuration:F2}s)");
-        }
+            Debug.Log($"[ActiveDefenseModule] PARRY! Elapsed: {DefenseDuration:F2}s");
     }
 
     private void TriggerBlockHit()
     {
-        // Block hit animation (when attack is blocked, not parried)
         if (animationProvider != null && !string.IsNullOrEmpty(CurrentDefense.blockHitAnimTrigger))
-        {
             animationProvider.SetTrigger(CurrentDefense.blockHitAnimTrigger);
-        }
 
         if (debugDefense)
-        {
             Debug.Log("[ActiveDefenseModule] Block impact animation triggered");
-        }
     }
 
     private void OpenCounterWindow()
@@ -309,38 +292,38 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
 
     #region Public API
 
-    /// <summary>
-    /// Change the current defense ability.
-    /// Called by AbilityLoadoutModule when defense changes.
-    /// </summary>
     public void SetDefense(DefenseAbilityData newDefense)
     {
         if (newDefense == cachedDefense) return;
 
-        // Deactivate current defense if active
         if (isDefenseActive)
-        {
             DeactivateDefense();
-        }
 
         cachedDefense = newDefense;
+        CacheDefenseResources(newDefense);
 
         if (debugDefense)
             Debug.Log($"[ActiveDefenseModule] Defense changed to: {newDefense?.defenseName ?? "None"}");
     }
 
-    /// <summary>
-    /// Force stop any active defense
-    /// </summary>
     public void ForceStopDefense()
     {
         if (isDefenseActive)
-        {
             DeactivateDefense();
-        }
 
         isInCounterWindow = false;
         isInParryWindow = false;
+    }
+
+    private void CacheDefenseResources(DefenseAbilityData defense)
+    {
+        defenseResourceCache.Clear();
+        if (defense == null || resourceProvider == null) return;
+
+        foreach (var def in defense.GetAllRequiredResources())
+        {
+            defenseResourceCache[def.name] = def;
+        }
     }
 
     #endregion
@@ -348,9 +331,7 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
     #region IDefenseProvider Implementation
 
     bool IDefenseProvider.IsBlocking() => isDefenseActive;
-
     bool IDefenseProvider.IsParrying() => isDefenseActive && isInParryWindow;
-
     bool IDefenseProvider.CanDefend() => IsEnabled && CurrentDefense != null;
 
     float IDefenseProvider.ProcessIncomingDamage(float damage, Vector3 attackDirection)
@@ -358,60 +339,39 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
         if (!isDefenseActive || CurrentDefense == null)
             return damage;
 
-        // Check if attack is within block angle
         if (!IsAttackWithinBlockAngle(attackDirection))
-        {
-            if (debugDefense)
-                Debug.Log("[ActiveDefenseModule] Attack from behind - no defense");
             return damage;
-        }
 
-        // Check if we're in the parry window
         bool isParry = isInParryWindow;
-
-        // Get appropriate stamina cost and damage reduction
-        float staminaCost = CurrentDefense.GetStaminaCost(isParry);
         float damageReduction = CurrentDefense.GetDamageReduction(isParry);
 
-        // Consume stamina for defending
-        if (resourceProvider != null && staminaCost > 0)
+        // Consume all required resources dynamically
+        foreach (var kvp in defenseResourceCache)
         {
-            if (!resourceProvider.HasResource(ResourceType.Stamina, staminaCost))
+            var def = kvp.Value;
+            float cost = CurrentDefense.GetResourceCost(def, isParry);
+
+            if (!resourceProvider.HasResource(def, cost))
             {
-                // Not enough stamina - defense fails, force stop blocking
-                if (debugDefense)
-                    Debug.Log("[ActiveDefenseModule] Out of stamina - defense broken!");
                 DeactivateDefense();
                 return damage;
             }
 
-            resourceProvider.ConsumeResource(ResourceType.Stamina, staminaCost);
+            resourceProvider.ConsumeResource(def, cost);
         }
 
-        // Calculate final damage
         float finalDamage = damage * (1f - damageReduction);
 
-        // Trigger appropriate animation and effects
-        if (isParry)
-        {
-            TriggerSuccessfulParry();
-        }
-        else
-        {
-            TriggerBlockHit();
-        }
+        if (isParry) TriggerSuccessfulParry();
+        else TriggerBlockHit();
 
-        // Spawn block impact VFX
         if (CurrentDefense.blockImpactVFX != null)
-        {
             Instantiate(CurrentDefense.blockImpactVFX, transform.position, Quaternion.LookRotation(-attackDirection));
-        }
 
         if (debugDefense)
         {
-            string defenseType = isParry ? "PARRY" : "BLOCK";
-            Debug.Log($"[ActiveDefenseModule] {defenseType}: {damage:F1} → {finalDamage:F1} " +
-                     $"(Reduction: {damageReduction * 100}%, Stamina: -{staminaCost:F1})");
+            string type = isParry ? "PARRY" : "BLOCK";
+            Debug.Log($"[ActiveDefenseModule] {type}: {damage:F1} → {finalDamage:F1} (Reduction: {damageReduction * 100}%)");
         }
 
         return finalDamage;
@@ -419,14 +379,10 @@ public class ActiveDefenseModule : MonoBehaviour, IBrainModule, IDefenseProvider
 
     float IDefenseProvider.GetDefensiveMultiplier(Vector3 attackDirection)
     {
-        if (!isDefenseActive || CurrentDefense == null)
-            return 1f;
+        if (!isDefenseActive || CurrentDefense == null) return 1f;
+        if (!IsAttackWithinBlockAngle(attackDirection)) return 1f;
 
-        if (!IsAttackWithinBlockAngle(attackDirection))
-            return 1f;
-
-        float reduction = CurrentDefense.GetDamageReduction(isInParryWindow);
-        return 1f - reduction;
+        return 1f - CurrentDefense.GetDamageReduction(isInParryWindow);
     }
 
     event Action IDefenseProvider.OnBlockStart

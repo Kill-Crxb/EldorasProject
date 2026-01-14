@@ -1,0 +1,107 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63f1401dcb445534faca4def0618a012, type: 3}
+  m_Name: RPGResources
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatSchema
+  statNamespace: character
+  description: RPG Resources
+  stats:
+  - statId: character.max_health
+    displayName: Max Health
+    description: Maximum hit points
+    baseValue: 40
+    formula: '{character.body} * 10'
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: character.max_stamina
+    displayName: Max Stamina
+    description: Maximum stamina
+    baseValue: 40
+    formula: '{character.spirit} * 10'
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: character.max_mana
+    displayName: Max Mana
+    description: Maximum mana
+    baseValue: 40
+    formula: '{character.mind} * 10'
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: character.max_recovery
+    displayName: Max Recovery
+    description: maximum recovery
+    baseValue: 40
+    formula: '{character.resilience} * 10'
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: character.max_regeneration
+    displayName: Max Regeneration
+    description: maximum regeneration
+    baseValue: 40
+    formula: '{character.endurance} * 10'
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: character.max_recollection
+    displayName: Max Recollection
+    description: maximum recollection
+    baseValue: 40
+    formula: '{character.insight} * 10'
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: character.max_shadow
+    displayName: Max Shadow
+    description: maximum shadow
+    baseValue: 20
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: character.max_light
+    displayName: Max Light
+    description: maximum light
+    baseValue: 20
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: character.max_chaos
+    displayName: Max Chaos
+    description: maximum chaos
+    baseValue: 20
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized

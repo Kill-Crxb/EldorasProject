@@ -323,8 +323,8 @@ public class HumanoidMeleeCombatBehavior : AICombatBehaviorModule
         if (resourceProvider == null)
             return 1f;
 
-        float current = resourceProvider.GetResource(ResourceType.Stamina);
-        float max = resourceProvider.GetMaxResource(ResourceType.Stamina);
+        float current = resourceProvider.GetResource(ResourceDefinition.Stamina);
+        float max = resourceProvider.GetMaxResource(ResourceDefinition.Stamina);
 
         return max > 0 ? current / max : 0f;
     }

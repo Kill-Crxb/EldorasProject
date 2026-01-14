@@ -1,7 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 // ItemInstance.cs - Runtime instance of an item (Serializable class)
+// Phase 1.6 Days 7-8: Migrated to use StatSystem instead of RPGSecondaryStats
 [System.Serializable]
 public class ItemInstance
 {
@@ -140,7 +141,7 @@ public class ItemInstance
         {
             modifiers.Add(new ItemStatModifier
             {
-                statName = "armor",
+                statName = "combat.armor",
                 value = definition.baseStats.armor * tierMultiplier,
                 source = $"{definition.displayName} (Base)"
             });
@@ -170,7 +171,7 @@ public class ItemInstance
             case ItemArchetype.Strength:
                 modifiers.Add(new ItemStatModifier
                 {
-                    statName = "regeneration",
+                    statName = "character.health_regen",
                     value = regenBonus,
                     source = $"{definition.displayName} (Strength Bonus)"
                 });
@@ -179,7 +180,7 @@ public class ItemInstance
             case ItemArchetype.Agility:
                 modifiers.Add(new ItemStatModifier
                 {
-                    statName = "recovery", // Stamina regen
+                    statName = "character.stamina_regen",
                     value = regenBonus,
                     source = $"{definition.displayName} (Agility Bonus)"
                 });
@@ -188,7 +189,7 @@ public class ItemInstance
             case ItemArchetype.Magic:
                 modifiers.Add(new ItemStatModifier
                 {
-                    statName = "recollection", // Mana regen
+                    statName = "character.mana_regen",
                     value = regenBonus,
                     source = $"{definition.displayName} (Magic Bonus)"
                 });
@@ -226,22 +227,27 @@ public class ItemInstance
         return baseBonus * GetTierMultiplier(tier);
     }
 
-    // Integration with your existing RPGSecondaryStats system
-    public void ApplyToStatsSystem(RPGSecondaryStats statsSystem)
-    {
-        // Remove old modifiers from this item
-        statsSystem.RemoveAllModifiersFromSource(instanceId);
 
-        // Apply new modifiers using your existing system
+    public void ApplyToStatsSystem(StatSystem statSystem)
+    {
+        if (statSystem == null || calculatedModifiers == null) return;
+
+        // Remove old modifiers from this item
+        statSystem.Engine.RemoveAllModifiersFromSource(instanceId);
+
+        // Apply new modifiers using StatSystem API
         foreach (var modifier in calculatedModifiers)
         {
             if (modifier.isPercentage)
             {
-                statsSystem.AddPercentageModifier(modifier.statName, instanceId, modifier.value);
+                // Percentage modifiers: value is already in percentage (e.g., 25.0 = 25%)
+                // Convert to decimal for engine (25.0 → 0.25)
+                statSystem.Engine.AddPercentModifier(modifier.statName, instanceId, modifier.value / 100f);
             }
             else
             {
-                statsSystem.AddItemModifier(modifier.statName, instanceId, modifier.value);
+                // Flat modifiers
+                statSystem.Engine.AddFlatModifier(modifier.statName, instanceId, modifier.value);
             }
         }
     }
@@ -282,7 +288,7 @@ public class ItemInstance
 [System.Serializable]
 public class ItemStatModifier
 {
-    public string statName; // e.g., "meleePower", "armor", "regeneration"
+    public string statName; // Full stat ID (e.g., "combat.armor", "character.max_health")
     public float value;
     public string source; // For tooltip display
     public bool isPercentage = false;
@@ -302,12 +308,12 @@ public class BaseItemStats
     public List<NamedStat> GetAllStats()
     {
         var stats = new List<NamedStat>();
-        if (armor > 0) stats.Add(new NamedStat("armor", armor));
-        if (health > 0) stats.Add(new NamedStat("maxHealth", health));
-        if (mana > 0) stats.Add(new NamedStat("maxMana", mana));
-        if (stamina > 0) stats.Add(new NamedStat("maxStamina", stamina));
-        if (damage > 0) stats.Add(new NamedStat("meleePower", damage));
-        if (attackSpeed > 0) stats.Add(new NamedStat("meleeSpeed", attackSpeed));
+        if (armor > 0) stats.Add(new NamedStat("combat.armor", armor));
+        if (health > 0) stats.Add(new NamedStat("character.max_health", health));
+        if (mana > 0) stats.Add(new NamedStat("character.max_mana", mana));
+        if (stamina > 0) stats.Add(new NamedStat("character.max_stamina", stamina));
+        if (damage > 0) stats.Add(new NamedStat("combat.attack_power", damage));
+        if (attackSpeed > 0) stats.Add(new NamedStat("combat.attack_speed", attackSpeed));
         return stats;
     }
 }

@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b0621af836928446b1a9fcccc5a1469, type: 3}
+  m_Name: Damage Calculation Config
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.DamageCalculationConfig
+  damageTypes:
+  - damageType: 0
+    displayName: Physical
+    description: Standard physical damage affected by armor
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - combat.attack_power
+    - combat.penetration
+    attackerStatMultipliers:
+    - 1
+    - 0.5
+    defenderStatIds:
+    - combat.armor
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 1, g: 1, b: 1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 3
+    displayName: Fire
+    description: Magical fire damage that ignores armor
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - magic.spell_power
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - combat.resistance
+    - magic.fire_resistance
+    defenderStatMultipliers:
+    - 0.5
+    - 1
+    damageColor: {r: 1, g: 1, b: 1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 4
+    displayName: Lightning
+    description: Magical lightning damage with high crit chance
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - magic.spell_power
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - combat.resistance
+    - magic.lightning_resistance
+    defenderStatMultipliers:
+    - 0.5
+    - 1
+    damageColor: {r: 1, g: 1, b: 1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 2
+    displayName: True
+    description: Pure damage that ignores ALL defenses
+    canCrit: 0
+    calculationMode: 2
+    attackerStatIds:
+    - combat.attack_power
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds: []
+    defenderStatMultipliers: []
+    damageColor: {r: 1, g: 1, b: 1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  defaultConfig:
+    damageType: 0
+    displayName: Physical
+    description: Standard physical damage
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds: []
+    attackerStatMultipliers: []
+    defenderStatIds: []
+    defenderStatMultipliers: []
+    damageColor: {r: 1, g: 1, b: 1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}

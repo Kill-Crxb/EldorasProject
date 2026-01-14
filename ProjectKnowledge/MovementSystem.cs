@@ -28,9 +28,6 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     [Tooltip("Feet detection module for grounded state (optional - will auto-discover)")]
     [SerializeField] private FeetDetectionModule feetDetection;
 
-    [Header("Control Sources")]
-    [SerializeField] private List<MonoBehaviour> controlSourceComponents;
-
     [Header("Debug")]
     [SerializeField] private bool showDebugInfo = false;
 
@@ -116,6 +113,12 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     {
         if (!isEnabled || locomotionHandler == null) return;
 
+        // Rebind if control source becomes inactive
+        if (activeControlSource == null || !activeControlSource.IsActive)
+        {
+            ActivateDefaultControlSource();
+        }
+
         // Update active control source
         activeControlSource?.UpdateSource();
 
@@ -134,20 +137,16 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     {
         availableControlSources = new List<IMovementControlSource>();
 
-        // Find all control sources in children
+        // Find all control sources in children (for AI, network, etc.)
         var sources = GetComponentsInChildren<IMovementControlSource>();
         availableControlSources.AddRange(sources);
 
-        // Also check serialized list (for manual assignment)
-        if (controlSourceComponents != null)
+        // Check if InputSystem implements IMovementControlSource
+        // InputSystem lives at Brain level, not as a child of MovementSystem
+        var inputSystem = brain.GetModule<InputSystem>();
+        if (inputSystem is IMovementControlSource inputAsControlSource && !availableControlSources.Contains(inputAsControlSource))
         {
-            foreach (var component in controlSourceComponents)
-            {
-                if (component is IMovementControlSource source && !availableControlSources.Contains(source))
-                {
-                    availableControlSources.Add(source);
-                }
-            }
+            availableControlSources.Add(inputAsControlSource);
         }
 
         if (showDebugInfo)
@@ -162,11 +161,13 @@ public class MovementSystem : MonoBehaviour, IBrainModule
 
     private void ActivateDefaultControlSource()
     {
-        // Find first enabled control source
+        // Find first enabled AND active control source
         foreach (var source in availableControlSources)
         {
             var monoBehaviour = source as MonoBehaviour;
-            if (monoBehaviour != null && monoBehaviour.enabled)
+            if (monoBehaviour != null &&
+                monoBehaviour.enabled &&
+                source.IsActive)
             {
                 SetControlSource(source);
                 return;

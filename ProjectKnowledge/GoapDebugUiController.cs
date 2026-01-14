@@ -151,8 +151,8 @@ public class GOAPDebugUIController : MonoBehaviour
         {
             string targetName = currentTarget.name;
             string entityType = targetBrain != null ?
-                targetBrain.GetComponentInChildren<NPCContextModule>() != null ? "NPC" : "Unknown"
-                : "No Brain";
+           targetBrain.IsNPC ? "NPC" : (targetBrain.IsPlayer ? "Player" : "Unknown")
+           : "No Brain";
             targetNameText.text = $"Target: {targetName}\nType: {entityType}";
         }
 

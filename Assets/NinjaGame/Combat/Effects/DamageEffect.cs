@@ -1,42 +1,78 @@
 using System;
 using UnityEngine;
 
-[System.Serializable]
+/// <summary>
+/// Instant Damage Effect
+/// Data-driven, DamageSystem-authoritative
+/// </summary>
+[Serializable]
 public class DamageEffect
 {
     [Header("Damage Configuration")]
     public float baseDamage = 10f;
     public DamageType damageType = DamageType.Physical;
-    [Tooltip("Can this damage critically hit?")]
-    public bool canCrit = true;
 
     public event Action OnCompleted;
 
-    [System.NonSerialized]
-    private DamageModule damageModule;
+    [NonSerialized] private DamageSystem attackerDamageSystem;
+    private bool isCompleted;
 
-    public void SetDamageModule(DamageModule module)
+    /// <summary>
+    /// Set the attacker's DamageSystem (required for stat-based damage)
+    /// </summary>
+    public void SetDamageSystem(DamageSystem system)
     {
-        damageModule = module;
+        attackerDamageSystem = system;
     }
 
-    public void Apply(IDamageable target)
+    /// <summary>
+    /// Apply damage to a target DamageSystem
+    /// </summary>
+    public void Apply(DamageSystem target)
     {
-        if (damageModule != null)
+        if (isCompleted)
+            return;
+
+        if (target == null)
         {
-            CombatDamagePacket packet = damageModule.CalculateOutgoingDamage(
-                baseDamage,
-                damageType,
-                canCrit
-            );
-            target.TakeDamage(packet.finalDamage);
+            Debug.LogWarning("[DamageEffect] Target DamageSystem is null");
+            Complete();
+            return;
         }
 
-        OnCompleted?.Invoke();
+        if (attackerDamageSystem == null)
+        {
+            Debug.LogError("[DamageEffect] Attacker DamageSystem not set before Apply()");
+            Complete();
+            return;
+        }
+
+        CombatAttackData attackData = new CombatAttackData
+        {
+            baseDamage = baseDamage,
+            damageType = damageType,
+            attackerTransform = attackerDamageSystem.transform,
+            hitPoint = target.transform.position,
+            hitNormal = Vector3.up
+        };
+
+        CombatDamagePacket packet = attackerDamageSystem.CalculateDamage(attackData);
+        target.TakeDamage(packet);
+
+        Complete();
     }
 
     public void Cancel()
     {
+        Complete();
+    }
+
+    private void Complete()
+    {
+        if (isCompleted)
+            return;
+
+        isCompleted = true;
         OnCompleted?.Invoke();
     }
 }

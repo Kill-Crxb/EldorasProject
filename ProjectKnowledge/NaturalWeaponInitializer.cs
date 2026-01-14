@@ -46,7 +46,7 @@ public class NaturalWeaponInitializer : MonoBehaviour
     public void InitializeNaturalWeapons()
     {
         // Get required modules
-        var damageModule = brain.GetModule<DamageModule>();
+        var damageModule = brain.GetModule<DamageSystem>();
         var healthProvider = brain.GetModuleImplementing<IHealthProvider>();
 
         if (damageModule == null)

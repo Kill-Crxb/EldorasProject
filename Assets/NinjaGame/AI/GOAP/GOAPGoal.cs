@@ -150,12 +150,10 @@ public abstract class GOAPGoal : ScriptableObject
     /// <summary>
     /// Helper: Calculate weight multiplier based on health urgency
     /// Lower health = higher multiplier for defensive goals
+    /// Uses dynamic health tracking from GOAPContext
     /// </summary>
     protected float GetHealthUrgencyMultiplier(GOAPContext ctx, bool inverseUrgency = false)
     {
-        // inverseUrgency = true: Lower health = LOWER weight (for aggressive goals)
-        // inverseUrgency = false: Lower health = HIGHER weight (for defensive goals)
-
         float healthPercent = ctx.healthPercent;
 
         if (inverseUrgency)
@@ -171,12 +169,26 @@ public abstract class GOAPGoal : ScriptableObject
     }
 
     /// <summary>
-    /// Helper: Calculate weight multiplier based on stamina availability
+    /// Helper: Calculate weight multiplier based on any resource availability dynamically
+    /// Example usage: GetResourceMultiplier(ctx, "Stamina") or "Chaos"
+    /// </summary>
+    protected float GetResourceMultiplier(GOAPContext ctx, string resourceName, float minWeight = 0.2f, float maxWeight = 1.2f)
+    {
+        if (ctx.resourcePercent != null && ctx.resourcePercent.TryGetValue(resourceName, out float percent))
+        {
+            return Mathf.Lerp(minWeight, maxWeight, percent);
+        }
+
+        // Resource not found, return fallback multiplier
+        return minWeight;
+    }
+
+    /// <summary>
+    /// Convenience for stamina-specific goals using dynamic system
     /// </summary>
     protected float GetStaminaMultiplier(GOAPContext ctx)
     {
-        // More stamina = higher weight for stamina-using goals
-        return Mathf.Lerp(0.2f, 1.2f, ctx.staminaPercent);
+        return GetResourceMultiplier(ctx, "Stamina", 0.2f, 1.2f);
     }
 
     /// <summary>
@@ -189,6 +201,7 @@ public abstract class GOAPGoal : ScriptableObject
     }
 
     #endregion
+
 
     #region Debug
 
