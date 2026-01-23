@@ -19,7 +19,7 @@ MonoBehaviour:
     displayName: Max Health
     description: Maximum hit points
     baseValue: 40
-    formula: '{character.body} * 10'
+    formula: '{core.body} * 5'
     displayColor: {r: 1, g: 1, b: 1, a: 1}
     icon: {fileID: 0}
     isVisible: 1
@@ -29,7 +29,7 @@ MonoBehaviour:
     displayName: Max Stamina
     description: Maximum stamina
     baseValue: 40
-    formula: '{character.spirit} * 10'
+    formula: '{core.spirit} * 5'
     displayColor: {r: 1, g: 1, b: 1, a: 1}
     icon: {fileID: 0}
     isVisible: 1
@@ -39,7 +39,7 @@ MonoBehaviour:
     displayName: Max Mana
     description: Maximum mana
     baseValue: 40
-    formula: '{character.mind} * 10'
+    formula: '{core.mind} * 5'
     displayColor: {r: 1, g: 1, b: 1, a: 1}
     icon: {fileID: 0}
     isVisible: 1
@@ -49,7 +49,7 @@ MonoBehaviour:
     displayName: Max Recovery
     description: maximum recovery
     baseValue: 40
-    formula: '{character.resilience} * 10'
+    formula: '{core.resilience} * 5'
     displayColor: {r: 1, g: 1, b: 1, a: 1}
     icon: {fileID: 0}
     isVisible: 1
@@ -59,7 +59,7 @@ MonoBehaviour:
     displayName: Max Regeneration
     description: maximum regeneration
     baseValue: 40
-    formula: '{character.endurance} * 10'
+    formula: '{core.endurance} *  5'
     displayColor: {r: 1, g: 1, b: 1, a: 1}
     icon: {fileID: 0}
     isVisible: 1
@@ -69,38 +69,18 @@ MonoBehaviour:
     displayName: Max Recollection
     description: maximum recollection
     baseValue: 40
-    formula: '{character.insight} * 10'
+    formula: '{core.insight} * 5'
     displayColor: {r: 1, g: 1, b: 1, a: 1}
     icon: {fileID: 0}
     isVisible: 1
     isSaveable: 1
     category: Uncategorized
-  - statId: character.max_shadow
-    displayName: Max Shadow
-    description: maximum shadow
-    baseValue: 20
-    formula: 
-    displayColor: {r: 1, g: 1, b: 1, a: 1}
-    icon: {fileID: 0}
-    isVisible: 1
-    isSaveable: 1
-    category: Uncategorized
-  - statId: character.max_light
-    displayName: Max Light
-    description: maximum light
-    baseValue: 20
-    formula: 
-    displayColor: {r: 1, g: 1, b: 1, a: 1}
-    icon: {fileID: 0}
-    isVisible: 1
-    isSaveable: 1
-    category: Uncategorized
-  - statId: character.max_chaos
-    displayName: Max Chaos
-    description: maximum chaos
-    baseValue: 20
-    formula: 
-    displayColor: {r: 1, g: 1, b: 1, a: 1}
+  - statId: core.max_aegis
+    displayName: Max Aegis
+    description: maximum aegis
+    baseValue: 0
+    formula: '{def.aegis} * {def.empowerment}'
+    displayColor: {r: 0.7971698, g: 1, b: 0.983468, a: 1}
     icon: {fileID: 0}
     isVisible: 1
     isSaveable: 1

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 190b85c8cb907eb45baa22e29e796686, type: 3}
+  m_Name: ManaDefinition
+  m_EditorClassIdentifier: Assembly-CSharp::ResourceDefinition
+  resourceId: mana
+  isHealthLike: 0
+  isTemporary: 0
+  displayName: Mana
+  description: Mana Points
+  maxStatId: character.max_mana
+  currentStatId: 
+  regenPerSecond: 0
+  regenDelay: 0
+  regenOutOfCombatOnly: 0
+  combatTimeout: 5
+  minValue: 0
+  allowNegative: 0
+  resourceColor: {r: 0.12878704, g: 0, b: 1, a: 1}
+  icon: {fileID: 0}
+  depletedSound: {fileID: 0}
+  restoredSound: {fileID: 0}
+  triggerDeathOnDepletion: 0
+  resetOnDeath: 0
+  tags: []

@@ -1,6 +1,11 @@
 ﻿using UnityEngine;
 using TMPro;
 
+/// <summary>
+/// Displays core stat values (Mind, Body, Spirit, etc.) using TextMeshPro
+/// Automatically finds the player's ControllerBrain and subscribes to stat changes
+/// Updated to use StatSystem instead of legacy RPGCoreStats
+/// </summary>
 public class CoreStatsUI : MonoBehaviour
 {
     [Header("Stat Value Displays")]

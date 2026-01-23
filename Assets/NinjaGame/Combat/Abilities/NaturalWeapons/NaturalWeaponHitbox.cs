@@ -127,41 +127,38 @@ public class NaturalWeaponHitbox : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Only process hits when active
-        if (!isActive || string.IsNullOrEmpty(currentAbilityId))
-            return;
+        // Guard clauses (flat logic - no nesting!)
+        if (!isActive) return;
+        if (string.IsNullOrEmpty(currentAbilityId)) return;
 
-        // Check if target is on a valid layer
-        if (((1 << other.gameObject.layer) & hitLayers) == 0)
-            return;
+        // Check layer
+        if (((1 << other.gameObject.layer) & hitLayers) == 0) return;
 
-        // Prevent hitting the same target multiple times in one swing
-        if (hitThisSwing.Contains(other))
-            return;
-
-        // Try to find damageable component
-        IDamageable damageable = other.GetComponent<IDamageable>();
-        if (damageable == null)
-        {
-            // Try to find on parent (some entities have colliders on child objects)
-            damageable = other.GetComponentInParent<IDamageable>();
-        }
-
-        if (damageable == null)
-        {
-            if (debugHitbox)
-                Debug.LogWarning($"[NaturalWeaponHitbox] Hit {other.name} but no IDamageable found");
-            return;
-        }
+        // Prevent multiple hits
+        if (hitThisSwing.Contains(other)) return;
 
         // Don't hit self
-        if (other.transform.root == transform.root)
-            return;
+        if (other.transform.root == transform.root) return;
 
-        // Mark as hit this swing
+        // Try to find target's ControllerBrain (new architecture)
+        ControllerBrain targetBrain = other.GetComponent<ControllerBrain>();
+        if (targetBrain == null)
+        {
+            // Try parent (colliders on child objects)
+            targetBrain = other.GetComponentInParent<ControllerBrain>();
+        }
+
+        if (targetBrain == null)
+        {
+            if (debugHitbox)
+                Debug.LogWarning($"[NaturalWeaponHitbox] Hit {other.name} but no ControllerBrain found");
+            return;
+        }
+
+        // Mark as hit
         hitThisSwing.Add(other);
 
-        // Get the ability definition
+        // Get ability
         AbilityDefinition ability = GetAbilityById(currentAbilityId);
         if (ability == null)
         {
@@ -169,19 +166,19 @@ public class NaturalWeaponHitbox : MonoBehaviour
             return;
         }
 
-        // Execute ability effects on target
-        if (damageSystem != null && healthProvider != null)
+        // Guard clause - check attacker brain
+        if (brain == null)
         {
-            ability.Execute(damageable, damageSystem, healthProvider, transform.root);
-
-            if (debugHitbox)
-            {
-                Debug.Log($"[NaturalWeaponHitbox] {weaponName} hit {other.name} with {ability.abilityName}");
-            }
+            Debug.LogError($"[NaturalWeaponHitbox] No brain reference! Call Initialize() first.");
+            return;
         }
-        else
+
+        // Execute ability on target using new architecture
+        ability.ExecuteOn(brain, targetBrain);
+
+        if (debugHitbox)
         {
-            Debug.LogError($"[NaturalWeaponHitbox] Missing DamageModule or HealthProvider! Call Initialize() first.");
+            Debug.Log($"[NaturalWeaponHitbox] {weaponName} hit {other.name} with {ability.abilityName}");
         }
     }
 

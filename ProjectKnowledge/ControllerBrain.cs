@@ -1,7 +1,8 @@
-﻿using UnityEngine;
-using UnityEngine.InputSystem;
+﻿using System;
 using System.Collections.Generic;
-using System;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public enum FeetContactType
 {
@@ -22,6 +23,8 @@ public class ControllerBrain : MonoBehaviour
     [SerializeField] private RPGSystem rpgSystem;
     [Header("Systems")]
     [SerializeField] private DamageSystem damageSystem;
+    [Tooltip("State machine module - manages parallel state layers")]
+    [SerializeField] private StateMachineModule stateMachineModule;
     [Tooltip("Universal movement system (all entities)")]
     [SerializeField] private MovementSystem movementSystem;
     [Tooltip("Universal animation system (all entities)")]
@@ -30,8 +33,12 @@ public class ControllerBrain : MonoBehaviour
     [SerializeField] private AbilitySystem abilitySystem;
     [Tooltip("Universal stat system (data-driven stats with formulas and modifiers)")]
     [SerializeField] private StatSystem statSystem;
+    [Tooltip("Universal resource system (data-driven resources with formulas and modifiers)")]
+    [SerializeField] private ResourceSystem resourceSystem;
     [Tooltip("Universal input system (keyboard/gamepad/AI/network control)")]
     [SerializeField] private InputSystem inputSystem;
+    [Tooltip("Blackboard system - semantic bridge for interpreting stats into facts (Phase 1.3)")]
+    [SerializeField] private BlackboardSystem blackboardSystem;
 
     [Header("Provider Coordinators (Legacy - Being Phased Out)")]
     [SerializeField] private InventoryProviderCoordinator inventoryProviderCoordinator;
@@ -82,10 +89,14 @@ public class ControllerBrain : MonoBehaviour
     public MovementSystem Movement => movementSystem;
     public AnimationSystem Animation => animationSystem;
     public AbilitySystem Abilities => abilitySystem;
+    public StateMachineModule StateMachine => stateMachineModule;
     public StatSystem Stats => statSystem;
+
+    public ResourceSystem ResourceSys => resourceSystem;
     public RPGSystem RPG => rpgSystem;
     public StatSystem StatSystem => statSystem; // Alias for consistency with migrated code
     public DamageSystem Damage => damageSystem;
+    public BlackboardSystem BlackboardSys => blackboardSystem;
 
     // Provider coordinators
     public InventoryProviderCoordinator InventoryProvider => inventoryProviderCoordinator;
@@ -229,6 +240,18 @@ public class ControllerBrain : MonoBehaviour
             providerCache[typeof(IInventoryProvider)] = inventoryProviderCoordinator.Inventory;
             providerCache[typeof(IEquipmentProvider)] = inventoryProviderCoordinator.Equipment;
         }
+
+        // Cache BlackboardSystem (Phase 1.3: Semantic Bridge)
+        if (blackboardSystem != null && blackboardSystem.Blackboard != null)
+        {
+            providerCache[typeof(Blackboard)] = blackboardSystem.Blackboard;
+        }
+
+        if (resourceSystem != null)
+        {
+            providerCache[typeof(IResourceProvider)] = resourceSystem;
+            providerCache[typeof(IHealthProvider)] = resourceSystem;
+        }
     }
 
     void InitializeEmptyArrays()
@@ -345,6 +368,9 @@ public class ControllerBrain : MonoBehaviour
         if (inputSystem != null && inputSystem is IBrainModule inputModule)
             inputModule.Initialize(this);
 
+        if (stateMachineModule != null && stateMachineModule is IBrainModule stateMachineModule_)
+            stateMachineModule_.Initialize(this);
+
         // MovementSystem SECOND (needs InputSystem as control source)
         if (movementSystem != null && movementSystem is IBrainModule movementModule)
             movementModule.Initialize(this);
@@ -357,6 +383,14 @@ public class ControllerBrain : MonoBehaviour
         if (abilitySystem != null && abilitySystem is IBrainModule abilityModule)
             abilityModule.Initialize(this);
 
+        // StatSystem FIFTH (needed before ResourceSystem)
+        if (statSystem != null && statSystem is IBrainModule statModule)
+            statModule.Initialize(this);
+
+        // ResourceSystem SIXTH (needs StatSystem for max values)
+        if (resourceSystem != null && resourceSystem is IBrainModule resourceModule)
+            resourceModule.Initialize(this);
+
         // Rebuild provider cache now that InputSystem is initialized
         BuildProviderCache();
 
@@ -365,8 +399,8 @@ public class ControllerBrain : MonoBehaviour
         {
             // Skip core systems - already initialized above
             if (module == movementSystem || module == animationSystem ||
-                module == abilitySystem || module == inputSystem || module == statSystem || module == identitySystem)
-
+                module == abilitySystem || module == inputSystem ||
+                module == statSystem || module == resourceSystem || module == identitySystem)
                 continue;
 
             module.Initialize(this);
@@ -530,10 +564,14 @@ public class ControllerBrain : MonoBehaviour
     public PlayerInputControls GetInputControls() => playerInputControls;
 
     // Combat shortcuts
-    public ICombatStatsProvider CombatStats => GetProvider<ICombatStatsProvider>();
     public IHealthProvider Health => GetProvider<IHealthProvider>();
     public IResourceProvider Resources => GetProvider<IResourceProvider>();
     public IDefenseProvider Defense => GetProvider<IDefenseProvider>();
+
+ 
+
+    // Blackboard shortcuts (Phase 1.3: Semantic Bridge)
+    public Blackboard Blackboard => blackboardSystem?.Blackboard;
 
     // Camera shortcuts (via coordinator with backward compatibility)
     public ICameraProvider CameraInterface => cameraCoordinator;
@@ -567,6 +605,8 @@ public class ControllerBrain : MonoBehaviour
             return animationSystem as T;
         if (typeof(T) == typeof(AbilitySystem) && abilitySystem != null)
             return abilitySystem as T;
+        if (typeof(T) == typeof(StateMachineModule) && stateMachineModule != null)  // NEW
+            return stateMachineModule as T;
         if (typeof(T) == typeof(StatSystem) && statSystem != null)
             return statSystem as T;
         if (typeof(T) == typeof(IdentitySystem) && identitySystem != null)
@@ -614,7 +654,7 @@ public class StatsWrapper
         this.brain = brain;
     }
 
-    public RPGSystem Allocation => brain.GetModule<RPGSystem>(); 
+    public RPGSystem Allocation => brain.GetModule<RPGSystem>();
 }
 
 /// <summary>
@@ -630,5 +670,5 @@ public class CombatWrapper
     }
 
     public DamageSystem Damage => brain.GetModule<DamageSystem>();
-    public ActiveDefenseModule ActiveDefense => brain.GetModule<ActiveDefenseModule>();
+   
 }

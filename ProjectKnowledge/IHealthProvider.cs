@@ -5,12 +5,11 @@ public interface IHealthProvider
     float GetCurrentHealth();
     float GetMaxHealth();
     float GetHealthPercentage();
+
     bool IsAlive();
 
-    void ApplyDamage(float damage);
-    void ApplyHealing(float healing);
-    void SetHealth(float value);
-    void SetHealthToMax();
+    void ApplyDamage(float amount);
+    void ApplyHealing(float amount);
 
     event Action<float> OnHealthChanged;
     event Action OnDeath;

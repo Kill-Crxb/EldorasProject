@@ -198,6 +198,8 @@ public partial class StatSystem : MonoBehaviour, IBrainModule, ISaveable
 
             // Cache for quick access
             quickAccessCache[statDef.statId] = stat;
+
+           
         }
     }
 

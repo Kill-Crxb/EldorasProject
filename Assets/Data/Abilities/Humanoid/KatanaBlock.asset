@@ -9,29 +9,47 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68d466a83fa4f294f9b15ba8ca8d4c67, type: 3}
+  m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
   m_Name: KatanaBlock
-  m_EditorClassIdentifier: Assembly-CSharp::DefenseAbilityData
-  defenseId: katana_block
-  defenseName: Katana Guard
-  description: 
+  m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
+  abilityId: kblock
+  abilityName: deflect
+  description: hold up your weapon and deflect hits from the front.
   icon: {fileID: 0}
-  blockDamageReduction: 1
+  abilityType: 1
+  abilityCategory: 3
+  setsUpperBodyState: 6
+  effectTrigger: 19
+  waitForAnimUnlock: 1
+  maxDuration: 2
+  resourceCosts: []
+  cooldown: 0
+  castTime: 0
+  requiredFactsAny: []
+  requiredFactsAll: []
+  forbiddenFactsAll: []
+  overrideDefaults: 0
+  customRequiredFacts: []
+  customForbiddenFacts: []
+  targetType: 1
+  range: 5
+  requiresLineOfSight: 1
+  damageEffects: []
+  damageOverTimeEffects: []
+  healEffects: []
+  healOverTimeEffects: []
+  knockbackEffects: []
+  movementEffects: []
+  animationTrigger: Ability
+  castEffectPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 0}
+  projectilePrefab: {fileID: 0}
+  blockDamageReduction: 0.5
   blockAngle: 120
   parryWindowDuration: 0.2
   parryDamageReduction: 1
-  parryEnablesCounter: 0
-  counterWindowDuration: 0
-  blockStaminaDrain: 8
-  parryStaminaCost: 5
-  blockStaminaCost: 10
-  parryRefundsStamina: 1
-  blockStartupTime: 0
-  blockAnimParam: IsBlocking
-  parryAnimTrigger: Parry
-  blockHitAnimTrigger: BlockHit
-  blockActivationVFX: {fileID: 0}
-  parrySuccessVFX: {fileID: 0}
-  blockImpactVFX: {fileID: 0}
-  requiredWeaponTypes: 
-  allowsUnarmed: 0
+  parryEnablesCounter: 1
+  counterWindowDuration: 1
+  blockStartupTime: 0.1
+  nextInChain: {fileID: 0}
+  chainWindow: 0.5

@@ -237,7 +237,7 @@ public class GOAPDebugUIController : MonoBehaviour
                 sb.AppendLine($"Distance: {ctx.distanceToTarget:F2}m");
             }
             sb.AppendLine($"Health: {ctx.healthPercent:P0}");
-            sb.AppendLine($"Is Busy: {ctx.isBusy}");
+            sb.AppendLine($"Is Busy: {ctx.IsActionLocked}");
 
             contextInfoText.text = sb.ToString();
         }

@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 190b85c8cb907eb45baa22e29e796686, type: 3}
   m_Name: HealthDefinition
   m_EditorClassIdentifier: Assembly-CSharp::ResourceDefinition
-  resourceType: 0
+  resourceId: health
+  isHealthLike: 1
+  isTemporary: 0
   displayName: Health
   description: Hit points
   maxStatId: character.max_health
@@ -27,5 +29,6 @@ MonoBehaviour:
   icon: {fileID: 0}
   depletedSound: {fileID: 0}
   restoredSound: {fileID: 0}
-  triggerDeathOnDepletion: 0
+  triggerDeathOnDepletion: 1
   resetOnDeath: 0
+  tags: []

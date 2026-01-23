@@ -1,17 +1,18 @@
 using System;
-
-public enum ResourceType { Health, Mana, Stamina, Energy, Rage, Focus }
+using System.Collections.Generic;
 
 public interface IResourceProvider
 {
-    float GetResource(ResourceType type);
-    float GetMaxResource(ResourceType type);
-    float GetResourcePercentage(ResourceType type);
+    float GetResource(ResourceDefinition def);
+    float GetMaxResource(ResourceDefinition def);
+    float GetResourcePercentage(ResourceDefinition def);
 
-    bool HasResource(ResourceType type, float amount);
-    bool ConsumeResource(ResourceType type, float amount);
-    void RestoreResource(ResourceType type, float amount);
-    void SetResourceToMax(ResourceType type);
+    bool HasResource(ResourceDefinition def, float amount);
+    bool ConsumeResource(ResourceDefinition def, float amount);
+    void RestoreResource(ResourceDefinition def, float amount);
+    void SetResourceToMax(ResourceDefinition def);
 
-    event Action<ResourceType, float> OnResourceChanged;
+    IReadOnlyDictionary<ResourceDefinition, float> GetAllResources();
+
+    event Action<ResourceDefinition, float> OnResourceChanged;
 }

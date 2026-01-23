@@ -12,76 +12,66 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63f1401dcb445534faca4def0618a012, type: 3}
   m_Name: RPGOffenceStats
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatSchema
-  statNamespace: offence
+  statNamespace: cmb
   description: RPG Combat Stats
   stats:
-  - statId: offence.critch
-    displayName: Critical Chance
-    description: Chance to land critical hits (%)
+  - statId: cmb.arcana
+    displayName: Arcana
+    description: Magical power
     baseValue: 5
-    formula: '{character.insight} * 1.5'
-    displayColor: {r: 0.8396226, g: 0.13861692, b: 0.4690331, a: 1}
+    formula: '{core.mind} * 1'
+    displayColor: {r: 0.27069238, g: 0.60315, b: 0.745283, a: 1}
     icon: {fileID: 0}
     isVisible: 1
     isSaveable: 1
-    category: Uncategorized
-  - statId: offence.power
-    displayName: Power
-    description: Magical Power
-    baseValue: 0
-    formula: '{character.mind} * 3'
-    displayColor: {r: 0.49860004, g: 0.15690638, b: 0.7735849, a: 1}
-    icon: {fileID: 0}
-    isVisible: 1
-    isSaveable: 1
-    category: Uncategorized
-  - statId: offence.crithit
-    displayName: Critical Damage
-    description: Critical Hit damage multiplier
-    baseValue: 0
-    formula: '{character.insight} * 1.5'
-    displayColor: {r: 0.6507087, g: 0.38074043, b: 0.8679245, a: 1}
-    icon: {fileID: 0}
-    isVisible: 1
-    isSaveable: 1
-    category: Uncategorized
-  - statId: offence.pen
-    displayName: Penetration
-    description: Percentage of damage that will bypass Armor or Resistance.
-    baseValue: 0
-    formula: '{character.endurance} * 3'
-    displayColor: {r: 0.53613675, g: 0.8207547, b: 0.19744569, a: 1}
-    icon: {fileID: 0}
-    isVisible: 1
-    isSaveable: 1
-    category: Uncategorized
-  - statId: offence.force
+    category: 
+  - statId: cmb.force
     displayName: Force
-    description: Physical Power
-    baseValue: 0
-    formula: '{character.body} * 3'
-    displayColor: {r: 0.8490566, g: 0.33194944, b: 0.084104665, a: 1}
+    description: Physical force
+    baseValue: 5
+    formula: '{core.body} * 1'
+    displayColor: {r: 0.5471698, g: 0.2771691, b: 0.17808829, a: 1}
     icon: {fileID: 0}
     isVisible: 1
     isSaveable: 1
-    category: Uncategorized
-  - statId: offence.status
-    displayName: Status
-    description: Increases the rate that status modifiers are applied
-    baseValue: 0
-    formula: '{character.resilience} * 3'
-    displayColor: {r: 0.8490566, g: 0.33194944, b: 0.084104665, a: 1}
+    category: 
+  - statId: cmb.initiative
+    displayName: Initiative
+    description: Combat speed
+    baseValue: 5
+    formula: '{core.spirit} * 1'
+    displayColor: {r: 0.4935026, g: 0.6792453, b: 0.24029905, a: 1}
     icon: {fileID: 0}
     isVisible: 1
     isSaveable: 1
-    category: Uncategorized
-  - statId: offence.haste
-    displayName: haste
-    description: modifies speed and recovery
-    baseValue: 0
-    formula: '{character.spirit} * 3'
-    displayColor: {r: 0.19339623, g: 0.7735849, b: 0.28415307, a: 1}
+    category: 
+  - statId: cmb.affliction
+    displayName: Affliction
+    description: Skill with applying status conditions.
+    baseValue: 5
+    formula: '{core.insight} * 1'
+    displayColor: {r: 0.4154245, g: 0.20799215, b: 0.7735849, a: 1}
     icon: {fileID: 0}
     isVisible: 1
     isSaveable: 1
-    category: Uncategorized
+    category: 
+  - statId: cmb.finesse
+    displayName: Finesse
+    description: increases chance to acheive critical hit. (+50% of hit)
+    baseValue: 5
+    formula: '{core.endurance} * 1'
+    displayColor: {r: 0.5566038, g: 0.40238917, b: 0.29142934, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: 
+  - statId: cmb.precision
+    displayName: Precision
+    description: Increases damage penetration
+    baseValue: 5
+    formula: '{core.resilience} * 1'
+    displayColor: {r: 0.19873619, g: 0.5471698, b: 0.21792315, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: 

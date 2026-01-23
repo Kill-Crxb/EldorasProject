@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 547a237ac8f95264bacb2ea368e7bf77, type: 3}
+  m_Name: BasicNinja
+  m_EditorClassIdentifier: Assembly-CSharp::BlackboardSchema
+  schemaId: basicninja
+  keys:
+  - keyName: IsWounded
+    type: 0
+    description: '"Health below 25%"'
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: CanDodge
+    type: 0
+    description: '"Stamina above 20"'
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: LowStamina
+    type: 0
+    description: '"Stamina below 30%"'
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: IsStunned
+    type: 0
+    description: '"Stunned, Unable to act"'
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: IsSilenced
+    type: 0
+    description: '"Silenced, Unable to cast spells or draw elements"'
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: IsDisarmed
+    type: 0
+    description: '"Disarmed, Unable to use current weapon for attacks"'
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: IsRooted
+    type: 0
+    description: '"Rooted, unable to move"'
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0

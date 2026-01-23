@@ -16,7 +16,7 @@ using System;
 /// - You define state enums per game
 /// - Permission rules are customizable
 /// </summary>
-public partial class StateMachineModule : MonoBehaviour, IStateProvider
+public partial class StateMachineModule : MonoBehaviour, IBrainModule, IStateProvider
 
 {
     [Header("Starting States")]
@@ -52,6 +52,11 @@ public partial class StateMachineModule : MonoBehaviour, IStateProvider
 
     // Initialization flag
     public bool IsInitialized { get; private set; }
+    public bool IsEnabled { get; set; } = true;
+    public void UpdateModule()
+    {
+        // StateMachineModule is event-driven, no per-frame updates needed
+    }
 
     // Events - modules can listen to these
     public event Action<BrainState, BrainState> OnBrainStateChanged;

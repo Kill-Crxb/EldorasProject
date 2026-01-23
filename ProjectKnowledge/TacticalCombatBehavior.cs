@@ -1,17 +1,14 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace RPG.Tactical
 {
     /// <summary>
-    /// Base class for combat behaviors with tactical AI and threat assessment.
-    /// Integrates with TacticalPositioningSystem for intelligent positioning.
-    /// 
-    /// Features:
-    /// - 7 tactical states (Observing, Engaging, Defensive, Aggressive, Retreating, Flanking, Recovering)
-    /// - Dynamic threat assessment system
-    /// - Integration with tactical positioning
-    /// - Health and stamina awareness
-    /// - State transition management
+    /// Fully dynamic Tactical Combat Behavior
+    /// - Data-driven: no hardcoded resources
+    /// - Caches all ResourceDefinitions from ResourceManager
+    /// - GOAP/AI goals can use any resource dynamically
+    /// - Threat, health, stamina, or any custom resource percentages are fully generic
     /// </summary>
     public abstract class TacticalCombatBehavior : AICombatBehaviorModule, ITacticalConfiguration
     {
@@ -21,7 +18,7 @@ namespace RPG.Tactical
         [SerializeField] protected float retreatHealthPercent = 0.2f;
         [SerializeField] protected float defensiveHealthPercent = 0.4f;
         [SerializeField] protected float aggressiveTargetHealthPercent = 0.3f;
-        [SerializeField] protected float recoveryStaminaPercent = 0.2f;
+        [SerializeField] protected float recoveryResourcePercent = 0.2f; // generic threshold for any resource
         [SerializeField] protected float flankingChance = 0.05f;
 
         [Header("Threat Assessment")]
@@ -48,11 +45,16 @@ namespace RPG.Tactical
         // Target access
         protected Transform currentTarget => brain?.GetModule<AISystem>()?.CurrentTarget;
 
-
         // Providers
         protected IHealthProvider healthProvider;
         protected IHealthProvider targetHealthProvider;
         protected IResourceProvider resourceProvider;
+
+        // Resource caches
+        protected Dictionary<string, ResourceDefinition> resourceDefs = new();
+        protected Dictionary<string, float> currentResources = new();
+        protected Dictionary<string, float> maxResources = new();
+        protected Dictionary<string, float> resourcePercent = new();
 
         // State tracking
         protected float stateEnterTime;
@@ -69,9 +71,11 @@ namespace RPG.Tactical
             healthProvider = brain.GetModuleImplementing<IHealthProvider>();
             resourceProvider = brain.GetModuleImplementing<IResourceProvider>();
 
-            if (healthProvider == null)
+            // Cache all ResourceDefinitions dynamically
+            if (resourceProvider != null)
             {
-                Debug.LogWarning($"[TacticalCombatBehavior] No IHealthProvider found on {gameObject.name}");
+                foreach (var def in ResourceManager.Instance.GetAll())
+                    resourceDefs[def.name] = def;
             }
 
             // Initialize state
@@ -108,6 +112,9 @@ namespace RPG.Tactical
                 }
             }
 
+            // Update resource cache
+            UpdateResourceCache();
+
             // Update tactical state
             UpdateTacticalState();
 
@@ -121,10 +128,41 @@ namespace RPG.Tactical
             ExecuteTacticalBehavior(target);
         }
 
-        /// <summary>
-        /// Override this in derived classes to implement tactical behaviors
-        /// </summary>
         protected abstract void ExecuteTacticalBehavior(Transform target);
+
+        #endregion
+
+        #region Resource Management
+
+        /// <summary>
+        /// Updates all cached resource values for this entity
+        /// </summary>
+        protected void UpdateResourceCache()
+        {
+            if (resourceProvider == null) return;
+
+            foreach (var kvp in resourceDefs)
+            {
+                var def = kvp.Value;
+                float current = resourceProvider.GetResource(def);
+                float max = resourceProvider.GetMaxResource(def);
+                float percent = max > 0f ? current / max : 0f;
+
+                currentResources[def.name] = current;
+                maxResources[def.name] = max;
+                resourcePercent[def.name] = percent;
+            }
+        }
+
+        /// <summary>
+        /// Returns the current normalized percentage of any resource
+        /// </summary>
+        protected float GetResourcePercent(string resourceName, float fallback = 1f)
+        {
+            if (resourcePercent.TryGetValue(resourceName, out var value))
+                return value;
+            return fallback;
+        }
 
         #endregion
 
@@ -132,10 +170,7 @@ namespace RPG.Tactical
 
         public virtual void UpdateTacticalState()
         {
-            // Get current target from AI module
             Transform target = brain?.GetModule<AISystem>()?.CurrentTarget;
-
-
             if (target == null)
             {
                 CurrentTacticalState = TacticalState.Observing;
@@ -144,86 +179,105 @@ namespace RPG.Tactical
 
             float healthPercent = GetHealthPercent();
             float targetHealthPercent = GetTargetHealthPercent();
-            float staminaPercent = GetStaminaPercent();
+
+            // Example: dynamically pick a key resource for recovery (can be configured per entity/goal)
+            float anyResourcePercent = 1f;
+            if (resourceDefs.Count > 0)
+            {
+                foreach (var key in resourceDefs.Keys)
+                {
+                    float percent = GetResourcePercent(key, 1f);
+                    if (percent < recoveryResourcePercent)
+                    {
+                        anyResourcePercent = percent;
+                        break;
+                    }
+                }
+            }
 
             TacticalState previousState = CurrentTacticalState;
 
-            // Retreating: very low health, survival priority
+            // Decision-making dynamically
             if (healthPercent < retreatHealthPercent)
-            {
                 CurrentTacticalState = TacticalState.Retreating;
-            }
-            // Defensive: low health, cautious approach
             else if (healthPercent < defensiveHealthPercent)
-            {
                 CurrentTacticalState = TacticalState.Defensive;
-            }
-            // Recovering: low stamina, need to back off
-            else if (staminaPercent < recoveryStaminaPercent)
-            {
+            else if (anyResourcePercent < recoveryResourcePercent)
                 CurrentTacticalState = TacticalState.Recovering;
-            }
-            // Aggressive: target is weak, press advantage
             else if (targetHealthPercent < aggressiveTargetHealthPercent)
-            {
                 CurrentTacticalState = TacticalState.Aggressive;
-            }
-            // Flanking: random tactical repositioning
             else if (Random.value < flankingChance)
-            {
                 CurrentTacticalState = TacticalState.Flanking;
-            }
-            // Observing: study target, circle
             else if (Random.value < observationChance && Time.time - stateEnterTime > observationDuration)
-            {
                 CurrentTacticalState = TacticalState.Observing;
-            }
-            // Default: Engaging
             else if (CurrentTacticalState != TacticalState.Observing &&
                      CurrentTacticalState != TacticalState.Flanking)
-            {
                 CurrentTacticalState = TacticalState.Engaging;
-            }
 
-            // Track state changes
             if (CurrentTacticalState != previousState)
             {
                 stateEnterTime = Time.time;
                 OnTacticalStateChanged(previousState, CurrentTacticalState);
             }
 
-            // Update threat level
             UpdateThreatLevel();
         }
 
         protected virtual void OnTacticalStateChanged(TacticalState from, TacticalState to)
         {
             if (debugTactical)
-            {
                 Debug.Log($"[TacticalCombatBehavior] {gameObject.name} state: {from} → {to}");
-            }
         }
 
         protected void UpdateThreatLevel()
         {
-            // Decay threat over time
             ThreatLevel = Mathf.Max(0f, ThreatLevel - threatDecayRate * Time.deltaTime);
             ThreatLevel = Mathf.Clamp01(ThreatLevel);
         }
 
         #endregion
 
-        #region Positioning System Integration
+        #region Health Helpers
+
+        protected float GetHealthPercent()
+        {
+            if (healthProvider == null) return 1f;
+
+            float current = healthProvider.GetCurrentHealth();
+            float max = healthProvider.GetMaxHealth();
+
+            return max > 0 ? current / max : 1f;
+        }
+
+        protected float GetTargetHealthPercent()
+        {
+            Transform target = brain?.GetModule<AISystem>()?.CurrentTarget;
+            if (target == null) return 1f;
+
+            if (targetHealthProvider == null)
+            {
+                var targetBrain = target.GetComponent<ControllerBrain>();
+                if (targetBrain != null)
+                    targetHealthProvider = targetBrain.GetModuleImplementing<IHealthProvider>();
+            }
+
+            if (targetHealthProvider == null) return 1f;
+
+            float current = targetHealthProvider.GetCurrentHealth();
+            float max = targetHealthProvider.GetMaxHealth();
+
+            return max > 0 ? current / max : 1f;
+        }
+
+        #endregion
+
+        #region Positioning Integration
 
         protected virtual void UpdateTacticalPoint(Transform target)
         {
-            // Determine desired role based on current tactical state
             TacticalRole desiredRole = GetDesiredRole();
-
-            // Get point preference based on tactical state
             PointPreference preference = GetPointPreference();
 
-            // Request point from positioning system
             TacticalPoint requestedPoint = targetPositioningSystem.RequestPoint(
                 gameObject,
                 desiredRole,
@@ -231,16 +285,13 @@ namespace RPG.Tactical
                 entityPriority
             );
 
-            // Update assignment
             if (requestedPoint != assignedPoint)
             {
                 assignedPoint = requestedPoint;
                 currentRole = desiredRole;
 
                 if (debugTactical && assignedPoint != null)
-                {
                     Debug.Log($"[TacticalCombatBehavior] {gameObject.name} assigned to {assignedPoint.Direction}/{assignedPoint.Ring}");
-                }
             }
         }
 
@@ -263,92 +314,23 @@ namespace RPG.Tactical
         {
             return CurrentTacticalState switch
             {
-                TacticalState.Flanking => new PointPreference
-                {
-                    AllowAnyDirection = true,
-                    PreferredRing = PointRing.Outer,
-                    PreferEmpty = true
-                },
-                TacticalState.Retreating => new PointPreference
-                {
-                    PreferredDirection = PointDirection.Back,
-                    PreferredRing = PointRing.Outer,
-                    AllowAnyDirection = false
-                },
+                TacticalState.Flanking => new PointPreference { AllowAnyDirection = true, PreferredRing = PointRing.Outer, PreferEmpty = true },
+                TacticalState.Retreating => new PointPreference { PreferredDirection = PointDirection.Back, PreferredRing = PointRing.Outer, AllowAnyDirection = false },
                 _ => PointPreference.Any
             };
         }
 
         #endregion
 
-        #region Damage & Threat Callbacks
+        #region Damage & Threat
 
-        /// <summary>
-        /// Called when this entity takes damage - increases threat level
-        /// </summary>
         public virtual void OnDamageTaken(int damage)
         {
             damageReceivedThisLife += damage;
             ThreatLevel = Mathf.Min(1f, ThreatLevel + threatIncreasePerHit);
 
             if (debugTactical)
-            {
                 Debug.Log($"[TacticalCombatBehavior] {gameObject.name} took {damage} damage. Threat: {ThreatLevel:F2}");
-            }
-        }
-
-        #endregion
-
-        #region Helper Methods
-
-        protected float GetHealthPercent()
-        {
-            if (healthProvider == null) return 1f;
-
-            float current = healthProvider.GetCurrentHealth();
-            float max = healthProvider.GetMaxHealth();
-
-            return max > 0 ? current / max : 1f;
-        }
-
-        protected float GetTargetHealthPercent()
-        {
-            Transform target = brain?.GetModule<AISystem>()?.CurrentTarget;
-
-            if (target == null) return 1f;
-
-            // Try to get target's health provider
-            if (targetHealthProvider == null)
-            {
-                var targetBrain = target.GetComponent<ControllerBrain>();
-                if (targetBrain != null)
-                {
-                    targetHealthProvider = targetBrain.GetModuleImplementing<IHealthProvider>();
-                }
-            }
-
-            if (targetHealthProvider == null) return 1f;
-
-            float current = targetHealthProvider.GetCurrentHealth();
-            float max = targetHealthProvider.GetMaxHealth();
-
-            return max > 0 ? current / max : 1f;
-        }
-
-        protected float GetStaminaPercent()
-        {
-            if (resourceProvider == null) return 1f;
-
-            float current = resourceProvider.GetResource(ResourceType.Stamina);
-            float max = resourceProvider.GetMaxResource(ResourceType.Stamina);
-
-            return max > 0 ? current / max : 1f;
-        }
-
-        protected bool HasReachedPoint(TacticalPoint point, float threshold = 1f)
-        {
-            if (point == null) return false;
-            return Vector3.Distance(transform.position, point.WorldPosition) <= threshold;
         }
 
         #endregion
@@ -359,28 +341,23 @@ namespace RPG.Tactical
         {
             base.OnCombatEnter(target);
 
-            // Reset threat and damage tracking
             ThreatLevel = baseThreatLevel;
             damageReceivedThisLife = 0;
             stateEnterTime = Time.time;
             CurrentTacticalState = TacticalState.Observing;
 
-            // Clear positioning assignments
             assignedPoint = null;
             targetHealthProvider = null;
             targetPositioningSystem = null;
 
             if (debugTactical)
-            {
                 Debug.Log($"[TacticalCombatBehavior] {gameObject.name} entered combat with {target.name}");
-            }
         }
 
         public override void OnCombatExit()
         {
             base.OnCombatExit();
 
-            // Release tactical point
             if (usePositioningSystem && targetPositioningSystem != null && assignedPoint != null)
             {
                 targetPositioningSystem.ReleasePoint(gameObject);
@@ -388,9 +365,7 @@ namespace RPG.Tactical
             }
 
             if (debugTactical)
-            {
                 Debug.Log($"[TacticalCombatBehavior] {gameObject.name} exited combat");
-            }
         }
 
         #endregion

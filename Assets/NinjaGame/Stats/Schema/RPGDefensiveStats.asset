@@ -12,14 +12,124 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63f1401dcb445534faca4def0618a012, type: 3}
   m_Name: RPGDefensiveStats
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatSchema
-  statNamespace: character
+  statNamespace: def
   description: Define stats for this namespace
   stats:
-  - statId: character.new_stat
-    displayName: New Stat
-    description: 
+  - statId: def.empowerment
+    displayName: Empowerment
+    description: Aegis Empowerment
+    baseValue: 1
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.fortification
+    displayName: Fortification
+    description: Armor Fortification
     baseValue: 0
     formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.Conditioning
+    displayName: Conditioning
+    description: Resistance Conditioning
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.attunement
+    displayName: Attunement
+    description: Barrier Attunement
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.technique
+    displayName: Technique
+    description: Deflection Technique
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.reflexes
+    displayName: Reflexes
+    description: Evasion Reflexes
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.armor
+    displayName: Armor
+    description: Total Armor (reduces damage taken) (returns deminish)
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.resistance
+    displayName: Resistance
+    description: Total Resistance (reduces Crowd control duration) (WIP)
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.barrier
+    displayName: Barrier
+    description: Total Barrier skill
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.deflection
+    displayName: Deflection
+    description: skill with deflecting strikes and spells
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.evasion
+    displayName: Evasion
+    description: Skill with dodging
+    baseValue: 0
+    formula: 
+    displayColor: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 0}
+    isVisible: 0
+    isSaveable: 0
+    category: 
+  - statId: def.aegis
+    displayName: Aegis
+    description: Base Aegis
+    baseValue: 0
+    formula: '{item.aegis} * 1'
     displayColor: {r: 0, g: 0, b: 0, a: 0}
     icon: {fileID: 0}
     isVisible: 0

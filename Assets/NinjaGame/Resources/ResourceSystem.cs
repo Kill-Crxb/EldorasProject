@@ -1,75 +1,88 @@
 ﻿using System;
 using System.Collections.Generic;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
-public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider
+public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider, IBrainModule
 {
     [SerializeField] private bool isEnabled = true;
-    public bool IsEnabled => isEnabled;
+    [SerializeField] private bool debugResources = false;
+
+    public bool IsEnabled
+    {
+        get => isEnabled;
+        set => isEnabled = value;
+    }
 
     private ControllerBrain brain;
     private StatSystem stats;
 
-    private readonly Dictionary<ResourceDefinition, float> current = new();
-    private readonly Dictionary<ResourceDefinition, float> max = new();
-
-
-    public IReadOnlyDictionary<ResourceDefinition, float> GetAllResources()
-    {
-        return current;
-    }
-
-    [Header("Debug")]
-    [SerializeField] private bool debugResources = false;
+    private readonly Dictionary<string, float> current = new();
+    private readonly Dictionary<string, float> max = new();
+    private readonly Dictionary<string, ResourceDefinition> definitions = new();
 
     public event Action<ResourceDefinition, float> OnResourceChanged;
     public event Action<float> OnHealthChanged;
     public event Action OnDeath;
 
-    private ResourceDefinition healthDef;
-
-    #region Initialization
-
+    private string healthResourceId;
 
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
         stats = brain.Stats;
 
-        foreach (var def in ResourceManager.Instance.GetAll())
+        if (stats == null)
         {
-            float maxValue = GetMaxResource(def);
-
-            current[def] = maxValue; // start full by default
-            max[def] = maxValue;
-
-            // Assign health role explicitly (NOT via flag)
-            if (def.triggerDeathOnDepletion)
-                healthDef = def;
+            Debug.LogError($"[ResourceSystem] No StatSystem found on {brain.name}");
+            return;
         }
 
-        if (healthDef == null)
-            Debug.LogError("[ResourceSystem] No health resource defined (triggerDeathOnDepletion = true)");
+        foreach (var def in ResourceManager.Instance.GetAll())
+        {
+            if (def == null || string.IsNullOrEmpty(def.resourceId))
+                continue;
 
-        if (debugResources)
-            Debug.Log($"[ResourceSystem] Initialized {current.Count} resources on {brain.name}");
+            float maxValue = !string.IsNullOrEmpty(def.maxStatId)
+                ? stats.GetValue(def.maxStatId)
+                : 100f;
+
+            if (maxValue <= 0f)
+                maxValue = 100f;
+
+            string id = def.resourceId;
+            current[id] = maxValue;
+            max[id] = maxValue;
+            definitions[id] = def;
+
+            if (def.triggerDeathOnDepletion)
+                healthResourceId = id;
+        }
+
+        if (string.IsNullOrEmpty(healthResourceId))
+            Debug.LogError("[ResourceSystem] No health resource defined (triggerDeathOnDepletion = true)");
     }
 
-    #endregion
-
-    #region IResourceProvider (Definition-driven)
+    public void UpdateModule()
+    {
+    }
 
     public float GetResource(ResourceDefinition def)
-        => def != null && current.TryGetValue(def, out var v) ? v : 0f;
+    {
+        if (def == null) return 0f;
+        return current.TryGetValue(def.resourceId, out var v) ? v : 0f;
+    }
 
     public float GetMaxResource(ResourceDefinition def)
-        => def != null && max.TryGetValue(def, out var v) ? v : 0f;
+    {
+        if (def == null) return 0f;
+        return max.TryGetValue(def.resourceId, out var v) ? v : 0f;
+    }
 
     public float GetResourcePercentage(ResourceDefinition def)
     {
+        if (def == null) return 0f;
         float m = GetMaxResource(def);
-        return m > 0 ? GetResource(def) / m : 0f;
+        return m > 0f ? GetResource(def) / m : 0f;
     }
 
     public bool HasResource(ResourceDefinition def, float amount)
@@ -91,32 +104,43 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider
 
     public void SetResourceToMax(ResourceDefinition def)
     {
-        if (def == null || !max.ContainsKey(def)) return;
-        Set(def, max[def]);
+        if (def == null) return;
+        if (!max.TryGetValue(def.resourceId, out float maxVal)) return;
+        Set(def, maxVal);
     }
 
-
-
-    #endregion
-
-    #region Internal Mutation
+    public IReadOnlyDictionary<ResourceDefinition, float> GetAllResources()
+    {
+        var result = new Dictionary<ResourceDefinition, float>();
+        foreach (var kvp in current)
+        {
+            if (definitions.TryGetValue(kvp.Key, out var def))
+                result[def] = kvp.Value;
+        }
+        return result;
+    }
 
     private void Modify(ResourceDefinition def, float delta)
     {
-        if (def == null || !current.ContainsKey(def)) return;
-        Set(def, current[def] + delta);
+        if (def == null) return;
+        if (!current.ContainsKey(def.resourceId)) return;
+        Set(def, current[def.resourceId] + delta);
     }
 
     private void Set(ResourceDefinition def, float value)
     {
-        if (def == null || !current.ContainsKey(def)) return;
+        if (def == null) return;
 
-        float clamped = Mathf.Clamp(value, 0f, max[def]);
-        current[def] = clamped;
+        string id = def.resourceId;
+        if (!current.ContainsKey(id)) return;
+
+        float maxVal = max[id];
+        float clamped = Mathf.Clamp(value, 0f, maxVal);
+        current[id] = clamped;
 
         OnResourceChanged?.Invoke(def, clamped);
 
-        if (def == healthDef)
+        if (id == healthResourceId)
         {
             OnHealthChanged?.Invoke(clamped);
 
@@ -125,18 +149,23 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider
         }
     }
 
-    #endregion
-
-    #region IHealthProvider (Health as Resource)
-
     public float GetCurrentHealth()
-        => GetResource(healthDef);
+    {
+        if (string.IsNullOrEmpty(healthResourceId)) return 0f;
+        return current.TryGetValue(healthResourceId, out var v) ? v : 0f;
+    }
 
     public float GetMaxHealth()
-        => GetMaxResource(healthDef);
+    {
+        if (string.IsNullOrEmpty(healthResourceId)) return 0f;
+        return max.TryGetValue(healthResourceId, out var v) ? v : 0f;
+    }
 
     public float GetHealthPercentage()
-        => GetResourcePercentage(healthDef);
+    {
+        float maxHP = GetMaxHealth();
+        return maxHP > 0f ? GetCurrentHealth() / maxHP : 0f;
+    }
 
     public bool IsAlive()
         => GetCurrentHealth() > 0f;
@@ -144,14 +173,18 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider
     public void ApplyDamage(float amount)
     {
         if (!isEnabled) return;
+        if (string.IsNullOrEmpty(healthResourceId)) return;
+        if (!definitions.TryGetValue(healthResourceId, out var healthDef)) return;
+
         Modify(healthDef, -Mathf.Abs(amount));
     }
 
     public void ApplyHealing(float amount)
     {
         if (!isEnabled) return;
+        if (string.IsNullOrEmpty(healthResourceId)) return;
+        if (!definitions.TryGetValue(healthResourceId, out var healthDef)) return;
+
         Modify(healthDef, Mathf.Abs(amount));
     }
-
-    #endregion
 }

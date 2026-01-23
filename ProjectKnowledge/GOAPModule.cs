@@ -260,13 +260,14 @@ public class GOAPModule : MonoBehaviour, IBrainModule
             return;
         }
 
-        // Skip if busy (ability executing, animation locked, staggered)
-        if (context.isBusy)
+        // Skip if action-locked (ability executing, movement locked, staggered, etc.)
+        if (context.IsActionLocked)
         {
             if (debugMode && Time.frameCount % 60 == 0) // Log once per second
-                Debug.Log($"[GOAPModule] Entity busy, skipping goal evaluation");
+                Debug.Log($"[GOAPModule] Entity action-locked, skipping goal evaluation");
             return;
         }
+
 
         // Check for interrupts first
         if (checkInterrupts && ShouldCheckForInterrupt())

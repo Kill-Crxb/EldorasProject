@@ -16,14 +16,27 @@ MonoBehaviour:
   abilityName: Cleave
   description: 
   icon: {fileID: 0}
-  resourceType: 2
-  resourceCost: 10
+  abilityType: 0
+  abilityCategory: 1
+  setsUpperBodyState: 1
+  effectTrigger: 19
+  waitForAnimUnlock: 1
+  maxDuration: 2
+  resourceCosts: []
   cooldown: 5
-  castTime: 0.5
-  targetType: 1
+  castTime: 0
+  requiredFactsAny: []
+  requiredFactsAll: []
+  forbiddenFactsAll: []
+  overrideDefaults: 0
+  customRequiredFacts: []
+  customForbiddenFacts: []
+  targetType: 4
   range: 5
   requiresLineOfSight: 1
-  damageEffects: []
+  damageEffects:
+  - baseDamage: 0
+    damageType: 0
   damageOverTimeEffects: []
   healEffects: []
   healOverTimeEffects: []
@@ -33,3 +46,12 @@ MonoBehaviour:
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   projectilePrefab: {fileID: 0}
+  blockDamageReduction: 0.5
+  blockAngle: 120
+  parryWindowDuration: 0.2
+  parryDamageReduction: 1
+  parryEnablesCounter: 1
+  counterWindowDuration: 1
+  blockStartupTime: 0.1
+  nextInChain: {fileID: 0}
+  chainWindow: 0.5

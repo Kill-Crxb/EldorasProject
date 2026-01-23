@@ -32,7 +32,7 @@ public class StatCoordinator : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
 
         if (debugLogging)
             Debug.Log("[StatCoordinator] Initialized");

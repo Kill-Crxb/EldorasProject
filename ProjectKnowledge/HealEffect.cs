@@ -3,35 +3,25 @@ using UnityEngine;
 
 /// <summary>
 /// Instant Heal Effect
-/// 
-/// Usage:
-/// - Called by abilities to heal targets
-/// - Works through IHealthProvider interface
-/// - DamageSystem and other health providers supported
-/// 
-/// Example:
-/// var effect = new HealEffect { healAmount = 50f };
-/// effect.SetHealthProvider(brain.GetModule<DamageSystem>());
-/// effect.Apply();
-/// 
-/// Updated: January 2026 - Supports DamageSystem
+/// Data-driven, HealthProvider-authoritative
 /// </summary>
-[System.Serializable]
+[Serializable]
 public class HealEffect
 {
     [Header("Heal Configuration")]
     [Tooltip("Amount of health to restore")]
     public float healAmount = 50f;
 
-    /// <summary>Fired when effect completes</summary>
     public event Action OnCompleted;
 
-    [System.NonSerialized]
+    [NonSerialized]
     private IHealthProvider healthProvider;
+
+    private bool isCompleted;
 
     /// <summary>
     /// Set the health provider that will receive healing
-    /// Call this before Apply()
+    /// Optional convenience for Apply()
     /// </summary>
     public void SetHealthProvider(IHealthProvider provider)
     {
@@ -39,59 +29,74 @@ public class HealEffect
     }
 
     /// <summary>
-    /// Apply healing to the health provider (modern - no parameter needed)
+    /// Apply healing using previously set health provider
     /// </summary>
     public void Apply()
     {
-        if (healthProvider != null)
-        {
-            healthProvider.ApplyHealing(healAmount);
-        }
-        else
+        if (isCompleted)
+            return;
+
+        if (healthProvider == null)
         {
             Debug.LogWarning("[HealEffect] No health provider set - healing not applied");
+            Complete();
+            return;
         }
 
-        OnCompleted?.Invoke();
+        healthProvider.ApplyHealing(healAmount);
+        Complete();
     }
 
     /// <summary>
-    /// Apply healing to IHealthProvider target (convenience overload)
+    /// Apply healing directly to a target (preferred API)
     /// </summary>
     public void Apply(IHealthProvider target)
     {
-        if (target != null)
+        if (isCompleted)
+            return;
+
+        if (target == null)
         {
-            target.ApplyHealing(healAmount);
+            Debug.LogWarning("[HealEffect] Target health provider is null");
+            Complete();
+            return;
         }
 
-        OnCompleted?.Invoke();
+        target.ApplyHealing(healAmount);
+        Complete();
     }
 
     /// <summary>
-    /// Apply healing (legacy IDamageable compatibility)
-    /// Note: Doesn't actually use the target - uses healthProvider set earlier
+    /// Legacy IDamageable compatibility
     /// </summary>
-    [System.Obsolete("Use Apply() or Apply(IHealthProvider) instead")]
+    [Obsolete("Use Apply(IHealthProvider) instead")]
     public void Apply(IDamageable target)
     {
-        if (healthProvider != null)
+        if (isCompleted)
+            return;
+
+        if (healthProvider == null)
         {
-            healthProvider.ApplyHealing(healAmount);
-        }
-        else
-        {
-            Debug.LogWarning("[HealEffect] No health provider set - use SetHealthProvider() before Apply()");
+            Debug.LogWarning("[HealEffect] No health provider set - legacy heal ignored");
+            Complete();
+            return;
         }
 
-        OnCompleted?.Invoke();
+        healthProvider.ApplyHealing(healAmount);
+        Complete();
     }
 
-    /// <summary>
-    /// Cancel the effect (for interruptible abilities)
-    /// </summary>
     public void Cancel()
     {
+        Complete();
+    }
+
+    private void Complete()
+    {
+        if (isCompleted)
+            return;
+
+        isCompleted = true;
         OnCompleted?.Invoke();
     }
 }

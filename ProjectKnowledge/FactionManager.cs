@@ -192,7 +192,7 @@ namespace RPG.Factions
         /// Currently set to 1.0 (normal regen) for all factions
         /// Uncomment code below to enable faction-specific regen
         /// </summary>
-        public float GetFactionResourceRegenBonus(FactionType faction, ResourceType resource)
+        public float GetFactionResourceRegenBonus(FactionType faction, ResourceDefinition resource)
         {
             // TODO: Currently set to normal rates (1.0) - adjust for game balance later
             return 1.0f;

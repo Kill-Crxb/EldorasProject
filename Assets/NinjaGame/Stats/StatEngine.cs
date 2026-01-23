@@ -85,12 +85,12 @@ namespace NinjaGame.Stats
     public class StatEngine
     {
         // All registered stats by ID
-        private Dictionary<string, StatNode> stats = new Dictionary<string, StatNode>();
+        private Dictionary<string, StatNode> stats = new Dictionary<string, StatNode>(StringComparer.OrdinalIgnoreCase);
 
         // Dependency graph for efficient updates
         // Key: stat that others depend ON
         // Value: list of stats that depend on it
-        private Dictionary<string, HashSet<string>> dependents = new Dictionary<string, HashSet<string>>();
+        private Dictionary<string, HashSet<string>> dependents = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
         // 🟢 Phase 1.6 Day 6: Reverse index for O(1) modifier removal
         // Key: sourceId (item, buff, talent)
@@ -102,6 +102,10 @@ namespace NinjaGame.Stats
 
         // Debug settings
         private bool debugLogging = false;
+
+        //lazy validation
+        private bool validationDirty = false;
+        private bool validated = false;
 
         // Events
         public event Action<string, float, float> OnStatChanged; // (statId, oldValue, newValue)
@@ -126,21 +130,25 @@ namespace NinjaGame.Stats
                 Debug.LogWarning($"[StatEngine] Stat '{stat.statId}' already registered. Replacing.");
             }
 
-            // 🟠 VALIDATION: Check formula and dependencies BEFORE registering
-            ValidateStatFormula(stat);
-
             stats[stat.statId] = stat;
-
-            // Build dependency graph
             UpdateDependencyGraph(stat);
 
-            // Subscribe to value changes
-            stat.OnValueChanged += (oldVal, newVal) => OnStatChanged?.Invoke(stat.statId, oldVal, newVal);
+            validationDirty = true; // 🔑 mark for later
+
+            stat.OnValueChanged += (oldVal, newVal) =>
+                OnStatChanged?.Invoke(stat.statId, oldVal, newVal);
 
             if (debugLogging)
                 Debug.Log($"[StatEngine] Registered stat: {stat.statId}");
         }
 
+        public void ValidateAllStats()
+        {
+            foreach (var stat in stats.Values)
+            {
+                ValidateStatFormula(stat);
+            }
+        }
         /// <summary>
         /// Validate stat formula and dependencies before registration
         /// </summary>
@@ -169,8 +177,12 @@ namespace NinjaGame.Stats
             {
                 if (!stats.ContainsKey(dependency))
                 {
+                    // Extract namespace from dependency (e.g., "def" from "def.aegis")
+                    string depNamespace = dependency.Contains('.') ? dependency.Substring(0, dependency.IndexOf('.')) : dependency;
+
                     Debug.LogWarning($"[StatEngine] Stat '{stat.statId}' references unknown stat '{dependency}'. " +
-                                    $"Make sure '{dependency}' is registered before '{stat.statId}', or this formula will fail.");
+                                    $"This usually means a schema containing '{depNamespace}.*' stats is not loaded. " +
+                                    $"Check that your StatSystem has all required schema IDs assigned in the inspector.");
                 }
             }
         }
@@ -233,6 +245,7 @@ namespace NinjaGame.Stats
         /// </summary>
         public float GetValue(string statId, float defaultValue = 0f)
         {
+            EnsureValidated();
             var stat = GetStat(statId);
             return stat?.FinalValue ?? defaultValue;
         }
@@ -242,6 +255,7 @@ namespace NinjaGame.Stats
         /// </summary>
         public float GetBaseValue(string statId, float defaultValue = 0f)
         {
+            EnsureValidated();
             var stat = GetStat(statId);
             return stat?.BaseValue ?? defaultValue;
         }
@@ -288,6 +302,7 @@ namespace NinjaGame.Stats
         /// <returns>Final calculated stat value</returns>
         public float GetValue(StatHandle handle, float defaultValue = 0f)
         {
+            EnsureValidated();
             if (!handle.IsValid)
                 return defaultValue;
 
@@ -314,6 +329,7 @@ namespace NinjaGame.Stats
         /// </summary>
         public float GetBaseValue(StatHandle handle, float defaultValue = 0f)
         {
+            EnsureValidated();
             if (!handle.IsValid)
                 return defaultValue;
 
@@ -334,6 +350,7 @@ namespace NinjaGame.Stats
         /// </summary>
         public void SetBaseValue(StatHandle handle, float value)
         {
+            EnsureValidated();
             if (!handle.IsValid)
                 return;
 
@@ -353,6 +370,7 @@ namespace NinjaGame.Stats
         /// </summary>
         public bool HasStat(StatHandle handle)
         {
+            EnsureValidated();
             if (!handle.IsValid)
                 return false;
 
@@ -410,6 +428,7 @@ namespace NinjaGame.Stats
             {
                 stat.AddContributionBonus(sourceId, targetStatId, multiplier);
                 UpdateDependencyGraph(stat); // Contribution adds dependency
+                validationDirty = true;
                 RecalculateWithDependents(statId);
 
                 if (debugLogging)
@@ -662,13 +681,11 @@ namespace NinjaGame.Stats
         /// </summary>
         private float EvaluateFormula(string formula, StatNode stat)
         {
-            // Start with formula result or base value
-            float result;
-            if (string.IsNullOrEmpty(formula))
-            {
-                result = stat.baseValue;
-            }
-            else
+            // Start with base value
+            float result = stat.baseValue;
+
+            // Add formula result if formula exists
+            if (!string.IsNullOrEmpty(formula))
             {
                 string processedFormula = formula;
 
@@ -676,18 +693,24 @@ namespace NinjaGame.Stats
                 // 🔴 CRITICAL: Use InvariantCulture to avoid locale issues (comma vs period)
                 foreach (var dependency in stat.Dependencies)
                 {
-                    // 🟠 VALIDATION: Check if dependency exists
+                    // 🟠 VALIDATION: Check if dependency exists (case-insensitive now)
                     if (!stats.ContainsKey(dependency))
                     {
-                        Debug.LogError($"[StatEngine] Formula for '{stat.statId}' references missing stat '{dependency}'. Using 0 as default.");
+                        // Extract namespace for helpful error message
+                        string depNamespace = dependency.Contains('.') ? dependency.Substring(0, dependency.IndexOf('.')) : dependency;
+                        Debug.LogError($"[StatEngine] Formula for '{stat.statId}' references missing stat '{dependency}'. " +
+                                      $"This usually means a schema containing '{depNamespace}.*' stats was not loaded. " +
+                                      $"Using 0 as default. Check StatSystem schema IDs.");
+                        processedFormula = processedFormula.Replace($"{{{dependency}}}", "0");
+                        continue;
                     }
 
                     float dependencyValue = GetValue(dependency, 0f);
                     processedFormula = processedFormula.Replace($"{{{dependency}}}", dependencyValue.ToString(CultureInfo.InvariantCulture));
                 }
 
-                // Evaluate mathematical expression
-                result = EvaluateMathExpression(processedFormula);
+                // Evaluate mathematical expression and ADD to base value
+                result += EvaluateMathExpression(processedFormula);
             }
 
             // Add contribution bonuses ("+X per Y" mechanics)
@@ -807,11 +830,13 @@ namespace NinjaGame.Stats
         /// </summary>
         public void RecalculateWithDependents(string statId)
         {
+            EnsureValidated();
             RecalculateWithDependents(statId, new HashSet<string>());
         }
 
         /// <summary>
-        /// Internal recursive implementation with cycle detection
+        /// Internal recursive implementation with cycle detection.
+        /// Calculates dependencies FIRST, then the stat itself, then its dependents.
         /// </summary>
         private void RecalculateWithDependents(string statId, HashSet<string> visited)
         {
@@ -819,21 +844,36 @@ namespace NinjaGame.Stats
             if (stat == null)
                 return;
 
-            // 🔴 CRITICAL: Cycle detection
+            // 🔴 CRITICAL: Cycle detection (only for dependency chain UPWARD)
             if (!visited.Add(statId))
             {
                 Debug.LogError($"[StatEngine] Circular dependency detected at '{statId}'! Dependency chain: {string.Join(" → ", visited)} → {statId}");
                 return;
             }
 
-            // Recalculate this stat's formula
+            // 🟢 STEP 1: Recursively calculate all dependencies FIRST (upward in tree)
+            // Uses SAME visited set to detect true cycles in dependency chain
+            foreach (var dependency in stat.Dependencies)
+            {
+                var dependencyStat = GetStat(dependency);
+                if (dependencyStat != null && dependencyStat.IsDirty)
+                {
+                    RecalculateWithDependents(dependency, visited);
+                }
+            }
+
+            // 🟢 STEP 2: Now calculate this stat (all dependencies are fresh)
             if (stat.IsDirty)
             {
                 float formulaResult = EvaluateFormula(stat.formula, stat);
                 stat.SetFormulaResult(formulaResult);
             }
 
-            // Recalculate all dependents (cascade)
+            // Remove from visited BEFORE cascading to dependents
+            visited.Remove(statId);
+
+            // 🟢 STEP 3: Cascade to dependents (downward in tree)
+            // Uses FRESH visited set for each dependent to avoid false cycle detection
             if (dependents.TryGetValue(statId, out var dependentList))
             {
                 foreach (var dependentId in dependentList)
@@ -842,27 +882,77 @@ namespace NinjaGame.Stats
                     if (dependent != null)
                     {
                         dependent.MarkFormulaDirty();
-                        RecalculateWithDependents(dependentId, visited);
+                        // Fresh visited set for each dependent branch
+                        RecalculateWithDependents(dependentId, new HashSet<string>());
                     }
                 }
             }
-
-            // Remove from visited set after processing (allows same stat in different branches)
-            visited.Remove(statId);
         }
 
         /// <summary>
-        /// Recalculate all dirty stats
+        /// Recalculate all stats using a multi-pass approach to handle dependencies.
+        /// Uses iterative calculation until all stats are stable.
+        /// 
+        /// This approach:
+        /// 1. Doesn't require dependency graph traversal
+        /// 2. Handles circular dependencies gracefully
+        /// 3. Always converges (with max iteration limit)
         /// </summary>
         public void RecalculateAll()
         {
+            EnsureValidated();
+
+            // Mark all stats as needing recalculation
             foreach (var stat in stats.Values)
             {
-                if (stat.IsDirty)
+                stat.MarkFormulaDirty();
+            }
+
+            // Multi-pass calculation: keep recalculating until nothing changes
+            // This handles dependencies without recursive traversal
+            const int maxPasses = 10; // Safety limit
+            int pass = 0;
+            bool anyChanged = true;
+
+            while (anyChanged && pass < maxPasses)
+            {
+                anyChanged = false;
+                pass++;
+
+                foreach (var stat in stats.Values)
                 {
-                    float formulaResult = EvaluateFormula(stat.formula, stat);
-                    stat.SetFormulaResult(formulaResult);
+                    if (stat.IsDirty)
+                    {
+                        float oldValue = stat.FinalValue;
+                        float formulaResult = EvaluateFormula(stat.formula, stat);
+                        stat.SetFormulaResult(formulaResult);
+
+                        // Check if value changed significantly
+                        if (!Mathf.Approximately(oldValue, stat.FinalValue))
+                        {
+                            anyChanged = true;
+
+                            // Mark dependents as dirty
+                            if (dependents.TryGetValue(stat.statId, out var dependentList))
+                            {
+                                foreach (var dependentId in dependentList)
+                                {
+                                    var dependent = GetStat(dependentId);
+                                    dependent?.MarkFormulaDirty();
+                                }
+                            }
+                        }
+                    }
                 }
+
+                if (debugLogging && pass > 1)
+                    Debug.Log($"[StatEngine] RecalculateAll pass {pass}, {(anyChanged ? "continuing" : "stable")}");
+            }
+
+            if (pass >= maxPasses)
+            {
+                Debug.LogWarning($"[StatEngine] RecalculateAll reached max passes ({maxPasses}). " +
+                                "This might indicate circular dependencies or unstable formulas.");
             }
         }
 
@@ -905,6 +995,22 @@ namespace NinjaGame.Stats
             }
 
             return summary.ToString();
+        }
+        private void EnsureValidated()
+        {
+            if (!validationDirty || validated)
+                return;
+
+            foreach (var stat in stats.Values)
+            {
+                ValidateStatFormula(stat);
+            }
+
+            validated = true;
+            validationDirty = false;
+
+            if (debugLogging)
+                Debug.Log("[StatEngine] Stat validation completed");
         }
 
         public void LogStatTree(string rootStatId)

@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63f1401dcb445534faca4def0618a012, type: 3}
   m_Name: RPGCoreStats
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatSchema
-  statNamespace: character
+  statNamespace: core
   description: Define stats for this namespace
   stats:
-  - statId: character.body
+  - statId: core.body
     displayName: Body
     description: Physical strength and power
     baseValue: 3
@@ -25,7 +25,7 @@ MonoBehaviour:
     isVisible: 1
     isSaveable: 1
     category: Uncategorized
-  - statId: character.mind
+  - statId: core.mind
     displayName: Mind
     description: Intelligence and magical power
     baseValue: 3
@@ -35,7 +35,7 @@ MonoBehaviour:
     isVisible: 1
     isSaveable: 1
     category: Uncategorized
-  - statId: character.spirit
+  - statId: core.spirit
     displayName: Spirit
     description: Agility and dexterity
     baseValue: 3
@@ -45,7 +45,7 @@ MonoBehaviour:
     isVisible: 1
     isSaveable: 1
     category: Uncategorized
-  - statId: character.resilience
+  - statId: core.resilience
     displayName: Resilience
     description: Defense and damage reduction
     baseValue: 3
@@ -55,7 +55,7 @@ MonoBehaviour:
     isVisible: 1
     isSaveable: 1
     category: Uncategorized
-  - statId: character.endurance
+  - statId: core.endurance
     displayName: Endurance
     description: Vitality and stamina
     baseValue: 3
@@ -65,7 +65,7 @@ MonoBehaviour:
     isVisible: 1
     isSaveable: 1
     category: Uncategorized
-  - statId: character.insight
+  - statId: core.insight
     displayName: Insight
     description: Wisdom and perception
     baseValue: 3

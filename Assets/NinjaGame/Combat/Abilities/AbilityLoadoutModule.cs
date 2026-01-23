@@ -45,7 +45,13 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
 
     [Header("Defense Slot")]
     [Tooltip("Defense ability (triggered by right click/block button)")]
-    [SerializeField] private DefenseAbilityData defenseSlot;
+    [SerializeField] private AbilityDefinition defenseSlot;
+
+    [Header("Default Unarmed Abilities")]
+    [Tooltip("Default basic attack when unarmed (reverts here when weapon unequipped)")]
+    [SerializeField] private AbilitySlotData defaultUnarmedAttack;
+    [Tooltip("Default defense when unarmed (reverts here when weapon unequipped)")]
+    [SerializeField] private AbilityDefinition defaultUnarmedDefense;
 
     [Header("Combo Settings")]
     [Tooltip("Time window to continue combo before resetting")]
@@ -107,6 +113,13 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
         InitializeSlot("X");
         InitializeSlot("C");
         InitializeSlot("V");
+
+        // PHASE 2: Initialize with default unarmed abilities
+        if (defaultUnarmedAttack != null)
+            SetBasicAttackSlot(defaultUnarmedAttack);
+
+        if (defaultUnarmedDefense != null)
+            AssignDefense(defaultUnarmedDefense);
 
         // Setup control sources
         SetupControlSources();
@@ -512,7 +525,7 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
     {
         Debug.Log("=== Ability Loadout ===");
         Debug.Log($"BasicAttack: {basicAttackChain?.slotName ?? "None"}");
-        Debug.Log($"Defense: {defenseSlot?.defenseName ?? "None"}");
+        Debug.Log($"Defense: {defenseSlot?.abilityName ?? "None"}");
         Debug.Log($"Q: {quickslotQ?.slotName ?? "Empty"}");
         Debug.Log($"Z: {quickslotZ?.slotName ?? "Empty"}");
         Debug.Log($"X: {quickslotX?.slotName ?? "Empty"}");
@@ -523,7 +536,7 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
     /// <summary>
     /// Get the current defense ability.
     /// </summary>
-    public DefenseAbilityData GetDefenseAbility()
+    public AbilityDefinition GetDefenseAbility()
     {
         return defenseSlot;
     }
@@ -531,20 +544,13 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
     /// <summary>
     /// Assign a new defense ability to the defense slot.
     /// </summary>
-    public bool AssignDefense(DefenseAbilityData newDefense)
+    public bool AssignDefense(AbilityDefinition newDefense)
     {
         defenseSlot = newDefense;
 
-        // Notify ActiveDefenseModule of the change
-        var defenseModule = brain?.GetModule<ActiveDefenseModule>();
-        if (defenseModule != null)
-        {
-            defenseModule.SetDefense(newDefense);
-        }
-
         if (debugLoadout)
         {
-            Debug.Log($"[AbilityLoadoutModule] Assigned defense: {newDefense?.defenseName ?? "None"}");
+            Debug.Log($"[AbilityLoadoutModule] Assigned defense: {newDefense?.abilityName ?? "None"}");
         }
 
         return true;
@@ -568,4 +574,65 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
 
         GUILayout.EndArea();
     }
+
+    // ========================================
+    // PHASE 2: Weapon Ability Management
+    // ========================================
+
+    /// <summary>
+    /// Set weapon abilities (called by equipment system)
+    /// Replaces current slots with weapon's abilities
+    /// </summary>
+    public void SetWeaponAbilities(AbilitySlotData weaponAttack, AbilityDefinition weaponDefense)
+    {
+        if (weaponAttack != null)
+        {
+            SetBasicAttackSlot(weaponAttack);
+
+            if (debugLoadout)
+                Debug.Log($"[AbilityLoadoutModule] Set weapon attack: {weaponAttack.slotName}");
+        }
+
+        if (weaponDefense != null)
+        {
+            AssignDefense(weaponDefense);
+
+            if (debugLoadout)
+                Debug.Log($"[AbilityLoadoutModule] Set weapon defense: {weaponDefense.abilityName}");
+        }
+    }
+
+    /// <summary>
+    /// Revert to default unarmed abilities
+    /// Called when weapon unequipped
+    /// </summary>
+    public void RevertToDefaultAbilities()
+    {
+        if (defaultUnarmedAttack != null)
+        {
+            SetBasicAttackSlot(defaultUnarmedAttack);
+
+            if (debugLoadout)
+                Debug.Log($"[AbilityLoadoutModule] Reverted to unarmed attack: {defaultUnarmedAttack.slotName}");
+        }
+
+        if (defaultUnarmedDefense != null)
+        {
+            AssignDefense(defaultUnarmedDefense);
+
+            if (debugLoadout)
+                Debug.Log($"[AbilityLoadoutModule] Reverted to unarmed defense: {defaultUnarmedDefense.abilityName}");
+        }
+    }
+
+    /// <summary>
+    /// Get current default unarmed attack
+    /// </summary>
+    public AbilitySlotData GetDefaultUnarmedAttack() => defaultUnarmedAttack;
+
+    /// <summary>
+    /// Get current default unarmed defense
+    /// </summary>
+    public AbilityDefinition GetDefaultUnarmedDefense() => defaultUnarmedDefense;
+
 }

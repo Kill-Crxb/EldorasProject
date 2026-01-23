@@ -55,8 +55,18 @@ MonoBehaviour:
     isVisible: 1
     isSaveable: 1
     category: Uncategorized
+  - statId: item.crithit
+    displayName: Critical Damage
+    description: Base weapon Crit Damage
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
   - statId: item.cost
-    displayName: Cost
+    displayName: Stamina Cost
     description: Base weapon resource cost
     baseValue: 0
     formula: 
@@ -67,7 +77,8 @@ MonoBehaviour:
     category: Uncategorized
   - statId: item.status
     displayName: Status
-    description: Base weapon status buildup
+    description: Base weapon chance to apply a status effect (Bleed, Slow, Poison
+      ect)
     baseValue: 0
     formula: 
     displayColor: {r: 1, g: 1, b: 1, a: 1}
@@ -75,9 +86,89 @@ MonoBehaviour:
     isVisible: 1
     isSaveable: 1
     category: Uncategorized
-  - statId: Armor
-    displayName: New Stat
-    description: Base weapon status buildup
+  - statId: item.armor
+    displayName: Armor
+    description: Base Item Armor
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.aegis
+    displayName: Aegis
+    description: Base Item Aegis
+    baseValue: 10
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.resistance
+    displayName: Resistance
+    description: Base Item Resistance
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.durability
+    displayName: Durability
+    description: Base Item Durability
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.weight
+    displayName: Weight
+    description: Base Item Weight (KG)
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.rarity
+    displayName: Rarity
+    description: (WIP) Rarity score?
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.barrier
+    displayName: Barrier
+    description: Base Item Barrier
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.deflection
+    displayName: Deflection
+    description: Base Item Deflection
+    baseValue: 0
+    formula: 
+    displayColor: {r: 1, g: 1, b: 1, a: 1}
+    icon: {fileID: 0}
+    isVisible: 1
+    isSaveable: 1
+    category: Uncategorized
+  - statId: item.evasion
+    displayName: Evasion
+    description: Base Item Evasion
     baseValue: 0
     formula: 
     displayColor: {r: 1, g: 1, b: 1, a: 1}

@@ -1,7 +1,6 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
-
-#if UNITY_EDITOR
 
 /// <summary>
 /// Editor utility for quickly creating NPC Archetypes with common presets
@@ -217,5 +216,4 @@ public class NPCArchetypeCreator : EditorWindow
         Debug.Log($"Created archetype: {assetPath}");
     }
 }
-
 #endif

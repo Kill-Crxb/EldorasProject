@@ -52,14 +52,23 @@ public class DamageSystem : MonoBehaviour
         bool crit = false;
         float critMult = 1f;
 
-        if (config != null && config.allowsCrits)
+        // Crit calculation - guard clauses first
+        if (config == null || !config.canCrit || stats == null)
         {
-            float chance = GetDynamicStat(config.critChanceStatIds);
-            if (UnityEngine.Random.value * 100f < chance)
+            // No crit possible - skip
+        }
+        else
+        {
+            // Query crit stats directly (no more config.critChanceStatIds)
+            float critChance = stats.GetValue("combat.crit_chance", 5f);
+
+            if (UnityEngine.Random.value * 100f < critChance)
             {
                 crit = true;
-                critMult = 1f + GetDynamicStat(config.critMultiplierStatIds);
-                damage *= critMult;
+                // Query crit damage directly (no more config.critMultiplierStatIds)
+                float critDamage = stats.GetValue("combat.crit_damage", 1.5f);
+                damage *= critDamage;
+                critMult = critDamage;
             }
         }
 
