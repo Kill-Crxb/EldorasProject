@@ -22,12 +22,23 @@ MemoryCaptures/
 .DS_Store
 Thumbs.db
 Assets/ImportedAssets/
+Assets/Handies/
+Assets/Loading Screen Items/
+Assets/MainFOlderMess/
+Assets/Resources/
+Assets/Scripts/
+Assets/Settings/
+Assets/TestingPrefabs/
+Assets/TextMesh Pro/
+Assets/Tiles/
+Assets/UI Prefabs/
 Assets/Animations/
 Assets/Humanoid/
 Assets/Editor/
 Assets/Models/
 Assets/UnplacedSounds/
 Assets/TestingPrefabs/
+
 
 
 

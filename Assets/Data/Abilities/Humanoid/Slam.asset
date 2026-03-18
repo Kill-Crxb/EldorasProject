@@ -12,25 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
   m_Name: Slam
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
-  abilityId: Slam
-  abilityName: Slam
-  description: 
-  icon: {fileID: 0}
-  abilityType: 0
-  abilityCategory: 1
-  setsUpperBodyState: 0
   effectTrigger: 19
   waitForAnimUnlock: 1
   maxDuration: 2
-  resourceCosts: []
-  cooldown: 5
-  castTime: 0
+  animationTrigger: Slam
+  castEffectPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 0}
+  projectilePrefab: {fileID: 0}
   requiredFactsAny: []
   requiredFactsAll: []
   forbiddenFactsAll: []
   overrideDefaults: 0
   customRequiredFacts: []
   customForbiddenFacts: []
+  nextInChain: {fileID: 0}
+  chainWindow: 0.5
+  resourceCosts: []
+  cooldown: 2
+  castTime: 0
+  abilityId: Slam
+  abilityName: Slam
+  description: 
+  icon: {fileID: 0}
+  abilityType: 0
+  abilityCategory: 1
   targetType: 1
   range: 5
   requiresLineOfSight: 1
@@ -40,10 +45,6 @@ MonoBehaviour:
   healOverTimeEffects: []
   knockbackEffects: []
   movementEffects: []
-  animationTrigger: Slam
-  castEffectPrefab: {fileID: 0}
-  hitEffectPrefab: {fileID: 0}
-  projectilePrefab: {fileID: 0}
   blockDamageReduction: 0.5
   blockAngle: 120
   parryWindowDuration: 0.2
@@ -51,5 +52,3 @@ MonoBehaviour:
   parryEnablesCounter: 1
   counterWindowDuration: 1
   blockStartupTime: 0.1
-  nextInChain: {fileID: 0}
-  chainWindow: 0.5

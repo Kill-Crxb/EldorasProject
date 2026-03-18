@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e6c78387218e045b0c95d0596c57f3, type: 3}
+  m_Name: Item_SteelKatana
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  itemId: steel_katana
+  displayName: Steel Katana
+  description: a Steel Katana. Glorious nipon steel.
+  icon: {fileID: 21300000, guid: b906fea0feef57a4ab4ae21578cc1c5a, type: 3}
+  worldPrefab: {fileID: 6413440490822234159, guid: a04645d8876d1a448ad847390068b125, type: 3}
+  equippedPrefab: {fileID: 6413440490822234159, guid: a04645d8876d1a448ad847390068b125, type: 3}
+  category: {fileID: 11400000, guid: 3a1a0cc2fa1f1d24297bde78aa943866, type: 2}
+  subType: {fileID: 11400000, guid: 45b10114e6a9cf4429ede1e21e7a4c87, type: 2}
+  baseType: {fileID: 11400000, guid: d2316f01bcfa9fc49a6cddb69583019a, type: 2}
+  gridWidth: 1
+  gridHeight: 2
+  statModifiers:
+  - statId: item.physdmg
+    statHandle: 0
+    modifierType: 0
+    value: 5
+    sourceStatId: 
+    sourceStatHandle: 0
+    scalingRatio: 0
+    hasCondition: 0
+    conditionDescription: 
+  - statId: item.aps
+    statHandle: 0
+    modifierType: 0
+    value: 1.4
+    sourceStatId: 
+    sourceStatHandle: 0
+    scalingRatio: 0
+    hasCondition: 0
+    conditionDescription: 
+  - statId: item.arp
+    statHandle: 0
+    modifierType: 0
+    value: 10
+    sourceStatId: 
+    sourceStatHandle: 0
+    scalingRatio: 0
+    hasCondition: 0
+    conditionDescription: 
+  - statId: item.critch
+    statHandle: 0
+    modifierType: 0
+    value: 15
+    sourceStatId: 
+    sourceStatHandle: 0
+    scalingRatio: 0
+    hasCondition: 0
+    conditionDescription: 
+  - statId: item.crithit
+    statHandle: 0
+    modifierType: 0
+    value: 50
+    sourceStatId: 
+    sourceStatHandle: 0
+    scalingRatio: 0
+    hasCondition: 0
+    conditionDescription: 
+  - statId: item.cost
+    statHandle: 0
+    modifierType: 0
+    value: 15
+    sourceStatId: 
+    sourceStatHandle: 0
+    scalingRatio: 0
+    hasCondition: 0
+    conditionDescription: 
+  resourceModifiers: []
+  grantedAbilities: []
+  customCombo: []
+  customDefense: {fileID: 0}
+  customSpecials: []
+  upgradeSlots:
+  - slotDefinition: {fileID: 11400000, guid: dc92297a550af3246a87593d940c194a, type: 2}
+    slotIndex: 0
+    isLockedByDefault: 0
+    unlockRequirement: 
+    customSlotIcon: {fileID: 0}
+    customSlotColor: {r: 0, g: 0, b: 0, a: 0}
+  - slotDefinition: {fileID: 11400000, guid: af5be92cc63559341b45f840d0c0f7d1, type: 2}
+    slotIndex: 0
+    isLockedByDefault: 0
+    unlockRequirement: 
+    customSlotIcon: {fileID: 0}
+    customSlotColor: {r: 0, g: 0, b: 0, a: 0}
+  - slotDefinition: {fileID: 11400000, guid: a78fac51948b7a04ebb1a339310fe00c, type: 2}
+    slotIndex: 0
+    isLockedByDefault: 0
+    unlockRequirement: 
+    customSlotIcon: {fileID: 0}
+    customSlotColor: {r: 0, g: 0, b: 0, a: 0}
+  rarity: 0
+  maxStackSize: 1
+  tags:
+  - t1
+  - katana
+  - commonweapon
+  baseValue: 150
+  dropsOnDeath: 1
+  isTradeable: 1
+  isDestructible: 1
