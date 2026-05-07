@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 /// <summary>
 /// ItemDefinition - Data-driven item template (ScriptableObject)
-/// 
+///
 /// Architecture:
 /// - Replaces hardcoded enums with ScriptableObject references
 /// - Supports formula-based stat scaling via StatSystem
 /// - Integrates with ResourceSystem for max/regen bonuses
 /// - Phase 3: Grants abilities via RuntimeAbilityManager
-/// 
+///
 /// Backward Compatibility:
 /// - Provides bridge properties (equipmentSlot, baseStats, tierScaling)
 /// - Allows old inventory code to work during Phase 3 migration
@@ -19,10 +19,6 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "New Item", menuName = "Items/Item Definition")]
 public class ItemDefinition : ScriptableObject
 {
-    // ========================================
-    // Basic Info
-    // ========================================
-
     [Header("Basic Info")]
     [Tooltip("Unique identifier (e.g., 'steel_katana', 'iron_circlet')")]
     public string itemId;
@@ -43,10 +39,6 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("Prefab instantiated in character hand/socket when equipped (3D model)")]
     public GameObject equippedPrefab;
 
-    // ========================================
-    // Classification (Data-Driven)
-    // ========================================
-
     [Header("Classification")]
     [Tooltip("Item category (Weapon, Armor, Consumable, etc.)")]
     public ItemCategory category;
@@ -57,10 +49,6 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("Base type for moveset inheritance (weapons only, optional)")]
     public ItemBaseType baseType;
 
-    // ========================================
-    // Grid Properties
-    // ========================================
-
     [Header("Grid Properties")]
     [Tooltip("Width in inventory grid cells")]
     public int gridWidth = 1;
@@ -68,9 +56,9 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("Height in inventory grid cells")]
     public int gridHeight = 1;
 
-    // ========================================
-    // Stats & Resources (StatSystem Integration)
-    // ========================================
+    [Header("Weapon Data")]
+    [Tooltip("Dice damage and combat stats for this weapon (null for non-weapons)")]
+    public WeaponData weaponData;
 
     [Header("Stats & Resources")]
     [Tooltip("Stat modifications (armor, attack power, etc.)")]
@@ -78,10 +66,6 @@ public class ItemDefinition : ScriptableObject
 
     [Tooltip("Resource modifications (max health, mana regen, etc.)")]
     public ItemResourceModifier[] resourceModifiers;
-
-    // ========================================
-    // Abilities (Phase 3)
-    // ========================================
 
     [Header("Abilities")]
     [Tooltip("Abilities granted by this item (equipment/consumables)")]
@@ -97,17 +81,9 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("Additional special abilities unique to this weapon")]
     public AbilityDefinition[] customSpecials;
 
-    // ========================================
-    // Upgrade System
-    // ========================================
-
     [Header("Upgrade System")]
     [Tooltip("Upgrade slots for this item (0-N slots, each with specific type)")]
     public ItemUpgradeSlot[] upgradeSlots;
-
-    // ========================================
-    // Advanced Properties
-    // ========================================
 
     [Header("Advanced")]
     [Tooltip("Item rarity level")]
@@ -135,63 +111,40 @@ public class ItemDefinition : ScriptableObject
     // Backward Compatibility (Phase 3 Migration)
     // ========================================
 
-
     /// <summary>
-    /// BRIDGE: Map new EquipmentSlotDefinition to old EquipmentSlot enum
-    /// Allows old inventory code to work during migration
+    /// BRIDGE: Map new EquipmentSlotDefinition to old EquipmentSlot enum.
+    /// Allows old inventory code to work during migration.
     /// </summary>
     public EquipmentSlot equipmentSlot
     {
         get
         {
-            // Guard clause - not equippable
             if (subType == null || !subType.isEquippable) return EquipmentSlot.Weapon1;
             if (subType.equipmentSlot == null) return EquipmentSlot.Weapon1;
 
-            // Map from new EquipmentSlotDefinition to old enum
             string slotId = subType.equipmentSlot.slotId.ToLower();
 
             switch (slotId)
             {
                 case "head":
-                case "helmet":
-                    return EquipmentSlot.Helmet;
-
+                case "helmet": return EquipmentSlot.Helmet;
                 case "chest":
                 case "armor":
-                case "body":
-                    return EquipmentSlot.Armor;
-
+                case "body": return EquipmentSlot.Armor;
                 case "hands":
-                case "gloves":
-                    return EquipmentSlot.Gloves;
-
+                case "gloves": return EquipmentSlot.Gloves;
                 case "feet":
-                case "boots":
-                    return EquipmentSlot.Boots;
-
+                case "boots": return EquipmentSlot.Boots;
                 case "weapon1":
                 case "mainhand":
-                case "main_hand":
-                    return EquipmentSlot.Weapon1;
-
+                case "main_hand": return EquipmentSlot.Weapon1;
                 case "weapon2":
                 case "offhand":
-                case "off_hand":
-                    return EquipmentSlot.Weapon2;
-
-                case "backpack":
-                    return EquipmentSlot.Backpack;
-
-                case "rig":
-                    return EquipmentSlot.Rig;
-
-                case "belt":
-                    return EquipmentSlot.Belt;
-
-                case "pouch":
-                    return EquipmentSlot.Pouch;
-
+                case "off_hand": return EquipmentSlot.Weapon2;
+                case "backpack": return EquipmentSlot.Backpack;
+                case "rig": return EquipmentSlot.Rig;
+                case "belt": return EquipmentSlot.Belt;
+                case "pouch": return EquipmentSlot.Pouch;
                 default:
                     Debug.LogWarning($"[ItemDefinition] Unknown equipment slot ID: {slotId}, defaulting to Weapon1");
                     return EquipmentSlot.Weapon1;
@@ -199,117 +152,72 @@ public class ItemDefinition : ScriptableObject
         }
     }
 
-    /// <summary>
-    /// BRIDGE: Archetype is deprecated, always returns None
-    /// Use tags or category system instead
-    /// </summary>
+    /// <summary>BRIDGE: Archetype is deprecated — use tags or category instead.</summary>
     public ItemArchetype archetype => ItemArchetype.None;
 
     // ========================================
     // Helpers
     // ========================================
 
-    /// <summary>
-    /// Get all abilities this item grants (base type + custom + granted)
-    /// </summary>
     public AbilityDefinition[] GetAllAbilities()
     {
-        List<AbilityDefinition> allAbilities = new List<AbilityDefinition>();
+        var allAbilities = new List<AbilityDefinition>();
 
-        // Add base type abilities if no custom override
         if (baseType != null)
         {
-            // Use custom combo if defined, else base type default
             if (customCombo != null && customCombo.Length > 0)
-            {
                 allAbilities.AddRange(customCombo);
-            }
             else if (baseType.defaultCombo != null)
-            {
                 allAbilities.AddRange(baseType.defaultCombo);
-            }
 
-            // Use custom defense if defined, else base type default
             if (customDefense != null)
-            {
                 allAbilities.Add(customDefense);
-            }
             else if (baseType.defaultDefense != null)
-            {
                 allAbilities.Add(baseType.defaultDefense);
-            }
 
-            // Add base type specials
             if (baseType.defaultSpecials != null)
-            {
                 allAbilities.AddRange(baseType.defaultSpecials);
-            }
         }
 
-        // Add custom specials
         if (customSpecials != null)
-        {
             allAbilities.AddRange(customSpecials);
-        }
 
-        // Add granted abilities
         if (grantedAbilities != null)
         {
             foreach (var granted in grantedAbilities)
             {
                 if (granted.ability != null)
-                {
                     allAbilities.Add(granted.ability);
-                }
             }
         }
 
         return allAbilities.ToArray();
     }
 
-    /// <summary>
-    /// Get combo abilities (base type or custom)
-    /// </summary>
     public AbilityDefinition[] GetComboAbilities()
     {
-        // Use custom combo if defined
         if (customCombo != null && customCombo.Length > 0)
             return customCombo;
 
-        // Fall back to base type
         if (baseType != null && baseType.defaultCombo != null)
             return baseType.defaultCombo;
 
         return new AbilityDefinition[0];
     }
 
-    /// <summary>
-    /// Get defense ability (custom or base type)
-    /// </summary>
     public AbilityDefinition GetDefenseAbility()
     {
-        // Use custom defense if defined
         if (customDefense != null)
             return customDefense;
 
-        // Fall back to base type
         if (baseType != null)
             return baseType.defaultDefense;
 
         return null;
     }
 
-    /// <summary>
-    /// Check if this item has a specific tag
-    /// </summary>
-    public bool HasTag(string tag)
-    {
-        return tags != null && tags.Contains(tag);
-    }
+    public bool HasTag(string tag) => tags != null && tags.Contains(tag);
 
-    /// <summary>
-    /// Validation helper
-    /// </summary>
     public bool IsValid()
     {
         if (string.IsNullOrEmpty(itemId) || string.IsNullOrEmpty(displayName))

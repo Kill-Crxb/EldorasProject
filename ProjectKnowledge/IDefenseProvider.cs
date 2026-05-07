@@ -1,17 +1,4 @@
-using System;
-using UnityEngine;
-
-public interface IDefenseProvider
-{
-
-    bool IsBlocking();
-    bool IsParrying();
-    bool CanDefend();
-
-    float ProcessIncomingDamage(float damage, Vector3 attackDirection);
-    float GetDefensiveMultiplier(Vector3 attackDirection);
-
-    event Action OnBlockStart;
-    event Action OnBlockEnd;
-    event Action OnPerfectBlock;
-}
+// IDefenseProvider removed.
+// Block/parry logic now lives in AbilitySystem.HandleDamageIntercept.
+// DamageSystem fires OnDamageIntercept when the target is blocking (BlackboardKey.IsBlocking).
+// Invincibility is checked via BlackboardKey.IsInvincible before damage is applied.

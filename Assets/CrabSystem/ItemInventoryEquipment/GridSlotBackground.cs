@@ -13,6 +13,10 @@ public class GridSlotBackground : MonoBehaviour, IDropHandler
     private GridPosition gridPosition;
     private RectTransform rectTransform;
 
+    // Drag highlights persist under hover-preview highlights and are cleared separately.
+    private bool hasDragHighlight;
+    private Color dragHighlightColor;
+
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
@@ -139,8 +143,25 @@ public class GridSlotBackground : MonoBehaviour, IDropHandler
             backgroundImage.color = color;
     }
 
+    // Restores to drag highlight if one is active, otherwise returns to normal.
     public void ClearHighlight()
     {
+        if (hasDragHighlight)
+            SetHighlight(dragHighlightColor);
+        else
+            SetNormal();
+    }
+
+    public void SetDragHighlight(Color color)
+    {
+        hasDragHighlight = true;
+        dragHighlightColor = color;
+        SetHighlight(color);
+    }
+
+    public void ClearDragHighlight()
+    {
+        hasDragHighlight = false;
         SetNormal();
     }
 

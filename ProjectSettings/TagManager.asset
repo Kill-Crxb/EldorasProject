@@ -10,17 +10,17 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Terrain
   - Water
   - UI
+  - StaticProp
+  - DynamicProp
   - Player
   - NPC
-  - Ground
-  - Walls
-  - Ceiling
-  - Targetable
-  - Weapons
-  - EnemyWeapon
+  - Projectile
+  - Hitbox
+  - Hurtbox
+  - Trigger
   - Interactable
   - 
   - 
@@ -52,3 +52,4 @@ TagManager:
   - Light Layer 5
   - Light Layer 6
   - Light Layer 7
+  m_MigratedRenderPipelines: []

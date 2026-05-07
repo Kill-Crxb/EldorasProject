@@ -280,50 +280,65 @@ public abstract class UniversalGrid : MonoBehaviour
         return success;
     }
 
-    /// <summary>
-    /// Show visual preview of where item would be placed
-    /// </summary>
-    public void ShowPlacementPreview(GridPosition pos, GridArea itemArea, string draggedItemId)
+    private static readonly Color s_validColor   = new Color(0.2f, 1f,   0.2f, 0.4f);
+    private static readonly Color s_invalidColor = new Color(1f,   0.2f, 0.2f, 0.4f);
+    private static readonly Color s_dragValid    = new Color(0.2f, 1f,   0.2f, 0.12f);
+    private static readonly Color s_dragInvalid  = new Color(1f,   0.2f, 0.2f, 0.12f);
+
+    // Uses the real CanPlaceItemAt check so occupied cells show red correctly.
+    public void ShowPlacementPreview(GridPosition pos, ItemInstance draggedItem, string draggedItemId)
     {
         ClearPlacementPreview();
+        if (!pos.IsValid || draggedItem == null) return;
 
-        if (!pos.IsValid) return;
+        bool canPlace = CanPlaceItemAt(draggedItem, pos, draggedItemId);
+        Color highlight = canPlace ? s_validColor : s_invalidColor;
 
-        // Create temporary item for validation
-        // We need to check if placement is valid
-        bool canPlace = pos.x >= 0 && pos.y >= 0 &&
-                       pos.x + itemArea.width <= gridWidth &&
-                       pos.y + itemArea.height <= gridHeight;
-
-        Color highlightColor = canPlace ?
-            new Color(0.2f, 1f, 0.2f, 0.3f) : // Green
-            new Color(1f, 0.2f, 0.2f, 0.3f);  // Red
-
-        // Highlight the cells
-        for (int x = pos.x; x < pos.x + itemArea.width; x++)
-        {
-            for (int y = pos.y; y < pos.y + itemArea.height; y++)
-            {
+        for (int x = pos.x; x < pos.x + draggedItem.itemWidth; x++)
+            for (int y = pos.y; y < pos.y + draggedItem.itemHeight; y++)
                 if (x >= 0 && x < gridWidth && y >= 0 && y < gridHeight)
-                {
-                    backgrounds[x, y].SetHighlight(highlightColor);
-                }
+                    backgrounds[x, y].SetHighlight(highlight);
+    }
+
+    public void ClearPlacementPreview()
+    {
+        for (int x = 0; x < gridWidth; x++)
+            for (int y = 0; y < gridHeight; y++)
+                backgrounds[x, y].ClearHighlight();
+    }
+
+    // Colors every cell: green if it's part of any valid placement, red otherwise.
+    // Called once on drag start across all registered grids.
+    public void ShowAllDragHighlights(ItemInstance item, string excludeId)
+    {
+        if (!isInitialized || item == null) return;
+
+        // Start everything red (no valid placement covers this cell yet).
+        for (int x = 0; x < gridWidth; x++)
+            for (int y = 0; y < gridHeight; y++)
+                backgrounds[x, y].SetDragHighlight(s_dragInvalid);
+
+        // For every top-left position where the item fits, paint those cells green.
+        int maxX = gridWidth  - item.itemWidth;
+        int maxY = gridHeight - item.itemHeight;
+        for (int x = 0; x <= maxX; x++)
+        {
+            for (int y = 0; y <= maxY; y++)
+            {
+                if (!CanPlaceItemAt(item, new GridPosition(x, y), excludeId)) continue;
+                for (int dx = 0; dx < item.itemWidth; dx++)
+                    for (int dy = 0; dy < item.itemHeight; dy++)
+                        backgrounds[x + dx, y + dy].SetDragHighlight(s_dragValid);
             }
         }
     }
 
-    /// <summary>
-    /// Clear placement preview highlighting
-    /// </summary>
-    public void ClearPlacementPreview()
+    public void ClearAllDragHighlights()
     {
+        if (!isInitialized) return;
         for (int x = 0; x < gridWidth; x++)
-        {
             for (int y = 0; y < gridHeight; y++)
-            {
-                backgrounds[x, y].ClearHighlight();
-            }
-        }
+                backgrounds[x, y].ClearDragHighlight();
     }
 
     /// <summary>
@@ -476,11 +491,10 @@ public abstract class UniversalGrid : MonoBehaviour
         UniversalWindowManager.Instance?.HideTooltip();
     }
 
-    /// <summary>
-    /// Called when an item icon is right-clicked.
-    /// Override in subclasses to handle context actions (e.g. equip from inventory).
-    /// </summary>
     public virtual void OnItemRightClicked(string itemId) { }
+
+    // Shift-click: move item to the most logical other grid (container ↔ inventory).
+    public virtual void OnItemShiftClicked(string itemId) { }
 
     /// <summary>
     /// Get item instance by ID - must be implemented by subclass

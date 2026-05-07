@@ -64,7 +64,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
     // Load order: stats first (base values), then inventory (items), then equipment (re-applies item stat modifiers)
     // stats first (base values), inventory (items), equipment (re-applies item stat modifiers), resources last (max is stat-driven)
-    private static readonly string[] LoadOrder = { "stats", "inventory", "equipment", "resources" };
+    private static readonly string[] LoadOrder = { "stats", "model", "inventory", "equipment", "hotbar", "resources" };
 
     #endregion
 
@@ -284,6 +284,15 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         if (debugLogging)
             Debug.Log($"[{ManagerName}] Wrote stat seed for {characterId}");
 
+        if (!string.IsNullOrEmpty(data.modelId))
+        {
+            string modelJson = "{\"modelId\":\"" + data.modelId + "\"}";
+            await provider.Save(characterId, "model", modelJson);
+
+            if (debugLogging)
+                Debug.Log($"[{ManagerName}] Wrote model seed for {characterId}: {data.modelId}");
+        }
+
         return characterId;
     }
 
@@ -336,9 +345,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
         if (playerBrain == null)
         {
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Player brain not yet registered — load deferred until brain registers.");
-
+            Debug.LogWarning($"[{ManagerName}] Player brain not yet registered — load deferred. If the brain never arrives, the character will not load.");
             pendingLoad = true;
             return;
         }

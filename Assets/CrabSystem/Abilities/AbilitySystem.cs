@@ -11,7 +11,7 @@ using UnityEngine.UIElements;
 /// and blackboard validation. Supports offensive/defensive/utility abilities with
 /// multi-resource costs, cooldowns, and combo chaining. Works for all entity types.
 /// </summary>
-public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDefenseProvider
+public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 {
     [Header("Module Settings")]
     [SerializeField] private bool isEnabled = true;
@@ -34,15 +34,15 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     private ControllerBrain brain;
     private StateMachineModule stateMachine;
     private Blackboard blackboard;
-    private RuntimeAbilityManager runtimeAbilityManager;  // PHASE 2: Dynamic ability management
+    private RuntimeAbilityManager runtimeAbilityManager;
     private IAnimationProvider animationProvider;
     private IResourceProvider resources;
     private IHealthProvider healthProvider;
     private MovementSystem movementSystem;
     private DamageSystem damageSystem;
+    private VFXSystem vfxSystem;
     private AnimationEventForwarder eventForwarder;
 
-    // Consolidated ability state (PHASE 1: No more parallel dictionaries)
     private class AbilityState
     {
         public AbilityDefinition definition;
@@ -57,7 +57,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
 
     private Dictionary<string, AbilityState> abilityStates = new Dictionary<string, AbilityState>();
 
-    // Cached equipment references (PHASE 1: Avoid string lookups)
     private ItemInstance cachedEquippedWeapon;
     private WeaponData cachedNaturalWeapon;
 
@@ -72,7 +71,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
 
     // Animation event state
     private bool isAnimationLocked = false;
-    private bool isMovementLocked = false;
     private bool isInvincible = false;
     private HashSet<Collider> activeHitboxes = new HashSet<Collider>();
 
@@ -105,13 +103,12 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     public bool IsExecuting => currentAbility != null || currentlyCastingAbility != null || isAnimationLocked;
 
     /// <summary>
-    /// Is movement currently locked by an ability animation?
+    /// The ability currently being executed. WeaponHitbox reads this on hit
+    /// to deliver damage without re-firing the ability.
     /// </summary>
-    public bool IsMovementLocked => isMovementLocked;
+    public AbilityDefinition CurrentAbility   => currentAbility;
+    public string            CurrentAbilityId => currentAbility?.abilityId;
 
-    /// <summary>
-    /// Is the entity currently invincible (iFrames)?
-    /// </summary>
     public bool IsInvincible => isInvincible;
 
     // ========================================
@@ -124,10 +121,19 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     public event Action<string> OnAbilityCastComplete;
     public event Action<AnimationEventType> OnAbilityAnimationEvent;
 
-    // IDefenseProvider events
     public event Action OnBlockStart;
     public event Action OnBlockEnd;
     public event Action OnPerfectBlock;
+
+    // ========================================
+    // Blackboard Helpers
+    // ========================================
+
+    private void SetFact(int key, bool value) => blackboard?.SetBool(key, value);
+
+    private void UpdateExecutingFact()
+        => SetFact(BlackboardKey.IsExecutingAbility,
+            currentAbility != null || currentlyCastingAbility != null || isAnimationLocked);
 
     // ========================================
     // IBrainModule Implementation
@@ -155,7 +161,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
             Debug.LogError("[AbilitySystem] BlackboardSystem not found! Semantic validation won't work.");
         }
 
-        // Get RuntimeAbilityManager (PHASE 2: Optional - enables dynamic abilities)
         runtimeAbilityManager = brain.GetModule<RuntimeAbilityManager>();
         if (runtimeAbilityManager != null && showDebugInfo)
         {
@@ -172,6 +177,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
 
         // Get optional modules
         damageSystem = brain.GetModule<DamageSystem>();
+        vfxSystem = brain.GetModule<VFXSystem>();
 
 
         // Validate loadout module
@@ -180,8 +186,12 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
             Debug.LogError("[AbilitySystem] LoadoutModule not assigned! Assign AbilityLoadoutModule in Inspector.");
         }
 
-        // Setup animation events
+        // Setup animation events — will retry after load if model isn't ready yet
         SetupAnimationEventForwarder();
+
+        // Subscribe to load completed so we can re-run forwarder setup
+        // after the model is instantiated by the save system
+        GameEvents.OnLoadCompleted += HandleLoadCompleted;
 
         // Build ability lookup
         BuildAbilityLookup();
@@ -221,18 +231,29 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     // Setup
     // ========================================
 
+    private void HandleLoadCompleted()
+    {
+        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+
+        if (eventForwarder != null) return; // Already found, nothing to do
+
+        SetupAnimationEventForwarder();
+
+        if (showDebugInfo)
+        {
+            Debug.Log(eventForwarder != null
+                ? "[AbilitySystem] AnimationEventForwarder found after load"
+                : "[AbilitySystem] AnimationEventForwarder still not found after load — check model hierarchy");
+        }
+    }
+
     private void SetupAnimationEventForwarder()
     {
-        // Find AnimationEventForwarder
         Transform playerRoot = brain.transform.parent;
         if (playerRoot != null)
-        {
             eventForwarder = playerRoot.GetComponentInChildren<AnimationEventForwarder>();
-        }
         else
-        {
             eventForwarder = brain.GetComponentInChildren<AnimationEventForwarder>();
-        }
 
         if (eventForwarder == null)
         {
@@ -240,9 +261,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
         }
         else
         {
-            // Subscribe to animation events
+            eventForwarder.Initialize(brain);
             eventForwarder.OnAnimationEvent += HandleAnimationEvent;
-            eventForwarder.OnStateTransitionEvent += HandleStateTransition;  // NEW: Animation-driven states
+            eventForwarder.OnStateTransitionEvent += HandleStateTransition;
         }
     }
 
@@ -273,11 +294,12 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
 
     private void OnDestroy()
     {
-        // Unsubscribe from animation events
+        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+
         if (eventForwarder != null)
         {
             eventForwarder.OnAnimationEvent -= HandleAnimationEvent;
-            eventForwarder.OnStateTransitionEvent -= HandleStateTransition;  // NEW: Animation-driven states
+            eventForwarder.OnStateTransitionEvent -= HandleStateTransition;
         }
     }
 
@@ -425,7 +447,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
 
         var ability = state.definition;
 
-        // PHASE 2: Check consumable uses (if using RuntimeAbilityManager)
         if (runtimeAbilityManager != null)
         {
             var instance = runtimeAbilityManager.GetInstanceByDefinition(abilityId);
@@ -467,7 +488,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
 
         var ability = state.definition;
 
-        // PHASE 2: Notify RuntimeAbilityManager (for consumable tracking)
         if (runtimeAbilityManager != null)
         {
             var instance = runtimeAbilityManager.GetInstanceByDefinition(abilityId);
@@ -515,13 +535,15 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
             CompleteAbility(currentAbility);
         }
 
-        // Reset locks
         isAnimationLocked = false;
-        isMovementLocked = false;
+        isInvincible = false;
+        SetFact(BlackboardKey.IsInvincible, false);
+        SetFact(BlackboardKey.IsBlocking, false);
+        UpdateExecutingFact();
     }
 
     // ========================================
-    // Blackboard Validation (NEW - Phase 1)
+    // Blackboard Validation
     // ========================================
 
     /// <summary>
@@ -631,7 +653,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     }
 
     // ========================================
-    // Execution (NEW - Phase 1)
+    // Execution
     // ========================================
 
     private void ExecuteAbility(AbilityDefinition ability)
@@ -639,15 +661,32 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
         // NOTE: State transitions now handled by animation events (OnStateTransition)
         // The animator sends events like OnStateTransition("MeleeWindup") at specific frames
 
-        // Track current ability
         currentAbility = ability;
         abilityStartTime = Time.time;
+        UpdateExecutingFact();
+
+        // ── Animator layer switching ──────────────────────────────────────
+        // Raise the correct combat layer, zero the other.
+        // Movement restrictions are handled by StatePermissionMatrix based on UpperBodyState.
+        if (animationProvider is AnimationSystem animSys)
+        {
+            int fullBodyLayer = animSys.GetLayerIndex("Full Body Actions");
+            int upperBodyLayer = animSys.GetLayerIndex("Upper Body Combat");
+            bool isFullBody = ability.animationLayer == AbilityAnimationLayer.FullBodyActions;
+
+            if (fullBodyLayer >= 0) animSys.SetLayerWeight(fullBodyLayer, isFullBody ? 1f : 0f);
+            if (upperBodyLayer >= 0) animSys.SetLayerWeight(upperBodyLayer, isFullBody ? 0f : 1f);
+        }
 
         // Play animation
         if (animationProvider != null && !string.IsNullOrEmpty(ability.animationTrigger))
         {
             animationProvider.TriggerCombatAnimation(ability.animationTrigger);
         }
+
+        // Spawn cast VFX
+        if (ability.castEffectPrefab != null)
+            vfxSystem?.SpawnEffect(ability.castEffectPrefab, VFXAnchor.CastOrigin);
 
         // Handle defensive abilities differently
         if (ability.abilityType == AbilityType.Defensive)
@@ -656,7 +695,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
         }
 
         // If effect trigger is not one of the standard effect events, execute immediately
-        // (This handles instant abilities that don't wait for animation events)
         bool hasEffectTrigger = ability.effectTrigger == AnimationEventType.Effect1 ||
                                ability.effectTrigger == AnimationEventType.Effect2 ||
                                ability.effectTrigger == AnimationEventType.Effect3;
@@ -665,27 +703,21 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
         {
             ExecuteAbilityEffects(ability);
 
-            // Complete immediately if not waiting for AnimUnlocked
             if (!ability.waitForAnimUnlock)
-            {
                 CompleteAbility(ability);
-            }
         }
 
         // Start safety timeout if configured
         if (ability.maxDuration > 0f)
         {
             if (safetyTimeoutCoroutine != null)
-            {
                 StopCoroutine(safetyTimeoutCoroutine);
-            }
+
             safetyTimeoutCoroutine = StartCoroutine(SafetyTimeoutCoroutine(ability));
         }
 
         if (showDebugInfo)
-        {
-            Debug.Log($"[AbilitySystem] Executed ability: {ability.abilityName}");
-        }
+            Debug.Log($"[AbilitySystem] Executed ability: {ability.abilityName} (layer: {ability.animationLayer})");
     }
 
     private IEnumerator SafetyTimeoutCoroutine(AbilityDefinition ability)
@@ -730,30 +762,34 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
             ability.ExecuteOnSelf(brain, effectManager, resources);
         }
 
-        // TODO Phase 4: Polymorphic effect execution
-        // foreach (var effect in ability.effects)
-        // {
-        //     effect.Execute(new AbilityContext(brain, ...));
-        // }
     }
 
-    /// <summary>
-    /// Complete ability execution and return to idle
-    /// </summary>
     private void CompleteAbility(AbilityDefinition ability)
     {
         // Return to idle state
-        // NOTE: Can also be handled by animation events (OnStateTransition("Idle"))
         if (stateMachine != null)
             stateMachine.TryTransitionUpperBody(UpperBodyState.Idle);
 
-        // Track for chaining
+        // ── Zero combat layers so locomotion takes full control again ─────
+        if (animationProvider is AnimationSystem animSys)
+        {
+            int fullBodyLayer = animSys.GetLayerIndex("Full Body Actions");
+            int upperBodyLayer = animSys.GetLayerIndex("Upper Body Combat");
+
+            if (fullBodyLayer >= 0) animSys.SetLayerWeight(fullBodyLayer, 0f);
+            if (upperBodyLayer >= 0) animSys.SetLayerWeight(upperBodyLayer, 0f);
+        }
+
         lastCompletedAbility = ability;
         lastAbilityCompleteTime = Time.time;
 
-        // Clear current
         if (currentAbility == ability)
+        {
             currentAbility = null;
+            isAnimationLocked = false;
+        }
+
+        UpdateExecutingFact();
 
         // Stop safety timeout
         if (safetyTimeoutCoroutine != null)
@@ -767,7 +803,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     }
 
     // ========================================
-    // Animation Events (NEW - Phase 1)
+    // Animation Events
     // ========================================
 
     private void HandleAnimationEvent(AnimationEventType eventType)
@@ -818,36 +854,29 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
 
             case AnimationEventType.AnimLocked:
                 isAnimationLocked = true;
-                break;
-
-            case AnimationEventType.MovementLocked:
-                isMovementLocked = true;
-                break;
-
-            case AnimationEventType.MovementUnlocked:
-                isMovementLocked = false;
+                UpdateExecutingFact();
                 break;
 
             case AnimationEventType.IFrameStart:
                 isInvincible = true;
+                SetFact(BlackboardKey.IsInvincible, true);
                 break;
 
             case AnimationEventType.IFrameEnd:
                 isInvincible = false;
+                SetFact(BlackboardKey.IsInvincible, false);
                 break;
         }
     }
 
     private void HandleAnimationUnlocked()
     {
-        // Guard clauses
+        isAnimationLocked = false;
+        UpdateExecutingFact();
+
         if (currentAbility == null) return;
         if (!currentAbility.waitForAnimUnlock) return;
 
-        // Unlock animation
-        isAnimationLocked = false;
-
-        // Complete ability
         CompleteAbility(currentAbility);
     }
 
@@ -874,7 +903,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     }
 
     // ========================================
-    // Chaining System (NEW - Phase 1)
+    // Chaining System
     // ========================================
 
     private void OpenChainWindow()
@@ -939,20 +968,19 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     }
 
     // ========================================
-    // Defensive Abilities (NEW - Phase 1)
+    // Defensive Abilities
     // ========================================
 
     private void ActivateDefensiveAbility(AbilityDefinition ability)
     {
         currentDefensiveAbility = ability;
         defenseStartTime = Time.time;
+        SetFact(BlackboardKey.IsBlocking, true);
+
+        if (damageSystem != null)
+            damageSystem.OnDamageIntercept += HandleDamageIntercept;
 
         OnBlockStart?.Invoke();
-
-        if (showDebugInfo)
-        {
-            Debug.Log($"[AbilitySystem] Activated defensive ability: {ability.abilityName}");
-        }
     }
 
     private void UpdateDefensiveAbility()
@@ -982,88 +1010,28 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
     {
         if (currentDefensiveAbility == null) return;
 
-        OnBlockEnd?.Invoke();
+        if (damageSystem != null)
+            damageSystem.OnDamageIntercept -= HandleDamageIntercept;
 
-        if (showDebugInfo)
-        {
-            Debug.Log($"[AbilitySystem] Deactivated defensive ability");
-        }
-
+        SetFact(BlackboardKey.IsBlocking, false);
         currentDefensiveAbility = null;
+        OnBlockEnd?.Invoke();
     }
 
-    // ========================================
-    // IDefenseProvider Implementation (NEW - Phase 1)
-    // ========================================
-
-    bool IDefenseProvider.IsBlocking()
+    private void HandleDamageIntercept(DamageInterceptArgs args)
     {
-        return currentDefensiveAbility != null &&
-               stateMachine != null &&
-               stateMachine.GetUpperBodyState() == UpperBodyState.Blocking;
-    }
-
-    bool IDefenseProvider.IsParrying()
-    {
-        if (currentDefensiveAbility == null) return false;
+        if (currentDefensiveAbility == null) return;
+        if (stateMachine == null || stateMachine.GetUpperBodyState() != UpperBodyState.Blocking) return;
+        if (!IsAttackWithinBlockAngle(args.attackDirection)) return;
 
         float timeInDefense = Time.time - defenseStartTime;
-        return currentDefensiveAbility.CanParry(timeInDefense);  // Use policy helper
-    }
+        args.damage *= currentDefensiveAbility.GetDefenseMultiplier(timeInDefense, true);
 
-    bool IDefenseProvider.CanDefend()
-    {
-        return isEnabled && currentDefensiveAbility != null;
-    }
-
-    float IDefenseProvider.ProcessIncomingDamage(float damage, Vector3 attackDirection)
-    {
-        // Guard clauses
-        if (currentDefensiveAbility == null) return damage;
-        if (!((IDefenseProvider)this).IsBlocking()) return damage;
-
-        // Check block angle
-        bool withinBlockAngle = IsAttackWithinBlockAngle(attackDirection);
-        if (!withinBlockAngle)
-            return damage;
-
-        // Use policy helper to get defense multiplier (handles parry vs block logic)
-        float timeInDefense = Time.time - defenseStartTime;
-        float damageMultiplier = currentDefensiveAbility.GetDefenseMultiplier(timeInDefense, withinBlockAngle);
-        float finalDamage = damage * damageMultiplier;
-
-        // Check if this was a parry for events/refunds
-        bool isParry = currentDefensiveAbility.CanParry(timeInDefense);
-
-        if (isParry)
+        if (currentDefensiveAbility.CanParry(timeInDefense))
         {
             OnPerfectBlock?.Invoke();
-
-            // Refund resources (use DRY helper)
             RefundResourceCosts(currentDefensiveAbility);
-
-            if (showDebugInfo)
-                Debug.Log($"[AbilitySystem] PARRY! {damage:F1} → {finalDamage:F1}");
         }
-        else if (showDebugInfo)
-        {
-            Debug.Log($"[AbilitySystem] BLOCK: {damage:F1} → {finalDamage:F1}");
-        }
-
-        return finalDamage;
-    }
-
-    float IDefenseProvider.GetDefensiveMultiplier(Vector3 attackDirection)
-    {
-        if (currentDefensiveAbility == null) return 1f;
-        if (!((IDefenseProvider)this).IsBlocking()) return 1f;
-
-        bool withinBlockAngle = IsAttackWithinBlockAngle(attackDirection);
-        if (!withinBlockAngle) return 1f;
-
-        // Use policy helper instead of manual reduction calculation
-        float timeInDefense = Time.time - defenseStartTime;
-        return currentDefensiveAbility.GetDefenseMultiplier(timeInDefense, withinBlockAngle);
     }
 
     private bool IsAttackWithinBlockAngle(Vector3 attackDirection)
@@ -1144,20 +1112,26 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
 
     private void EnableAbilityHitboxes()
     {
-        // TODO: Implement hitbox activation
+        var hitboxes = brain.GetComponentsInChildren<WeaponHitbox>(true);
+        foreach (var hitbox in hitboxes)
+            hitbox.Enable();
+
         if (showDebugInfo)
-            Debug.Log("[AbilitySystem] Hitboxes enabled");
+            Debug.Log($"[AbilitySystem] Enabled {hitboxes.Length} WeaponHitbox(es)");
     }
 
     private void DisableAbilityHitboxes()
     {
-        // TODO: Implement hitbox deactivation
+        var hitboxes = brain.GetComponentsInChildren<WeaponHitbox>(true);
+        foreach (var hitbox in hitboxes)
+            hitbox.Disable();
+
         if (showDebugInfo)
-            Debug.Log("[AbilitySystem] Hitboxes disabled");
+            Debug.Log($"[AbilitySystem] Disabled {hitboxes.Length} WeaponHitbox(es)");
     }
 
     // ========================================
-    // PHASE 2: Runtime Ability Query Methods
+    // Runtime Ability Query Methods
     // ========================================
 
     /// <summary>
@@ -1250,5 +1224,39 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, IDef
         }
 
         Debug.Log($"Total: {allInstances.Count} instances");
+    }
+
+    // ========================================
+    // Hit Proc Integration
+    // ========================================
+
+    /// <summary>
+    /// Called by WeaponHitbox when a hit lands.
+    /// Rolls each HitProcEntry on the source ability independently and applies
+    /// any procs that fire to the slot currently holding that ability.
+    /// </summary>
+    public void NotifyHitLanded(string sourceAbilityId, ControllerBrain target)
+    {
+        if (!abilityStates.TryGetValue(sourceAbilityId, out var state)) return;
+        var ability = state.definition;
+        if (ability.hitProcs == null || ability.hitProcs.Count == 0) return;
+
+        var hotbar     = brain.GetModule<HotbarSystem>();
+        var transforms = brain.GetModule<SlotTransformationSystem>();
+        if (hotbar == null || transforms == null) return;
+
+        var (barId, slotIndex) = hotbar.FindSlotForAbility(sourceAbilityId);
+        if (barId == null) return;
+
+        foreach (var proc in ability.hitProcs)
+        {
+            if (proc?.targetAbility == null) continue;
+            if (UnityEngine.Random.value < proc.probability)
+            {
+                transforms.ApplyOverride(barId, slotIndex, proc.targetAbility,
+                                         TransformationType.HitProc,
+                                         proc.windowSeconds, 30);
+            }
+        }
     }
 }

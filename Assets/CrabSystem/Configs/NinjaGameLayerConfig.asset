@@ -1,0 +1,265 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ebfc3063bf56cd4490c10ccaec438e2, type: 3}
+  m_Name: NinjaGameLayerConfig
+  m_EditorClassIdentifier: Assembly-CSharp::LayerConfig
+  layers:
+  - index: 0
+    name: Default
+    description: "Catch-all \u2014 keep things off this"
+    isBuiltIn: 1
+  - index: 1
+    name: TransparentFX
+    description: Unity built-in
+    isBuiltIn: 1
+  - index: 2
+    name: Ignore Raycast
+    description: Unity built-in
+    isBuiltIn: 1
+  - index: 3
+    name: Terrain
+    description: Ground, floors, static world geometry
+    isBuiltIn: 0
+  - index: 4
+    name: Water
+    description: Unity built-in
+    isBuiltIn: 1
+  - index: 5
+    name: UI
+    description: Unity built-in
+    isBuiltIn: 1
+  - index: 6
+    name: StaticProp
+    description: "Non-interactive world objects \u2014 pillars, walls, rocks"
+    isBuiltIn: 0
+  - index: 7
+    name: DynamicProp
+    description: "Moveable/destructible objects \u2014 crates, chests, barrels"
+    isBuiltIn: 0
+  - index: 8
+    name: Player
+    description: Player characters
+    isBuiltIn: 0
+  - index: 9
+    name: NPC
+    description: "All non-player entities \u2014 enemies and friendlies alike"
+    isBuiltIn: 0
+  - index: 10
+    name: Projectile
+    description: Arrows, spells, thrown objects
+    isBuiltIn: 0
+  - index: 11
+    name: Hitbox
+    description: Weapon hitboxes and attack volumes
+    isBuiltIn: 0
+  - index: 12
+    name: Hurtbox
+    description: "Entity vulnerable areas \u2014 where hits land"
+    isBuiltIn: 0
+  - index: 13
+    name: Trigger
+    description: Area triggers, quest volumes, zone detection
+    isBuiltIn: 0
+  - index: 14
+    name: Interactable
+    description: "Interactive objects \u2014 levers, doors, pickups"
+    isBuiltIn: 0
+  collisionRules:
+  - layerIndexA: 3
+    layerIndexB: 6
+    collides: 0
+    note: "Terrain \u2194 StaticProp \u2014 no interaction needed"
+  - layerIndexA: 3
+    layerIndexB: 7
+    collides: 1
+    note: "Terrain \u2194 DynamicProp \u2014 props rest on terrain"
+  - layerIndexA: 3
+    layerIndexB: 8
+    collides: 1
+    note: "Terrain \u2194 Player \u2014 player walks on terrain"
+  - layerIndexA: 3
+    layerIndexB: 9
+    collides: 1
+    note: "Terrain \u2194 NPC \u2014 NPCs walk on terrain"
+  - layerIndexA: 3
+    layerIndexB: 10
+    collides: 1
+    note: "Terrain \u2194 Projectile \u2014 arrows hit ground"
+  - layerIndexA: 3
+    layerIndexB: 11
+    collides: 1
+    note: "Terrain \u2194 Hitbox \u2014 weapons bounce off terrain (CQC penalty)"
+  - layerIndexA: 3
+    layerIndexB: 12
+    collides: 0
+    note: "Terrain \u2194 Hurtbox \u2014 terrain doesn't hurt entities"
+  - layerIndexA: 3
+    layerIndexB: 13
+    collides: 0
+    note: "Terrain \u2194 Trigger \u2014 no interaction"
+  - layerIndexA: 3
+    layerIndexB: 14
+    collides: 0
+    note: "Terrain \u2194 Interactable \u2014 no interaction"
+  - layerIndexA: 6
+    layerIndexB: 7
+    collides: 1
+    note: "StaticProp \u2194 DynamicProp \u2014 props collide with static world"
+  - layerIndexA: 6
+    layerIndexB: 8
+    collides: 1
+    note: "StaticProp \u2194 Player \u2014 player collides with walls/pillars"
+  - layerIndexA: 6
+    layerIndexB: 9
+    collides: 1
+    note: "StaticProp \u2194 NPC \u2014 NPCs collide with walls"
+  - layerIndexA: 6
+    layerIndexB: 10
+    collides: 1
+    note: "StaticProp \u2194 Projectile \u2014 projectiles hit walls"
+  - layerIndexA: 6
+    layerIndexB: 11
+    collides: 1
+    note: "StaticProp \u2194 Hitbox \u2014 weapons bounce off walls"
+  - layerIndexA: 6
+    layerIndexB: 12
+    collides: 0
+    note: "StaticProp \u2194 Hurtbox \u2014 walls don't register hits"
+  - layerIndexA: 6
+    layerIndexB: 13
+    collides: 0
+    note: "StaticProp \u2194 Trigger \u2014 no interaction"
+  - layerIndexA: 6
+    layerIndexB: 14
+    collides: 0
+    note: "StaticProp \u2194 Interactable \u2014 no interaction"
+  - layerIndexA: 7
+    layerIndexB: 8
+    collides: 1
+    note: "DynamicProp \u2194 Player \u2014 player pushes props"
+  - layerIndexA: 7
+    layerIndexB: 9
+    collides: 1
+    note: "DynamicProp \u2194 NPC \u2014 NPCs interact with props"
+  - layerIndexA: 7
+    layerIndexB: 10
+    collides: 1
+    note: "DynamicProp \u2194 Projectile \u2014 projectiles hit props"
+  - layerIndexA: 7
+    layerIndexB: 11
+    collides: 0
+    note: "DynamicProp \u2194 Hitbox \u2014 weapons don't physically push props (handled
+      by damage)"
+  - layerIndexA: 7
+    layerIndexB: 12
+    collides: 0
+    note: "DynamicProp \u2194 Hurtbox \u2014 no interaction"
+  - layerIndexA: 7
+    layerIndexB: 13
+    collides: 0
+    note: "DynamicProp \u2194 Trigger \u2014 no interaction"
+  - layerIndexA: 7
+    layerIndexB: 14
+    collides: 0
+    note: "DynamicProp \u2194 Interactable \u2014 no interaction"
+  - layerIndexA: 8
+    layerIndexB: 9
+    collides: 1
+    note: "Player \u2194 NPC \u2014 players and NPCs collide physically"
+  - layerIndexA: 8
+    layerIndexB: 10
+    collides: 1
+    note: "Player \u2194 Projectile \u2014 projectiles hit player"
+  - layerIndexA: 8
+    layerIndexB: 11
+    collides: 0
+    note: "Player \u2194 Hitbox \u2014 player body not directly hittable, only Hurtbox"
+  - layerIndexA: 8
+    layerIndexB: 12
+    collides: 0
+    note: "Player \u2194 Hurtbox \u2014 hurtboxes not on Player layer"
+  - layerIndexA: 8
+    layerIndexB: 13
+    collides: 1
+    note: "Player \u2194 Trigger \u2014 player enters trigger zones"
+  - layerIndexA: 8
+    layerIndexB: 14
+    collides: 1
+    note: "Player \u2194 Interactable \u2014 player can interact with objects"
+  - layerIndexA: 9
+    layerIndexB: 10
+    collides: 1
+    note: "NPC \u2194 Projectile \u2014 projectiles hit NPCs"
+  - layerIndexA: 9
+    layerIndexB: 11
+    collides: 0
+    note: "NPC \u2194 Hitbox \u2014 NPC body not directly hittable, only Hurtbox"
+  - layerIndexA: 9
+    layerIndexB: 12
+    collides: 0
+    note: "NPC \u2194 Hurtbox \u2014 no interaction"
+  - layerIndexA: 9
+    layerIndexB: 13
+    collides: 1
+    note: "NPC \u2194 Trigger \u2014 NPCs can enter trigger zones"
+  - layerIndexA: 9
+    layerIndexB: 14
+    collides: 0
+    note: "NPC \u2194 Interactable \u2014 NPCs don't interact with objects"
+  - layerIndexA: 10
+    layerIndexB: 11
+    collides: 1
+    note: "Projectile \u2194 Hitbox \u2014 players can parry projectiles with a weapon"
+  - layerIndexA: 10
+    layerIndexB: 12
+    collides: 1
+    note: "Projectile \u2194 Hurtbox \u2014 projectiles deal damage"
+  - layerIndexA: 10
+    layerIndexB: 13
+    collides: 0
+    note: "Projectile \u2194 Trigger \u2014 no interaction"
+  - layerIndexA: 10
+    layerIndexB: 14
+    collides: 0
+    note: "Projectile \u2194 Interactable \u2014 no interaction"
+  - layerIndexA: 11
+    layerIndexB: 11
+    collides: 1
+    note: "Hitbox \u2194 Hitbox \u2014 weapon clashing, skill ceiling mechanic"
+  - layerIndexA: 11
+    layerIndexB: 12
+    collides: 1
+    note: "Hitbox \u2194 Hurtbox \u2014 primary damage detection path"
+  - layerIndexA: 11
+    layerIndexB: 13
+    collides: 0
+    note: "Hitbox \u2194 Trigger \u2014 no interaction"
+  - layerIndexA: 11
+    layerIndexB: 14
+    collides: 0
+    note: "Hitbox \u2194 Interactable \u2014 no interaction"
+  - layerIndexA: 12
+    layerIndexB: 12
+    collides: 0
+    note: "Hurtbox \u2194 Hurtbox \u2014 hurtboxes don't interact with each other"
+  - layerIndexA: 12
+    layerIndexB: 13
+    collides: 0
+    note: "Hurtbox \u2194 Trigger \u2014 no interaction"
+  - layerIndexA: 12
+    layerIndexB: 14
+    collides: 0
+    note: "Hurtbox \u2194 Interactable \u2014 no interaction"
+  - layerIndexA: 13
+    layerIndexB: 14
+    collides: 0
+    note: "Trigger \u2194 Interactable \u2014 no interaction"

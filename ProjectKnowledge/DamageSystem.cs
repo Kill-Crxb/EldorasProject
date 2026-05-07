@@ -1,7 +1,18 @@
-﻿using NinjaGame.Stats;
+using NinjaGame.Stats;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+
+/// <summary>
+/// Mutable args passed to OnDamageIntercept listeners so they can modify incoming damage.
+/// AbilitySystem subscribes while a defensive ability is active.
+/// </summary>
+public class DamageInterceptArgs
+{
+    public float damage;
+    public readonly Vector3 attackDirection;
+    public DamageInterceptArgs(float damage, Vector3 dir) { this.damage = damage; attackDirection = dir; }
+}
 
 /// <summary>
 /// Handles damage calculation, damage reception, and death for any entity with a Brain.
@@ -30,7 +41,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     private ControllerBrain brain;
     private StatSystem stats;
     private IHealthProvider health;
-    private IDefenseProvider defense;
+    private Blackboard blackboard;
 
     private bool isDead;
 
@@ -44,13 +55,13 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     public event Action OnDeath;
     public event Action<CombatDamagePacket> OnDamageDealt;
     public event Action<CombatDamagePacket> OnDamageTaken;
+    // Fired before damage is applied when the target is blocking. Listeners may reduce args.damage.
+    public event Action<DamageInterceptArgs> OnDamageIntercept;
 
     private void Awake()
     {
         if (autoSetupHurtbox)
-        {
             SetupHurtbox();
-        }
     }
 
     private void SetupHurtbox()
@@ -76,12 +87,8 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     {
         brain = controllerBrain;
         stats = brain.Stats;
-
-        // Get ResourceSystem which implements IHealthProvider
         health = brain.ResourceSys;
-
-        // Defense provider may not exist (optional)
-        defense = brain.GetModule<IDefenseProvider>();
+        blackboard = brain.GetModule<BlackboardSystem>()?.Blackboard;
 
         if (stats == null || health == null)
         {
@@ -92,14 +99,9 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
         health.OnDeath += Die;
         health.OnHealthChanged += HandleHealthChanged;
-
-        Debug.Log($"[DamageSystem] Initialized on {brain.name} - Health provider ready!");
     }
 
-    public void UpdateModule()
-    {
-        // DamageSystem is event-driven, no per-frame logic needed
-    }
+    public void UpdateModule() { }
 
     private void HandleHealthChanged(float current)
     {
@@ -115,14 +117,12 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         bool crit = false;
         float critMult = 1f;
 
-        // Crit calculation - guard clauses first
         if (config == null || !config.canCrit || stats == null)
         {
-            // No crit possible - skip
+            // No crit possible
         }
         else
         {
-            // Query crit stats directly
             float critChance = stats.GetValue("combat.crit_chance", 5f);
 
             if (UnityEngine.Random.value * 100f < critChance)
@@ -156,11 +156,16 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     public void TakeDamage(CombatDamagePacket packet)
     {
         if (!isEnabled || isDead) return;
+        if (blackboard != null && blackboard.GetBool(BlackboardKey.IsInvincible)) return;
 
         float dmg = packet.finalDamage;
 
-        if (defense != null)
-            dmg = defense.ProcessIncomingDamage(dmg, packet.attackDirection);
+        if (OnDamageIntercept != null && blackboard != null && blackboard.GetBool(BlackboardKey.IsBlocking))
+        {
+            var args = new DamageInterceptArgs(dmg, packet.attackDirection);
+            OnDamageIntercept.Invoke(args);
+            dmg = args.damage;
+        }
 
         health.ApplyDamage(dmg);
         OnDamageTaken?.Invoke(packet);
@@ -194,11 +199,8 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        // Ensure hurtbox stays a trigger in editor
         if (hurtbox != null)
-        {
             hurtbox.isTrigger = true;
-        }
     }
 #endif
 }

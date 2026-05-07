@@ -56,4 +56,10 @@ public struct BlackboardKey
 
     public static bool operator ==(BlackboardKey a, BlackboardKey b) => a.hash == b.hash;
     public static bool operator !=(BlackboardKey a, BlackboardKey b) => a.hash != b.hash;
+
+    // Well-known key hashes — use these instead of raw string hashes.
+    // Add new keys here as facts are introduced; name must match the condition's OutputFactKey exactly.
+    public static readonly int IsExecutingAbility = "IsExecutingAbility".GetHashCode();
+    public static readonly int IsInvincible       = "IsInvincible".GetHashCode();
+    public static readonly int IsBlocking         = "IsBlocking".GetHashCode();
 }

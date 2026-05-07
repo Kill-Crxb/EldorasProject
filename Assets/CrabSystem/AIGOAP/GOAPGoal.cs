@@ -154,18 +154,12 @@ public abstract class GOAPGoal : ScriptableObject
     /// </summary>
     protected float GetHealthUrgencyMultiplier(GOAPContext ctx, bool inverseUrgency = false)
     {
-        float healthPercent = ctx.healthPercent;
+        float healthPercent = ctx.healthModule?.GetHealthPercentage() ?? 1f;
 
         if (inverseUrgency)
-        {
-            // Aggressive goals - higher weight when healthy
             return Mathf.Lerp(0.5f, 1.5f, healthPercent);
-        }
         else
-        {
-            // Defensive goals - higher weight when damaged
             return Mathf.Lerp(2.0f, 0.5f, healthPercent);
-        }
     }
 
     /// <summary>
@@ -174,12 +168,17 @@ public abstract class GOAPGoal : ScriptableObject
     /// </summary>
     protected float GetResourceMultiplier(GOAPContext ctx, string resourceName, float minWeight = 0.2f, float maxWeight = 1.2f)
     {
-        if (ctx.resourcePercent != null && ctx.resourcePercent.TryGetValue(resourceName, out float percent))
+        if (ctx.resourceModule == null) return minWeight;
+
+        foreach (var def in ResourceManager.Instance.GetAll())
         {
+            if (!def.name.Equals(resourceName, System.StringComparison.OrdinalIgnoreCase)) continue;
+            float max = ctx.resourceModule.GetMaxResource(def);
+            if (max <= 0f) return minWeight;
+            float percent = ctx.resourceModule.GetResource(def) / max;
             return Mathf.Lerp(minWeight, maxWeight, percent);
         }
 
-        // Resource not found, return fallback multiplier
         return minWeight;
     }
 

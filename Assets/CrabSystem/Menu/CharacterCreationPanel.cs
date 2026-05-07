@@ -111,7 +111,7 @@ public class CharacterCreationPanel : MonoBehaviour
     [SerializeField] private int maxNameLength = 20;
 
     [Tooltip("Model ID written to metadata. Placeholder until appearance system is built.")]
-    [SerializeField] private string defaultModelId = "base_body";
+    [SerializeField] private string defaultModelId = "female_base_v1";
 
     [Header("Debug")]
     [SerializeField] private bool debugLogging = false;

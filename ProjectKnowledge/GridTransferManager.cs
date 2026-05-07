@@ -74,6 +74,9 @@ public class GridTransferManager : MonoBehaviour
         isDragging = true;
 
         sourceGrid.OnItemDragStarted(itemId, area);
+
+        foreach (var g in registeredGrids)
+            g?.ShowAllDragHighlights(item, itemId);
     }
 
     public void UpdateDrag(Vector2 screenPos)
@@ -82,7 +85,7 @@ public class GridTransferManager : MonoBehaviour
 
         var targetGrid = GetGridAtScreenPosition(screenPos);
         if (targetGrid != null)
-            targetGrid.ShowPlacementPreview(targetGrid.ScreenToGridPosition(screenPos), draggedItemArea, draggedItemId);
+            targetGrid.ShowPlacementPreview(targetGrid.ScreenToGridPosition(screenPos), draggedItem, draggedItemId);
         else
             ClearAllPreviews();
     }
@@ -92,6 +95,7 @@ public class GridTransferManager : MonoBehaviour
         if (!isDragging) { Debug.LogWarning("[GridTransferManager] EndDrag called but not dragging!"); return; }
 
         ClearAllPreviews();
+        ClearAllDragHighlights();
 
         var targetGrid = GetGridAtScreenPosition(screenPos);
         if (targetGrid == null)
@@ -111,8 +115,57 @@ public class GridTransferManager : MonoBehaviour
     {
         if (!isDragging) return;
         ClearAllPreviews();
+        ClearAllDragHighlights();
         sourceGrid?.OnItemDragCancelled(draggedItemId);
         ResetDragState();
+    }
+
+    // Shift-click: move item to the best available target grid without dragging.
+    public bool QuickTransfer(UniversalGrid source, ItemInstance item)
+    {
+        // Prefer player inventory when coming from a container, and vice-versa.
+        bool wantPlayer = !source.IsPlayerInventory;
+        UniversalGrid target = null;
+
+        foreach (var grid in registeredGrids)
+        {
+            if (grid == null || grid == source) continue;
+            if (grid.IsPlayerInventory == wantPlayer) { target = grid; break; }
+        }
+
+        // Fallback: any other registered grid.
+        if (target == null)
+        {
+            foreach (var grid in registeredGrids)
+                if (grid != null && grid != source) { target = grid; break; }
+        }
+
+        if (target == null) return false;
+
+        // Scan top-left to bottom-right for the first free position.
+        for (int y = 0; y < target.GridHeight; y++)
+        {
+            for (int x = 0; x < target.GridWidth; x++)
+            {
+                var pos = new GridPosition(x, y);
+                if (!target.CanPlaceItemAt(item, pos)) continue;
+
+                if (!source.RemoveItem(item.instanceId))
+                {
+                    Debug.LogError("[GridTransferManager] QuickTransfer: could not remove item from source");
+                    return false;
+                }
+
+                if (target.AddItem(item, pos)) return true;
+
+                // AddItem failed — put it back.
+                Debug.LogError("[GridTransferManager] QuickTransfer: could not add item to target, returning to source");
+                source.AddItem(item, new GridPosition(item.gridX, item.gridY));
+                return false;
+            }
+        }
+
+        return false; // No space in target
     }
 
     private void ResetDragState()
@@ -128,6 +181,12 @@ public class GridTransferManager : MonoBehaviour
     {
         foreach (var grid in registeredGrids)
             grid?.ClearPlacementPreview();
+    }
+
+    private void ClearAllDragHighlights()
+    {
+        foreach (var grid in registeredGrids)
+            grid?.ClearAllDragHighlights();
     }
 
     private bool AttemptTransfer(UniversalGrid source, UniversalGrid target, string itemId, ItemInstance item, GridPosition targetPos)

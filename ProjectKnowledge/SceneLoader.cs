@@ -81,12 +81,7 @@ public class SceneLoader : MonoBehaviour
         // Wait one frame for the scene to fully initialise
         yield return null;
 
-        if (sceneName == gameSceneName)
-        {
-            if (debugLogging)
-                Debug.Log("[SceneLoader] Game scene ready — firing OnGameSceneReady");
-
-            GameEvents.GameSceneReady();
-        }
+        // GameSceneReady is fired by GameSceneBootstrapper in the game scene's Start(),
+        // not here — SceneLoader is destroyed with the menu scene before this point.
     }
 }

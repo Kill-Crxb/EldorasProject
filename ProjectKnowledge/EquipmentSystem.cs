@@ -16,12 +16,24 @@ using System.Collections.Generic;
 ///
 /// Created: February 18, 2026 (Refactored to eliminate enum dependency)
 /// Updated: Phase 3 — ISaveable added
+/// Updated: Visual spawning — fires GameEvents.ItemEquipped so ModelModule
+///          can spawn/clear equippedPrefab on the correct socket without
+///          EquipmentSystem knowing ModelModule exists.
+/// Updated: Dice damage — GetEquippedWeapon(slotId) added
+/// Updated: Load-time visual restore — BroadcastVisuals() moved to LateInitialize
+///          so all brain modules (including ModelModule) are subscribed before
+///          the visual events fire.
 /// </summary>
 public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 {
     [Header("Equipment Storage")]
     [Tooltip("Currently equipped items (visible in inspector for debugging)")]
     [SerializeField] private List<EquippedSlotData> equippedItems = new List<EquippedSlotData>();
+
+    [Header("Slot Definitions")]
+    [Tooltip("All EquipmentSlotDefinition SOs this entity uses. Required for visual restore on login. " +
+             "Assign the same SOs used in EquipmentWindow's slot configs.")]
+    [SerializeField] private List<EquipmentSlotDefinition> slotDefinitions = new List<EquipmentSlotDefinition>();
 
     [Header("NPC Configuration")]
     [SerializeField] private bool hasNaturalWeapon = false;
@@ -31,8 +43,10 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
     [Header("Debug")]
     [SerializeField] private bool debugEquipment = false;
 
-    // Runtime storage (fast dictionary lookup)
     private Dictionary<string, ItemInstance> equipment = new Dictionary<string, ItemInstance>();
+
+    // Built from slotDefinitions on Initialize — slotId → SO reference
+    private Dictionary<string, EquipmentSlotDefinition> slotLookup = new Dictionary<string, EquipmentSlotDefinition>();
 
     private ControllerBrain brain;
     public ControllerBrain Brain => brain;
@@ -58,6 +72,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         statSystem = brain.GetModule<StatSystem>();
         resourceSystem = brain.GetModule<ResourceSystem>();
 
+        BuildSlotLookup();
         LoadSerializedData();
 
         if (hasNaturalWeapon && !string.IsNullOrEmpty(naturalWeaponItemId))
@@ -69,9 +84,30 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
             Debug.Log($"[EquipmentSystem] Initialized for {brain.name}");
     }
 
-    public void LateInitialize() { }
+    /// <summary>
+    /// Subscribe to OnLoadCompleted here rather than broadcasting immediately.
+    /// LateInitialize fires synchronously during ControllerBrain.Awake — before the
+    /// async save load runs — so the equipment dictionary is still empty at that point.
+    /// OnLoadCompleted fires after all ISaveable modules have finished loading their data,
+    /// which is the correct moment to rebuild visuals.
+    /// </summary>
+    public void LateInitialize()
+    {
+        GameEvents.OnLoadCompleted += HandleLoadCompleted;
+    }
+
     public void UpdateModule() { }
-    public void Shutdown() { }
+
+    public void Shutdown()
+    {
+        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+    }
+
+    private void HandleLoadCompleted()
+    {
+        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+        BroadcastVisuals();
+    }
 
     #endregion
 
@@ -203,6 +239,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         equipment[slotId] = item;
         ApplyItemStats(item);
         OnEquipmentChanged?.Invoke(slot, item);
+        GameEvents.ItemEquipped(slot, item);
         UpdateSerializedData();
 
         if (debugEquipment)
@@ -224,6 +261,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         RemoveItemStats(item);
         equipment[slotId] = null;
         OnEquipmentChanged?.Invoke(slot, null);
+        GameEvents.ItemEquipped(slot, null);
         UpdateSerializedData();
 
         if (debugEquipment)
@@ -257,6 +295,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         RemoveItemStats(item);
         equipment[slotId] = null;
         OnEquipmentChanged?.Invoke(slot, null);
+        GameEvents.ItemEquipped(slot, null);
         UpdateSerializedData();
 
         if (debugEquipment)
@@ -279,6 +318,17 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         return item;
     }
 
+    /// <summary>
+    /// Returns the WeaponData for the item in the given slot, or null if the slot
+    /// is empty or the equipped item has no WeaponData assigned.
+    /// Used by DamageEffect to resolve dice damage at hit time.
+    /// </summary>
+    public WeaponData GetEquippedWeapon(string slotId)
+    {
+        var item = GetEquippedItem(slotId);
+        return item?.Definition?.weaponData;
+    }
+
     public bool IsSlotOccupied(EquipmentSlotDefinition slot)
     {
         if (slot == null) return false;
@@ -287,6 +337,52 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
     public Dictionary<string, ItemInstance> GetAllEquippedItems()
         => new Dictionary<string, ItemInstance>(equipment);
+
+    #endregion
+
+    #region Visual Broadcast
+
+    /// <summary>
+    /// Fires GameEvents.ItemEquipped for every occupied slot.
+    /// Called from LateInitialize so all brain modules are subscribed first.
+    /// Slots with no matching SO in slotLookup are skipped with a warning.
+    /// </summary>
+    private void BroadcastVisuals()
+    {
+        foreach (var kvp in equipment)
+        {
+            if (kvp.Value == null) continue;
+
+            if (!slotLookup.TryGetValue(kvp.Key, out EquipmentSlotDefinition slotDef))
+            {
+                Debug.LogWarning($"[EquipmentSystem] No slot definition found for '{kvp.Key}' — visual not broadcast. Add the SO to the Slot Definitions list.");
+                continue;
+            }
+
+            GameEvents.ItemEquipped(slotDef, kvp.Value);
+
+            if (debugEquipment)
+                Debug.Log($"[EquipmentSystem] BroadcastVisuals — '{kvp.Key}': {kvp.Value.Definition.displayName}");
+        }
+    }
+
+    /// <summary>
+    /// Builds a slotId → EquipmentSlotDefinition lookup from the inspector list.
+    /// Called once on Initialize.
+    /// </summary>
+    private void BuildSlotLookup()
+    {
+        slotLookup.Clear();
+
+        foreach (var slotDef in slotDefinitions)
+        {
+            if (slotDef == null || string.IsNullOrEmpty(slotDef.slotId)) continue;
+            slotLookup[slotDef.slotId] = slotDef;
+        }
+
+        if (debugEquipment)
+            Debug.Log($"[EquipmentSystem] Built slot lookup — {slotLookup.Count} slots registered");
+    }
 
     #endregion
 

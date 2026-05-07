@@ -12,10 +12,23 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
     [SerializeField] private bool onlyLogChanges = true;
 
     private ControllerBrain brain;
-    private Animator animator => brain?.EntityAnimator; // Dynamic property
+    private Animator animator => brain?.EntityAnimator;
 
-    // Cache for change detection
     private System.Collections.Generic.Dictionary<string, object> parameterCache = new System.Collections.Generic.Dictionary<string, object>();
+
+    private static readonly string[] s_locomotionParams =
+    {
+        "MovementState", "IsLockedOn", "StrafeX", "StrafeY",
+        "MovementSpeed", "IsGrounded", "VerticalVelocity",
+        "JumpTrigger", "DashTrigger", "IsDashing"
+    };
+
+    private static readonly string[] s_combatParams =
+    {
+        "BasicAttack1", "BasicAttack2", "BasicAttack3",
+        "Cleave", "Whirlwind", "Thrust", "Slam",
+        "HitLight", "HitHeavy", "Stagger", "Death", "IsDead"
+    };
 
     public bool IsEnabled { get; set; } = true;
 
@@ -333,19 +346,7 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
 
         Debug.Log("=== Validating Locomotion Parameters ===");
 
-        string[] requiredParams = new string[]
-        {
-            "MovementState",
-            "IsLockedOn",
-            "StrafeX",
-            "StrafeY",
-            "MovementSpeed",
-            "IsGrounded",
-            "VerticalVelocity",
-            "JumpTrigger",
-            "DashTrigger",
-            "IsDashing"
-        };
+        string[] requiredParams = s_locomotionParams;
 
         int foundCount = 0;
         foreach (string paramName in requiredParams)
@@ -373,21 +374,7 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
 
         Debug.Log("=== Validating Combat Parameters ===");
 
-        string[] combatParams = new string[]
-        {
-            "BasicAttack1",
-            "BasicAttack2",
-            "BasicAttack3",
-            "Cleave",
-            "Whirlwind",
-            "Thrust",
-            "Slam",
-            "HitLight",
-            "HitHeavy",
-            "Stagger",
-            "Death",
-            "IsDead"
-        };
+        string[] combatParams = s_combatParams;
 
         int foundCount = 0;
         foreach (string paramName in combatParams)

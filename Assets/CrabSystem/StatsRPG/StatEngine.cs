@@ -7,80 +7,10 @@ using System.Text.RegularExpressions;
 namespace NinjaGame.Stats
 {
     /// <summary>
-    /// Universal stat calculation engine with formula parsing and dependency tracking.
-    /// Handles stat registration, modifier application, and optimized recalculation.
-    /// 
-    /// Architecture:
-    /// 1. Register stats via StatSchema or code
-    /// 2. Apply modifiers from items/buffs/talents
-    /// 3. Engine automatically recalculates dirty stats and their dependents
-    /// 
-    /// Performance:
-    /// - Dirty flag optimization (only recalc changed stats)
-    /// - Dependency tracking (cascade updates efficiently)
-    /// - Cached formula parsing (no regex per frame)
-    /// 
-    /// ==============================================================================
-    /// DESIGN DECISIONS & LIMITATIONS
-    /// ==============================================================================
-    /// 
-    /// ✅ IMPLEMENTED SAFEGUARDS:
-    /// 1. Cycle detection in dependency graphs (prevents infinite recursion)
-    /// 2. Culture-invariant numeric parsing (prevents locale issues)
-    /// 3. Formula validation at registration (catches errors early)
-    /// 4. Missing dependency warnings (helps debug formula issues)
-    /// 
-    /// ⚠️ KNOWN LIMITATIONS (Acceptable for Current Use):
-    /// 
-    /// 1. STRING-BASED FORMULA PARSING:
-    ///    - Uses simple string.Replace() for {stat} references
-    ///    - Could fail on edge cases (e.g., {stat} substring of {stat_bonus})
-    ///    - Limitation: No tokenization or AST
-    ///    - Impact: Low (stat IDs use namespaces, unlikely to overlap)
-    ///    - Future: Tokenize formulas for better safety
-    /// 
-    /// 2. RECURSIVE DESCENT PARSER:
-    ///    - Doesn't handle unary minus (e.g., "-5 + 3")
-    ///    - O(n²) worst case due to substring operations
-    ///    - Limitation: Not suitable for complex nested formulas
-    ///    - Impact: Low (RPG formulas are typically simple)
-    ///    - Future: Expression tree or third-party library
-    /// 
-    /// 3. MODIFIER REMOVAL PERFORMANCE:
-    ///    - RemoveAllModifiersFromSource is O(N) over all stats
-    ///    - Limitation: Could be slow with 100+ stats and frequent changes
-    ///    - Impact: Low (typical RPG has 20-50 stats)
-    ///    - Future: Reverse index (sourceId → affected stats)
-    /// 
-    /// 4. FLOATING-POINT DETERMINISM:
-    ///    - Uses float, not double
-    ///    - Repeated calculations can accumulate drift
-    ///    - Limitation: Not deterministic for replays/netcode
-    ///    - Impact: Negligible for single-player RPG
-    ///    - Future: Consider double if multiplayer needed
-    /// 
-    /// ==============================================================================
-    /// FUTURE ENHANCEMENTS (When Needed)
-    /// ==============================================================================
-    /// 
-    /// 🟡 TIER 1 - Scaling Improvements (100+ stats, 1000+ items):
-    ///    - Reverse index for modifier removal
-    ///    - Topological sort for deterministic evaluation order
-    ///    - Pooled HashSets for cycle detection
-    /// 
-    /// 🟡 TIER 2 - Advanced Features (Complex formulas, designer tools):
-    ///    - Tokenized formula parser
-    ///    - Expression tree compilation
-    ///    - Live formula editing with validation
-    ///    - Visual dependency graph editor
-    /// 
-    /// 🟡 TIER 3 - Production Hardening (Multiplayer, mods):
-    ///    - Double precision for determinism
-    ///    - Thread-safe evaluation
-    ///    - Stat delta compression for network sync
-    ///    - Mod API with sandboxing
-    /// 
-    /// ==============================================================================
+    /// Per-entity stat calculation engine. Supports formula-driven stats, flat/percent
+    /// modifiers, dependency cascades, and O(K) source removal via reverse index.
+    /// Formula parser uses simple string substitution — stat IDs must be namespace-qualified
+    /// (e.g. "character.strength") to avoid substring collisions.
     /// </summary>
     public class StatEngine
     {
@@ -386,260 +316,60 @@ namespace NinjaGame.Stats
 
         #region Modifier Management
 
-        /// <summary>
-        /// Add a flat modifier to a stat
-        /// </summary>
         public void AddFlatModifier(string statId, string sourceId, float value)
         {
             var stat = GetStat(statId);
-            if (stat != null)
-            {
-                stat.AddFlatModifier(sourceId, value);
-                RecalculateWithDependents(statId);
+            if (stat == null) return;
 
-                if (debugLogging)
-                    Debug.Log($"[StatEngine] Added flat modifier to {statId}: {sourceId} = {value}");
-            }
+            stat.AddFlatModifier(sourceId, value);
+            TrackSource(sourceId, statId);
+            RecalculateTracked(statId);
+
+            if (debugLogging)
+                Debug.Log($"[StatEngine] AddFlatModifier {statId}: {sourceId} = {value}");
         }
 
-        /// <summary>
-        /// Add a percentage modifier to a stat
-        /// </summary>
         public void AddPercentModifier(string statId, string sourceId, float percent)
         {
             var stat = GetStat(statId);
-            if (stat != null)
-            {
-                stat.AddPercentModifier(sourceId, percent);
-                RecalculateWithDependents(statId);
+            if (stat == null) return;
 
-                if (debugLogging)
-                    Debug.Log($"[StatEngine] Added percent modifier to {statId}: {sourceId} = {percent * 100}%");
-            }
+            stat.AddPercentModifier(sourceId, percent);
+            TrackSource(sourceId, statId);
+            RecalculateTracked(statId);
+
+            if (debugLogging)
+                Debug.Log($"[StatEngine] AddPercentModifier {statId}: {sourceId} = {percent * 100}%");
         }
 
-        /// <summary>
-        /// Add a contribution bonus (modifies formula relationships)
-        /// </summary>
         public void AddContributionBonus(string statId, string sourceId, string targetStatId, float multiplier)
         {
             var stat = GetStat(statId);
-            if (stat != null)
-            {
-                stat.AddContributionBonus(sourceId, targetStatId, multiplier);
-                UpdateDependencyGraph(stat); // Contribution adds dependency
-                validationDirty = true;
-                RecalculateWithDependents(statId);
+            if (stat == null) return;
 
-                if (debugLogging)
-                    Debug.Log($"[StatEngine] Added contribution bonus to {statId}: {sourceId} = +{multiplier} per {targetStatId}");
-            }
+            stat.AddContributionBonus(sourceId, targetStatId, multiplier);
+            UpdateDependencyGraph(stat);
+            validationDirty = true;
+            TrackSource(sourceId, statId);
+            RecalculateTracked(statId);
+
+            if (debugLogging)
+                Debug.Log($"[StatEngine] AddContributionBonus {statId}: {sourceId} = +{multiplier} per {targetStatId}");
         }
 
-        /// <summary>
-        /// Remove all modifiers from a specific source
-        /// 
-        /// PERFORMANCE NOTE:
-        /// Currently O(N) over all stats. For games with:
-        /// - Frequent equip/unequip
-        /// - Large stat counts (100+)
-        /// - Many simultaneous buffs
-        /// 
-        /// Consider future optimization:
-        /// Maintain reverse index: Dictionary<string, HashSet<string>> sourceToStats
-        /// This would make removal O(M) where M = affected stats only
-        /// </summary>
+        // O(K) removal — only iterates stats affected by this source.
         public void RemoveAllModifiersFromSource(string sourceId)
         {
-            HashSet<string> affectedStats = new HashSet<string>();
-
-            foreach (var stat in stats.Values)
-            {
-                stat.RemoveAllModifiersFromSource(sourceId);
-                if (stat.IsDirty)
-                {
-                    affectedStats.Add(stat.statId);
-                }
-            }
-
-            // Recalculate all affected stats
-            foreach (var statId in affectedStats)
-            {
-                RecalculateWithDependents(statId);
-            }
-
-            if (debugLogging)
-                Debug.Log($"[StatEngine] Removed all modifiers from source: {sourceId} (affected {affectedStats.Count} stats)");
-        }
-
-        #endregion
-
-        #region Optimized Modifier Management (Phase 1.6 Day 6)
-
-        /// <summary>
-        /// Add a flat modifier with reverse index tracking and profiling.
-        /// Phase 1.6 Day 6: O(1) modifier tracking + performance profiling
-        /// </summary>
-        public void AddFlatModifier_Optimized(string statId, string sourceId, float value)
-        {
-            var stat = GetStat(statId);
-            if (stat == null)
-            {
-                Debug.LogWarning($"[StatEngine] Cannot add modifier: stat '{statId}' not found");
-                return;
-            }
-
-            // Add modifier
-            stat.AddFlatModifier(sourceId, value);
-
-            // Update reverse index for O(1) removal later
-            if (!sourceIndex.ContainsKey(sourceId))
-            {
-                sourceIndex[sourceId] = new HashSet<string>();
-            }
-            sourceIndex[sourceId].Add(statId);
-
-            // Recalculate with profiling
-            if (profiler.IsEnabled)
-            {
-                profiler.BeginCalculation(statId);
-                RecalculateWithDependents(statId);
-                int depCount = dependents.ContainsKey(statId) ? dependents[statId].Count : 0;
-                profiler.EndCalculation(statId, depCount);
-            }
-            else
-            {
-                RecalculateWithDependents(statId);
-            }
-
-            if (debugLogging)
-                Debug.Log($"[StatEngine] Added flat modifier to {statId}: {sourceId} = {value}");
-        }
-
-        /// <summary>
-        /// Add a percent modifier with reverse index tracking and profiling.
-        /// Phase 1.6 Day 6: O(1) modifier tracking + performance profiling
-        /// </summary>
-        public void AddPercentModifier_Optimized(string statId, string sourceId, float percent)
-        {
-            var stat = GetStat(statId);
-            if (stat == null)
-            {
-                Debug.LogWarning($"[StatEngine] Cannot add modifier: stat '{statId}' not found");
-                return;
-            }
-
-            // Add modifier
-            stat.AddPercentModifier(sourceId, percent);
-
-            // Update reverse index for O(1) removal later
-            if (!sourceIndex.ContainsKey(sourceId))
-            {
-                sourceIndex[sourceId] = new HashSet<string>();
-            }
-            sourceIndex[sourceId].Add(statId);
-
-            // Recalculate with profiling
-            if (profiler.IsEnabled)
-            {
-                profiler.BeginCalculation(statId);
-                RecalculateWithDependents(statId);
-                int depCount = dependents.ContainsKey(statId) ? dependents[statId].Count : 0;
-                profiler.EndCalculation(statId, depCount);
-            }
-            else
-            {
-                RecalculateWithDependents(statId);
-            }
-
-            if (debugLogging)
-                Debug.Log($"[StatEngine] Added percent modifier to {statId}: {sourceId} = {percent * 100}%");
-        }
-
-        /// <summary>
-        /// Add a contribution bonus with reverse index tracking and profiling.
-        /// Phase 1.6 Day 6: O(1) modifier tracking + performance profiling
-        /// </summary>
-        public void AddContributionBonus_Optimized(string statId, string sourceId, string targetStatId, float multiplier)
-        {
-            var stat = GetStat(statId);
-            if (stat == null)
-            {
-                Debug.LogWarning($"[StatEngine] Cannot add contribution: stat '{statId}' not found");
-                return;
-            }
-
-            // Add contribution bonus
-            stat.AddContributionBonus(sourceId, targetStatId, multiplier);
-            UpdateDependencyGraph(stat); // Contribution adds dependency
-
-            // Update reverse index for O(1) removal later
-            if (!sourceIndex.ContainsKey(sourceId))
-            {
-                sourceIndex[sourceId] = new HashSet<string>();
-            }
-            sourceIndex[sourceId].Add(statId);
-
-            // Recalculate with profiling
-            if (profiler.IsEnabled)
-            {
-                profiler.BeginCalculation(statId);
-                RecalculateWithDependents(statId);
-                int depCount = dependents.ContainsKey(statId) ? dependents[statId].Count : 0;
-                profiler.EndCalculation(statId, depCount);
-            }
-            else
-            {
-                RecalculateWithDependents(statId);
-            }
-
-            if (debugLogging)
-                Debug.Log($"[StatEngine] Added contribution bonus to {statId}: {sourceId} = +{multiplier} per {targetStatId}");
-        }
-
-        /// <summary>
-        /// Remove all modifiers from a source using reverse index.
-        /// Phase 1.6 Day 6: O(K) optimization where K = affected stats
-        /// 
-        /// PERFORMANCE:
-        /// OLD RemoveAllModifiersFromSource(): O(N) over all stats
-        /// NEW RemoveAllModifiersFromSource_Optimized(): O(K) where K = affected stats only
-        /// 
-        /// Example: 50 total stats, 5 affected by item
-        /// OLD: Iterates 50 stats → 50 operations
-        /// NEW: Iterates 5 stats → 5 operations (10x faster!)
-        /// </summary>
-        public void RemoveAllModifiersFromSource_Optimized(string sourceId)
-        {
-            // Check reverse index
             if (!sourceIndex.TryGetValue(sourceId, out var affectedStats))
-            {
-                // No stats modified by this source
-                if (debugLogging)
-                    Debug.Log($"[StatEngine] No stats modified by source '{sourceId}'");
                 return;
-            }
 
-            // Only iterate over affected stats (O(K) instead of O(N))
             foreach (var statId in affectedStats)
             {
                 var stat = GetStat(statId);
                 if (stat != null)
                 {
                     stat.RemoveAllModifiersFromSource(sourceId);
-
-                    // Recalculate with profiling
-                    if (profiler.IsEnabled)
-                    {
-                        profiler.BeginCalculation(statId);
-                        RecalculateWithDependents(statId);
-                        int depCount = dependents.ContainsKey(statId) ? dependents[statId].Count : 0;
-                        profiler.EndCalculation(statId, depCount);
-                    }
-                    else
-                    {
-                        RecalculateWithDependents(statId);
-                    }
+                    RecalculateTracked(statId);
                 }
             }
 
@@ -656,19 +386,34 @@ namespace NinjaGame.Stats
         /// </summary>
         public void EnableProfiling(bool enable)
         {
-            if (enable)
-                profiler.Enable();
-            else
-                profiler.Disable();
+            if (enable) profiler.Enable();
+            else profiler.Disable();
         }
 
-        /// <summary>
-        /// Export performance report to console.
-        /// Call after running game scenarios to analyze stat calculation performance.
-        /// </summary>
-        public void ExportPerformanceReport()
+        public void ExportPerformanceReport() => profiler.LogReport();
+
+        // Records sourceId → statId in the reverse index so removal is O(K).
+        private void TrackSource(string sourceId, string statId)
         {
-            profiler.LogReport();
+            if (!sourceIndex.ContainsKey(sourceId))
+                sourceIndex[sourceId] = new HashSet<string>();
+            sourceIndex[sourceId].Add(statId);
+        }
+
+        // Recalculates statId with profiler instrumentation when enabled.
+        private void RecalculateTracked(string statId)
+        {
+            if (profiler.IsEnabled)
+            {
+                profiler.BeginCalculation(statId);
+                RecalculateWithDependents(statId);
+                int depCount = dependents.ContainsKey(statId) ? dependents[statId].Count : 0;
+                profiler.EndCalculation(statId, depCount);
+            }
+            else
+            {
+                RecalculateWithDependents(statId);
+            }
         }
 
         #endregion

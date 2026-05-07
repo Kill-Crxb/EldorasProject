@@ -105,13 +105,10 @@ public class ItemInstance
     {
         if (other == null || !other.IsPlaced) return false;
 
-        var mySlots = GetOccupiedSlots();
-        var otherSlots = other.GetOccupiedSlots();
-
-        foreach (var mySlot in mySlots)
+        var otherSet = new HashSet<Vector2Int>(other.GetOccupiedSlots());
+        foreach (var slot in GetOccupiedSlots())
         {
-            if (otherSlots.Contains(mySlot))
-                return true;
+            if (otherSet.Contains(slot)) return true;
         }
         return false;
     }

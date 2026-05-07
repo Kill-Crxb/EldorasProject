@@ -431,6 +431,19 @@ public class InputSystem : MonoBehaviour,
         AbilityVPressed = inputActions.Player.QuickslotV.WasPressedThisFrame();
     }
 
+    // Lazily resolved — HotbarSystem initialises after InputSystem.
+    private HotbarSystem hotbarSystem;
+
+    private HotbarSystem GetHotbarSystem()
+    {
+        if (hotbarSystem == null)
+            hotbarSystem = brain?.GetModule<HotbarSystem>();
+        return hotbarSystem;
+    }
+
+    // One float per centre-bar slot (0-8). Tracks how long each button is held.
+    private readonly float[] _hotbarHeldTime = new float[9];
+
     private void ReadHotbarInput()
     {
         Hotbar1Pressed = inputActions.Player.Hotbar1.WasPressedThisFrame();
@@ -442,6 +455,89 @@ public class InputSystem : MonoBehaviour,
         Hotbar7Pressed = inputActions.Player.Hotbar7.WasPressedThisFrame();
         Hotbar8Pressed = inputActions.Player.Hotbar8.WasPressedThisFrame();
         Hotbar9Pressed = inputActions.Player.Hotbar9.WasPressedThisFrame();
+
+        BridgeHotbarInput();
+    }
+
+    private void BridgeHotbarInput()
+    {
+        var hotbar = GetHotbarSystem();
+        if (hotbar == null) return;
+
+        for (int i = 0; i < 9; i++)
+        {
+            bool isHeld     = GetHotbarIsPressed(i);
+            bool wasPressed = GetHotbarPressed(i);
+            bool wasReleased = !isHeld && _hotbarHeldTime[i] > 0f;
+
+            if (isHeld)
+            {
+                _hotbarHeldTime[i] += Time.deltaTime;
+            }
+            else if (wasReleased)
+            {
+                float heldDuration  = _hotbarHeldTime[i];
+                _hotbarHeldTime[i] = 0f;
+
+                // Charge ability fires on release if held past the threshold
+                var slot    = hotbar.GetSlot("centre", i);
+                var ability = hotbar.ResolveSlotAbility(slot);
+
+                if (ability?.chargeAbility != null && heldDuration >= ability.chargeThreshold)
+                {
+                    brain.GetModule<AbilitySystem>()?.UseAbility(ability.chargeAbility.abilityId);
+                    continue; // Charge handled — skip normal TriggerSlot
+                }
+            }
+
+            // Normal press — only fire if the button has no charge ability, or on immediate press
+            if (wasPressed)
+            {
+                var slot    = hotbar.GetSlot("centre", i);
+                var ability = hotbar.ResolveSlotAbility(slot);
+
+                // If there IS a charge ability, wait for release to decide — don't fire on press
+                if (ability?.chargeAbility != null) continue;
+
+                hotbar.TriggerSlot("centre", i);
+            }
+        }
+    }
+
+    // Returns true while hotbar button i is physically held down.
+    private bool GetHotbarIsPressed(int i)
+    {
+        switch (i)
+        {
+            case 0: return inputActions.Player.Hotbar1.IsPressed();
+            case 1: return inputActions.Player.Hotbar2.IsPressed();
+            case 2: return inputActions.Player.Hotbar3.IsPressed();
+            case 3: return inputActions.Player.Hotbar4.IsPressed();
+            case 4: return inputActions.Player.Hotbar5.IsPressed();
+            case 5: return inputActions.Player.Hotbar6.IsPressed();
+            case 6: return inputActions.Player.Hotbar7.IsPressed();
+            case 7: return inputActions.Player.Hotbar8.IsPressed();
+            case 8: return inputActions.Player.Hotbar9.IsPressed();
+            default: return false;
+        }
+    }
+
+    // Returns true only on the frame the button was pressed.
+    private bool GetHotbarPressed(int i)
+    {
+        switch (i)
+        {
+            case 0: return Hotbar1Pressed;
+            case 1: return Hotbar2Pressed;
+            case 2: return Hotbar3Pressed;
+            case 3: return Hotbar4Pressed;
+            case 4: return Hotbar5Pressed;
+            case 5: return Hotbar6Pressed;
+            case 6: return Hotbar7Pressed;
+            case 7: return Hotbar8Pressed;
+            case 8: return Hotbar9Pressed;
+            default: return false;
+        }
     }
 
     private void ReadInteractionInput()
@@ -480,6 +576,8 @@ public class InputSystem : MonoBehaviour,
         Hotbar7Pressed = false;
         Hotbar8Pressed = false;
         Hotbar9Pressed = false;
+
+        for (int i = 0; i < _hotbarHeldTime.Length; i++) _hotbarHeldTime[i] = 0f;
 
         InteractPressed = false;
     }

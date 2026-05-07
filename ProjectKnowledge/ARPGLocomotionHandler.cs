@@ -44,6 +44,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
     [SerializeField] private string strafeXParam = "StrafeX";
     [SerializeField] private string strafeYParam = "StrafeY";
     [SerializeField] private string jumpTriggerParam = "JumpTrigger";
+    [SerializeField] private string movementStateParam = "MovementState";
 
     // References
     private IAnimationProvider animationProvider;
@@ -220,12 +221,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
                 targetRot,
                 rotationSpeed * Time.deltaTime
             );
-            // NOTE (Polish): Vector3.Lerp asymptotically approaches zero,
-            // leaving tiny residual velocities (eg. ~1e-7).
-            // This can cause very small non-zero MovementSpeed values in the animator.
-            // Safe to clamp currentVelocity or animation speed to zero during polish pass.
-
-        }
+            }
         else
         {
             targetVelocity = Vector3.zero;
@@ -290,10 +286,6 @@ public class ARPGLocomotionHandler : LocomotionHandler
             acceleration * 1.5f * Time.deltaTime
         );
 
-        // NOTE (Polish): Vector3.Lerp asymptotically approaches zero,
-        // leaving tiny residual velocities (eg. ~1e-7).
-        // This can cause very small non-zero MovementSpeed values in the animator.
-        // Safe to clamp currentVelocity or animation speed to zero during polish pass.
     }
 
     float GetMoveSpeed()
@@ -420,6 +412,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
 
     void UpdateAnimations()
     {
+
         if (animationProvider == null)
         {
             if (showDebugInfo)
@@ -431,7 +424,17 @@ public class ARPGLocomotionHandler : LocomotionHandler
         // Send actual velocity magnitude to animator
         // The blend tree will smoothly interpolate between animation states
         float speed = currentVelocity.magnitude;
+        int movementState;
+        if (speed < 0.1f)
+            movementState = 0; // Idle
+        else if (isSprinting)
+            movementState = 3; // Sprint
+        else if (enableWalkRunToggle && isInWalkMode)
+            movementState = 1; // Walk
+        else
+            movementState = 2; // Run
 
+        animationProvider.SetInteger(movementStateParam, movementState);
         if (showDebugInfo)
         {
             Debug.Log($"[UpdateAnimations] Velocity: {speed:F2} → Sent to animator '{movementSpeedParam}'");
@@ -450,54 +453,6 @@ public class ARPGLocomotionHandler : LocomotionHandler
         animationProvider.SetFloat(strafeYParam, normalizedStrafeInput.y);
     }
 
-    /*
-    /// <summary>
-    /// Calculate animation state based on input intent
-    /// Returns: 0 = Idle, 1 = Walk, 2 = Run, 3 = Sprint
-    /// 
-    /// NOTE: Currently unused - using velocity-based animation instead.
-    /// Kept for reference in case you want to switch back to discrete states.
-    /// </summary>
-    int GetAnimationSpeedFromIntent()
-    {
-        int result;
-        string reason;
-
-        // No input = Idle
-        if (movementInput.magnitude < 0.1f)
-        {
-            result = 0; // Idle
-            reason = $"No input (mag: {movementInput.magnitude:F3})";
-        }
-        // Sprinting
-        else if (isSprinting)
-        {
-            result = 3; // Sprint
-            reason = "Sprinting";
-        }
-        // Walk mode toggled on
-        else if (enableWalkRunToggle && isInWalkMode)
-        {
-            result = 1; // Walk
-            reason = "Walk mode toggled ON";
-        }
-        // Default running
-        else
-        {
-            result = 2; // Run
-            reason = "Default run mode";
-        }
-
-        if (showDebugInfo)
-        {
-            Debug.Log($"[GetAnimationSpeedFromIntent] Result: {result}, Reason: {reason}, " +
-                     $"Input: {movementInput}, isSprinting: {isSprinting}, " +
-                     $"walkToggleEnabled: {enableWalkRunToggle}, isInWalkMode: {isInWalkMode}");
-        }
-
-        return result;
-    }
-    */
 
     // ============================
     // Ability Support (called by MovementEffect)

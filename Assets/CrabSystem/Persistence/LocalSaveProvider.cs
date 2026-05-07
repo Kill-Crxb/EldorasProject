@@ -31,6 +31,26 @@ public class LocalSaveProvider : ISaveProvider
     private readonly string savesRoot;
     private readonly string accountsFilePath;
 
+    // ── Write Serialisation ───────────────────────────────────────────────
+    // One semaphore per absolute file path prevents sharing violations when
+    // two saves for the same file fire concurrently.
+
+    private readonly System.Collections.Generic.Dictionary<string, System.Threading.SemaphoreSlim> fileLocks
+        = new System.Collections.Generic.Dictionary<string, System.Threading.SemaphoreSlim>();
+
+    private System.Threading.SemaphoreSlim GetFileLock(string filePath)
+    {
+        lock (fileLocks)
+        {
+            if (!fileLocks.TryGetValue(filePath, out var sem))
+            {
+                sem = new System.Threading.SemaphoreSlim(1, 1);
+                fileLocks[filePath] = sem;
+            }
+            return sem;
+        }
+    }
+
     // ── Constructor ───────────────────────────────────────────────────────
 
     public LocalSaveProvider()
@@ -128,6 +148,8 @@ public class LocalSaveProvider : ISaveProvider
 
         string filePath = Path.Combine(characterPath, $"{filename}.json");
 
+        var sem = GetFileLock(filePath);
+        await sem.WaitAsync();
         try
         {
             await File.WriteAllTextAsync(filePath, json);
@@ -137,6 +159,10 @@ public class LocalSaveProvider : ISaveProvider
         {
             Debug.LogError($"[LocalSaveProvider] Save failed ({characterId}/{filename}): {e.Message}");
             return false;
+        }
+        finally
+        {
+            sem.Release();
         }
     }
 

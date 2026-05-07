@@ -135,6 +135,16 @@ public class UniversalInventoryGrid : UniversalGrid
         return inventorySystem.GetItemInstance(itemId);
     }
 
+    public override void OnItemShiftClicked(string itemId)
+    {
+        var item = inventorySystem?.GetItemInstance(itemId);
+        if (item == null) return;
+
+        bool transferred = GridTransferManager.Instance.QuickTransfer(this, item);
+        if (!transferred && debugMode)
+            Debug.Log($"[UniversalInventoryGrid] Shift-click transfer failed for {item.Definition?.displayName} — no space in target grid");
+    }
+
     public override void OnItemRightClicked(string itemId)
     {
         // Only handle right-click equip for player inventory

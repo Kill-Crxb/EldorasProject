@@ -2,8 +2,15 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// Damage Over Time Effect
-/// Fully dynamic, DamageSystem-driven
+/// Damage Over Time Effect — fully dynamic, DamageSystem-driven.
+///
+/// Tick damage source (evaluated each tick, not once on Apply):
+/// - If tickDice is assigned (diceCount > 0): rolls tickDice each tick, ignores damagePerTick
+/// - Otherwise: uses damagePerTick flat value as before
+///
+/// Example — poison dagger:
+///   tickDice = 1d4, tickInterval = 1f, duration = 5f
+///   → rolls 1d4 five times over five seconds
 /// </summary>
 [Serializable]
 public class DamageOverTimeEffect
@@ -13,6 +20,10 @@ public class DamageOverTimeEffect
     public float tickInterval = 1f;
     public float damagePerTick = 10f;
     public DamageType damageType = DamageType.Poison;
+
+    [Header("Dice Tick (Optional)")]
+    [Tooltip("If diceCount > 0, each tick rolls this expression instead of using damagePerTick")]
+    public DiceRoll tickDice;
 
     public event Action OnCompleted;
     public event Action OnTick;
@@ -72,9 +83,11 @@ public class DamageOverTimeEffect
             return;
         }
 
+        float tickDamage = tickDice.diceCount > 0 ? tickDice.Roll() : damagePerTick;
+
         CombatAttackData attackData = new CombatAttackData
         {
-            baseDamage = damagePerTick,
+            baseDamage = tickDamage,
             damageType = damageType,
             attackerTransform = attackerDamage.transform,
             hitPoint = targetDamage.transform.position,

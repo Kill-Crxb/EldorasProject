@@ -4,65 +4,19 @@ using UnityEngine;
 
 /// <summary>
 /// Enhanced Damage Effect - Full damage calculation pipeline
-/// 
-/// Damage Calculation Flow:
-/// 1. Determine Base Damage:
-///    - useWeaponDamage? → weapon.damage + baseDamage
-///    - else → baseDamage only
-/// 2. Apply Base Multiplier:
-///    - damage *= baseDamageMultiplier
-/// 3. Add External Modifiers (Phase 2.2):
-///    - damage += GetExternalFlatDamage()
-/// 4. Apply Final Multiplier:
-///    - damage *= finalDamageMultiplier
-/// 
-/// Blackboard Gating:
-/// - Effect checks requiredCasterFacts and requiredTargetFacts
-/// - If requirements not met, effect is skipped (returns early)
-/// - Enables conditional damage (e.g., "Execute" deals bonus vs wounded targets)
-/// 
-/// Example Configurations:
-/// 
-/// Basic Attack:
-///   useWeaponDamage = true
-///   baseDamage = 0
-///   baseDamageMultiplier = 1.0
-///   → Deals 100% weapon damage
-/// 
-/// Heavy Strike:
-///   useWeaponDamage = true
-///   baseDamage = 5
-///   baseDamageMultiplier = 1.5
-///   → Deals (weapon + 5) * 1.5
-/// 
-/// Fireball:
-///   useWeaponDamage = false
-///   baseDamage = 30
-///   → Deals 30 static damage
-/// 
-/// Execute (Primary):
-///   useWeaponDamage = true
-///   baseDamage = 0
-///   → Normal weapon damage
-/// 
-/// Execute (Secondary):
-///   useWeaponDamage = false
-///   baseDamage = 50
-///   requiredTargetFacts = ["IsWounded"]
-///   → Bonus damage if target wounded
-/// 
-/// Phase 2.1: Weapon Stat Integration
-/// Created: January 27, 2026
 /// </summary>
 [Serializable]
 public class DamageEffect
 {
     [Header("Base Damage")]
-    [Tooltip("Use equipped weapon damage as base? (Unchecked = static ability damage)")]
+    [Tooltip("Use equipped weapon dice roll as base? (Unchecked = static ability damage)")]
     public bool useWeaponDamage = false;
 
-    [Tooltip("Base damage value (fallback if no weapon, or bonus if useWeaponDamage = true)")]
+    [Tooltip("Added to weapon dice roll when useWeaponDamage is true. Use negative for off-hand penalties.")]
     public float baseDamage = 10f;
+
+    [Tooltip("Slot ID to read weapon from (default: mainwep). Override for off-hand abilities.")]
+    public string weaponSlotId = "mainwep";
 
     [Header("Damage Type")]
     public DamageType damageType = DamageType.Physical;
@@ -84,194 +38,156 @@ public class DamageEffect
     public event Action OnCompleted;
 
     [NonSerialized] private DamageSystem attackerDamageSystem;
-    private bool isCompleted;
+    [NonSerialized] private bool isCompleted;
 
-    /// <summary>
-    /// Set the attacker's DamageSystem (required for damage calculation)
-    /// </summary>
     public void SetDamageSystem(DamageSystem system)
     {
         attackerDamageSystem = system;
     }
 
-    /// <summary>
-    /// Apply damage to a target DamageSystem
-    /// Includes full damage pipeline with weapon integration and blackboard gating
-    /// </summary>
     public void Apply(DamageSystem target)
     {
-        if (isCompleted)
-            return;
+        isCompleted = false;
 
-        // Guard clauses
         if (target == null)
         {
-            Debug.LogWarning("[DamageEffect] Target DamageSystem is null");
+            Debug.LogWarning("[DamageEffect] BAIL — target is null");
             Complete();
             return;
         }
 
         if (attackerDamageSystem == null)
         {
-            Debug.LogError("[DamageEffect] Attacker DamageSystem not set before Apply()");
+            Debug.LogError("[DamageEffect] BAIL — attackerDamageSystem is null (SetDamageSystem not called?)");
             Complete();
             return;
         }
 
-        // Check blackboard requirements (skip effect if not met)
         if (!CheckBlackboardRequirements(attackerDamageSystem, target))
         {
-            // Requirements not met - skip this effect silently
+            Debug.LogWarning("[DamageEffect] BAIL — blackboard requirements not met");
             Complete();
             return;
         }
 
-        // Calculate final damage using pipeline
         float finalDamage = CalculateDamage(attackerDamageSystem);
 
-        // Create attack data
         CombatAttackData attackData = new CombatAttackData
         {
             baseDamage = finalDamage,
             damageType = damageType,
             attackerTransform = attackerDamageSystem.transform,
-            hitPoint = target.transform.position,
+            hitPoint = target.Brain?.GetModule<VFXSystem>()?.GetAnchorPosition(VFXAnchor.Overhead) ?? target.transform.root.position + Vector3.up * 1.5f,
             hitNormal = Vector3.up
         };
 
-        // Let DamageSystem calculate final packet (applies armor, resistances, etc.)
         CombatDamagePacket packet = attackerDamageSystem.CalculateDamage(attackData);
+
+        Debug.Log($"[DamageEffect] Dealing {packet.finalDamage:F1} {damageType} to {target.name}");
+
         target.TakeDamage(packet);
+
+        DamageNumberManager.Spawn(packet.finalDamage, attackData.hitPoint);
 
         Complete();
     }
 
-    /// <summary>
-    /// Full damage calculation pipeline
-    /// </summary>
     private float CalculateDamage(DamageSystem attacker)
     {
-        // Step 1: Determine base damage
         float damage = GetBaseDamage(attacker);
-
-        // Step 2: Apply base multiplier
         damage *= baseDamageMultiplier;
-
-        // Step 3: Add external flat modifiers (Phase 2.2 - stub for now)
         damage += GetExternalFlatDamage(attacker);
-
-        // Step 4: Apply final multiplier
         damage *= finalDamageMultiplier;
-
         return damage;
     }
 
-    /// <summary>
-    /// Get base damage (weapon + ability base)
-    /// </summary>
     private float GetBaseDamage(DamageSystem attacker)
     {
-        float damage = baseDamage;
+        if (!useWeaponDamage)
+            return baseDamage;
 
-        if (useWeaponDamage)
-        {
-            float weaponDamage = GetWeaponDamage(attacker);
-            damage += weaponDamage;
-        }
-
-        return damage;
+        return GetWeaponDamage(attacker) + baseDamage;
     }
 
-    /// <summary>
-    /// Query weapon damage through ControllerBrain
-    /// </summary>
     private float GetWeaponDamage(DamageSystem attacker)
     {
-        // Get brain from DamageSystem
-        var brain = GetBrain(attacker);
+        var brain = attacker?.Brain;
         if (brain == null) return 0f;
 
-        // Try equipped weapon (players)
         var equipmentSystem = brain.GetModule<EquipmentSystem>();
-        if (equipmentSystem != null)
-        {
-            // For now, return 0 until API is available
-            // return equipmentSystem.GetEquippedWeaponDamage();
-        }
+        if (equipmentSystem == null) return 0f;
 
-        // Try natural weapon (NPCs/animals)
-        // TODO Phase 2.1: Add natural weapon support to NPCModule
-        // var npcModule = brain.GetModule<NPCModule>();
-        // if (npcModule != null && npcModule.naturalWeapon != null)
-        //     return npcModule.naturalWeapon.damage;
+        var equippedItem = equipmentSystem.GetEquippedItem(weaponSlotId);
+        if (equippedItem == null) return 0f;
 
-        return 0f;
+        var weaponData = equippedItem.Definition?.weaponData;
+        if (weaponData == null) return 0f;
+
+        return weaponData.RollDamage();
     }
 
-    /// <summary>
-    /// Get external flat damage modifiers (Phase 2.2)
-    /// From gear, buffs, passives, ability tags, etc.
-    /// </summary>
     private float GetExternalFlatDamage(DamageSystem attacker)
     {
-        // TODO Phase 2.2: Implement modifier aggregation
-        // - Get gear bonuses
-        // - Get buff/debuff modifiers
-        // - Get tag-based bonuses
         return 0f;
     }
 
-    /// <summary>
-    /// Check if blackboard requirements are met
-    /// Query through ControllerBrain (consistent with all systems)
-    /// </summary>
     private bool CheckBlackboardRequirements(DamageSystem attacker, DamageSystem target)
     {
-        // Check caster requirements
         if (requiredCasterFacts != null && requiredCasterFacts.Count > 0)
         {
-            var casterBrain = GetBrain(attacker);
-            if (casterBrain == null) return false;
+            var casterBrain = attacker?.Brain;
+            if (casterBrain == null)
+            {
+                Debug.LogWarning("[DamageEffect] CheckBlackboard — casterBrain is null");
+                return false;
+            }
 
             var casterBoard = casterBrain.Blackboard;
-            if (casterBoard == null) return false;
+            if (casterBoard == null)
+            {
+                Debug.LogWarning("[DamageEffect] CheckBlackboard — caster has no Blackboard");
+                return false;
+            }
 
             foreach (var fact in requiredCasterFacts)
             {
-                // Hash string to int key for lookup
                 int key = new BlackboardKey(fact).hash;
                 if (!casterBoard.GetBool(key))
-                    return false;  // Required caster fact not met
+                {
+                    Debug.LogWarning($"[DamageEffect] CheckBlackboard — caster missing fact '{fact}'");
+                    return false;
+                }
             }
         }
 
-        // Check target requirements
         if (requiredTargetFacts != null && requiredTargetFacts.Count > 0)
         {
-            var targetBrain = GetBrain(target);
-            if (targetBrain == null) return false;
+            var targetBrain = target?.Brain;
+            if (targetBrain == null)
+            {
+                Debug.LogWarning("[DamageEffect] CheckBlackboard — targetBrain is null");
+                return false;
+            }
 
             var targetBoard = targetBrain.Blackboard;
-            if (targetBoard == null) return false;
+            if (targetBoard == null)
+            {
+                Debug.LogWarning("[DamageEffect] CheckBlackboard — target has no Blackboard");
+                return false;
+            }
 
             foreach (var fact in requiredTargetFacts)
             {
-                // Hash string to int key for lookup
                 int key = new BlackboardKey(fact).hash;
                 if (!targetBoard.GetBool(key))
-                    return false;  // Required target fact not met
+                {
+                    Debug.LogWarning($"[DamageEffect] CheckBlackboard — target missing fact '{fact}'");
+                    return false;
+                }
             }
         }
 
-        return true;  // All requirements met
-    }
-
-    /// <summary>
-    /// Get ControllerBrain from DamageSystem
-    /// </summary>
-    private ControllerBrain GetBrain(DamageSystem damageSystem)
-    {
-        return damageSystem?.Brain;
+        return true;
     }
 
     public void Cancel()

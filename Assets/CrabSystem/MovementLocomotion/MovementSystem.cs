@@ -33,6 +33,7 @@ public class MovementSystem : MonoBehaviour, IBrainModule
 
     // References
     private ControllerBrain brain;
+    private StateMachineModule stateMachine;
     private IMovementControlSource activeControlSource;
     private List<IMovementControlSource> availableControlSources;
 
@@ -66,6 +67,10 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     public void Initialize(ControllerBrain brain)
     {
         this.brain = brain;
+
+        stateMachine = brain.GetModule<StateMachineModule>();
+        if (stateMachine == null)
+            Debug.LogWarning("[MovementSystem] No StateMachineModule found — movement permission checks disabled");
 
         // Auto-discover feet detection if not assigned
         if (feetDetection == null)
@@ -122,11 +127,33 @@ public class MovementSystem : MonoBehaviour, IBrainModule
         // Update active control source
         activeControlSource?.UpdateSource();
 
-        // Get movement input from control source
+        // Get raw input from control source
         MovementInput input = activeControlSource?.GetMovementInput() ?? MovementInput.Zero;
 
-        // Execute movement via locomotion handler
+        // ── State machine permission check ────────────────────────────────
+        // Map the requested input to a LowerBodyState and ask the state machine
+        // if it's currently allowed. This is where StatePermissionMatrix enforces
+        // all movement restrictions — Dark Souls lock, blocking slow walk, etc.
+        // No movement lock bools needed anywhere else in the codebase.
+        if (input.HasMovementInput && stateMachine != null)
+        {
+            LowerBodyState desired = ResolveLowerBodyState(input);
+            if (!stateMachine.CanPerformMovement(desired))
+                input = MovementInput.Zero;
+        }
+
         locomotionHandler.ExecuteMovement(input);
+    }
+
+    /// <summary>
+    /// Maps a MovementInput to the most appropriate LowerBodyState for permission checking.
+    /// The state machine uses this to decide whether the current upper body / posture allows it.
+    /// </summary>
+    private LowerBodyState ResolveLowerBodyState(MovementInput input)
+    {
+        if (input.Sprint) return LowerBodyState.Sprinting;
+        if (input.Dash) return LowerBodyState.Dashing;
+        return LowerBodyState.Running;
     }
 
     // ========================================
