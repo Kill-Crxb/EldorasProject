@@ -59,6 +59,12 @@ public class CameraCoordinator : MonoBehaviour, IBrainModule, ICameraProvider
     {
         brain = controllerBrain;
 
+        if (brain.IsNPC)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
         // Auto-discover camera if not assigned - only look for ICameraImplementation types
         if (cameraModule == null)
         {
@@ -123,6 +129,11 @@ public class CameraCoordinator : MonoBehaviour, IBrainModule, ICameraProvider
     public float GetCameraHorizontalRotation() => cameraImpl?.GetHorizontalRotation() ?? 0f;
     public void SetMouseSensitivity(float sensitivity) => cameraImpl?.SetMouseSensitivity(sensitivity);
     public void SetCameraOffset(Vector3 offset) => cameraImpl?.SetCameraOffset(offset);
+
+    // Neither SimpleThirdPersonCamera nor MMOStyleCamera drive character facing directly -
+    // ARPGLocomotionHandler handles facing itself from move/look input. OverShoulderCamera
+    // is the one that sets this true.
+    public bool CameraDrivesFacing => false;
 
     // Type-specific accessors for accessing camera-specific features
     public SimpleThirdPersonCamera SimpleCamera => cameraModule as SimpleThirdPersonCamera;

@@ -64,7 +64,7 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
 
     // References
     private ControllerBrain brain;
-    private UniversalFactionHandler factionHandler;
+    private FactionSystem factionSystem;
 
     // Detection state
     private Transform currentTarget;
@@ -118,15 +118,15 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
     {
         brain = controllerBrain;
 
-        // Get faction handler through ControllerBrain's Identity system
-        if (brain.Identity != null)
+        // Get faction system through ControllerBrain
+        if (brain.Faction != null)
         {
-            factionHandler = brain.Identity.Faction;
+            factionSystem = brain.Faction;
         }
 
-        if (useFactionDetection && factionHandler == null)
+        if (useFactionDetection && factionSystem == null)
         {
-            Debug.LogWarning($"[PerceptionModule] Faction detection enabled but no FactionAffiliationHandler found on {brain.name}");
+            Debug.LogWarning($"[PerceptionModule] Faction detection enabled but no FactionSystem found on {brain.name}");
         }
 
         if (debugMode)
@@ -314,36 +314,37 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
         // If no faction detection, all targets are valid
         if (!useFactionDetection) return true;
 
-        // If no faction handler, can't filter by faction
-        if (factionHandler == null)
+        // If no faction system, can't filter by faction
+        if (factionSystem == null)
         {
             if (debugMode)
-                Debug.LogWarning($"[PerceptionModule] No faction handler - cannot filter by faction");
+                Debug.LogWarning($"[PerceptionModule] No faction system - cannot filter by faction");
             return true;
         }
 
-        // Get target's faction handler
-        if (targetBrain.Identity == null || targetBrain.Identity.Faction == null)
+        // Get target's faction system
+        if (targetBrain.Faction == null)
         {
             if (debugMode)
-                Debug.Log($"[PerceptionModule] Target {targetBrain.name} has no faction - skipping");
+                Debug.Log($"[PerceptionModule] Target {targetBrain.name} has no faction system - skipping");
             return false;
         }
 
-        UniversalFactionHandler targetFaction = targetBrain.Identity.Faction;
-        FactionType myFaction = factionHandler.AffiliatedFaction;
-        FactionType theirFaction = targetFaction.AffiliatedFaction;
+        FactionSystem targetFaction = targetBrain.Faction;
+        string myFactionId = factionSystem.CurrentFactionId;
+        string theirFactionId = targetFaction.CurrentFactionId;
 
         if (debugMode)
-            Debug.Log($"[PerceptionModule] Faction check: My={myFaction}, Their={theirFaction}");
+            Debug.Log($"[PerceptionModule] Faction check: My={myFactionId}, Their={theirFactionId}");
 
-        // Check relationship
+        FactionType myFaction = ConvertFactionIdToType(myFactionId);
+        FactionType theirFaction = ConvertFactionIdToType(theirFactionId);
+
         FactionRelationship relationship = FactionManager.GetRelationship(myFaction, theirFaction);
 
         if (debugMode)
             Debug.Log($"[PerceptionModule] Relationship: {relationship}");
 
-        // Only detect hostiles if configured
         if (onlyDetectHostiles)
         {
             return relationship == FactionRelationship.Hostile;
@@ -470,9 +471,27 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
     {
         if (!isEnabled) return;
 
-        // Draw detailed info when selected
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position + Vector3.up * eyeHeight, 0.2f);
+    }
+
+    private FactionType ConvertFactionIdToType(string factionId)
+    {
+        return factionId switch
+        {
+            "faction_humans" => FactionType.Humans,
+            "faction_elves" => FactionType.Elves,
+            "faction_dwarves" => FactionType.Dwarves,
+            "faction_undead" => FactionType.Undead,
+            "faction_warlocks" => FactionType.Warlocks,
+            "faction_monsters" => FactionType.Monsters,
+            "faction_wildlife" => FactionType.Wildlife,
+            "faction_neutral" => FactionType.Neutral,
+            "faction_player" => FactionType.Player,
+            "faction_hostile" => FactionType.Hostile,
+            "faction_friendly" => FactionType.Friendly,
+            _ => FactionType.Neutral
+        };
     }
 
     #endregion

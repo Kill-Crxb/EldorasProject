@@ -56,7 +56,7 @@ MonoBehaviour:
   itemIcon: {fileID: 8129668304995407937, guid: 9ed3c287b2f15b34da6e0ab07aa84ffb, type: 3}
   slotSize: 64
   weaponIconSize: {x: 64, y: 128}
-  debugMode: 1
+  debugMode: 0
 --- !u!1 &4056929078562831704
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,36 +1,30 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Universal Character Configuration Handler
-///
-/// INTELLIGENT BEHAVIOR:
-/// - Checks entity type on initialization
-/// - Auto-disables for Players (they load via SaveManager + GameEvents)
-/// - Stays active for NPCs (they use archetypes)
-///
-/// This enables UNIVERSAL PREFABS:
-/// - Same prefab for Players and NPCs
-/// - ConfigHandler adapts automatically
-/// - No manual component removal needed
-/// </summary>
 public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 {
-    [Header("Configuration")]
-    [SerializeField] private bool debugMode = false;
+    #region Inspector
 
-    [Header("Auto-Disable Settings")]
-    [Tooltip("If true, this component disables itself for Player entities")]
+    [Header("Configuration")]
     [SerializeField] private bool autoDisableForPlayers = true;
 
     [Header("Level Scaling")]
-    [Tooltip("How much stats increase per level (0.15 = 15% per level)")]
     [SerializeField] private float statScalingPerLevel = 0.15f;
 
+    #endregion
+
+    #region Private Fields
+
     private ControllerBrain brain;
-    private IEntityConfig currentConfig;
-    private bool isPlayerEntity = false;
+    private bool isPlayerEntity;
+    private bool nameplateSpawned;
+
+    #endregion
+
+    #region Properties
 
     public bool IsEnabled { get; set; } = true;
+
+    #endregion
 
     #region IBrainModule Implementation
 
@@ -38,30 +32,27 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
     {
         brain = controllerBrain;
 
-        if (autoDisableForPlayers && IsPlayerEntityType())
-        {
+        if (autoDisableForPlayers && IsPlayerEntity())
             isPlayerEntity = true;
-            IsEnabled = false;
 
-            if (debugMode)
-                Debug.Log($"[CharacterConfig] Player entity detected — auto-disabling on {brain.name}");
-
-            return;
-        }
-
-        if (debugMode)
-            Debug.Log($"[CharacterConfig] Initialized on {brain.name} (Type: {GetEntityTypeName()})");
+        GameEvents.OnCharacterConfigDataReady += ConfigureEntity;
     }
 
-    public void UpdateModule() { }
+    public void UpdateModule()
+    {
+    }
+
+    public void LateInitialize()
+    {
+    }
 
     #endregion
 
-    #region Smart Entity Detection
+    #region Entity Detection
 
-    private bool IsPlayerEntityType()
+    private bool IsPlayerEntity()
     {
-        if (brain.Identity?.Identity != null && brain.Identity.Identity.Type == EntityType.Player)
+        if (brain.Identity != null && brain.Identity.Type == EntityType.Player)
             return true;
 
         if (gameObject.CompareTag("Player"))
@@ -73,176 +64,153 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
         return false;
     }
 
-    private string GetEntityTypeName()
-    {
-        if (brain.Identity?.Identity != null)
-            return brain.Identity.Identity.Type.ToString();
-        return "Unknown";
-    }
-
     #endregion
 
     #region Public API
 
-    /// <summary>
-    /// Configure entity from any NPC data source.
-    /// Auto-skips if this is a player entity.
-    /// </summary>
-    public void Configure(IEntityConfig config)
+    public void ConfigureEntity(CharacterConfigData data)
     {
-        if (isPlayerEntity)
+        if (data == null)
         {
-            if (debugMode)
-                Debug.LogWarning("[CharacterConfig] Skipping Configure() — Player entities load via SaveManager.");
+            Debug.LogWarning($"[CharacterConfigurationHandler] Received null config data");
             return;
         }
 
         if (!IsEnabled)
         {
-            if (debugMode)
-                Debug.LogWarning("[CharacterConfig] Configure() called but handler is disabled.");
+            Debug.LogWarning($"[CharacterConfigurationHandler] Handler is disabled");
             return;
         }
 
-        currentConfig = config;
+        bool isPlayerConfig = !brain.IsNPC;
+        bool isNpcConfig = !string.IsNullOrEmpty(data.characterId) && brain.Identity != null && data.characterId == brain.Identity.EntityId;
 
-        switch (config)
+        if (!isPlayerConfig && !isNpcConfig)
         {
-            case NPCConfig npcConfig:
-                ConfigureNPC(npcConfig);
-                break;
-
-            default:
-                Debug.LogError($"[CharacterConfig] Unknown config type: {config.GetType()}");
-                break;
+            Debug.Log($"[CharacterConfigurationHandler] Config not for this entity, skipping");
+            return;
         }
+
+        Debug.Log($"[CharacterConfigurationHandler] Configuring entity: name='{data.displayName}', faction='{data.factionId}'");
+
+        if (brain.IsNPC)
+            DisablePlayerOnlySystems();
+
+        ConfigureIdentity(data);
+        ConfigureFaction(data);
+        ConfigureStats(data);
+        ConfigureModel(data);
+
+        if (brain.IsNPC)
+            TrySpawnNameplate();
     }
 
-    /// <summary>Manual override — force enable for special cases.</summary>
     public void ForceEnable()
     {
         isPlayerEntity = false;
         IsEnabled = true;
-
-        if (debugMode)
-            Debug.Log($"[CharacterConfig] Force-enabled on {brain.name}");
     }
 
     #endregion
 
-    #region NPC Configuration
+    #region Configuration
 
-    private void ConfigureNPC(NPCConfig config)
+    private void DisablePlayerOnlySystems()
     {
-        var archetype = config.archetype;
-
-        if (archetype == null)
+        if (brain.Input != null)
         {
-            Debug.LogError("[CharacterConfig] NPCConfig has null archetype!");
-            return;
+            brain.Input.SetMode(InputMode.AI);
+            brain.Input.IsEnabled = false;
         }
 
-        if (debugMode)
-            Debug.Log($"[CharacterConfig] Configuring NPC from archetype: {archetype.archetypeName}");
-
-        if (brain.Identity?.Identity != null)
-            brain.Identity.Identity.Type = EntityType.NPC;
-
-        ConfigureIdentity(archetype, config.overrideLevel);
-        ConfigureFaction(archetype);
-        ConfigureStats(archetype, config.overrideLevel);
-
-        if (debugMode)
-            Debug.Log($"[CharacterConfig] Applied archetype '{archetype.archetypeName}' to {brain.name}");
+        // Camera disable reconnects here after the camera rebuild.
     }
 
-    private void ConfigureIdentity(NPCArchetype archetype, int levelOverride)
+    private void ConfigureIdentity(CharacterConfigData data)
     {
-        var identity = brain.Identity?.Identity;
+        var identity = brain.Identity;
         if (identity == null)
-        {
-            Debug.LogWarning("[CharacterConfig] IdentityHandler not found!");
             return;
-        }
 
-        identity.DisplayName = archetype.useGenericName ? archetype.genericName : GenerateNPCName(archetype);
-        identity.Level = levelOverride > 0 ? levelOverride : 1;
+        if (brain.IsNPC)
+            identity.Type = EntityType.NPC;
+
+        identity.DisplayName = data.displayName;
+        identity.Level = data.level;
     }
 
-    private void ConfigureFaction(NPCArchetype archetype)
+    private void ConfigureFaction(CharacterConfigData data)
     {
-        var faction = brain.Identity?.Faction;
-        if (faction == null) return;
+        var factionSystem = brain.Faction;
+        if (factionSystem == null)
+            return;
 
-        faction.SetFaction(ConvertToFactionType(archetype.faction));
+        factionSystem.CurrentFactionId = data.factionId;
     }
 
-    private void ConfigureStats(NPCArchetype archetype, int levelOverride)
+    private void ConfigureStats(CharacterConfigData data)
     {
         var statSystem = brain.Stats;
         if (statSystem == null)
         {
-            Debug.LogWarning("[CharacterConfig] StatSystem not found!");
+            Debug.LogWarning("[CharacterConfigurationHandler] StatSystem not found");
             return;
         }
 
-        int level = levelOverride > 0 ? levelOverride : 1;
-        float multiplier = 1f + (level - 1) * statScalingPerLevel;
+        int level = data.level > 0 ? data.level : 1;
 
         brain.RPG?.SetLevel(level);
 
-        string ns = statSystem.HasStat("character.mind") ? "character"
-                  : statSystem.HasStat("core.mind") ? "core"
-                  : "character";
-
-        var stats = archetype.baseStats;
-        statSystem.SetBaseValue($"{ns}.mind", stats.mind * multiplier);
-        statSystem.SetBaseValue($"{ns}.body", stats.body * multiplier);
-        statSystem.SetBaseValue($"{ns}.spirit", stats.spirit * multiplier);
-        statSystem.SetBaseValue($"{ns}.resilience", stats.resilience * multiplier);
-        statSystem.SetBaseValue($"{ns}.endurance", stats.endurance * multiplier);
-        statSystem.SetBaseValue($"{ns}.insight", stats.insight * multiplier);
-    }
-
-    #endregion
-
-    #region Helpers
-
-    private string GenerateNPCName(NPCArchetype archetype) => archetype.genericName;
-
-    private RPG.Factions.FactionType ConvertToFactionType(NPCFaction npcFaction)
-    {
-        return npcFaction switch
+        if (data.baseStatOverrides == null || data.baseStatOverrides.Length == 0)
         {
-            NPCFaction.Wildlife => RPG.Factions.FactionType.Wildlife,
-            NPCFaction.Beasts => RPG.Factions.FactionType.Monsters,
-            NPCFaction.Humans => RPG.Factions.FactionType.Humans,
-            NPCFaction.Elves => RPG.Factions.FactionType.Elves,
-            NPCFaction.Dwarves => RPG.Factions.FactionType.Dwarves,
-            NPCFaction.Undead => RPG.Factions.FactionType.Undead,
-            NPCFaction.Warlocks => RPG.Factions.FactionType.Warlocks,
-            NPCFaction.Demons => RPG.Factions.FactionType.Hostile,
-            NPCFaction.Neutral => RPG.Factions.FactionType.Neutral,
-            NPCFaction.Player => RPG.Factions.FactionType.Player,
-            _ => RPG.Factions.FactionType.Neutral
-        };
+            Debug.LogWarning("[CharacterConfigurationHandler] No stat overrides in config");
+            return;
+        }
+
+        Debug.Log($"[CharacterConfigurationHandler] Applying {data.baseStatOverrides.Length} stat overrides");
+
+        foreach (var overrideEntry in data.baseStatOverrides)
+        {
+            if (string.IsNullOrEmpty(overrideEntry.statId))
+                continue;
+
+            var stat = statSystem.GetStat(overrideEntry.statId);
+            if (stat == null)
+            {
+                Debug.LogWarning($"[CharacterConfigurationHandler] Stat '{overrideEntry.statId}' not found in engine");
+                continue;
+            }
+
+            if (!string.IsNullOrEmpty(stat.formula))
+            {
+                Debug.Log($"[CharacterConfigurationHandler] Skipping '{overrideEntry.statId}' (has formula)");
+                continue;
+            }
+
+            Debug.Log($"[CharacterConfigurationHandler] Setting {overrideEntry.statId} = {overrideEntry.baseValue}");
+            statSystem.SetBaseValue(overrideEntry.statId, overrideEntry.baseValue);
+        }
+
+        Debug.Log("[CharacterConfigurationHandler] Stat configuration complete");
     }
 
-    #endregion
-
-    #region Debug
-
-    [ContextMenu("Check Entity Type")]
-    private void DebugCheckEntityType()
+    private void ConfigureModel(CharacterConfigData data)
     {
-        if (!Application.isPlaying) { Debug.LogWarning("[CharacterConfig] Must be in Play Mode!"); return; }
-        if (brain == null) { Debug.LogError("[CharacterConfig] Brain not initialized!"); return; }
+        if (string.IsNullOrEmpty(data.modelId))
+            return;
 
-        Debug.Log($"=== CHARACTER CONFIG DEBUG ===\n" +
-                  $"GameObject: {gameObject.name}\n" +
-                  $"Is Player Entity: {isPlayerEntity}\n" +
-                  $"IsEnabled: {IsEnabled}\n" +
-                  $"Entity Type: {GetEntityTypeName()}");
+        var modelModule = brain.GetModule<ModelModule>();
+        if (modelModule != null)
+            modelModule.SwapModel(data.modelId);
+    }
+
+    private void TrySpawnNameplate()
+    {
+        if (nameplateSpawned)
+            return;
+
+        nameplateSpawned = true;
+        NameplateManager.Instance?.SpawnNameplate(brain);
     }
 
     #endregion

@@ -1,4 +1,4 @@
-﻿// Target Lock Module - Simple camera companion for targeting
+﻿// Target Lock Module - Standalone targeting; camera-agnostic
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,16 +11,15 @@ public class TargetLockModule : MonoBehaviour, IPlayerModule, IInputHandler
     [Header("Debug")]
     // [SerializeField] private bool showDebugInfo = false;
 
-    // Simple references - camera is right here!
+    // References
     private ControllerBrain brain;
-    private new SimpleThirdPersonCamera camera; // 'new' keyword to hide inherited Component.camera
     private Transform playerRoot;
 
     // Targeting state
     private Transform lockedTarget;
     private bool isLockedOn;
 
-    // Properties for camera to use
+    // Properties for other systems to read
     public bool IsLockedOn => isLockedOn;
     public Transform LockedTarget => lockedTarget;
     public Vector3 TargetPoint => lockedTarget != null ? GetTargetPoint() : Vector3.zero;
@@ -32,7 +31,6 @@ public class TargetLockModule : MonoBehaviour, IPlayerModule, IInputHandler
     public void Initialize(ControllerBrain brain)
     {
         this.brain = brain;
-        camera = GetComponent<SimpleThirdPersonCamera>(); // Same GameObject!
         playerRoot = brain.transform.parent;
 
         // Subscribe to input

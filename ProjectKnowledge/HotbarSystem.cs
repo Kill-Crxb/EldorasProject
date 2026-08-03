@@ -2,17 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Owns the three action bars and bridges slot assignments to AbilitySystem.
-/// Single source of truth for what is assigned to each hotbar slot.
-///
-/// SO resolution uses AbilitySlotDatabase (inspector-registered) — never Resources.Load.
-/// Combo chains belong to AbilityLoadoutModule (ZXCV); TriggerSlot calls UseAbility directly.
-/// </summary>
 public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 {
-    [Header("Debug")]
-    [SerializeField] private bool debugLogging = false;
+    [Header("Bar Defaults (fresh character only — saves override these)")]
+    [SerializeField] private BarSizeConfig centreBarDefault = new BarSizeConfig(4, 1);
+    [SerializeField] private BarSizeConfig bottomLeftBarDefault = new BarSizeConfig(4, 1);
+    [SerializeField] private BarSizeConfig bottomRightBarDefault = new BarSizeConfig(4, 1);
 
     private ControllerBrain brain;
     private AbilitySystem abilitySystem;
@@ -23,19 +18,16 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
     private ActionBarConfig bottomRightBar;
 
     public event Action<string, int> OnSlotChanged;
-
     public bool IsEnabled { get; set; } = true;
-
-    // ── IBrainModule ─────────────────────────────────────────────────────
 
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
         abilitySystem = brain.GetModule<AbilitySystem>();
 
-        centreBar      = new ActionBarConfig("centre",      4, 1);
-        bottomLeftBar  = new ActionBarConfig("bottomLeft",  4, 1);
-        bottomRightBar = new ActionBarConfig("bottomRight", 4, 1);
+        centreBar = new ActionBarConfig("centre", centreBarDefault.slots, centreBarDefault.rows);
+        bottomLeftBar = new ActionBarConfig("bottomLeft", bottomLeftBarDefault.slots, bottomLeftBarDefault.rows);
+        bottomRightBar = new ActionBarConfig("bottomRight", bottomRightBarDefault.slots, bottomRightBarDefault.rows);
     }
 
     public void LateInitialize()
@@ -46,60 +38,52 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 
     public void UpdateModule() { }
 
-    // ── Assignment API ────────────────────────────────────────────────────
+    public void AssignSlot(string barId, int index, string abilitySlotId)
+    {
+        var config = ResolveBar(barId);
+        if (config == null || !IsValidIndex(index, config)) return;
+
+        config.slots[index].abilitySlotId = abilitySlotId ?? "";
+        OnSlotChanged?.Invoke(barId, index);
+        GameEvents.HotbarSlotChanged(barId, index);
+    }
 
     public void AssignSlot(string barId, int index, AbilitySlotData slotData)
     {
-        var config = ResolveBar(barId);
-        if (config == null || index < 0 || index >= config.slots.Count) return;
-
-        config.slots[index].abilitySlotId = slotData != null ? slotData.name : "";
-        OnSlotChanged?.Invoke(barId, index);
-        GameEvents.HotbarSlotChanged(barId, index);
-
-        if (debugLogging)
-            Debug.Log($"[HotbarSystem] {barId}[{index}] = '{slotData?.name ?? "empty"}'");
+        AssignSlot(barId, index, slotData?.name ?? "");
     }
 
     public void AssignSlot(string barId, int index, AbilityDefinition ability)
     {
-        var config = ResolveBar(barId);
-        if (config == null || index < 0 || index >= config.slots.Count) return;
+        AssignSlot(barId, index, ability != null ? $"ability:{ability.abilityId}" : "");
+    }
 
-        config.slots[index].abilitySlotId = ability != null ? $"ability:{ability.abilityId}" : "";
+    public void AssignItemSlot(string barId, int index, string itemInstanceId)
+    {
+        var config = ResolveBar(barId);
+        if (config == null || !IsValidIndex(index, config)) return;
+
+        config.slots[index].abilitySlotId = "";
+        config.slots[index].itemInstanceId = itemInstanceId ?? "";
         OnSlotChanged?.Invoke(barId, index);
         GameEvents.HotbarSlotChanged(barId, index);
     }
 
-    /// <summary>
-    /// Stub — assigns an item to a slot. Full implementation deferred until ItemSystem.UseItem exists.
-    /// </summary>
     public void AssignItemSlot(string barId, int index, ItemInstance item)
     {
-        var config = ResolveBar(barId);
-        if (config == null || index < 0 || index >= config.slots.Count) return;
-
-        config.slots[index].abilitySlotId  = "";
-        config.slots[index].itemInstanceId = item?.instanceId ?? "";
-        OnSlotChanged?.Invoke(barId, index);
-        GameEvents.HotbarSlotChanged(barId, index);
-
-        if (debugLogging)
-            Debug.Log($"[HotbarSystem] Item stub assigned to {barId}[{index}]: {item?.instanceId ?? "null"}");
+        AssignItemSlot(barId, index, item?.instanceId ?? "");
     }
 
     public void ClearSlot(string barId, int index)
     {
         var config = ResolveBar(barId);
-        if (config == null || index < 0 || index >= config.slots.Count) return;
+        if (config == null || !IsValidIndex(index, config)) return;
 
-        config.slots[index].abilitySlotId  = "";
+        config.slots[index].abilitySlotId = "";
         config.slots[index].itemInstanceId = "";
         OnSlotChanged?.Invoke(barId, index);
         GameEvents.HotbarSlotChanged(barId, index);
     }
-
-    // ── Query API ─────────────────────────────────────────────────────────
 
     public ActionBarSlotData GetSlot(string barId, int index)
         => ResolveBar(barId)?.GetSlot(index);
@@ -107,10 +91,6 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
     public ActionBarConfig GetConfig(string barId)
         => ResolveBar(barId);
 
-    /// <summary>
-    /// Resolves the base AbilityDefinition for a slot.
-    /// Returns null if unassigned or the SO cannot be found.
-    /// </summary>
     public AbilityDefinition ResolveSlotAbility(ActionBarSlotData slot)
     {
         if (slot == null || !slot.IsAssigned) return null;
@@ -127,25 +107,14 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
             : null;
     }
 
-    /// <summary>
-    /// Finds which slot in any bar is currently assigned a given abilityId.
-    /// Returns (null, -1) if not found.
-    /// </summary>
     public (string barId, int index) FindSlotForAbility(string abilityId)
     {
         foreach (var (id, config) in AllBars())
         {
             for (int i = 0; i < config.slots.Count; i++)
             {
-                var slot = config.slots[i];
-                if (!slot.IsAssigned) continue;
-
-                if (slot.abilitySlotId == $"ability:{abilityId}") return (id, i);
-
-                var slotData = AbilitySlotDatabase.Get(slot.abilitySlotId);
-                if (slotData?.abilityChain == null) continue;
-                foreach (var ability in slotData.abilityChain)
-                    if (ability != null && ability.abilityId == abilityId) return (id, i);
+                if (DoesSlotContainAbility(config.slots[i], abilityId))
+                    return (id, i);
             }
         }
         return (null, -1);
@@ -156,13 +125,6 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
         ResolveBar(barId)?.Resize(slotCount, rowCount);
     }
 
-    // ── Execution ─────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Called by InputSystem on Hotbar1–9 press.
-    /// Priority: active override → base ability. Base is fully suppressed while override exists.
-    /// Charge input is handled by InputSystem before this is called.
-    /// </summary>
     public void TriggerSlot(string barId, int index)
     {
         if (abilitySystem == null) return;
@@ -170,43 +132,33 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
         var slot = GetSlot(barId, index);
         if (slot == null || !slot.IsAssigned) return;
 
-        // Item slot — stub until ItemSystem.UseItem is implemented
         if (slot.HasItem)
         {
             Debug.LogWarning($"[HotbarSystem] Item use not yet implemented: {slot.itemInstanceId}");
             return;
         }
 
-        // Override path — base ability is suppressed while this is active
         if (transformSystem != null && transformSystem.HasOverride(barId, index))
         {
-            var overrideAbility = transformSystem.GetEffectiveAbility(barId, index);
-            if (overrideAbility != null && abilitySystem.CanUseAbility(overrideAbility.abilityId))
-            {
-                abilitySystem.UseAbility(overrideAbility.abilityId);
-                transformSystem.ClearOverride(barId, index);
-            }
-            return; // Base ability NOT executed regardless of success
+            TriggerOverride(barId, index);
+            return;
         }
 
-        // Base path
         var ability = ResolveSlotAbility(slot);
-        if (ability == null) return;
-        abilitySystem.UseAbility(ability.abilityId);
+        if (ability != null)
+            abilitySystem.UseAbility(ability.abilityId);
     }
 
-    // ── ISaveable ─────────────────────────────────────────────────────────
-
-    public string GetSaveId()      => "hotbar";
-    public int    GetSaveVersion() => 1;
+    public string GetSaveId() => "hotbar";
+    public int GetSaveVersion() => 1;
 
     public string GetSaveData()
     {
         var data = new HotbarSaveData
         {
-            version        = GetSaveVersion(),
-            centreBar      = centreBar,
-            bottomLeftBar  = bottomLeftBar,
+            version = GetSaveVersion(),
+            centreBar = centreBar,
+            bottomLeftBar = bottomLeftBar,
             bottomRightBar = bottomRightBar,
         };
         return JsonUtility.ToJson(data);
@@ -219,34 +171,56 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
         var data = JsonUtility.FromJson<HotbarSaveData>(json);
         if (data == null) return;
 
-        if (data.centreBar      != null) centreBar      = data.centreBar;
-        if (data.bottomLeftBar  != null) bottomLeftBar  = data.bottomLeftBar;
+        if (data.centreBar != null) centreBar = data.centreBar;
+        if (data.bottomLeftBar != null) bottomLeftBar = data.bottomLeftBar;
         if (data.bottomRightBar != null) bottomRightBar = data.bottomRightBar;
 
         NotifyAllBarsChanged();
-
-        if (debugLogging) Debug.Log("[HotbarSystem] Loaded save data.");
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
+    private void TriggerOverride(string barId, int index)
+    {
+        var overrideAbility = transformSystem.GetEffectiveAbility(barId, index);
+        if (overrideAbility != null && abilitySystem.CanUseAbility(overrideAbility.abilityId))
+        {
+            abilitySystem.UseAbility(overrideAbility.abilityId);
+            transformSystem.ClearOverride(barId, index);
+        }
+    }
+
+    private bool DoesSlotContainAbility(ActionBarSlotData slot, string abilityId)
+    {
+        if (!slot.IsAssigned) return false;
+
+        if (slot.abilitySlotId == $"ability:{abilityId}") return true;
+
+        var slotData = AbilitySlotDatabase.Get(slot.abilitySlotId);
+        if (slotData?.abilityChain == null) return false;
+
+        foreach (var ability in slotData.abilityChain)
+            if (ability != null && ability.abilityId == abilityId) return true;
+
+        return false;
+    }
+
+    private bool IsValidIndex(int index, ActionBarConfig config)
+        => index >= 0 && index < config.slots.Count;
 
     private ActionBarConfig ResolveBar(string barId)
     {
         switch (barId)
         {
-            case "centre":      return centreBar;
-            case "bottomLeft":  return bottomLeftBar;
+            case "centre": return centreBar;
+            case "bottomLeft": return bottomLeftBar;
             case "bottomRight": return bottomRightBar;
-            default:
-                Debug.LogWarning($"[HotbarSystem] Unknown barId '{barId}'");
-                return null;
+            default: return null;
         }
     }
 
     private IEnumerable<(string id, ActionBarConfig config)> AllBars()
     {
-        yield return ("centre",      centreBar);
-        yield return ("bottomLeft",  bottomLeftBar);
+        yield return ("centre", centreBar);
+        yield return ("bottomLeft", bottomLeftBar);
         yield return ("bottomRight", bottomRightBar);
     }
 
@@ -256,4 +230,14 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
             for (int i = 0; i < config.slots.Count; i++)
                 OnSlotChanged?.Invoke(id, i);
     }
+}
+
+[System.Serializable]
+public class BarSizeConfig
+{
+    [Range(1, 12)] public int slots = 4;
+    [Range(1, 3)] public int rows = 1;
+
+    public BarSizeConfig() { }
+    public BarSizeConfig(int slots, int rows) { this.slots = slots; this.rows = rows; }
 }

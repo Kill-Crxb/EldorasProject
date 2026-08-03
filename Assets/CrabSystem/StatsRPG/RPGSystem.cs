@@ -104,12 +104,12 @@ public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable
         var identitySystem = brain.Identity;
         if (identitySystem != null)
         {
-            identityHandler = identitySystem.Identity as IIdentityLevel;
+            identityHandler = identitySystem as IIdentityLevel;
             if (identityHandler != null)
             {
                 OnLevelChanged = null;
                 OnLevelChanged += SyncIdentityLevel;
-                identityHandler.Level = currentLevel;  // ✅ FIXED: Direct property assignment
+                identityHandler.Level = currentLevel;
             }
         }
 

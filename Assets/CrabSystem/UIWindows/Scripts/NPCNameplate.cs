@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using RPG.Factions;
@@ -51,16 +51,14 @@ namespace RPG.NPC.UI
         void Awake()
         {
             canvas = GetComponent<Canvas>();
-            mainCamera = Camera.main;
 
             if (canvas != null)
-            {
                 canvas.renderMode = RenderMode.WorldSpace;
-                canvas.worldCamera = mainCamera;
-            }
 
             if (!showHealthBar && healthBarPanel != null)
                 healthBarPanel.SetActive(false);
+
+            TryResolveCamera();
         }
 
         void OnEnable() => NameplateManager.Instance?.Register(this);
@@ -69,11 +67,22 @@ namespace RPG.NPC.UI
         void Start()
         {
             if (nameText == null) Debug.LogError("[NPCNameplate] Name Text not assigned!", this);
-            if (mainCamera == null) Debug.LogError("[NPCNameplate] Main Camera not found!", this);
+        }
+
+        private void TryResolveCamera()
+        {
+            if (mainCamera != null) return;
+
+            mainCamera = Camera.main;
+            if (mainCamera != null && canvas != null)
+                canvas.worldCamera = mainCamera;
         }
 
         void LateUpdate()
         {
+            if (mainCamera == null)
+                TryResolveCamera();
+
             if (!hasRefreshedAfterStart && Time.frameCount > 5)
             {
                 FactionType playerFaction = GetPlayerFaction();
@@ -112,9 +121,9 @@ namespace RPG.NPC.UI
             var identity = brain.Identity;
             if (identity != null)
             {
-                npcName = identity.GetEntityName();
-                npcLevel = identity.GetLevel();
-                npcFaction = identity.GetFaction();
+                npcName = identity.DisplayName;
+                npcLevel = identity.Level;
+                npcFaction = identity.GetFactionType();
             }
             else
             {
@@ -190,14 +199,14 @@ namespace RPG.NPC.UI
         {
             if (cachedPlayerBrain == null) return FactionType.Player;
             var identity = cachedPlayerBrain.Identity;
-            return identity != null ? identity.GetFaction() : FactionType.Player;
+            return identity != null ? identity.GetFactionType() : FactionType.Player;
         }
 
         private int GetPlayerLevel()
         {
             if (cachedPlayerBrain == null) return 10;
             var identity = cachedPlayerBrain.Identity;
-            return identity != null ? identity.GetLevel() : 10;
+            return identity != null ? identity.Level : 10;
         }
 
         private Color GetLevelColor()

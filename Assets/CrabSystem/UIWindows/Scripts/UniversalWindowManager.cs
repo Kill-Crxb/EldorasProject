@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
@@ -180,7 +180,7 @@ public class UniversalWindowManager : MonoBehaviour
             ? CreateWorldSpaceWindow(windowId, containerBrain.transform)
             : CreateWindow(windowId);
 
-        string containerName = containerBrain.Identity?.GetEntityName() ?? containerBrain.name;
+        string containerName = containerBrain.Identity?.DisplayName ?? containerBrain.name;
         window.OpenContainer(containerBrain, containerName);
 
         if (playerBrain != null) OpenPlayerInventory(playerBrain);

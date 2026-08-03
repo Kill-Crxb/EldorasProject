@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
@@ -170,7 +170,7 @@ public class ContainerWindow : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         // Read from IdentitySystem (single source of truth for entity name)
         var identitySystem = containerBrain.GetModule<IdentitySystem>();
         if (identitySystem != null)
-            return identitySystem.GetEntityName();
+            return identitySystem.DisplayName;
 
         // Fallback to GameObject name
         return containerBrain.name;
@@ -400,7 +400,7 @@ public class ContainerWindow : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         var identitySystem = containerBrain.GetModule<IdentitySystem>();
         if (identitySystem != null)
         {
-            string containerName = identitySystem.GetEntityName().Replace(" ", "_");
+            string containerName = identitySystem.DisplayName.Replace(" ", "_");
             return $"ContainerWindow_{containerName}_Position";
         }
 

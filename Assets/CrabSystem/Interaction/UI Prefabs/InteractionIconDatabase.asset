@@ -15,3 +15,5 @@ MonoBehaviour:
   icons:
   - action: 1
     icon: {fileID: 21300000, guid: efd87f80f2b725d4695cc3831a0eae6f, type: 3}
+  - action: 2
+    icon: {fileID: 21300000, guid: af5c01cfa596cef4cac93b8dd357e268, type: 3}

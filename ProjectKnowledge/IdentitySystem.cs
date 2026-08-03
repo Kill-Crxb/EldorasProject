@@ -1,114 +1,102 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+using UnityEngine;
 using RPG.Factions;
 
-public class IdentitySystem : MonoBehaviour, IBrainModule
+public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
 {
     [Header("Module Settings")]
     [SerializeField] private bool isEnabled = true;
 
-    [Header("Handlers")]
-    [SerializeField] private UniversalIdentityHandler identityHandler;
-    [SerializeField] private UniversalFactionHandler factionHandler;
-    [SerializeField] private MonoBehaviour modelHandler;
+    [Header("Identity Data")]
+    [SerializeField] private string displayName = "Entity";
+    [SerializeField] private EntityType type = EntityType.Entity;
+    [SerializeField] private int level = 1;
 
     private ControllerBrain brain;
-    private List<IIdentityHandler> handlers = new List<IIdentityHandler>();
 
     public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
     public ControllerBrain Brain => brain;
 
-    public UniversalIdentityHandler Identity => identityHandler;
-    public UniversalFactionHandler Faction => factionHandler;
-    public MonoBehaviour Model => modelHandler;
+    public string DisplayName { get => displayName; set => displayName = value; }
+    public EntityType Type { get => type; set => type = value; }
+    public int Level { get => level; set => level = value; }
 
-    public bool IsPlayer => GetEntityType() == EntityType.Player;
-    public bool IsNPC => GetEntityType() == EntityType.NPC || GetEntityType() == EntityType.Enemy || GetEntityType() == EntityType.Neutral;
-    public bool IsObject => GetEntityType() == EntityType.Prop;
+    // Entity unique identifier
+    private string entityId = System.Guid.NewGuid().ToString();
+    public string EntityId { get => entityId; set => entityId = value; }
+
+    public bool IsPlayer => type == EntityType.Player;
+    public bool IsNPC => type == EntityType.NPC || type == EntityType.Enemy || type == EntityType.Neutral;
+
+    public EntityType GetEntityType() => type;
+
+    // Get faction type via brain's FactionSystem
+    public FactionType GetFactionType()
+    {
+        // FactionSystem uses string IDs, not FactionType enum
+        // For now return Neutral; can be extended to map faction IDs to types
+        return FactionType.Neutral;
+    }
 
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
-        DiscoverHandlers();
-
-        foreach (var handler in handlers)
-        {
-            if (handler != null && handler.IsEnabled)
-                handler.Initialize(this);
-        }
-
-        if (IsNPC)
-            NameplateManager.Instance?.SpawnNameplate(brain);
     }
 
     public void UpdateModule()
     {
-        if (!isEnabled) return;
-        foreach (var handler in handlers)
+    }
+
+    public void LateInitialize()
+    {
+    }
+
+    #region ISaveable
+
+    public string GetSaveId() => "identity";
+
+    public string GetSaveData()
+    {
+        var data = new IdentitySaveData
         {
-            if (handler != null && handler.IsEnabled)
-                handler.UpdateHandler();
-        }
+            entityId = entityId,
+            displayName = displayName,
+            type = type.ToString(),
+            level = level
+        };
+        return JsonUtility.ToJson(data);
     }
 
-    private void DiscoverHandlers()
+    public void LoadSaveData(string json)
     {
-        handlers.Clear();
+        if (string.IsNullOrEmpty(json))
+            return;
 
-        if (identityHandler != null) handlers.Add(identityHandler);
-        if (factionHandler != null) handlers.Add(factionHandler);
-
-        if (modelHandler is IBrainModule modelBrain)
-            modelBrain.Initialize(brain);
-
-        foreach (var handler in GetComponentsInChildren<IIdentityHandler>())
+        try
         {
-            if (!handlers.Contains(handler))
-                handlers.Add(handler);
+            var data = JsonUtility.FromJson<IdentitySaveData>(json);
+            if (data != null)
+            {
+                if (!string.IsNullOrEmpty(data.entityId))
+                    entityId = data.entityId;
+                displayName = data.displayName;
+                level = data.level;
+                if (System.Enum.TryParse<EntityType>(data.type, out var parsedType))
+                    type = parsedType;
+            }
         }
+        catch { }
     }
 
-    // ── Identity Queries ──────────────────────────────────────────────────
+    public int GetSaveVersion() => 1;
 
-    public string GetEntityName() => identityHandler?.DisplayName ?? "Unknown";
-    public new string GetEntityId() => identityHandler?.EntityId ?? "";
-    public int GetLevel() => identityHandler?.Level ?? 0;
-    public EntityType GetEntityType() => identityHandler?.Type ?? EntityType.Entity;
-    public float GetExistenceTime() => identityHandler?.ExistenceTime ?? 0f;
+    #endregion
 
-    // ── Faction Queries ───────────────────────────────────────────────────
-
-    public FactionType GetFaction() => factionHandler != null ? factionHandler.GetFaction() : FactionType.None;
-    public bool IsHostileTo(FactionType other) => factionHandler?.IsHostileTo(other) ?? false;
-    public bool IsFriendlyWith(FactionType other) => factionHandler?.IsFriendlyWith(other) ?? false;
-    public FactionRelationship GetRelationshipWith(FactionType other) =>
-        factionHandler?.GetRelationshipWith(other) ?? FactionRelationship.Neutral;
-
-    // ── Model Queries ─────────────────────────────────────────────────────
-
-    public GameObject GetCurrentModel()
+    [System.Serializable]
+    private class IdentitySaveData
     {
-        if (modelHandler is CrabThirdPerson.Character.ModelModule mm) return mm.CurrentModel;
-        return null;
-    }
-
-    public string GetModelId()
-    {
-        if (modelHandler is CrabThirdPerson.Character.ModelModule mm) return mm.CurrentModelId ?? "";
-        return "";
-    }
-
-    public bool SwapModel(string modelId)
-    {
-        if (modelHandler is CrabThirdPerson.Character.ModelModule mm) return mm.SwapModel(modelId);
-        return false;
-    }
-
-    // ── Debug ─────────────────────────────────────────────────────────────
-
-    [ContextMenu("Debug: Print Identity Info")]
-    private void DebugPrintInfo()
-    {
-        Debug.Log($"[IdentitySystem] Name={GetEntityName()} | ID={GetEntityId()} | Type={GetEntityType()} | Level={GetLevel()} | Faction={GetFaction()}");
+        public string entityId;
+        public string displayName;
+        public string type;
+        public int level;
     }
 }

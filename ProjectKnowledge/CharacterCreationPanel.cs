@@ -305,22 +305,11 @@ public class CharacterCreationPanel : MonoBehaviour
         {
             characterName = characterName,
             accountName = accountManager.ActiveAccountName,
-            modelId = defaultModelId,
-            originId = string.Empty,
-            mind = stats[MIND],
-            body = stats[BODY],
-            spirit = stats[SPIRIT],
-            resilience = stats[RESILIENCE],
-            endurance = stats[ENDURANCE],
-            insight = stats[INSIGHT],
-            unspentPoints = remainingPoints
+            modelId = defaultModelId
         };
 
         if (debugLogging)
-            Debug.Log($"[CharacterCreationPanel] Finalising: {data.characterName} | " +
-                      $"Stats: M{data.mind} B{data.body} Sp{data.spirit} " +
-                      $"R{data.resilience} E{data.endurance} I{data.insight} | " +
-                      $"Unspent: {data.unspentPoints}");
+            Debug.Log($"[CharacterCreationPanel] Finalising: {data.characterName}");
 
         string characterId = await saveManager.CreateCharacter(data);
 

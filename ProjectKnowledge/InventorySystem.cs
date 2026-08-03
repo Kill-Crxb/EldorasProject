@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -423,7 +423,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         var identitySystem = brain?.GetModule<IdentitySystem>();
         if (identitySystem != null)
         {
-            string entityName = identitySystem.GetEntityName().Replace(" ", "_");
+            string entityName = identitySystem.DisplayName.Replace(" ", "_");
             return System.IO.Path.Combine(Application.persistentDataPath, "Saves", $"{entityName}_inventory.json");
         }
 

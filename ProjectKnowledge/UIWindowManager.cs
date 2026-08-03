@@ -12,9 +12,8 @@ public class UIWindowManager : MonoBehaviour
     [SerializeField] private GameObject statsWindowPrefab;
     [SerializeField] private GameObject equipmentWindowPrefab;
 
-    [Header("Scene-Resident Windows")]
-    [Tooltip("The Spellbook window already lives in the scene — drag it here")]
-    [SerializeField] private SpellbookWindow spellbookWindow;
+    [Header("Window Prefabs (continued)")]
+    [SerializeField] private GameObject spellbookWindowPrefab;
 
     [Header("Debug")]
     [SerializeField] private bool debugMode = false;
@@ -106,26 +105,38 @@ public class UIWindowManager : MonoBehaviour
 
     private void ToggleSpellbookWindow()
     {
-        if (spellbookWindow == null)
+        if (activeWindows.ContainsKey("Spellbook"))
         {
-            Debug.LogWarning("[UIWindowManager] SpellbookWindow not assigned in Inspector.");
+            CloseWindow("Spellbook");
             return;
         }
 
-        // Initialise once — Initialize guards against double-calls
-        spellbookWindow.Initialize("Spellbook", PlayerBrain, this);
+        if (spellbookWindowPrefab == null)
+        {
+            Debug.LogWarning("[UIWindowManager] Spellbook window prefab not assigned in Inspector.");
+            return;
+        }
 
-        if (spellbookWindow.IsOpen)
+        var canvas = UICanvas;
+        if (canvas == null) return;
+
+        var windowObj = Instantiate(spellbookWindowPrefab, canvas.transform);
+        var window = windowObj.GetComponent<SpellbookWindow>();
+
+        if (window == null)
         {
-            spellbookWindow.OnClose();
-            spellbookWindow.gameObject.SetActive(false);
+            Debug.LogError("[UIWindowManager] Spellbook prefab missing SpellbookWindow component.");
+            Destroy(windowObj);
+            return;
         }
-        else
-        {
-            spellbookWindow.gameObject.SetActive(true);
-            BringWindowToFront(spellbookWindow);
-            spellbookWindow.Open();
-        }
+
+        window.Initialize("Spellbook", PlayerBrain, this);
+        window.Open();
+        BringWindowToFront(window);
+        activeWindows["Spellbook"] = window;
+
+        if (debugMode)
+            Debug.Log("[UIWindowManager] Opened window: Spellbook");
     }
 
     private void ToggleWindow(string windowId, GameObject prefab)

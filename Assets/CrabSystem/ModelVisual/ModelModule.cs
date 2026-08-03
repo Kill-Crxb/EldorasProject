@@ -1,513 +1,272 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using RPG.Factions;
 
-namespace CrabThirdPerson.Character
+/// <summary>
+/// ModelModule — reads sockets from ModelSocketProvider by slot ID.
+/// 
+/// When an item is equipped:
+/// 1. EquipmentSystem fires GameEvents.OnItemEquipped(slot, item)
+/// 2. ModelModule looks up the socket using slot.slotId (via ModelSocketProvider)
+/// 3. If found, instantiates equippedPrefab under that socket
+/// 
+/// ModelSocketProvider is the bridge — it holds the slot-to-socket mappings.
+/// No socketName string matching needed; everything keyed by slot ID.
+/// </summary>
+public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
 {
-    /// <summary>
-    /// ModelModule - manages the entity's visible model, sockets, and equipped visual items.
-    ///
-    /// Equipment Visual Spawning:
-    /// Subscribes to GameEvents.OnItemEquipped. When an item is equipped, reads
-    /// slot.socketName and item.Definition.equippedPrefab, then calls EquipVisualItem
-    /// to instantiate the prefab on the correct socket. On unequip (null item) calls
-    /// ClearSocket. No direct reference to EquipmentSystem required.
-    ///
-    /// Prefab Transform:
-    /// EquipVisualItem preserves the prefab's baked local position, rotation, and scale
-    /// so weapon socket alignment authored on the prefab root is respected.
-    /// </summary>
-    public class ModelModule : MonoBehaviour, IPlayerModule, ISaveable
+    #region Inspector
+
+    [Header("Module Settings")]
+    [SerializeField] private bool isEnabled = true;
+
+    [Header("Model")]
+    [SerializeField] private GameObject currentModel;
+    [SerializeField] private string currentModelId;
+    [SerializeField] private Animator modelAnimator;
+
+    [Header("Database")]
+    [SerializeField] private ModelDatabase modelDatabase;
+
+    #endregion
+
+    #region Private Fields
+
+    private ControllerBrain brain;
+    private ModelSocketProvider socketProvider;
+    private Dictionary<string, Transform> socketCache = new Dictionary<string, Transform>();
+
+    #endregion
+
+    #region Events
+
+    public event Action<string> OnModelChanged;
+
+    #endregion
+
+    #region Properties
+
+    public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
+    public GameObject CurrentModel => currentModel;
+    public string CurrentModelId => currentModelId;
+    public Animator ModelAnimator => modelAnimator;
+
+    #endregion
+
+    #region IBrainModule Implementation
+
+    public void Initialize(ControllerBrain controllerBrain)
     {
-        [Header("Module Settings")]
-        [SerializeField] private bool isEnabled = true;
-        [SerializeField] private bool showDebugInfo = false;
+        brain = controllerBrain;
 
-        [Header("Current Model")]
-        [SerializeField] private GameObject currentModel;
-        [SerializeField] private string currentModelId;
-        [SerializeField] private Animator modelAnimator;
+        if (!isEnabled)
+            return;
 
-        [Header("Model Database")]
-        [SerializeField] private ModelDatabase modelDatabase;
+        if (currentModel == null)
+            DetectExistingModel();
 
-        [Header("Network Settings")]
-        [SerializeField] private bool syncModelChanges = true;
-
-        private Dictionary<string, Transform> socketCache = new Dictionary<string, Transform>();
-        private ControllerBrain brain;
-        private bool isFullyInitialized = false;
-
-        public event Action<ModelDatabase.ModelVariant> OnModelChanged;
-        public event Action<string> OnModelChangeRequested;
-
-        public bool IsEnabled
-        {
-            get => isEnabled;
-            set => isEnabled = value;
-        }
-        public GameObject CurrentModel => currentModel;
-        public string CurrentModelId => currentModelId;
-        public Animator ModelAnimator => modelAnimator;
-        public bool IsFullyInitialized => isFullyInitialized;
-
-        #region IPlayerModule Implementation
-
-        public void Initialize(ControllerBrain brain)
-        {
-            this.brain = brain;
-
-            if (!isEnabled)
-                return;
-
-            if (currentModel == null)
-                DetectExistingModel();
-
-            CacheStandardSockets();
-
-            if (currentModel != null && modelAnimator == null)
-                modelAnimator = currentModel.GetComponentInChildren<Animator>();
-
-            GameEvents.OnItemEquipped += HandleItemEquipped;
-
-            isFullyInitialized = true;
-        }
-
-        public void UpdateModule()
-        {
-            if (!isEnabled || !isFullyInitialized) return;
-
-#if UNITY_EDITOR
-            if (showDebugInfo)
-                ValidateModelState();
-#endif
-        }
-
-        #endregion
-
-        #region Unity Callbacks
-
-        private void OnDestroy()
-        {
-            GameEvents.OnItemEquipped -= HandleItemEquipped;
-        }
-
-        private void OnValidate()
-        {
-            if (currentModel != null && modelAnimator == null)
-                modelAnimator = currentModel.GetComponentInChildren<Animator>();
-        }
-
-        #endregion
-
-        #region Equipment Visual Handling
-
-        /// <summary>
-        /// Responds to GameEvents.OnItemEquipped.
-        /// Spawns equippedPrefab on the slot's socket, or clears the socket on unequip.
-        /// Slots with no socketName are silently skipped (rings, amulets, etc.).
-        /// </summary>
-        private void HandleItemEquipped(EquipmentSlotDefinition slot, ItemInstance item)
-        {
-            if (!isFullyInitialized) return;
-            if (slot == null) return;
-            if (string.IsNullOrEmpty(slot.socketName)) return;
-
-            if (item == null)
-            {
-                ClearSocket(slot.socketName);
-
-                if (showDebugInfo)
-                    Debug.Log($"[ModelModule] Cleared socket '{slot.socketName}' (unequip)");
-
-                return;
-            }
-
-            var prefab = item.Definition?.equippedPrefab;
-            if (prefab == null)
-            {
-                if (showDebugInfo)
-                    Debug.Log($"[ModelModule] '{item.Definition?.displayName}' has no equippedPrefab — skipping visual spawn");
-                return;
-            }
-
-            bool spawned = EquipVisualItem(slot.socketName, prefab);
-
-            if (showDebugInfo)
-                Debug.Log($"[ModelModule] EquipVisualItem '{slot.socketName}' → '{prefab.name}': {(spawned ? "OK" : "socket not found")}");
-        }
-
-        #endregion
-
-        #region Model Management
-
-        public bool SwapModel(string newModelId, bool fromNetwork = false)
-        {
-            if (!isEnabled || modelDatabase == null)
-            {
-                Debug.LogWarning($"[ModelModule] Cannot swap model — module disabled or no database assigned");
-                return false;
-            }
-
-            var newVariant = modelDatabase.GetModelById(newModelId);
-            if (newVariant == null)
-            {
-                Debug.LogWarning($"[ModelModule] Model with ID '{newModelId}' not found in database");
-                return false;
-            }
-
-            var currentEquipment = ExtractCurrentEquipment();
-
-            if (currentModel != null)
-            {
-                if (Application.isPlaying)
-                    Destroy(currentModel);
-                else
-                    DestroyImmediate(currentModel);
-            }
-
-            currentModel = Instantiate(newVariant.modelPrefab, transform);
-            currentModel.name = newVariant.modelPrefab.name + " (Runtime)";
-            currentModelId = newModelId;
-
-            CacheStandardSockets();
-
+        if (currentModel != null && modelAnimator == null)
             modelAnimator = currentModel.GetComponentInChildren<Animator>();
-            brain.RefreshAnimatorReference();
 
-            ReapplyEquipment(currentEquipment);
-
-            OnModelChanged?.Invoke(newVariant);
-
-            if (!fromNetwork && syncModelChanges)
-                OnModelChangeRequested?.Invoke(newModelId);
-
-            return true;
-        }
-
-        public bool SetRandomModelForFaction(FactionType faction, RaceType race = RaceType.Any)
-        {
-            if (modelDatabase == null) return false;
-
-            var randomModel = modelDatabase.GetRandomModel(faction, race);
-            if (randomModel != null)
-                return SwapModel(randomModel.modelId);
-
-            Debug.LogWarning($"[ModelModule] No models found for faction: {faction}, race: {race}");
-            return false;
-        }
-
-        private void DetectExistingModel()
-        {
-            var existingAnimator = GetComponentInChildren<Animator>();
-            if (existingAnimator != null)
-            {
-                currentModel = existingAnimator.gameObject;
-                modelAnimator = existingAnimator;
-                currentModelId = "existing_model";
-            }
-        }
-
-        #endregion
-
-        #region Socket Management
-
-        public Transform GetSocket(string socketName)
-        {
-            if (socketCache.TryGetValue(socketName.ToLower(), out Transform socket))
-                return socket;
-
-            if (showDebugInfo)
-                Debug.LogWarning($"[ModelModule] Socket '{socketName}' not found in cache");
-            return null;
-        }
-
-        public Transform GetWeaponSocket() => GetSocket("weapon");
-
-        public string[] GetAvailableSocketNames()
-        {
-            var names = new string[socketCache.Count];
-            socketCache.Keys.CopyTo(names, 0);
-            return names;
-        }
-
-        private void CacheStandardSockets()
-        {
-            socketCache.Clear();
-
-            if (currentModel == null)
-            {
-                Debug.LogWarning("[ModelModule] CacheStandardSockets called with no model");
-                return;
-            }
-
-            var provider = currentModel.GetComponent<ModelSocketProvider>();
-            if (provider != null)
-            {
-                foreach (var kvp in provider.GetAllSockets())
-                    socketCache[kvp.Key] = kvp.Value;
-
-                if (showDebugInfo)
-                    Debug.Log($"[ModelModule] Cached {socketCache.Count} sockets from ModelSocketProvider");
-            }
-            else
-            {
-                Debug.LogWarning($"[ModelModule] No ModelSocketProvider found on '{currentModel.name}'. Add ModelSocketProvider to the model root prefab and assign socket references.");
-            }
-        }
-
-        private void RegisterSocket(string socketName, Transform socket)
-        {
-            if (socket == null) return;
-            socketCache[socketName.ToLower()] = socket;
-        }
-
-        public void RegisterSocket(string socketName, Transform socket, bool overwrite = false)
-        {
-            if (socket == null || string.IsNullOrEmpty(socketName)) return;
-            if (!overwrite && socketCache.ContainsKey(socketName.ToLower())) return;
-            socketCache[socketName.ToLower()] = socket;
-        }
-
-        #endregion
-
-        #region Equipment Management
-
-        /// <summary>
-        /// Instantiates itemPrefab parented to the named socket.
-        /// Preserves the prefab's baked local transform so socket alignment
-        /// authored on the prefab root is respected.
-        /// </summary>
-        public bool EquipVisualItem(string socketName, GameObject itemPrefab)
-        {
-            var socket = GetSocket(socketName);
-            if (socket == null || itemPrefab == null)
-                return false;
-
-            ClearSocket(socketName);
-
-            var equipped = Instantiate(itemPrefab, socket);
-            equipped.transform.localPosition = itemPrefab.transform.localPosition;
-            equipped.transform.localRotation = itemPrefab.transform.localRotation;
-            equipped.transform.localScale = itemPrefab.transform.localScale;
-
-            return true;
-        }
-
-        public void ClearSocket(string socketName)
-        {
-            var socket = GetSocket(socketName);
-            if (socket == null) return;
-
-            for (int i = socket.childCount - 1; i >= 0; i--)
-            {
-                var child = socket.GetChild(i);
-                if (Application.isPlaying)
-                    Destroy(child.gameObject);
-                else
-                    DestroyImmediate(child.gameObject);
-            }
-        }
-
-        private Dictionary<string, GameObject[]> ExtractCurrentEquipment()
-        {
-            var equipment = new Dictionary<string, GameObject[]>();
-
-            foreach (var kvp in socketCache)
-            {
-                var socket = kvp.Value;
-                if (socket == null) continue;
-
-                var items = new GameObject[socket.childCount];
-                for (int i = 0; i < socket.childCount; i++)
-                    items[i] = socket.GetChild(i).gameObject;
-
-                if (items.Length > 0)
-                    equipment[kvp.Key] = items;
-            }
-
-            return equipment;
-        }
-
-        private void ReapplyEquipment(Dictionary<string, GameObject[]> equipment)
-        {
-            foreach (var kvp in equipment)
-            {
-                var socket = GetSocket(kvp.Key);
-                if (socket == null) continue;
-
-                foreach (var item in kvp.Value)
-                {
-                    if (item == null) continue;
-                    item.transform.SetParent(socket);
-                    item.transform.localPosition = Vector3.zero;
-                    item.transform.localRotation = Quaternion.identity;
-                    item.transform.localScale = Vector3.one;
-                }
-            }
-        }
-
-        #endregion
-
-        #region ISaveable
-
-        public string GetSaveId() => "model";
-        public int GetSaveVersion() => 1;
-
-        public string GetSaveData()
-        {
-            return JsonUtility.ToJson(new ModelSaveData { modelId = currentModelId });
-        }
-
-        public void LoadSaveData(string json)
-        {
-            if (string.IsNullOrEmpty(json)) return;
-
-            var data = JsonUtility.FromJson<ModelSaveData>(json);
-            if (data == null || string.IsNullOrEmpty(data.modelId)) return;
-
-            SwapModel(data.modelId);
-        }
-
-        [System.Serializable]
-        private class ModelSaveData
-        {
-            public string modelId;
-        }
-
-        #endregion
-
-        #region Multiplayer Support
-
-        public PlayerSelectionData GetCurrentModelData()
-        {
-            return new PlayerSelectionData
-            {
-                selectedModelId = currentModelId,
-                customColors = GetCurrentColors(),
-                equipmentChoices = GetCurrentEquipment()
-            };
-        }
-
-        public void ApplyModelData(PlayerSelectionData data)
-        {
-            if (!string.IsNullOrEmpty(data.selectedModelId))
-                SwapModel(data.selectedModelId, fromNetwork: true);
-
-            if (data.customColors != null)
-                ApplyColorCustomization(data.customColors);
-        }
-
-        private void ApplyColorCustomization(Color[] colors)
-        {
-            // TODO: Implement color customization system
-        }
-
-        private Color[] GetCurrentColors()
-        {
-            return new Color[0];
-        }
-
-        private Dictionary<string, string> GetCurrentEquipment()
-        {
-            return new Dictionary<string, string>();
-        }
-
-        #endregion
-
-        #region Debug and Validation
-
-#if UNITY_EDITOR
-        private void ValidateModelState()
-        {
-            if (currentModel == null)
-            {
-                Debug.LogWarning("[ModelModule] No current model assigned");
-                return;
-            }
-
-            if (modelAnimator == null)
-                Debug.LogWarning("[ModelModule] No animator found on current model");
-
-            if (socketCache.Count == 0)
-                Debug.LogWarning("[ModelModule] No sockets cached — other modules may not function correctly");
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            if (!showDebugInfo || socketCache == null) return;
-
-            Gizmos.color = Color.yellow;
-            foreach (var kvp in socketCache)
-            {
-                if (kvp.Value != null)
-                {
-                    Gizmos.DrawWireSphere(kvp.Value.position, 0.05f);
-                    UnityEditor.Handles.Label(kvp.Value.position, kvp.Key);
-                }
-            }
-        }
-#endif
-
-        #endregion
+        CacheSocketsFromProvider();
+        GameEvents.OnItemEquipped += HandleItemEquipped;
     }
 
-    #region Supporting Data Structures
-
-    [System.Serializable]
-    public class PlayerSelectionData
+    public void UpdateModule()
     {
-        public string playerName;
-        public string selectedModelId;
-        public FactionType faction;
-        public Color[] customColors;
-        public Dictionary<string, string> equipmentChoices;
-
-        public PlayerSelectionData()
-        {
-            customColors = new Color[0];
-            equipmentChoices = new Dictionary<string, string>();
-        }
     }
 
-    [System.Serializable]
-    public class ModelCustomization
+    public void LateInitialize()
     {
-        public MaterialChange[] materialChanges;
-        public BoneScale[] boneScales;
-    }
-
-    [System.Serializable]
-    public class MaterialChange
-    {
-        public string rendererPath;
-        public Material material;
-    }
-
-    [System.Serializable]
-    public class BoneScale
-    {
-        public string bonePath;
-        public Vector3 scale;
-    }
-
-    public enum FactionType
-    {
-        None,
-        Alliance,
-        Horde,
-        Neutral
-    }
-
-    public enum RaceType
-    {
-        Any,
-        Human,
-        Elf,
-        Dwarf,
-        Orc,
-        Undead
     }
 
     #endregion
+
+    #region Model Management
+
+    public bool SwapModel(string modelId, bool preserveEquipment = true)
+    {
+        if (string.IsNullOrEmpty(modelId))
+            return false;
+
+        if (modelDatabase == null)
+            return false;
+
+        var modelVariant = modelDatabase.GetModel(modelId);
+        if (modelVariant == null)
+            return false;
+
+        if (currentModel != null)
+            Destroy(currentModel);
+
+        currentModel = Instantiate(modelVariant.prefab, transform);
+        currentModelId = modelId;
+
+        modelAnimator = currentModel.GetComponentInChildren<Animator>();
+        if (brain != null)
+        {
+            brain.RefreshAnimatorReference();
+            brain.SetAnimatorDirect(modelAnimator);
+        }
+
+        CacheSocketsFromProvider();
+        OnModelChanged?.Invoke(modelId);
+
+        return true;
+    }
+
+    #endregion
+
+    #region Socket Management
+
+    /// <summary>
+    /// Reads sockets from ModelSocketProvider on the current model.
+    /// ModelSocketProvider has a list of slot assets mapped to bone transforms.
+    /// We cache all of them for O(1) lookup during equipment changes.
+    /// </summary>
+    private void CacheSocketsFromProvider()
+    {
+        socketCache.Clear();
+        socketProvider = null;
+
+        if (currentModel == null)
+            return;
+
+        socketProvider = currentModel.GetComponent<ModelSocketProvider>();
+        if (socketProvider == null)
+        {
+            Debug.LogWarning($"[ModelModule] Model '{currentModelId}' has no ModelSocketProvider. Add the component and map slots to sockets.");
+            return;
+        }
+
+        socketCache = socketProvider.GetAllSockets();
+
+        if (socketCache.Count == 0)
+            Debug.LogWarning($"[ModelModule] Model '{currentModelId}' has no slot-socket mappings in ModelSocketProvider.");
+    }
+
+    /// <summary>
+    /// Gets a socket transform by slot ID.
+    /// Returns null if not found.
+    /// </summary>
+    public Transform GetSocket(string slotId)
+    {
+        if (string.IsNullOrEmpty(slotId))
+            return null;
+
+        if (socketCache.TryGetValue(slotId.ToLower(), out var socket))
+            return socket;
+
+        return null;
+    }
+
+    #endregion
+
+    #region Equipment Visual Handling
+
+    /// <summary>
+    /// Called when EquipmentSystem fires GameEvents.OnItemEquipped.
+    /// Uses slot.slotId to look up the socket in the cache.
+    /// Spawns equippedPrefab under the socket.
+    /// </summary>
+    private void HandleItemEquipped(EquipmentSlotDefinition slot, ItemInstance item)
+    {
+        if (slot == null || currentModel == null)
+            return;
+
+        if (item == null)
+        {
+            ClearSocket(slot.slotId);
+            return;
+        }
+
+        if (item.Definition == null || item.Definition.equippedPrefab == null)
+            return;
+
+        var socket = GetSocket(slot.slotId);
+        if (socket == null)
+        {
+            // This is normal — not all slots need visuals (e.g., rings, storage)
+            // Only log if this is a weapon or armor slot that should have a visual
+            if (slot.isWeaponSlot || slot.socketName != "" || slot.slotId.Contains("armor") || slot.slotId.Contains("helmet"))
+                Debug.LogWarning($"[ModelModule] No socket mapped for slot '{slot.slotId}' ({slot.displayName}). Add it to ModelSocketProvider.slotSockets.");
+            return;
+        }
+
+        var visual = Instantiate(item.Definition.equippedPrefab, socket);
+        visual.name = item.Definition.displayName;
+    }
+
+    /// <summary>
+    /// Clears all children from a socket (unequip visual).
+    /// </summary>
+    private void ClearSocket(string slotId)
+    {
+        var socket = GetSocket(slotId);
+        if (socket == null)
+            return;
+
+        foreach (Transform child in socket)
+            Destroy(child.gameObject);
+    }
+
+    #endregion
+
+    #region Model Detection
+
+    private void DetectExistingModel()
+    {
+        var modelRoot = transform.Find("3D Model") ??
+                       transform.Find("Model") ??
+                       transform.Find("Visual");
+
+        if (modelRoot != null)
+            currentModel = modelRoot.gameObject;
+    }
+
+    #endregion
+
+    #region ISaveable Implementation
+
+    public string GetSaveId() => "model";
+
+    public string GetSaveData()
+    {
+        var data = new ModelSaveData
+        {
+            currentModelId = currentModelId
+        };
+
+        return JsonUtility.ToJson(data);
+    }
+
+    public void LoadSaveData(string json)
+    {
+        if (string.IsNullOrEmpty(json))
+            return;
+
+        var data = JsonUtility.FromJson<ModelSaveData>(json);
+        if (!string.IsNullOrEmpty(data.currentModelId))
+            SwapModel(data.currentModelId);
+    }
+
+    public int GetSaveVersion() => 1;
+
+    #endregion
+
+    #region Cleanup
+
+    private void OnDestroy()
+    {
+        GameEvents.OnItemEquipped -= HandleItemEquipped;
+    }
+
+    #endregion
+}
+
+[System.Serializable]
+public class ModelSaveData
+{
+    public string currentModelId;
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using RPG.Factions;
 
 public class EquipmentWindow : UIWindow
 {
@@ -26,7 +27,6 @@ public class EquipmentWindow : UIWindow
 
     private EquipmentSystem equipmentSystem;
     private IdentitySystem identitySystem;
-    private PlayerInfoModule playerInfo;
     private readonly Dictionary<string, EquipmentSlotVisual_Simple> slotVisuals = new Dictionary<string, EquipmentSlotVisual_Simple>();
 
     protected override void SetupWindow()
@@ -35,7 +35,6 @@ public class EquipmentWindow : UIWindow
 
         equipmentSystem = playerBrain.GetModule<EquipmentSystem>();
         identitySystem = playerBrain.GetModule<IdentitySystem>();
-        playerInfo = playerBrain.GetModule<PlayerInfoModule>();
 
         if (equipmentSystem == null) { Debug.LogError("[EquipmentWindow] No EquipmentSystem on player!"); return; }
 
@@ -116,13 +115,13 @@ public class EquipmentWindow : UIWindow
     private void UpdateInfoPanel()
     {
         if (playerNameText != null && identitySystem != null)
-            playerNameText.text = identitySystem.GetEntityName();
+            playerNameText.text = identitySystem.DisplayName;
 
-        if (factionNameText != null && playerInfo != null)
-            factionNameText.text = playerInfo.GetPlayerFactionName();
+        if (factionNameText != null && playerBrain?.GetModule<FactionSystem>() is FactionSystem faction)
+            factionNameText.text = faction.CurrentFactionName;
 
-        if (levelGoldText != null)
-            levelGoldText.text = playerInfo != null ? $"LVL {playerInfo.GetCharacterLevel()}  0G" : "LVL 1  0G";
+        if (levelGoldText != null && identitySystem != null)
+            levelGoldText.text = $"LVL {identitySystem.Level}  0G";
     }
 
     public int SlotCount => slotVisuals.Count;

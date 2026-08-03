@@ -1,32 +1,27 @@
 ﻿#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
+using System.Collections.Generic;
 
-/// <summary>
-/// Editor utility for quickly creating NPC Archetypes with common presets
-/// Window → RPG → NPC Archetype Creator
-/// </summary>
 public class NPCArchetypeCreator : EditorWindow
 {
     private string archetypeName = "Bear";
-    private NPCFaction faction = NPCFaction.Wildlife;
+    private string factionId = "faction_wildlife";
     private NPCType npcType = NPCType.Beast;
     private NPCImportance importance = NPCImportance.Soldier;
 
-    // Stats
+    private int mind = 5;
     private int body = 18;
+    private int spirit = 8;
+    private int resilience = 15;
     private int endurance = 20;
-    private float healthMultiplier = 1.2f;
-    private float damageMultiplier = 1.0f;
+    private int insight = 8;
 
-    // Model
     private string modelId = "bear_brown";
-
-    // Combat
     private string combatBehaviorClassName = "BearCombatBehavior";
-
-    // Abilities
     private AbilityDefinition[] abilities = new AbilityDefinition[0];
+
+    private Vector2 scrollPosition;
 
     [MenuItem("Window/RPG/NPC Archetype Creator")]
     public static void ShowWindow()
@@ -36,10 +31,11 @@ public class NPCArchetypeCreator : EditorWindow
 
     private void OnGUI()
     {
+        scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+
         GUILayout.Label("NPC Archetype Creator", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
-        // Quick Presets
         GUILayout.Label("Quick Presets", EditorStyles.boldLabel);
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Bear Soldier"))
@@ -51,33 +47,30 @@ public class NPCArchetypeCreator : EditorWindow
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.Space();
 
-        // Identity
         GUILayout.Label("Identity", EditorStyles.boldLabel);
         archetypeName = EditorGUILayout.TextField("Archetype Name", archetypeName);
-        faction = (NPCFaction)EditorGUILayout.EnumPopup("Faction", faction);
+        factionId = EditorGUILayout.TextField("Faction ID", factionId);
         npcType = (NPCType)EditorGUILayout.EnumPopup("NPC Type", npcType);
         importance = (NPCImportance)EditorGUILayout.EnumPopup("Importance", importance);
         EditorGUILayout.Space();
 
-        // Stats
-        GUILayout.Label("Stats", EditorStyles.boldLabel);
+        GUILayout.Label("Base Stats (Level 1)", EditorStyles.boldLabel);
+        mind = EditorGUILayout.IntField("Mind", mind);
         body = EditorGUILayout.IntField("Body", body);
+        spirit = EditorGUILayout.IntField("Spirit", spirit);
+        resilience = EditorGUILayout.IntField("Resilience", resilience);
         endurance = EditorGUILayout.IntField("Endurance", endurance);
-        healthMultiplier = EditorGUILayout.FloatField("Health Multiplier", healthMultiplier);
-        damageMultiplier = EditorGUILayout.FloatField("Damage Multiplier", damageMultiplier);
+        insight = EditorGUILayout.IntField("Insight", insight);
         EditorGUILayout.Space();
 
-        // Model
         GUILayout.Label("Model", EditorStyles.boldLabel);
         modelId = EditorGUILayout.TextField("Model ID", modelId);
         EditorGUILayout.Space();
 
-        // Combat
         GUILayout.Label("Combat", EditorStyles.boldLabel);
         combatBehaviorClassName = EditorGUILayout.TextField("Combat Behavior Class", combatBehaviorClassName);
         EditorGUILayout.Space();
 
-        // Abilities
         GUILayout.Label("Abilities", EditorStyles.boldLabel);
         SerializedObject so = new SerializedObject(this);
         SerializedProperty abilitiesProperty = so.FindProperty("abilities");
@@ -85,7 +78,6 @@ public class NPCArchetypeCreator : EditorWindow
         so.ApplyModifiedProperties();
         EditorGUILayout.Space();
 
-        // Create Button
         EditorGUILayout.Space();
         if (GUILayout.Button("Create Archetype Asset", GUILayout.Height(30)))
         {
@@ -98,32 +90,38 @@ public class NPCArchetypeCreator : EditorWindow
             $"Resources/NPCArchetypes/{GetArchetypeFileName()}.asset",
             MessageType.Info
         );
+
+        GUILayout.EndScrollView();
     }
 
     private void LoadBearSoldierPreset()
     {
         archetypeName = "Bear";
-        faction = NPCFaction.Wildlife;
+        factionId = "faction_wildlife";
         npcType = NPCType.Beast;
         importance = NPCImportance.Soldier;
+        mind = 5;
         body = 18;
+        spirit = 8;
+        resilience = 15;
         endurance = 20;
-        healthMultiplier = 1.2f;
-        damageMultiplier = 1.0f;
+        insight = 8;
         modelId = "bear_brown";
         combatBehaviorClassName = "BearCombatBehavior";
     }
 
     private void LoadBearElitePreset()
     {
-        archetypeName = "Bear";
-        faction = NPCFaction.Wildlife;
+        archetypeName = "Bear Elite";
+        factionId = "faction_wildlife";
         npcType = NPCType.Beast;
         importance = NPCImportance.Elite;
+        mind = 6;
         body = 25;
+        spirit = 10;
+        resilience = 20;
         endurance = 30;
-        healthMultiplier = 1.8f;
-        damageMultiplier = 1.2f;
+        insight = 10;
         modelId = "bear_brown";
         combatBehaviorClassName = "BearCombatBehavior";
     }
@@ -131,67 +129,56 @@ public class NPCArchetypeCreator : EditorWindow
     private void LoadBearBossPreset()
     {
         archetypeName = "Bear King";
-        faction = NPCFaction.Wildlife;
+        factionId = "faction_wildlife";
         npcType = NPCType.Beast;
         importance = NPCImportance.Boss;
+        mind = 8;
         body = 40;
+        spirit = 12;
+        resilience = 30;
         endurance = 50;
-        healthMultiplier = 3.0f;
-        damageMultiplier = 1.5f;
+        insight = 12;
         modelId = "bear_brown";
         combatBehaviorClassName = "BearCombatBehavior";
     }
 
     private string GetArchetypeFileName()
     {
-        return $"archetype_{faction.ToString().ToLower()}_{npcType.ToString().ToLower()}_{importance.ToString().ToLower()}";
+        return $"archetype_{npcType.ToString().ToLower()}_{importance.ToString().ToLower()}";
     }
 
     private void CreateArchetype()
     {
-        // Create the archetype
         var archetype = ScriptableObject.CreateInstance<NPCArchetype>();
 
-        // Set identity
         archetype.archetypeId = GetArchetypeFileName();
         archetype.archetypeName = archetypeName;
-        archetype.faction = faction;
+        archetype.factionId = factionId;
         archetype.npcType = npcType;
         archetype.importance = importance;
 
-        // Set stats
-        archetype.baseStats = new StatAllocation
+        archetype.baseStatOverrides = new StatBaseOverride[]
         {
-            mind = 5,
-            body = body,
-            spirit = 8,
-            resilience = 15,
-            endurance = endurance,
-            insight = 8,
-            healthMultiplier = healthMultiplier,
-            damageMultiplier = damageMultiplier
+            new StatBaseOverride { statId = "core.mind", baseValue = mind },
+            new StatBaseOverride { statId = "core.body", baseValue = body },
+            new StatBaseOverride { statId = "core.spirit", baseValue = spirit },
+            new StatBaseOverride { statId = "core.resilience", baseValue = resilience },
+            new StatBaseOverride { statId = "core.endurance", baseValue = endurance },
+            new StatBaseOverride { statId = "core.insight", baseValue = insight },
         };
 
-        // Set abilities
-        archetype.abilities = new System.Collections.Generic.List<AbilityDefinition>(abilities);
-
-        // Set combat behavior
+        archetype.abilities = new List<AbilityDefinition>(abilities);
         archetype.combatBehaviorClassName = combatBehaviorClassName;
-
-        // Set model
-        archetype.modelPool = new System.Collections.Generic.List<string> { modelId };
+        archetype.modelPool = new List<string> { modelId };
         archetype.randomizeModel = false;
 
-        // Set name
         archetype.useGenericName = true;
         archetype.genericName = archetypeName;
 
-        // Set faction settings
         archetype.aggressiveToHostileFactions = true;
         archetype.assistsAlliedFactions = false;
         archetype.defendsFactionMembers = true;
 
-        // Create Resources folder if it doesn't exist
         string resourcesPath = "Assets/Resources";
         if (!AssetDatabase.IsValidFolder(resourcesPath))
         {
@@ -204,12 +191,10 @@ public class NPCArchetypeCreator : EditorWindow
             AssetDatabase.CreateFolder("Assets/Resources", "NPCArchetypes");
         }
 
-        // Save the asset
         string assetPath = $"{archetypesPath}/{GetArchetypeFileName()}.asset";
         AssetDatabase.CreateAsset(archetype, assetPath);
         AssetDatabase.SaveAssets();
 
-        // Ping the asset
         EditorUtility.FocusProjectWindow();
         Selection.activeObject = archetype;
 

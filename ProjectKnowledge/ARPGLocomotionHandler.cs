@@ -221,7 +221,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
                 targetRot,
                 rotationSpeed * Time.deltaTime
             );
-            }
+        }
         else
         {
             targetVelocity = Vector3.zero;

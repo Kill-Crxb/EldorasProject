@@ -1,4 +1,4 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using RPG.Factions;
@@ -112,9 +112,9 @@ namespace RPG.NPC.UI
             var identity = brain.Identity;
             if (identity != null)
             {
-                npcName = identity.GetEntityName();
-                npcLevel = identity.GetLevel();
-                npcFaction = identity.GetFaction();
+                npcName = identity.DisplayName;
+                npcLevel = identity.Level;
+                npcFaction = identity.GetFactionType();
             }
             else
             {
@@ -190,14 +190,14 @@ namespace RPG.NPC.UI
         {
             if (cachedPlayerBrain == null) return FactionType.Player;
             var identity = cachedPlayerBrain.Identity;
-            return identity != null ? identity.GetFaction() : FactionType.Player;
+            return identity != null ? identity.GetFactionType() : FactionType.Player;
         }
 
         private int GetPlayerLevel()
         {
             if (cachedPlayerBrain == null) return 10;
             var identity = cachedPlayerBrain.Identity;
-            return identity != null ? identity.GetLevel() : 10;
+            return identity != null ? identity.Level : 10;
         }
 
         private Color GetLevelColor()

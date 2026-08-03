@@ -9,9 +9,6 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private GameObject inventoryPanel;
     [SerializeField] private GameObject statsPanel;
 
-    [Header("Camera Control")]
-    [SerializeField] private SimpleThirdPersonCamera playerCamera;
-
     [Header("Input")]
     [SerializeField] private InputActionReference toggleInventoryAction;
 
@@ -91,9 +88,7 @@ public class MenuManager : MonoBehaviour
         if (inventoryPanel != null)
             inventoryPanel.SetActive(true);
 
-        // Disable camera INPUT (not the component)
-        if (playerCamera != null)
-            playerCamera.SetInputEnabled(false);
+        // Camera input gating reconnects here after the camera rebuild.
 
         // Free cursor
         previousCursorLockMode = Cursor.lockState;
@@ -103,7 +98,7 @@ public class MenuManager : MonoBehaviour
         Cursor.visible = true;
 
         if (showDebugInfo)
-            Debug.Log("Menu opened - cursor freed, camera input disabled");
+            Debug.Log("Menu opened - cursor freed");
     }
 
     public void CloseMenu()
@@ -123,16 +118,14 @@ public class MenuManager : MonoBehaviour
         if (statsPanel != null)
             statsPanel.SetActive(false);
 
-        // Re-enable camera input
-        if (playerCamera != null)
-            playerCamera.SetInputEnabled(true);
+        // Camera input gating reconnects here after the camera rebuild.
 
         // Restore cursor state
         Cursor.lockState = previousCursorLockMode;
         Cursor.visible = previousCursorVisible;
 
         if (showDebugInfo)
-            Debug.Log("Menu closed - cursor locked, camera input enabled");
+            Debug.Log("Menu closed - cursor locked");
     }
 
     // Panel switching methods for future use

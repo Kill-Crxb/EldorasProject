@@ -2,90 +2,112 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ModelSocketProvider — lives on the model root prefab.
-/// Holds explicit serialised references to all socket transforms for this model.
-/// ModelModule reads from this component instead of searching by name.
-///
-/// Usage:
-/// - Add to the root GameObject of each model prefab.
-/// - Drag the correct transforms from the rig into each socket field.
-/// - Bone names in Blender/FBX do not need to match the socket key names.
+/// ModelSocketProvider — mapping of equipment slot assets to bone transforms.
+/// 
+/// Architecture:
+/// - Takes EquipmentSlotDefinition assets as input
+/// - Maps each slot to a bone transform on the model rig
+/// - Provides O(1) lookup for sockets by slot ID
+/// 
+/// Setup:
+/// 1. Add this component to model prefab root (next to Animator)
+/// 2. For each slot that needs visual rendering, add an entry to slotSockets
+/// 3. Drag the EquipmentSlotDefinition SO into the "slot" field
+/// 4. Drag the bone transform into the "socket" field
+/// 
+/// Example:
+/// - Slot: Slot_MainWeapon
+/// - Socket: Armature|Spine|Chest|Shoulder.R|Arm.R|Hand.R (the right hand bone)
+/// 
+/// If a slot isn't in this list, it won't render (e.g., rings, storage, amulets without visuals).
 /// </summary>
 public class ModelSocketProvider : MonoBehaviour
 {
-    [Header("Standard Sockets")]
-    [Tooltip("Right hand weapon attachment point")]
-    public Transform weapon;
+    [System.Serializable]
+    public class SlotSocketMapping
+    {
+        [Tooltip("The EquipmentSlotDefinition asset (e.g., Slot_MainWeapon)")]
+        public EquipmentSlotDefinition slot;
 
-    [Tooltip("Left hand shield / off-hand attachment point")]
-    public Transform shield;
+        [Tooltip("The bone/transform on this model's rig where this item should attach")]
+        public Transform socket;
+    }
 
-    [Tooltip("Head equipment attachment point")]
-    public Transform helmet;
+    [Header("Slot-to-Socket Mappings")]
+    [Tooltip("For each slot that needs visual rendering on this model, add an entry here.\n" +
+             "Drag the EquipmentSlotDefinition asset and the bone transform.")]
+    public List<SlotSocketMapping> slotSockets = new List<SlotSocketMapping>();
 
-    [Tooltip("Chest equipment attachment point")]
-    public Transform chest;
-
-    [Tooltip("Foot equipment attachment point")]
-    public Transform boots;
-
-    [Tooltip("Floor-level foot effects (dust, footsteps)")]
-    public Transform feeteffects;
-
-    [Tooltip("Upper spine rear — back equipment, capes")]
-    public Transform backeffects;
-
-    [Header("Additional Sockets")]
-    [Tooltip("Optional extra sockets for this model. Key must be lowercase with no spaces.")]
-    public List<NamedSocket> extraSockets = new List<NamedSocket>();
+    private Dictionary<string, Transform> socketCache = new Dictionary<string, Transform>();
+    private bool isCached = false;
 
     /// <summary>
-    /// Returns all sockets as a flat dictionary keyed by lowercase name.
-    /// ModelModule calls this once after instantiating the model.
+    /// Returns all sockets as a dictionary keyed by slot ID.
+    /// Caches the result on first call.
     /// </summary>
     public Dictionary<string, Transform> GetAllSockets()
     {
-        var result = new Dictionary<string, Transform>();
+        if (isCached)
+            return socketCache;
 
-        TryAdd(result, "weapon", weapon);
-        TryAdd(result, "shield", shield);
-        TryAdd(result, "helmet", helmet);
-        TryAdd(result, "chest", chest);
-        TryAdd(result, "boots", boots);
-        TryAdd(result, "feeteffects", feeteffects);
-        TryAdd(result, "backeffects", backeffects);
+        socketCache.Clear();
 
-        foreach (var entry in extraSockets)
+        foreach (var mapping in slotSockets)
         {
-            if (!string.IsNullOrWhiteSpace(entry.key) && entry.socket != null)
-                TryAdd(result, entry.key.ToLower(), entry.socket);
+            if (mapping.slot == null || mapping.socket == null)
+                continue;
+
+            socketCache[mapping.slot.slotId] = mapping.socket;
         }
 
-        return result;
+        isCached = true;
+        return socketCache;
     }
 
-    private void TryAdd(Dictionary<string, Transform> dict, string key, Transform value)
+    /// <summary>
+    /// Gets a socket by slot ID.
+    /// Returns null if slot not found.
+    /// </summary>
+    public Transform GetSocket(string slotId)
     {
-        if (value != null)
-            dict[key] = value;
+        if (string.IsNullOrEmpty(slotId))
+            return null;
+
+        var sockets = GetAllSockets();
+        if (sockets.TryGetValue(slotId.ToLower(), out var socket))
+            return socket;
+
+        return null;
     }
 
-    [System.Serializable]
-    public class NamedSocket
+    /// <summary>
+    /// Gets a socket by EquipmentSlotDefinition asset.
+    /// Returns null if slot not in mappings.
+    /// </summary>
+    public Transform GetSocket(EquipmentSlotDefinition slot)
     {
-        [Tooltip("Lowercase key — must match the socketName on EquipmentSlotDefinition")]
-        public string key;
-        public Transform socket;
+        if (slot == null)
+            return null;
+
+        return GetSocket(slot.slotId);
     }
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
+        if (slotSockets == null || slotSockets.Count == 0)
+            return;
+
         Gizmos.color = Color.cyan;
-        foreach (var kvp in GetAllSockets())
+        foreach (var mapping in slotSockets)
         {
-            Gizmos.DrawWireSphere(kvp.Value.position, 0.04f);
-            UnityEditor.Handles.Label(kvp.Value.position + Vector3.up * 0.06f, kvp.Key);
+            if (mapping.socket == null)
+                continue;
+
+            Gizmos.DrawWireSphere(mapping.socket.position, 0.04f);
+
+            string label = mapping.slot != null ? mapping.slot.slotId : "(null slot)";
+            UnityEditor.Handles.Label(mapping.socket.position + Vector3.up * 0.06f, label);
         }
     }
 #endif

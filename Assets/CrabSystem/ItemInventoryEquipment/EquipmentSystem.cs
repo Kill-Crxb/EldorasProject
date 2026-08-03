@@ -2,28 +2,6 @@
 using System;
 using System.Collections.Generic;
 
-/// <summary>
-/// EquipmentSystem - Fully data-driven equipment management
-///
-/// NO ENUMS! Uses EquipmentSlotDefinition ScriptableObjects instead.
-/// Equipment slots are identified by string slotId (e.g., "helmet", "ring", "mainwep")
-///
-/// Architecture:
-/// - Dictionary instead of array (keyed by slotId)
-/// - Events pass EquipmentSlotDefinition instead of enum
-/// - Stat application works the same
-/// - Fully flexible — add new slots without code changes
-///
-/// Created: February 18, 2026 (Refactored to eliminate enum dependency)
-/// Updated: Phase 3 — ISaveable added
-/// Updated: Visual spawning — fires GameEvents.ItemEquipped so ModelModule
-///          can spawn/clear equippedPrefab on the correct socket without
-///          EquipmentSystem knowing ModelModule exists.
-/// Updated: Dice damage — GetEquippedWeapon(slotId) added
-/// Updated: Load-time visual restore — BroadcastVisuals() moved to LateInitialize
-///          so all brain modules (including ModelModule) are subscribed before
-///          the visual events fire.
-/// </summary>
 public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 {
     [Header("Equipment Storage")]
@@ -40,8 +18,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
     [SerializeField] private string naturalWeaponItemId;
     [SerializeField] private EquipmentSlotDefinition naturalWeaponSlot;
 
-    [Header("Debug")]
-    [SerializeField] private bool debugEquipment = false;
+    
 
     private Dictionary<string, ItemInstance> equipment = new Dictionary<string, ItemInstance>();
 
@@ -80,8 +57,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
         isInitialized = true;
 
-        if (debugEquipment)
-            Debug.Log($"[EquipmentSystem] Initialized for {brain.name}");
+       
     }
 
     /// <summary>
@@ -106,7 +82,15 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
     private void HandleLoadCompleted()
     {
         GameEvents.OnLoadCompleted -= HandleLoadCompleted;
-        BroadcastVisuals();
+
+        try
+        {
+            BroadcastVisuals();
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[EquipmentSystem] Exception in BroadcastVisuals: {ex.Message}\n{ex.StackTrace}");
+        }
     }
 
     #endregion
@@ -138,8 +122,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
             });
         }
 
-        if (debugEquipment)
-            Debug.Log($"[EquipmentSystem] GetSaveData — {saveData.slots.Count} slots serialised");
+  
 
         return JsonUtility.ToJson(saveData);
     }
@@ -170,12 +153,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
                 durability = entry.durability
             };
 
-            if (item.Definition == null)
-            {
-                if (debugEquipment)
-                    Debug.LogWarning($"[EquipmentSystem] Skipping unknown item definition: {entry.definitionId}");
-                continue;
-            }
+   
 
             equipment[entry.slotId] = item;
             ApplyItemStats(item);
@@ -183,8 +161,6 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
         UpdateSerializedData();
 
-        if (debugEquipment)
-            Debug.Log($"[EquipmentSystem] LoadSaveData — {saveData.slots.Count} slots restored for {brain.name}");
     }
 
     // ── Save Data Structures ──────────────────────────────────────────────
@@ -226,7 +202,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
         if (!slot.CanEquip(item.Definition))
         {
-            if (debugEquipment)
+
                 Debug.Log($"[EquipmentSystem] {item.Definition.displayName} cannot be equipped to {slot.displayName}");
             return false;
         }
@@ -242,7 +218,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         GameEvents.ItemEquipped(slot, item);
         UpdateSerializedData();
 
-        if (debugEquipment)
+        
             Debug.Log($"[EquipmentSystem] Equipped {item.Definition.displayName} to {slot.displayName}");
 
         return true;
@@ -264,7 +240,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         GameEvents.ItemEquipped(slot, null);
         UpdateSerializedData();
 
-        if (debugEquipment)
+        
             Debug.Log($"[EquipmentSystem] Unequipped {item.Definition.displayName} from {slot.displayName}");
 
         return true;
@@ -286,7 +262,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         {
             if (!inventorySystem.AddItem(item))
             {
-                if (debugEquipment)
+               
                     Debug.LogWarning("[EquipmentSystem] Inventory full, cannot unequip!");
                 return false;
             }
@@ -298,8 +274,8 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         GameEvents.ItemEquipped(slot, null);
         UpdateSerializedData();
 
-        if (debugEquipment)
-            Debug.Log($"[EquipmentSystem] Unequipped {item.Definition.displayName} to inventory");
+        
+            
 
         return true;
     }
@@ -361,8 +337,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
             GameEvents.ItemEquipped(slotDef, kvp.Value);
 
-            if (debugEquipment)
-                Debug.Log($"[EquipmentSystem] BroadcastVisuals — '{kvp.Key}': {kvp.Value.Definition.displayName}");
+       
         }
     }
 
@@ -380,8 +355,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
             slotLookup[slotDef.slotId] = slotDef;
         }
 
-        if (debugEquipment)
-            Debug.Log($"[EquipmentSystem] Built slot lookup — {slotLookup.Count} slots registered");
+       
     }
 
     #endregion
@@ -396,8 +370,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         foreach (var modifier in item.calculatedModifiers)
             statSystem.Engine.AddFlatModifier(modifier.statName, item.instanceId, modifier.value);
 
-        if (debugEquipment)
-            Debug.Log($"[EquipmentSystem] Applied {item.calculatedModifiers.Length} stat modifiers");
+      
     }
 
     private void RemoveItemStats(ItemInstance item)
@@ -407,8 +380,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
         statSystem.Engine.RemoveAllModifiersFromSource(item.instanceId);
 
-        if (debugEquipment)
-            Debug.Log($"[EquipmentSystem] Removed stat modifiers from {item.Definition.displayName}");
+      
     }
 
     #endregion
@@ -433,8 +405,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
         EquipItem(weaponInstance, naturalWeaponSlot);
 
-        if (debugEquipment)
-            Debug.Log($"[EquipmentSystem] Equipped natural weapon: {weaponInstance.Definition.displayName}");
+ 
     }
 
     #endregion

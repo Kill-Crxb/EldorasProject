@@ -51,7 +51,7 @@ public class InventoryWindow : UIWindow
         // Read from IdentitySystem (single source of truth for entity name)
         var identitySystem = playerBrain.GetModule<IdentitySystem>();
         if (identitySystem != null)
-            return identitySystem.GetEntityName();
+            return identitySystem.DisplayName;
 
         // Fallback to GameObject name
         return playerBrain.name;

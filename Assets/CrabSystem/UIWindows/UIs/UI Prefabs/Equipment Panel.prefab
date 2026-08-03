@@ -460,6 +460,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1130,7 +1131,7 @@ MonoBehaviour:
   headerBar: {fileID: 9165585504865479102}
   rememberPosition: 1
   defaultPosition: {x: 0, y: 0}
-  debugMode: 1
+  debugMode: 0
   leftEquipContainer: {fileID: 7144062033020751528}
   rightEquipContainer: {fileID: 3146097095248559820}
   leftWeaponContainer: {fileID: 6671393459302237567}
@@ -1326,6 +1327,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1462,6 +1464,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

@@ -1,10 +1,7 @@
 using UnityEngine;
 using TMPro;
+using RPG.Factions;
 
-/// <summary>
-/// Displays player info (name, faction, level) in the UI.
-/// Phase 1.6 Days 7-8: Migrated to use direct module access instead of backward compatibility wrappers
-/// </summary>
 public class PlayerInfoPanel : MonoBehaviour
 {
     [Header("UI References")]
@@ -15,10 +12,8 @@ public class PlayerInfoPanel : MonoBehaviour
     [Header("Player Reference")]
     [SerializeField] private ControllerBrain playerBrain;
 
-    private PlayerInfoModule playerInfo;
-    private IdentityHandler identityHandler;
-    private PlayerFactionHandler factionHandler;
-    private RPGSystem RPGSystem;  
+    private IdentitySystem identitySystem;
+    private FactionSystem factionSystem;
 
     private void Start()
     {
@@ -28,70 +23,30 @@ public class PlayerInfoPanel : MonoBehaviour
             return;
         }
 
-        playerInfo = playerBrain.GetModule<PlayerInfoModule>();
-        if (playerInfo == null)
+        identitySystem = playerBrain.GetModule<IdentitySystem>();
+        factionSystem = playerBrain.GetModule<FactionSystem>();
+
+        if (identitySystem == null || factionSystem == null)
         {
-            Debug.LogError("PlayerInfoPanel: Could not find PlayerInfoModule on player");
+            Debug.LogError("PlayerInfoPanel: Missing IdentitySystem or FactionSystem on player");
             return;
         }
 
-        identityHandler = playerInfo.IdentityHandler;
-        factionHandler = playerInfo.FactionHandler;
-
-        if (identityHandler == null)
-        {
-            Debug.LogError("PlayerInfoPanel: IdentityHandler not found");
-        }
-
-        if (factionHandler == null)
-        {
-            Debug.LogError("PlayerInfoPanel: PlayerFactionHandler not found");
-        }
-
-        // MIGRATED: Direct module access instead of backward compatibility wrapper
-        RPGSystem = playerBrain.GetModule<RPGSystem>();
-        if (RPGSystem != null)
-        {
-            RPGSystem.OnLevelChanged += OnLevelChanged;
-        }
-
-        UpdateDisplay();
-    }
-
-    private void OnDestroy()
-    {
-        // Unsubscribe from events
-        if (RPGSystem != null)
-        {
-            RPGSystem.OnLevelChanged -= OnLevelChanged;
-        }
-    }
-
-    private void OnLevelChanged(int oldLevel, int newLevel)
-    {
         UpdateDisplay();
     }
 
     private void UpdateDisplay()
     {
-        if (playerNameText != null && identityHandler != null)
-        {
-            playerNameText.text = identityHandler.CharacterName;
-        }
+        if (identitySystem == null || factionSystem == null)
+            return;
 
-        if (factionNameText != null && factionHandler != null)
-        {
-            factionNameText.text = factionHandler.GetFactionName();
-        }
+        if (playerNameText != null)
+            playerNameText.text = identitySystem.DisplayName;
 
-        if (playerLvlText != null && identityHandler != null)
-        {
-            playerLvlText.text = $"Lvl {identityHandler.Level}";
-        }
+        if (playerLvlText != null)
+            playerLvlText.text = $"Lvl {identitySystem.Level}";
+
+        if (factionNameText != null)
+            factionNameText.text = factionSystem.CurrentFactionId;
     }
-
-    public void RefreshDisplay()
-    {
-        UpdateDisplay();
-    }
-} 
+}

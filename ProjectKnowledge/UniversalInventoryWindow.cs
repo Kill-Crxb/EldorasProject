@@ -204,7 +204,7 @@ public class UniversalInventoryWindow : MonoBehaviour, IBeginDragHandler, IDragH
             return;
         }
 
-        string title = containerName ?? containerBrain.Identity?.GetEntityName() ?? "Container";
+        string title = containerName ?? containerBrain.Identity?.DisplayName ?? "Container";
         windowId = $"Container_{containerBrain.GetInstanceID()}";
 
         Open(inventorySystem, containerBrain, title, isPlayerInv: false);
@@ -356,7 +356,7 @@ public class UniversalInventoryWindow : MonoBehaviour, IBeginDragHandler, IDragH
         layoutElement.minHeight = gridPixelHeight;
 
         if (debugMode)
-            Debug.Log($"[UniversalInventoryWindow] Sized grid container to {gridPixelWidth}×{gridPixelHeight}");
+            Debug.Log($"[UniversalInventoryWindow] Sized grid container to {gridPixelWidth}ï¿½{gridPixelHeight}");
     }
 
     #endregion

@@ -1,5 +1,34 @@
-﻿using UnityEngine;
+using System;
+using UnityEngine;
 using UnityEngine.InputSystem;
+
+/// <summary>
+/// Which set of physical keys a bar can claim.
+/// Mutually exclusive — if two bars claim the same set, the second one wins
+/// and the first is set to None with a console warning.
+/// </summary>
+public enum HotbarKeybindSet
+{
+    None,           // Bar has no keybinds (mouse / drag only)
+    ZXCV,           // Z=slot0  X=slot1  C=slot2  V=slot3
+    Hotbar1234,     // 1=slot0  2=slot1  3=slot2  4=slot3
+    Hotbar5678,     // 5=slot0  6=slot1  7=slot2  8=slot3
+    Hotbar9,        // 9=slot0  (single-key utility bar)
+    QuickslotQ,     // Q=slot0  (ranged slot — mirrors equipped ranged inventory)
+}
+
+/// <summary>
+/// Serialised form of the keybind routing config — three enum values.
+/// Stored as "inputProfile" in the character save.
+/// </summary>
+[Serializable]
+public class InputProfileSaveData
+{
+    public int version = 1;
+    public HotbarKeybindSet centreBarKeybinds;
+    public HotbarKeybindSet bottomLeftKeybinds;
+    public HotbarKeybindSet bottomRightKeybinds;
+}
 
 /// <summary>
 /// Input Mode - Determines how InputSystem interprets control
@@ -14,27 +43,33 @@ public enum InputMode
 }
 
 /// <summary>
-/// Universal Input System - Central control source for all entities
-/// 
-/// This system serves THREE roles:
-/// 1. Raw input state provider (IInputProvider)
-/// 2. Movement control source (IMovementControlSource)
-/// 3. Ability control source (IAbilityControlSource)
-/// 
-/// Architecture:
-/// - ONE InputSystem per entity
-/// - Mode switching: Player/AI/Network/Admin/Test
-/// - Systems poll InputSystem for input
-/// - Enables possession, admin tools, multiplayer
-/// 
-/// Pattern: Universal control source that works for players, NPCs, and possessed entities
+/// Universal Input System - Central control source for all entities.
+///
+/// Roles:
+///   1. Raw input state provider     (IInputProvider)
+///   2. Movement control source      (IMovementControlSource)
+///   3. Ability control source       (IAbilityControlSource)
+///   4. Keybind routing config owner (ISaveable → "inputProfile")
+///
+/// Keybind routing:
+///   Each of the three hotbars (centre / bottomLeft / bottomRight) can claim
+///   one HotbarKeybindSet. Assignment is inspector-configurable and persisted
+///   per character via ISaveable. If two bars claim the same set the second
+///   assignment loses and is demoted to None.
+///
+///   Q / LMB always route to AbilityLoadoutModule as "BasicAttack".
 /// </summary>
 public class InputSystem : MonoBehaviour,
     IBrainModule,
     IInputProvider,
     IMovementControlSource,
-    IAbilityControlSource
+    IAbilityControlSource,
+    ISaveable
 {
+    // ========================================
+    // Inspector
+    // ========================================
+
     [Header("Module Settings")]
     [SerializeField] private bool isEnabled = true;
 
@@ -45,12 +80,26 @@ public class InputSystem : MonoBehaviour,
     [Tooltip("Transform player input to camera space (Player mode only)")]
     [SerializeField] private bool cameraRelativeMovement = true;
 
+    [Header("Keybind Routing")]
+    [Tooltip("Which keybind set the centre bar responds to")]
+    [SerializeField] private HotbarKeybindSet centreBarKeybinds = HotbarKeybindSet.ZXCV;
+
+    [Tooltip("Which keybind set the bottom-left bar responds to")]
+    [SerializeField] private HotbarKeybindSet bottomLeftKeybinds = HotbarKeybindSet.QuickslotQ;
+
+    [Tooltip("Which keybind set the bottom-right bar responds to")]
+    [SerializeField] private HotbarKeybindSet bottomRightKeybinds = HotbarKeybindSet.None;
+
     [Header("Optional Dependencies")]
     [Tooltip("Camera provider for camera-relative movement (auto-discovered)")]
     [SerializeField] private MonoBehaviour cameraProviderComponent;
 
     [Tooltip("Target lock module for lock-on look direction (auto-discovered)")]
     [SerializeField] private TargetLockModule targetLock;
+
+    [Header("AI Control Source")]
+    [Tooltip("Control source for NPCs without AI behavior (stub that returns zero input)")]
+    [SerializeField] private StubAIControlSource stubAIControlSource;
 
     [Tooltip("Pathfinding module for AI movement (auto-discovered)")]
     [SerializeField] private PathfindingModule pathfinding;
@@ -65,15 +114,14 @@ public class InputSystem : MonoBehaviour,
     private ControllerBrain brain;
     private PlayerInputControls inputActions;
     private ICameraProvider cameraProvider;
+    private HotbarSystem hotbarSystem;
 
-    // AI ability queueing
     private string aiRequestedAbility;
 
     // ========================================
     // Input State (IInputProvider)
     // ========================================
 
-    // Movement
     public Vector2 MoveInput { get; private set; }
     public Vector2 LookInput { get; private set; }
     public bool JumpPressed { get; private set; }
@@ -81,20 +129,20 @@ public class InputSystem : MonoBehaviour,
     public bool SprintHeld { get; private set; }
     public bool DashPressed { get; private set; }
 
-    // Combat
     public bool LightAttackPressed { get; private set; }
     public bool HeavyAttackPressed { get; private set; }
     public bool BlockHeld { get; private set; }
     public bool ParryPressed { get; private set; }
 
-    // Ability Quickslots
+    // Raw quickslot state — exposed for IInputProvider consumers and AI.
+    // In Player mode ZXCV route to a hotbar bar via BridgeBarInput,
+    // not to AbilityLoadoutModule.
     public bool AbilityQPressed { get; private set; }
     public bool AbilityZPressed { get; private set; }
     public bool AbilityXPressed { get; private set; }
     public bool AbilityCPressed { get; private set; }
     public bool AbilityVPressed { get; private set; }
 
-    // Hotbar (1-9)
     public bool Hotbar1Pressed { get; private set; }
     public bool Hotbar2Pressed { get; private set; }
     public bool Hotbar3Pressed { get; private set; }
@@ -105,58 +153,57 @@ public class InputSystem : MonoBehaviour,
     public bool Hotbar8Pressed { get; private set; }
     public bool Hotbar9Pressed { get; private set; }
 
-    // Interaction
     public bool InteractPressed { get; private set; }
 
     // ========================================
     // Properties
     // ========================================
 
-    public bool IsEnabled
-    {
-        get => isEnabled;
-        set => isEnabled = value;
-    }
-
+    public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
     public ControllerBrain Brain => brain;
     public InputMode CurrentMode => currentMode;
-
-    // IMovementControlSource + IAbilityControlSource
     public bool IsActive =>
         isEnabled &&
         (currentMode == InputMode.Player || currentMode == InputMode.AI);
-
     public string SourceName => $"InputSystem ({currentMode})";
 
     // ========================================
-    // IBrainModule Implementation
+    // IBrainModule
     // ========================================
 
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
-
         inputActions = brain.GetInputControls();
 
         if (inputActions == null)
         {
             Debug.LogError($"[InputSystem] PlayerInputControls is NULL on {brain.name}! " +
-                          $"Entity type: {brain.EntityType}. " +
-                          $"InputSystem will not work without PlayerInputControls.");
-
+                           $"Entity type: {brain.EntityType}.");
             if (brain.IsPlayer)
-            {
-                Debug.LogError($"[InputSystem] This IS a Player entity but has no PlayerInputControls! " +
-                              $"ControllerBrain.InitializeInputSystem() may have failed.");
-            }
+                Debug.LogError("[InputSystem] This IS a Player entity but has no PlayerInputControls!");
             else
+                Debug.LogWarning($"[InputSystem] Not a Player entity ({brain.EntityType}). Consider InputMode.AI.");
+        }
+
+        if (brain.IsNPC)
+        {
+            currentMode = InputMode.AI;
+
+            // Auto-discover stub AI control source if not assigned
+            if (stubAIControlSource == null)
             {
-                Debug.LogWarning($"[InputSystem] This is NOT a Player entity ({brain.EntityType}). " +
-                                $"Consider setting InputMode to AI instead of Player.");
+                stubAIControlSource = GetComponentInChildren<StubAIControlSource>();
+            }
+
+            if (stubAIControlSource == null)
+            {
+                Debug.LogWarning($"[InputSystem] No StubAIControlSource found on NPC {brain.name}. Create a child GameObject with StubAIControlSource component.");
             }
         }
 
         SetupDependencies();
+        ValidateKeybindRouting();
     }
 
     public void UpdateModule()
@@ -170,25 +217,75 @@ public class InputSystem : MonoBehaviour,
 
         switch (currentMode)
         {
-            case InputMode.Player:
-                ReadPlayerInput();
-                break;
+            case InputMode.Player: ReadPlayerInput(); break;
+            default: ClearPlayerInput(); break;
+        }
+    }
 
-            case InputMode.AI:
-                ClearPlayerInput();
-                break;
+    // ========================================
+    // ISaveable  —  "inputProfile"
+    // ========================================
 
-            case InputMode.Network:
-                ClearPlayerInput();
-                break;
+    public string GetSaveId() => "inputProfile";
+    public int GetSaveVersion() => 1;
 
-            case InputMode.Admin:
-                ClearPlayerInput();
-                break;
+    public string GetSaveData()
+    {
+        var data = new InputProfileSaveData
+        {
+            version = GetSaveVersion(),
+            centreBarKeybinds = centreBarKeybinds,
+            bottomLeftKeybinds = bottomLeftKeybinds,
+            bottomRightKeybinds = bottomRightKeybinds,
+        };
+        return JsonUtility.ToJson(data);
+    }
 
-            case InputMode.Test:
-                ClearPlayerInput();
-                break;
+    public void LoadSaveData(string json)
+    {
+        if (string.IsNullOrEmpty(json)) return;
+
+        var data = JsonUtility.FromJson<InputProfileSaveData>(json);
+        if (data == null) return;
+
+        centreBarKeybinds = data.centreBarKeybinds;
+        bottomLeftKeybinds = data.bottomLeftKeybinds;
+        bottomRightKeybinds = data.bottomRightKeybinds;
+
+        ValidateKeybindRouting();
+
+        if (showDebugInfo)
+            Debug.Log($"[InputSystem] Profile loaded — centre:{centreBarKeybinds} " +
+                      $"left:{bottomLeftKeybinds} right:{bottomRightKeybinds}");
+    }
+
+    // ========================================
+    // Keybind Routing Validation
+    // ========================================
+
+    /// <summary>
+    /// Enforces mutual exclusivity. Priority: centre > bottomLeft > bottomRight.
+    /// If bottomRight conflicts with either other bar it loses. If bottomLeft
+    /// conflicts with centre it loses. The loser is demoted to None.
+    /// Called at Initialize and after LoadSaveData.
+    /// </summary>
+    private void ValidateKeybindRouting()
+    {
+        if (bottomRightKeybinds != HotbarKeybindSet.None &&
+            (bottomRightKeybinds == centreBarKeybinds ||
+             bottomRightKeybinds == bottomLeftKeybinds))
+        {
+            Debug.LogWarning($"[InputSystem] bottomRight keybind set '{bottomRightKeybinds}' " +
+                             $"already claimed by another bar — demoted to None.");
+            bottomRightKeybinds = HotbarKeybindSet.None;
+        }
+
+        if (bottomLeftKeybinds != HotbarKeybindSet.None &&
+            bottomLeftKeybinds == centreBarKeybinds)
+        {
+            Debug.LogWarning($"[InputSystem] bottomLeft keybind set '{bottomLeftKeybinds}' " +
+                             $"already claimed by centre bar — demoted to None.");
+            bottomLeftKeybinds = HotbarKeybindSet.None;
         }
     }
 
@@ -198,112 +295,65 @@ public class InputSystem : MonoBehaviour,
 
     private void SetupDependencies()
     {
-        // Camera provider (for camera-relative movement)
-        if (cameraProviderComponent != null && cameraProviderComponent is ICameraProvider)
-        {
-            cameraProvider = cameraProviderComponent as ICameraProvider;
-        }
+        if (cameraProviderComponent is ICameraProvider cp)
+            cameraProvider = cp;
         else
-        {
             cameraProvider = brain.GetModuleImplementing<ICameraProvider>();
-        }
 
-        // Target lock (for lock-on look direction)
         if (targetLock == null)
-        {
             targetLock = brain.GetModule<TargetLockModule>();
-        }
 
-        // Pathfinding (for AI movement)
         if (pathfinding == null)
-        {
             pathfinding = brain.GetModule<PathfindingModule>();
-        }
+    }
+
+    private HotbarSystem GetHotbarSystem()
+    {
+        if (hotbarSystem == null)
+            hotbarSystem = brain?.GetModule<HotbarSystem>();
+        return hotbarSystem;
     }
 
     // ========================================
-    // IMovementControlSource Implementation
+    // IMovementControlSource
     // ========================================
 
     public MovementInput GetMovementInput()
     {
         switch (currentMode)
         {
-            case InputMode.Player:
-                return GetPlayerMovementInput();
-
-            case InputMode.AI:
-                return GetAIMovementInput();
-
-            case InputMode.Admin:
-                return GetAdminMovementInput();
-
-            default:
-                return MovementInput.Zero;
+            case InputMode.Player: return GetPlayerMovementInput();
+            case InputMode.AI: return GetAIMovementInput();
+            case InputMode.Admin: return GetAdminMovementInput();
+            default: return MovementInput.Zero;
         }
     }
 
-    public void OnActivated()
-    {
-        if (showDebugInfo)
-            Debug.Log($"[InputSystem] Activated in {currentMode} mode");
-    }
-
-    public void OnDeactivated()
-    {
-        if (showDebugInfo)
-            Debug.Log($"[InputSystem] Deactivated");
-    }
+    public void OnActivated() { if (showDebugInfo) Debug.Log($"[InputSystem] Activated in {currentMode} mode"); }
+    public void OnDeactivated() { if (showDebugInfo) Debug.Log("[InputSystem] Deactivated"); }
 
     public void UpdateSource()
     {
-        // We must guarantee fresh input is available
         if (!IsEnabled) return;
-
-        // Read input NOW (not relying on UpdateModule order)
         switch (currentMode)
         {
-            case InputMode.Player:
-                ReadPlayerInput();
-                break;
-
-            case InputMode.AI:
-                ClearPlayerInput();
-                break;
-
-            case InputMode.Network:
-                ClearPlayerInput();
-                break;
-
-            case InputMode.Admin:
-                ClearPlayerInput();
-                break;
-
-            case InputMode.Test:
-                ClearPlayerInput();
-                break;
+            case InputMode.Player: ReadPlayerInput(); break;
+            default: ClearPlayerInput(); break;
         }
     }
 
     // ========================================
-    // IAbilityControlSource Implementation
+    // IAbilityControlSource
     // ========================================
 
     public string GetAbilitySlotToTrigger()
     {
         switch (currentMode)
         {
-            case InputMode.Player:
-                return GetPlayerAbilityInput();
-
-            case InputMode.AI:
-                return GetAIAbilityInput();
-
-            case InputMode.Admin:
-                return GetAdminAbilityInput();
-
-            default:
-                return null;
+            case InputMode.Player: return GetPlayerAbilityInput();
+            case InputMode.AI: return GetAIAbilityInput();
+            case InputMode.Admin: return GetAdminAbilityInput();
+            default: return null;
         }
     }
 
@@ -311,73 +361,44 @@ public class InputSystem : MonoBehaviour,
     // Mode Switching
     // ========================================
 
-    /// <summary>
-    /// Switch input mode at runtime
-    /// Example: inputSystem.SetMode(InputMode.Admin) for possession
-    /// </summary>
     public void SetMode(InputMode mode)
     {
         if (currentMode == mode) return;
-
-        InputMode oldMode = currentMode;
+        InputMode old = currentMode;
         currentMode = mode;
-
-        if (showDebugInfo)
-            Debug.Log($"[InputSystem] Mode changed: {oldMode} → {currentMode}");
+        if (showDebugInfo) Debug.Log($"[InputSystem] Mode: {old} → {currentMode}");
     }
 
-    /// <summary>
-    /// Get current input mode
-    /// </summary>
-    public InputMode GetMode()
-    {
-        return currentMode;
-    }
+    public InputMode GetMode() => currentMode;
 
     // ========================================
     // AI Control API
     // ========================================
 
-    /// <summary>
-    /// Request an ability to be triggered (AI mode)
-    /// Called by GOAP goals or combat behaviors
-    /// </summary>
     public void RequestAbility(string slotKey)
     {
         if (currentMode != InputMode.AI)
         {
-            Debug.LogWarning($"[InputSystem] RequestAbility() called but mode is {currentMode}, not AI");
+            Debug.LogWarning($"[InputSystem] RequestAbility() called but mode is {currentMode}");
             return;
         }
-
         aiRequestedAbility = slotKey;
-
-        if (showDebugInfo)
-            Debug.Log($"[InputSystem] AI requested ability: {slotKey}");
     }
 
-    /// <summary>
-    /// Check if an ability request is pending
-    /// </summary>
-    public bool HasPendingAbilityRequest()
-    {
-        return !string.IsNullOrEmpty(aiRequestedAbility);
-    }
-
-    /// <summary>
-    /// Clear any pending ability request
-    /// </summary>
-    public void ClearAbilityRequest()
-    {
-        aiRequestedAbility = null;
-    }
+    public bool HasPendingAbilityRequest() => !string.IsNullOrEmpty(aiRequestedAbility);
+    public void ClearAbilityRequest() => aiRequestedAbility = null;
 
     // ========================================
     // Player Input Reading
     // ========================================
 
+    private int _lastReadFrame = -1;
+
     private void ReadPlayerInput()
     {
+        if (Time.frameCount == _lastReadFrame) return;
+        _lastReadFrame = Time.frameCount;
+
         ReadMovementInput();
         ReadCombatInput();
         ReadAbilityInput();
@@ -387,42 +408,27 @@ public class InputSystem : MonoBehaviour,
 
     private void ReadMovementInput()
     {
-        if (inputActions == null)
-        {
-            if (showDebugInfo)
-                Debug.LogWarning("[InputSystem] Cannot read movement input - PlayerInputControls is null!");
-            return;
-        }
+        if (inputActions == null) return;
 
         MoveInput = inputActions.Player.Move.ReadValue<Vector2>();
         LookInput = inputActions.Player.Look.ReadValue<Vector2>();
-
         JumpPressed = inputActions.Player.Jump.WasPressedThisFrame();
         JumpHeld = inputActions.Player.Jump.IsPressed();
-
-        // Simple hold-to-sprint (no toggle complexity)
         SprintHeld = inputActions.Player.Sprint.IsPressed();
-
         DashPressed = false; // TODO: Add Dash to PlayerInputControls
     }
 
     private void ReadCombatInput()
     {
         LightAttackPressed = inputActions.Player.Attack.WasPressedThisFrame();
-        HeavyAttackPressed = false; // TODO: Add HeavyAttack to PlayerInputControls
-
+        HeavyAttackPressed = false; // TODO: Add HeavyAttack
         BlockHeld = inputActions.Player.Block.IsPressed();
-        ParryPressed = false; // TODO: Add Parry to PlayerInputControls
+        ParryPressed = false; // TODO: Add Parry
     }
 
     private void ReadAbilityInput()
     {
-        if (inputActions == null)
-        {
-            if (showDebugInfo)
-                Debug.LogWarning("[InputSystem] Cannot read ability input - PlayerInputControls is null!");
-            return;
-        }
+        if (inputActions == null) return;
 
         AbilityQPressed = inputActions.Player.QuickslotQ.WasPressedThisFrame();
         AbilityZPressed = inputActions.Player.QuickslotZ.WasPressedThisFrame();
@@ -430,19 +436,6 @@ public class InputSystem : MonoBehaviour,
         AbilityCPressed = inputActions.Player.QuickslotC.WasPressedThisFrame();
         AbilityVPressed = inputActions.Player.QuickslotV.WasPressedThisFrame();
     }
-
-    // Lazily resolved — HotbarSystem initialises after InputSystem.
-    private HotbarSystem hotbarSystem;
-
-    private HotbarSystem GetHotbarSystem()
-    {
-        if (hotbarSystem == null)
-            hotbarSystem = brain?.GetModule<HotbarSystem>();
-        return hotbarSystem;
-    }
-
-    // One float per centre-bar slot (0-8). Tracks how long each button is held.
-    private readonly float[] _hotbarHeldTime = new float[9];
 
     private void ReadHotbarInput()
     {
@@ -456,309 +449,368 @@ public class InputSystem : MonoBehaviour,
         Hotbar8Pressed = inputActions.Player.Hotbar8.WasPressedThisFrame();
         Hotbar9Pressed = inputActions.Player.Hotbar9.WasPressedThisFrame();
 
-        BridgeHotbarInput();
-    }
-
-    private void BridgeHotbarInput()
-    {
-        var hotbar = GetHotbarSystem();
-        if (hotbar == null) return;
-
-        for (int i = 0; i < 9; i++)
-        {
-            bool isHeld     = GetHotbarIsPressed(i);
-            bool wasPressed = GetHotbarPressed(i);
-            bool wasReleased = !isHeld && _hotbarHeldTime[i] > 0f;
-
-            if (isHeld)
-            {
-                _hotbarHeldTime[i] += Time.deltaTime;
-            }
-            else if (wasReleased)
-            {
-                float heldDuration  = _hotbarHeldTime[i];
-                _hotbarHeldTime[i] = 0f;
-
-                // Charge ability fires on release if held past the threshold
-                var slot    = hotbar.GetSlot("centre", i);
-                var ability = hotbar.ResolveSlotAbility(slot);
-
-                if (ability?.chargeAbility != null && heldDuration >= ability.chargeThreshold)
-                {
-                    brain.GetModule<AbilitySystem>()?.UseAbility(ability.chargeAbility.abilityId);
-                    continue; // Charge handled — skip normal TriggerSlot
-                }
-            }
-
-            // Normal press — only fire if the button has no charge ability, or on immediate press
-            if (wasPressed)
-            {
-                var slot    = hotbar.GetSlot("centre", i);
-                var ability = hotbar.ResolveSlotAbility(slot);
-
-                // If there IS a charge ability, wait for release to decide — don't fire on press
-                if (ability?.chargeAbility != null) continue;
-
-                hotbar.TriggerSlot("centre", i);
-            }
-        }
-    }
-
-    // Returns true while hotbar button i is physically held down.
-    private bool GetHotbarIsPressed(int i)
-    {
-        switch (i)
-        {
-            case 0: return inputActions.Player.Hotbar1.IsPressed();
-            case 1: return inputActions.Player.Hotbar2.IsPressed();
-            case 2: return inputActions.Player.Hotbar3.IsPressed();
-            case 3: return inputActions.Player.Hotbar4.IsPressed();
-            case 4: return inputActions.Player.Hotbar5.IsPressed();
-            case 5: return inputActions.Player.Hotbar6.IsPressed();
-            case 6: return inputActions.Player.Hotbar7.IsPressed();
-            case 7: return inputActions.Player.Hotbar8.IsPressed();
-            case 8: return inputActions.Player.Hotbar9.IsPressed();
-            default: return false;
-        }
-    }
-
-    // Returns true only on the frame the button was pressed.
-    private bool GetHotbarPressed(int i)
-    {
-        switch (i)
-        {
-            case 0: return Hotbar1Pressed;
-            case 1: return Hotbar2Pressed;
-            case 2: return Hotbar3Pressed;
-            case 3: return Hotbar4Pressed;
-            case 4: return Hotbar5Pressed;
-            case 5: return Hotbar6Pressed;
-            case 6: return Hotbar7Pressed;
-            case 7: return Hotbar8Pressed;
-            case 8: return Hotbar9Pressed;
-            default: return false;
-        }
+        BridgeBarInput("centre", centreBarKeybinds);
+        BridgeBarInput("bottomLeft", bottomLeftKeybinds);
+        BridgeBarInput("bottomRight", bottomRightKeybinds);
     }
 
     private void ReadInteractionInput()
     {
-        // Use New Input System API
-        // TODO: Add "Interact" action to PlayerInputControls.inputactions
-        InteractPressed = Keyboard.current != null && Keyboard.current[Key.E].wasPressedThisFrame;
+        InteractPressed = Keyboard.current != null &&
+                          Keyboard.current[Key.E].wasPressedThisFrame;
     }
+
+    // ========================================
+    // Hotbar Bridge
+    // ========================================
+
+    // Per-bar held-time arrays — sized to max bar capacity (12).
+    private readonly float[] _centreHeldTime = new float[12];
+    private readonly float[] _bottomLeftHeldTime = new float[12];
+    private readonly float[] _bottomRightHeldTime = new float[12];
+
+    private float[] HeldTimeFor(string barId)
+    {
+        switch (barId)
+        {
+            case "centre": return _centreHeldTime;
+            case "bottomLeft": return _bottomLeftHeldTime;
+            case "bottomRight": return _bottomRightHeldTime;
+            default: return _centreHeldTime;
+        }
+    }
+
+    /// <summary>
+    /// Routes a keybind set to the given bar.
+    /// Handles charge-hold logic: waits for release on charge-ability slots,
+    /// fires charge variant if held past chargeThreshold, otherwise fires base.
+    /// </summary>
+    private void BridgeBarInput(string barId, HotbarKeybindSet keybindSet)
+    {
+        if (keybindSet == HotbarKeybindSet.None) return;
+
+        var hotbar = GetHotbarSystem();
+        if (hotbar == null) return;
+
+        float[] heldTime = HeldTimeFor(barId);
+        int slotCount = SlotCountFor(keybindSet);
+
+        for (int i = 0; i < slotCount; i++)
+        {
+            bool isHeld = GetIsPressed(keybindSet, i);
+            bool wasPressed = GetWasPressed(keybindSet, i);
+            bool wasReleased = !isHeld && heldTime[i] > 0f;
+
+            if (isHeld)
+            {
+                heldTime[i] += Time.deltaTime;
+            }
+            else if (wasReleased)
+            {
+                float duration = heldTime[i];
+                heldTime[i] = 0f;
+
+                var slot = hotbar.GetSlot(barId, i);
+                var ability = hotbar.ResolveSlotAbility(slot);
+
+                if (ability?.chargeAbility != null && duration >= ability.chargeThreshold)
+                    brain.GetModule<AbilitySystem>()?.UseAbility(ability.chargeAbility.abilityId);
+                else
+                    hotbar.TriggerSlot(barId, i);
+
+                continue;
+            }
+
+            // Immediate press — skip if slot has a charge ability (waits for release).
+            if (wasPressed)
+            {
+                var slot = hotbar.GetSlot(barId, i);
+                var ability = hotbar.ResolveSlotAbility(slot);
+
+                if (ability?.chargeAbility != null) continue;
+
+                hotbar.TriggerSlot(barId, i);
+            }
+        }
+    }
+
+    private static int SlotCountFor(HotbarKeybindSet set)
+    {
+        switch (set)
+        {
+            case HotbarKeybindSet.ZXCV: return 4;
+            case HotbarKeybindSet.Hotbar1234: return 4;
+            case HotbarKeybindSet.Hotbar5678: return 4;
+            case HotbarKeybindSet.Hotbar9: return 1;
+            case HotbarKeybindSet.QuickslotQ: return 1;
+            default: return 0;
+        }
+    }
+
+    /// <summary>Returns true while the physical button for slot i is held.</summary>
+    private bool GetIsPressed(HotbarKeybindSet set, int i)
+    {
+        switch (set)
+        {
+            case HotbarKeybindSet.ZXCV:
+                switch (i)
+                {
+                    case 0: return inputActions.Player.QuickslotZ.IsPressed();
+                    case 1: return inputActions.Player.QuickslotX.IsPressed();
+                    case 2: return inputActions.Player.QuickslotC.IsPressed();
+                    case 3: return inputActions.Player.QuickslotV.IsPressed();
+                }
+                break;
+
+            case HotbarKeybindSet.Hotbar1234:
+                switch (i)
+                {
+                    case 0: return inputActions.Player.Hotbar1.IsPressed();
+                    case 1: return inputActions.Player.Hotbar2.IsPressed();
+                    case 2: return inputActions.Player.Hotbar3.IsPressed();
+                    case 3: return inputActions.Player.Hotbar4.IsPressed();
+                }
+                break;
+
+            case HotbarKeybindSet.Hotbar5678:
+                switch (i)
+                {
+                    case 0: return inputActions.Player.Hotbar5.IsPressed();
+                    case 1: return inputActions.Player.Hotbar6.IsPressed();
+                    case 2: return inputActions.Player.Hotbar7.IsPressed();
+                    case 3: return inputActions.Player.Hotbar8.IsPressed();
+                }
+                break;
+
+            case HotbarKeybindSet.Hotbar9:
+                if (i == 0) return inputActions.Player.Hotbar9.IsPressed();
+                break;
+
+            case HotbarKeybindSet.QuickslotQ:
+                if (i == 0) return inputActions.Player.QuickslotQ.IsPressed();
+                break;
+        }
+        return false;
+    }
+
+    /// <summary>Returns true on the frame the physical button for slot i was pressed.</summary>
+    private bool GetWasPressed(HotbarKeybindSet set, int i)
+    {
+        switch (set)
+        {
+            case HotbarKeybindSet.ZXCV:
+                switch (i)
+                {
+                    case 0: return AbilityZPressed;
+                    case 1: return AbilityXPressed;
+                    case 2: return AbilityCPressed;
+                    case 3: return AbilityVPressed;
+                }
+                break;
+
+            case HotbarKeybindSet.Hotbar1234:
+                switch (i)
+                {
+                    case 0: return Hotbar1Pressed;
+                    case 1: return Hotbar2Pressed;
+                    case 2: return Hotbar3Pressed;
+                    case 3: return Hotbar4Pressed;
+                }
+                break;
+
+            case HotbarKeybindSet.Hotbar5678:
+                switch (i)
+                {
+                    case 0: return Hotbar5Pressed;
+                    case 1: return Hotbar6Pressed;
+                    case 2: return Hotbar7Pressed;
+                    case 3: return Hotbar8Pressed;
+                }
+                break;
+
+            case HotbarKeybindSet.Hotbar9:
+                if (i == 0) return Hotbar9Pressed;
+                break;
+
+            case HotbarKeybindSet.QuickslotQ:
+                if (i == 0) return AbilityQPressed;
+                break;
+        }
+        return false;
+    }
+
+    // ========================================
+    // Player Ability Input  (→ AbilityLoadoutModule)
+    // ========================================
+
+    /// <summary>
+    /// All player ability input now routes through BridgeBarInput → HotbarSystem.
+    /// AbilityLoadoutModule receives no player input — returns null always.
+    /// </summary>
+    private string GetPlayerAbilityInput() => null;
+
+    // ========================================
+    // AI / Admin Ability Input
+    // ========================================
+
+    private string GetAIAbilityInput()
+    {
+        string slot = aiRequestedAbility;
+        aiRequestedAbility = null;
+        return slot;
+    }
+
+    private string GetAdminAbilityInput()
+    {
+        // TODO: scripted admin abilities
+        return null;
+    }
+
+    // ========================================
+    // ClearPlayerInput
+    // ========================================
 
     private void ClearPlayerInput()
     {
         MoveInput = Vector2.zero;
         LookInput = Vector2.zero;
-        JumpPressed = false;
-        JumpHeld = false;
-        SprintHeld = false;
-        DashPressed = false;
-
-        LightAttackPressed = false;
-        HeavyAttackPressed = false;
-        BlockHeld = false;
-        ParryPressed = false;
-
-        AbilityQPressed = false;
-        AbilityZPressed = false;
-        AbilityXPressed = false;
-        AbilityCPressed = false;
-        AbilityVPressed = false;
-
-        Hotbar1Pressed = false;
-        Hotbar2Pressed = false;
-        Hotbar3Pressed = false;
-        Hotbar4Pressed = false;
-        Hotbar5Pressed = false;
-        Hotbar6Pressed = false;
-        Hotbar7Pressed = false;
-        Hotbar8Pressed = false;
+        JumpPressed = JumpHeld = SprintHeld = DashPressed = false;
+        LightAttackPressed = HeavyAttackPressed = BlockHeld = ParryPressed = false;
+        AbilityQPressed = AbilityZPressed = AbilityXPressed =
+            AbilityCPressed = AbilityVPressed = false;
+        Hotbar1Pressed = Hotbar2Pressed = Hotbar3Pressed = Hotbar4Pressed =
+        Hotbar5Pressed = Hotbar6Pressed = Hotbar7Pressed = Hotbar8Pressed =
         Hotbar9Pressed = false;
 
-        for (int i = 0; i < _hotbarHeldTime.Length; i++) _hotbarHeldTime[i] = 0f;
+        Array.Clear(_centreHeldTime, 0, _centreHeldTime.Length);
+        Array.Clear(_bottomLeftHeldTime, 0, _bottomLeftHeldTime.Length);
+        Array.Clear(_bottomRightHeldTime, 0, _bottomRightHeldTime.Length);
 
         InteractPressed = false;
     }
 
     // ========================================
-    // Player Mode - Movement Input
+    // Movement Helpers
     // ========================================
 
     private MovementInput GetPlayerMovementInput()
     {
-        Vector2 rawInput = MoveInput;
-
-        // Transform to camera space if enabled
-        Vector2 moveDirection = cameraRelativeMovement
-            ? TransformInputToCameraSpace(rawInput)
-            : rawInput;
-
-        // Calculate look direction
-        Vector2 lookDirection = CalculateLookDirection(moveDirection);
+        Vector2 raw = MoveInput;
+        Vector2 moveDir = cameraRelativeMovement ? TransformToCameraSpace(raw) : raw;
+        Vector2 lookDir = CalculateLookDirection(moveDir);
 
         return new MovementInput
         {
-            MoveDirection = moveDirection,
-            LookDirection = lookDirection,
+            MoveDirection = moveDir,
+            LookDirection = lookDir,
             Sprint = SprintHeld,
             Jump = JumpPressed,
             Dash = DashPressed
         };
     }
 
-    private Vector2 TransformInputToCameraSpace(Vector2 rawInput)
+    private Vector2 TransformToCameraSpace(Vector2 raw)
     {
-        if (rawInput.magnitude < 0.01f)
-            return Vector2.zero;
+        if (raw.magnitude < 0.01f) return Vector2.zero;
 
-        Transform cameraTransform = cameraProvider?.CameraTransform;
+        Transform cam = cameraProvider?.CameraTransform ?? Camera.main?.transform;
+        if (cam == null) return raw;
 
-        // Fallback to Camera.main
-        if (cameraTransform == null)
-        {
-            Camera mainCam = Camera.main;
-            if (mainCam == null)
-                return rawInput;
+        Vector3 fwd = cam.forward; fwd.y = 0f; fwd.Normalize();
+        Vector3 right = cam.right; right.y = 0f; right.Normalize();
 
-            cameraTransform = mainCam.transform;
-        }
-
-        Vector3 cameraForward = cameraTransform.forward;
-        Vector3 cameraRight = cameraTransform.right;
-
-        cameraForward.y = 0f;
-        cameraRight.y = 0f;
-        cameraForward.Normalize();
-        cameraRight.Normalize();
-
-        Vector3 moveDirection = cameraForward * rawInput.y + cameraRight * rawInput.x;
-
-        return new Vector2(moveDirection.x, moveDirection.z);
+        Vector3 dir = fwd * raw.y + right * raw.x;
+        return new Vector2(dir.x, dir.z);
     }
 
-    private Vector2 CalculateLookDirection(Vector2 moveDirection)
+    private Vector2 CalculateLookDirection(Vector2 moveDir)
     {
-        // Lock-on: look at target
         if (targetLock != null && targetLock.IsLockedOn)
         {
-            Vector3 directionToTarget = targetLock.LockedTarget.position - brain.transform.position;
-            directionToTarget.y = 0f;
-
-            if (directionToTarget.magnitude > 0.1f)
+            Vector3 toTarget = targetLock.LockedTarget.position - brain.transform.position;
+            toTarget.y = 0f;
+            if (toTarget.magnitude > 0.1f)
             {
-                directionToTarget.Normalize();
-                return new Vector2(directionToTarget.x, directionToTarget.z);
+                toTarget.Normalize();
+                return new Vector2(toTarget.x, toTarget.z);
             }
         }
 
-        // Free movement: look in movement direction
-        if (moveDirection.magnitude > 0.1f)
-            return moveDirection;
-
-        return Vector2.zero;
+        return moveDir.magnitude > 0.1f ? moveDir : Vector2.zero;
     }
-
-    // ========================================
-    // AI Mode - Movement Input
-    // ========================================
 
     private MovementInput GetAIMovementInput()
     {
-        if (pathfinding == null || !pathfinding.HasPath)
-            return MovementInput.Zero;
+        // Prefer stub AI control source if available (for NPCs without pathfinding)
+        if (stubAIControlSource != null)
+            return stubAIControlSource.GetMovementInput();
 
-        // Get direction to next path point
-        Vector3 nextPosition = pathfinding.GetNextPathPosition();
-        Vector3 directionToNext = nextPosition - brain.transform.position;
-        directionToNext.y = 0f;
+        // Fall back to pathfinding if available
+        if (pathfinding == null || !pathfinding.HasPath) return MovementInput.Zero;
 
-        if (directionToNext.magnitude < 0.1f)
-            return MovementInput.Zero;
+        Vector3 next = pathfinding.GetNextPathPosition();
+        Vector3 dir = next - brain.transform.position;
+        dir.y = 0f;
 
-        directionToNext.Normalize();
-        Vector2 moveDirection = new Vector2(directionToNext.x, directionToNext.z);
+        if (dir.magnitude < 0.1f) return MovementInput.Zero;
+
+        dir.Normalize();
+        Vector2 moveDir = new Vector2(dir.x, dir.z);
 
         return new MovementInput
         {
-            MoveDirection = moveDirection,
-            LookDirection = moveDirection,
-            Sprint = false, // TODO: AI sprint logic
-            Jump = false,   // TODO: AI jump logic
+            MoveDirection = moveDir,
+            LookDirection = moveDir,
+            Sprint = false,
+            Jump = false,
             Dash = false
         };
     }
 
-    // ========================================
-    // Admin Mode - Movement Input
-    // ========================================
-
     private MovementInput GetAdminMovementInput()
     {
-        // TODO: Implement admin scripted movement
+        // TODO: scripted admin movement
         return MovementInput.Zero;
     }
 
+
     // ========================================
-    // Player Mode - Ability Input
+    // Keybind Routing Query
     // ========================================
 
-    private string GetPlayerAbilityInput()
+    /// <summary>
+    /// Returns the keybind set assigned to the given bar.
+    /// Used by ActionBarView to generate per-slot key labels.
+    /// </summary>
+    public HotbarKeybindSet GetKeybindSetForBar(string barId)
     {
-        // Check basic attack
-        if (LightAttackPressed)
-            return "BasicAttack";
-
-        // Check quickslots
-        if (AbilityQPressed) return "Q";
-        if (AbilityZPressed) return "Z";
-        if (AbilityXPressed) return "X";
-        if (AbilityCPressed) return "C";
-        if (AbilityVPressed) return "V";
-
-        return null;
+        switch (barId)
+        {
+            case "centre": return centreBarKeybinds;
+            case "bottomLeft": return bottomLeftKeybinds;
+            case "bottomRight": return bottomRightKeybinds;
+            default: return HotbarKeybindSet.None;
+        }
     }
-
     // ========================================
-    // AI Mode - Ability Input
-    // ========================================
-
-    private string GetAIAbilityInput()
-    {
-        // Return and clear queued ability
-        string slot = aiRequestedAbility;
-        aiRequestedAbility = null;
-        return slot;
-    }
-
-    // ========================================
-    // Admin Mode - Ability Input
-    // ========================================
-
-    private string GetAdminAbilityInput()
-    {
-        // TODO: Implement admin scripted abilities
-        return null;
-    }
-
-    // ========================================
-    // Debug Visualization
+    // Debug
     // ========================================
 
     private void OnGUI()
     {
         if (!showDebugInfo || !Application.isPlaying) return;
 
-        GUILayout.BeginArea(new Rect(10, 10, 300, 150));
+        GUILayout.BeginArea(new Rect(10, 10, 300, 180));
         GUILayout.Label("=== INPUT SYSTEM ===");
-        GUILayout.Label($"Mode: {currentMode}");
-        GUILayout.Label($"Active: {IsActive}");
-        GUILayout.Label($"Move: {MoveInput}");
-        GUILayout.Label($"Sprint: {SprintHeld}");
-        GUILayout.Label($"Jump: {JumpPressed}");
+        GUILayout.Label($"Mode:        {currentMode}");
+        GUILayout.Label($"Active:      {IsActive}");
+        GUILayout.Label($"Move:        {MoveInput}");
+        GUILayout.Label($"Sprint:      {SprintHeld}   Jump: {JumpPressed}");
+        GUILayout.Label($"Centre:      {centreBarKeybinds}");
+        GUILayout.Label($"BottomLeft:  {bottomLeftKeybinds}");
+        GUILayout.Label($"BottomRight: {bottomRightKeybinds}");
         GUILayout.EndArea();
     }
 
-    // No OnDestroy needed - Brain owns and cleans up PlayerInputControls
+    // No OnDestroy needed — Brain owns and cleans up PlayerInputControls
 }

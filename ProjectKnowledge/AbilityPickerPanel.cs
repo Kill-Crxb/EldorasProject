@@ -16,16 +16,16 @@ public class AbilityPickerPanel : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private RectTransform entryContainer;
-    [SerializeField] private GameObject    entryPrefab;
-    [SerializeField] private ScrollRect    scrollRect;
+    [SerializeField] private GameObject entryPrefab;
+    [SerializeField] private ScrollRect scrollRect;
 
     [Header("Static Slot List")]
     [Tooltip("Drag AbilitySlotData SOs here. Supplemented at runtime by RuntimeAbilityManager.")]
     [SerializeField] private List<AbilitySlotData> staticSlotList = new List<AbilitySlotData>();
 
     private HotbarSystem hotbarSystem;
-    private string       targetBarId;
-    private bool         isOpen;
+    private string targetBarId;
+    private bool isOpen;
 
     private readonly List<AbilityPickerEntry> spawnedEntries = new List<AbilityPickerEntry>();
 
@@ -41,8 +41,8 @@ public class AbilityPickerPanel : MonoBehaviour
     public void Open(HotbarSystem hotbar, string barId)
     {
         hotbarSystem = hotbar;
-        targetBarId  = barId;
-        isOpen       = true;
+        targetBarId = barId;
+        isOpen = true;
         gameObject.SetActive(true);
         Refresh();
     }
@@ -132,10 +132,10 @@ public class AbilityPickerEntry : MonoBehaviour,
     IDragHandler,
     IEndDragHandler
 {
-    [SerializeField] private Image           iconImage;
+    [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI nameText;
 
-    public AbilitySlotData   SlotData   { get; private set; }
+    public AbilitySlotData SlotData { get; private set; }
     public AbilityDefinition AbilityDef { get; private set; }
 
     // IHotbarDraggable — resolves Ability from SlotData chain or raw AbilityDef
@@ -144,37 +144,42 @@ public class AbilityPickerEntry : MonoBehaviour,
     ItemInstance IHotbarDraggable.Item => null;
 
     private RectTransform rt;
-    private CanvasGroup   canvasGroup;
-    private Transform     originalParent;
-    private Vector2       originalPosition;
+    private CanvasGroup canvasGroup;
+    private Transform originalParent;
+    private Vector2 originalPosition;
 
     void Awake()
     {
-        rt          = GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
-        canvasGroup = GetComponent<CanvasGroup>()   ?? gameObject.AddComponent<CanvasGroup>();
+        rt = GetComponent<RectTransform>() ?? gameObject.AddComponent<RectTransform>();
+        canvasGroup = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+
+        if (iconImage != null)
+        {
+            iconImage.raycastTarget = false;
+        }
     }
 
     public void Initialize(AbilitySlotData slotData, AbilityDefinition abilityDef)
     {
-        SlotData   = slotData;
+        SlotData = slotData;
         AbilityDef = abilityDef;
 
-        Sprite icon  = slotData?.GetDisplayIcon() ?? abilityDef?.icon;
-        string label = slotData?.slotName         ?? abilityDef?.abilityName ?? "—";
+        Sprite icon = slotData?.GetDisplayIcon() ?? abilityDef?.icon;
+        string label = slotData?.slotName ?? abilityDef?.abilityName ?? "—";
 
         if (iconImage != null) { iconImage.sprite = icon; iconImage.enabled = icon != null; }
-        if (nameText  != null) nameText.text = label;
+        if (nameText != null) nameText.text = label;
     }
 
     public void OnBeginDrag(PointerEventData e)
     {
-        originalParent   = transform.parent;
+        originalParent = transform.parent;
         originalPosition = rt.anchoredPosition;
 
         var root = GetComponentInParent<Canvas>();
         if (root != null) { transform.SetParent(root.transform, true); transform.SetAsLastSibling(); }
 
-        canvasGroup.alpha          = 0.65f;
+        canvasGroup.alpha = 0.65f;
         canvasGroup.blocksRaycasts = false;
     }
 
@@ -187,7 +192,7 @@ public class AbilityPickerEntry : MonoBehaviour,
 
     public void OnEndDrag(PointerEventData e)
     {
-        canvasGroup.alpha          = 1f;
+        canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
         transform.SetParent(originalParent, true);
         rt.anchoredPosition = originalPosition;

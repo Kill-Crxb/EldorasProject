@@ -2,11 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// HUD MonoBehaviour for one action bar (centre, bottomLeft, or bottomRight).
-/// Always visible — not registered with UIWindowManager.
-/// Resolves the player brain via SaveManager.PlayerBrain on load completion.
-/// </summary>
 public class ActionBarView : MonoBehaviour
 {
     [Header("Identity")]
@@ -21,6 +16,7 @@ public class ActionBarView : MonoBehaviour
     [SerializeField] private Button pickerToggleButton;
     [SerializeField] private AbilityPickerPanel abilityPickerPanel;
 
+    private ControllerBrain playerBrain;
     private HotbarSystem hotbarSystem;
     private SlotTransformationSystem transformSystem;
     private readonly List<ActionBarSlotView> slotViews = new List<ActionBarSlotView>();
@@ -44,46 +40,30 @@ public class ActionBarView : MonoBehaviour
         GameEvents.OnLoadCompleted -= HandleLoadCompleted;
 
         if (hotbarSystem != null)
-        {
             hotbarSystem.OnSlotChanged -= HandleSlotChanged;
-        }
-        if (transformSystem != null)
-        {
-            transformSystem.OnOverrideChanged -= HandleOverrideChanged;
-        }
-    }
 
-    // ── Connection ───────────────────────────────────────────────────────
+        if (transformSystem != null)
+            transformSystem.OnOverrideChanged -= HandleOverrideChanged;
+    }
 
     private void HandleLoadCompleted()
     {
         GameEvents.OnLoadCompleted -= HandleLoadCompleted;
 
-        var playerBrain = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
-        if (playerBrain == null)
-        {
-            Debug.LogWarning($"[ActionBarView:{barId}] PlayerBrain not available at load completion.");
-            return;
-        }
+        playerBrain = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
+        if (playerBrain == null) return;
 
-        hotbarSystem  = playerBrain.GetModule<HotbarSystem>();
+        hotbarSystem = playerBrain.GetModule<HotbarSystem>();
         transformSystem = playerBrain.GetModule<SlotTransformationSystem>();
 
-        if (hotbarSystem == null)
-        {
-            Debug.LogWarning($"[ActionBarView:{barId}] No HotbarSystem on player brain.");
-            return;
-        }
+        if (hotbarSystem == null) return;
 
         hotbarSystem.OnSlotChanged += HandleSlotChanged;
-
         if (transformSystem != null)
             transformSystem.OnOverrideChanged += HandleOverrideChanged;
 
         Refresh();
     }
-
-    // ── Layout ───────────────────────────────────────────────────────────
 
     private void Refresh()
     {
@@ -95,26 +75,40 @@ public class ActionBarView : MonoBehaviour
         if (gridLayoutGroup != null)
             gridLayoutGroup.constraintCount = config.ColumnsPerRow;
 
-        // Grow
-        while (slotViews.Count < config.slotCount)
+        ResizeSlotViews(config.slotCount);
+        SetupSlotViews(config);
+    }
+
+    private void ResizeSlotViews(int targetCount)
+    {
+        while (slotViews.Count < targetCount)
         {
+            Transform parent = gridLayoutGroup != null ? gridLayoutGroup.transform : transform;
             var view = slotViewPrefab != null
-                ? Instantiate(slotViewPrefab, transform)
-                : CreateFallbackSlotView();
+                ? Instantiate(slotViewPrefab, parent)
+                : CreateFallbackSlotView(parent);
             slotViews.Add(view);
         }
 
-        // Shrink
-        while (slotViews.Count > config.slotCount)
+        while (slotViews.Count > targetCount)
         {
             int last = slotViews.Count - 1;
             Destroy(slotViews[last].gameObject);
             slotViews.RemoveAt(last);
         }
+    }
+
+    private void SetupSlotViews(ActionBarConfig config)
+    {
+        var inputSystem = playerBrain?.GetModule<InputSystem>();
+        HotbarKeybindSet keybindSet = inputSystem != null
+            ? inputSystem.GetKeybindSetForBar(barId)
+            : HotbarKeybindSet.None;
 
         for (int i = 0; i < config.slotCount; i++)
         {
-            slotViews[i].Setup(barId, i, hotbarSystem, transformSystem);
+            string label = GetKeyLabel(keybindSet, i);
+            slotViews[i].Setup(barId, i, hotbarSystem, transformSystem, label);
             slotViews[i].Refresh();
         }
     }
@@ -131,15 +125,32 @@ public class ActionBarView : MonoBehaviour
         slotViews[index].Refresh();
     }
 
-    // ── Fallback ─────────────────────────────────────────────────────────
-
-    private ActionBarSlotView CreateFallbackSlotView()
+    private ActionBarSlotView CreateFallbackSlotView(Transform parent)
     {
         var go = new GameObject("SlotView");
-        go.transform.SetParent(transform, false);
+        go.transform.SetParent(parent, false);
         var rt = go.AddComponent<RectTransform>();
         rt.sizeDelta = new Vector2(64, 64);
         go.AddComponent<UnityEngine.UI.Image>().color = new Color(0.15f, 0.15f, 0.15f, 0.9f);
         return go.AddComponent<ActionBarSlotView>();
+    }
+
+    private static string GetKeyLabel(HotbarKeybindSet set, int i)
+    {
+        switch (set)
+        {
+            case HotbarKeybindSet.ZXCV:
+                return i switch { 0 => "Z", 1 => "X", 2 => "C", 3 => "V", _ => "" };
+            case HotbarKeybindSet.Hotbar1234:
+                return i switch { 0 => "1", 1 => "2", 2 => "3", 3 => "4", _ => "" };
+            case HotbarKeybindSet.Hotbar5678:
+                return i switch { 0 => "5", 1 => "6", 2 => "7", 3 => "8", _ => "" };
+            case HotbarKeybindSet.Hotbar9:
+                return i == 0 ? "9" : "";
+            case HotbarKeybindSet.QuickslotQ:
+                return i == 0 ? "Q" : "";
+            default:
+                return "";
+        }
     }
 }

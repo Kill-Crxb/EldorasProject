@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99d87ec8b324c0d4c879b838e3b2ab5c, type: 3}
+  m_Name: NPCSpawnConfig_NatureSpirit
+  m_EditorClassIdentifier: Assembly-CSharp::NPCSpawnConfig
+  spawnConfigId: npc_nature_spirit_01
+  displayName: Nature Spirit
+  prefab: {fileID: 4161431986582699676, guid: dc71cdd5d88c18b46a75a83e2e707e21, type: 3}
+  archetype: {fileID: 11400000, guid: 10507c4779efbdc45829d883abf69be9, type: 2}
+  useRandomVariant: 0
+  variants: []
+  spawnLevel: -1
