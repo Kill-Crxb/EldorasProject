@@ -62,4 +62,5 @@ public struct BlackboardKey
     public static readonly int IsExecutingAbility = "IsExecutingAbility".GetHashCode();
     public static readonly int IsInvincible       = "IsInvincible".GetHashCode();
     public static readonly int IsBlocking         = "IsBlocking".GetHashCode();
+    public static readonly int IsInConversation   = "IsInConversation".GetHashCode();
 }

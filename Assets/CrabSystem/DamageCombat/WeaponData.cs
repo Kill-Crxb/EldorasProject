@@ -15,8 +15,6 @@ public class WeaponData : ScriptableObject
     public string weaponName = "My Sword";
     public WeaponType weaponType = WeaponType.Sword;
     public WeaponCategory category = WeaponCategory.Manufactured;
-    public float attackSpeed = 1.2f;
-    public float reach = 2f;
 
     [Header("Dice Damage")]
     [Tooltip("Dice expression rolled on each hit — e.g. 1d8 for a longsword, 1d4 for a dagger")]
@@ -31,25 +29,6 @@ public class WeaponData : ScriptableObject
 
     [Tooltip("For natural weapons: specific socket name (e.g. 'LeftClaw', 'RightClaw', 'Jaw')")]
     public string preferredSocketName = "";
-
-    [Header("Stamina Costs")]
-    public float lightAttackStamina = 15f;
-    public float heavyAttackStamina = 30f;
-    public float blockStamina = 5f;
-
-    [Header("Combat Properties")]
-    public bool canBlock = true;
-    public bool canParry = true;
-    public bool hasCombos = true;
-    public int maxComboCount = 3;
-
-    [Header("Visual")]
-    public GameObject weaponModel;
-    public Transform weaponSocket;
-
-    [Header("Effects")]
-    public ParticleSystem attackEffect;
-    public AudioClip[] attackSounds;
 
     /// <summary>
     /// Roll the weapon's damage expression and add the flat bonus.

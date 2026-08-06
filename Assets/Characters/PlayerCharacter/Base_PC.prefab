@@ -56,6 +56,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2134284767731574623}
   - component: {fileID: 8623906753414368579}
+  - component: {fileID: 9196161261799337341}
   m_Layer: 8
   m_Name: Camera_System
   m_TagString: Untagged
@@ -92,12 +93,36 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraModule
   cameraTransform: {fileID: 2773566987605302999}
-  distance: 1.3
-  pivotHeight: 1.5
-  shoulderOffset: 0.4
-  sensitivity: 0.15
-  minPitch: -35
-  maxPitch: 60
+  modes:
+  - modeName: Default
+    distance: 1.3
+    pivotHeight: 1.5
+    shoulderOffset: 0.4
+    sensitivity: 0.15
+    minPitch: -35
+    maxPitch: 60
+  - modeName: Dialogue
+    distance: 0.6
+    pivotHeight: 1.6
+    shoulderOffset: 0.4
+    sensitivity: 0.05
+    minPitch: -20
+    maxPitch: 30
+  startingMode: Default
+  modeBlendDuration: 0.35
+--- !u!114 &9196161261799337341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 161205504405089135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 168f8c90f484def40b792522832b58ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraEventListener
+  cameraModule: {fileID: 8623906753414368579}
 --- !u!1 &783313110572476356
 GameObject:
   m_ObjectHideFlags: 0
@@ -261,6 +286,7 @@ MonoBehaviour:
   blackboardSystem: {fileID: 4115196387130392266}
   inventorySystem: {fileID: 4136185658555715558}
   interactionSystem: {fileID: 440392200595385103}
+  dialogueSystem: {fileID: 0}
   hotbarSystem: {fileID: 8064901073675467688}
   slotTransformationSystem: {fileID: 3195358102234684433}
   entityType: 1
@@ -879,7 +905,7 @@ MonoBehaviour:
     slots: 4
     rows: 1
   bottomRightBarDefault:
-    slots: 4
+    slots: 2
     rows: 1
 --- !u!114 &3195358102234684433
 MonoBehaviour:
@@ -1198,7 +1224,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4161431986582699676}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fd1ebc00549b3f46b22cffaa294ebd8, type: 3}
   m_Name: 
@@ -1221,7 +1247,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4161431986582699676}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51daacfa5a59fcb4ab97cd8ffcff1473, type: 3}
   m_Name: 
@@ -1445,8 +1471,10 @@ MonoBehaviour:
   starterAbilities:
   - {fileID: 11400000, guid: c00c31af8a0f0144382988ff6732bc2f, type: 2}
   - {fileID: 11400000, guid: 145f5201e275f5f4e8f69e41dbc252dd, type: 2}
-  - {fileID: 11400000, guid: 49c2728a353b84c4e8512baa68b2e3fb, type: 2}
+  - {fileID: 11400000, guid: e0b8950eaa9a4c042a3a791b7090f723, type: 2}
   - {fileID: 11400000, guid: cade32b5cb7943b4280aa263e6ce9568, type: 2}
+  - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
+  - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
 --- !u!114 &1267513654726929429
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1469,6 +1497,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8500912184580402166}
   - component: {fileID: 440392200595385103}
+  - component: {fileID: 5958888855205514763}
   m_Layer: 8
   m_Name: Interaction_System
   m_TagString: Untagged
@@ -1485,7 +1514,7 @@ Transform:
   m_GameObject: {fileID: 4473629046579420901}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1508,6 +1537,7 @@ MonoBehaviour:
   interactionAction: 0
   interactionRange: 2
   canInteractMultipleTimes: 0
+  interactionCollider: {fileID: 0}
   detectionRadius: 2
   detectionInterval: 0.2
   detectionLayer:
@@ -1520,6 +1550,27 @@ MonoBehaviour:
   OnDirectInteraction:
     m_PersistentCalls:
       m_Calls: []
+--- !u!135 &5958888855205514763
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4473629046579420901}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.5
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &4536920560882079103
 GameObject:
   m_ObjectHideFlags: 0

@@ -209,12 +209,6 @@ public class ItemInstance
 
         // Apply legacy runtime modifiers
         ApplyLegacyModifiers(statSystem);
-
-        // Apply new stat modifiers (Phase 3 system)
-        ApplyNewStatModifiers(statSystem);
-
-        // Apply resource modifiers (Phase 3 system)
-        ApplyResourceModifiers(resourceSystem);
     }
 
     private void ApplyLegacyModifiers(StatSystem statSystem)
@@ -244,31 +238,6 @@ public class ItemInstance
         }
     }
 
-    private void ApplyNewStatModifiers(StatSystem statSystem)
-    {
-        // Guard clause: No new modifiers
-        if (cachedDefinition.statModifiers == null) return;
-
-        foreach (var modifier in cachedDefinition.statModifiers)
-        {
-            modifier.ApplyToStatEngine(statSystem.Engine, instanceId);
-        }
-    }
-
-    private void ApplyResourceModifiers(ResourceSystem resourceSystem)
-    {
-        // Guard clause: No resource system provided
-        if (resourceSystem == null) return;
-
-        // Guard clause: No resource modifiers
-        if (cachedDefinition.resourceModifiers == null) return;
-
-        foreach (var modifier in cachedDefinition.resourceModifiers)
-        {
-            modifier.ApplyToResourceSystem(resourceSystem, instanceId);
-        }
-    }
-
     public void RemoveFromStatsSystem(StatSystem statSystem, ResourceSystem resourceSystem = null)
     {
         // Guard clause: Need stat system
@@ -276,17 +245,6 @@ public class ItemInstance
 
         // Remove stat modifiers
         statSystem.Engine.RemoveAllModifiersFromSource(instanceId);
-
-        // Guard clause: No resource system
-        if (resourceSystem == null) return;
-
-        // Guard clause: No resource modifiers
-        if (cachedDefinition?.resourceModifiers == null) return;
-
-        foreach (var modifier in cachedDefinition.resourceModifiers)
-        {
-            modifier.RemoveFromResourceSystem(resourceSystem, instanceId);
-        }
     }
 }
 

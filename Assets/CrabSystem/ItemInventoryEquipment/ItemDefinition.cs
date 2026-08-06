@@ -60,31 +60,6 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("Dice damage and combat stats for this weapon (null for non-weapons)")]
     public WeaponData weaponData;
 
-    [Header("Stats & Resources")]
-    [Tooltip("Stat modifications (armor, attack power, etc.)")]
-    public ItemStatModifier[] statModifiers;
-
-    [Tooltip("Resource modifications (max health, mana regen, etc.)")]
-    public ItemResourceModifier[] resourceModifiers;
-
-    [Header("Abilities")]
-    [Tooltip("Abilities granted by this item (equipment/consumables)")]
-    public GrantedAbilityData[] grantedAbilities;
-
-    [Header("Moveset Override (Weapons)")]
-    [Tooltip("Override base type's default combo (null = use base type)")]
-    public AbilityDefinition[] customCombo;
-
-    [Tooltip("Override base type's default defense (null = use base type)")]
-    public AbilityDefinition customDefense;
-
-    [Tooltip("Additional special abilities unique to this weapon")]
-    public AbilityDefinition[] customSpecials;
-
-    [Header("Upgrade System")]
-    [Tooltip("Upgrade slots for this item (0-N slots, each with specific type)")]
-    public ItemUpgradeSlot[] upgradeSlots;
-
     [Header("Advanced")]
     [Tooltip("Item rarity level")]
     public ItemRarity rarity = ItemRarity.Common;
@@ -158,63 +133,6 @@ public class ItemDefinition : ScriptableObject
     // ========================================
     // Helpers
     // ========================================
-
-    public AbilityDefinition[] GetAllAbilities()
-    {
-        var allAbilities = new List<AbilityDefinition>();
-
-        if (baseType != null)
-        {
-            if (customCombo != null && customCombo.Length > 0)
-                allAbilities.AddRange(customCombo);
-            else if (baseType.defaultCombo != null)
-                allAbilities.AddRange(baseType.defaultCombo);
-
-            if (customDefense != null)
-                allAbilities.Add(customDefense);
-            else if (baseType.defaultDefense != null)
-                allAbilities.Add(baseType.defaultDefense);
-
-            if (baseType.defaultSpecials != null)
-                allAbilities.AddRange(baseType.defaultSpecials);
-        }
-
-        if (customSpecials != null)
-            allAbilities.AddRange(customSpecials);
-
-        if (grantedAbilities != null)
-        {
-            foreach (var granted in grantedAbilities)
-            {
-                if (granted.ability != null)
-                    allAbilities.Add(granted.ability);
-            }
-        }
-
-        return allAbilities.ToArray();
-    }
-
-    public AbilityDefinition[] GetComboAbilities()
-    {
-        if (customCombo != null && customCombo.Length > 0)
-            return customCombo;
-
-        if (baseType != null && baseType.defaultCombo != null)
-            return baseType.defaultCombo;
-
-        return new AbilityDefinition[0];
-    }
-
-    public AbilityDefinition GetDefenseAbility()
-    {
-        if (customDefense != null)
-            return customDefense;
-
-        if (baseType != null)
-            return baseType.defaultDefense;
-
-        return null;
-    }
 
     public bool HasTag(string tag) => tags != null && tags.Contains(tag);
 

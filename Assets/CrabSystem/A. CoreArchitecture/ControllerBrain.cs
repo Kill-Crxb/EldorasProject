@@ -36,6 +36,7 @@ public class ControllerBrain : MonoBehaviour
     [SerializeField] private BlackboardSystem blackboardSystem;
     [SerializeField] private InventorySystem inventorySystem;
     [SerializeField] private InteractionSystem interactionSystem;
+    [SerializeField] private DialogueSystem dialogueSystem;
     [SerializeField] private HotbarSystem hotbarSystem;
     [SerializeField] private SlotTransformationSystem slotTransformationSystem;
 
@@ -90,6 +91,7 @@ public class ControllerBrain : MonoBehaviour
     public BlackboardSystem BlackboardModule => blackboardSystem;
     public InventorySystem Inventory => inventorySystem;
     public InteractionSystem Interaction => interactionSystem;
+    public DialogueSystem Dialogue => dialogueSystem;
     public HotbarSystem Hotbar => hotbarSystem;
     public SlotTransformationSystem SlotTransform => slotTransformationSystem;
 
@@ -210,7 +212,11 @@ public class ControllerBrain : MonoBehaviour
         if (identitySystem != null) providerCache[typeof(IdentitySystem)] = identitySystem;
         if (factionSystem != null) providerCache[typeof(FactionSystem)] = factionSystem;
         if (modelModule != null) providerCache[typeof(ModelModule)] = modelModule;
-        if (stateMachineModule != null) providerCache[typeof(StateMachineModule)] = stateMachineModule;
+        if (stateMachineModule != null)
+        {
+            providerCache[typeof(StateMachineModule)] = stateMachineModule;
+            providerCache[typeof(IStateProvider)] = stateMachineModule;
+        }
         if (statSystem != null) providerCache[typeof(StatSystem)] = statSystem;
 
         if (inputSystem != null)
@@ -254,6 +260,7 @@ public class ControllerBrain : MonoBehaviour
             providerCache[typeof(IInventoryProvider)] = inventorySystem;
         }
         if (interactionSystem != null) providerCache[typeof(InteractionSystem)] = interactionSystem;
+        if (dialogueSystem != null) providerCache[typeof(DialogueSystem)] = dialogueSystem;
         if (hotbarSystem != null) providerCache[typeof(HotbarSystem)] = hotbarSystem;
         if (slotTransformationSystem != null) providerCache[typeof(SlotTransformationSystem)] = slotTransformationSystem;
         if (cameraModule != null) providerCache[typeof(ICameraProvider)] = cameraModule;
@@ -297,6 +304,7 @@ public class ControllerBrain : MonoBehaviour
         InitOrdered(inventorySystem);
         InitOrdered(rpgSystem);
         InitOrdered(interactionSystem);
+        InitOrdered(dialogueSystem);
         InitOrdered(hotbarSystem);
         InitOrdered(slotTransformationSystem);
 

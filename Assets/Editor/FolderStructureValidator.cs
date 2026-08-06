@@ -202,8 +202,6 @@ public class FolderStructureValidator : AssetPostprocessor
             { "ItemBaseType.cs",                "ItemInventoryEquipment" },
             { "ItemCatagory.cs",                "ItemInventoryEquipment" },
             { "ItemSubtype.cs",                 "ItemInventoryEquipment" },
-            { "ItemStatModifier.cs",            "ItemInventoryEquipment" },
-            { "ItemResourceModifier.cs",        "ItemInventoryEquipment" },
             { "ItemUpgradeSlot.cs",             "ItemInventoryEquipment" },
             { "UpgradeslotDefinition.cs",       "ItemInventoryEquipment" },
             { "InventoryGridData.cs",           "ItemInventoryEquipment" },
@@ -269,7 +267,6 @@ public class FolderStructureValidator : AssetPostprocessor
             { "AbilityLoadoutConfiguration.cs", "Abilities" },
             { "AbilitySlotData.cs",             "Abilities" },
             { "RuntimeAbilityManager.cs",       "Abilities" },
-            { "GrantedAbilityData.cs",          "Abilities" },
             { "IAbilityProvider.cs",            "Abilities" },
             { "IAbilityControlSource.cs",       "Abilities" },
 

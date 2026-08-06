@@ -36,6 +36,19 @@ public static class GameEvents
 
     #endregion
 
+    #region Camera
+
+    public static event Action<string> OnCameraModeChangeRequested;
+
+    #endregion
+
+    #region Dialogue
+
+    public static event Action<ControllerBrain, ControllerBrain> OnDialogueStarted;
+    public static event Action<ControllerBrain> OnDialogueEnded;
+
+    #endregion
+
     #region Invoke Helpers
 
     public static void CharacterSelected(string characterId) =>
@@ -65,6 +78,15 @@ public static class GameEvents
     public static void ItemEquipped(EquipmentSlotDefinition slot, ItemInstance item) =>
         OnItemEquipped?.Invoke(slot, item);
 
+    public static void CameraModeChangeRequested(string modeName) =>
+        OnCameraModeChangeRequested?.Invoke(modeName);
+
+    public static void DialogueStarted(ControllerBrain npc, ControllerBrain actor) =>
+        OnDialogueStarted?.Invoke(npc, actor);
+
+    public static void DialogueEnded(ControllerBrain npc) =>
+        OnDialogueEnded?.Invoke(npc);
+
     #endregion
 
     #region Scene Cleanup
@@ -80,6 +102,9 @@ public static class GameEvents
         OnCharacterConfigDataReady = null;
         OnHotbarSlotChanged = null;
         OnItemEquipped = null;
+        OnCameraModeChangeRequested = null;
+        OnDialogueStarted = null;
+        OnDialogueEnded = null;
     }
 
     #endregion

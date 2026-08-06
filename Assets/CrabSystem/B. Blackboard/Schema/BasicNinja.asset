@@ -140,3 +140,9 @@ MonoBehaviour:
     defaultBool: 0
     defaultFloat: 0
     defaultInt: 0
+  - keyName: IsDialogue
+    type: 0
+    description: Speaking with someone.
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0

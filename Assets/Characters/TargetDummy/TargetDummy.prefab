@@ -1512,6 +1512,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8500912184580402166}
   - component: {fileID: 440392200595385103}
+  - component: {fileID: 5014279151046923384}
   m_Layer: 8
   m_Name: Interaction_System
   m_TagString: Untagged
@@ -1551,6 +1552,7 @@ MonoBehaviour:
   interactionAction: 0
   interactionRange: 2
   canInteractMultipleTimes: 0
+  interactionCollider: {fileID: 5014279151046923384}
   detectionRadius: 2
   detectionInterval: 0.2
   detectionLayer:
@@ -1563,6 +1565,27 @@ MonoBehaviour:
   OnDirectInteraction:
     m_PersistentCalls:
       m_Calls: []
+--- !u!135 &5014279151046923384
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4473629046579420901}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4536920560882079103
 GameObject:
   m_ObjectHideFlags: 0
@@ -1830,12 +1853,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraModule
   cameraTransform: {fileID: 2956264965644508688}
-  distance: 1.3
-  pivotHeight: 1.5
-  shoulderOffset: 0.4
-  sensitivity: 0.15
-  minPitch: -35
-  maxPitch: 60
+  modes:
+  - modeName: Default
+    distance: 1.3
+    pivotHeight: 1.5
+    shoulderOffset: 0.4
+    sensitivity: 0.15
+    minPitch: -35
+    maxPitch: 60
+  - modeName: Dialogue
+    distance: 0.6
+    pivotHeight: 1.6
+    shoulderOffset: 0.2
+    sensitivity: 0.05
+    minPitch: -20
+    maxPitch: 30
+  startingMode: Default
+  modeBlendDuration: 0.35
 --- !u!1 &7591293930480927091
 GameObject:
   m_ObjectHideFlags: 0

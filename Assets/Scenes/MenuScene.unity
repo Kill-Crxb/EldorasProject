@@ -650,6 +650,9 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1779959144}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6152882890618554971, guid: b440a694e0289e249a4db35ccb7049c2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1019659087}
     - targetCorrespondingSourceObject: {fileID: 8121711244561305628, guid: b440a694e0289e249a4db35ccb7049c2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1998768411}
@@ -11982,6 +11985,23 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f718a10845157ee4da4f4604313f78e8, type: 3}
+--- !u!1 &1019659085 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6152882890618554971, guid: b440a694e0289e249a4db35ccb7049c2, type: 3}
+  m_PrefabInstance: {fileID: 123419250}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1019659087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1019659085}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c929f6d20be622f43a2b327af895b321, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueUIListener
 --- !u!1 &1027020644
 GameObject:
   m_ObjectHideFlags: 0

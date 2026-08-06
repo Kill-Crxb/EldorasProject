@@ -176,6 +176,7 @@ Transform:
   - {fileID: 6179109947979963437}
   - {fileID: 418606450432923941}
   - {fileID: 7547661486950331192}
+  - {fileID: 3241100243467544390}
   m_Father: {fileID: 505027778239189661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7834155014174466237
@@ -209,6 +210,7 @@ MonoBehaviour:
   blackboardSystem: {fileID: 4115196387130392266}
   inventorySystem: {fileID: 4136185658555715558}
   interactionSystem: {fileID: 440392200595385103}
+  dialogueSystem: {fileID: 2325102952327978599}
   hotbarSystem: {fileID: 8064901073675467688}
   slotTransformationSystem: {fileID: 3195358102234684433}
   entityType: 2
@@ -1493,6 +1495,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8500912184580402166}
   - component: {fileID: 440392200595385103}
+  - component: {fileID: 581088301620632733}
   m_Layer: 8
   m_Name: Interaction_System
   m_TagString: Untagged
@@ -1532,6 +1535,7 @@ MonoBehaviour:
   interactionAction: 0
   interactionRange: 2
   canInteractMultipleTimes: 0
+  interactionCollider: {fileID: 581088301620632733}
   detectionRadius: 2
   detectionInterval: 0.2
   detectionLayer:
@@ -1544,6 +1548,27 @@ MonoBehaviour:
   OnDirectInteraction:
     m_PersistentCalls:
       m_Calls: []
+--- !u!135 &581088301620632733
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4473629046579420901}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 1.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4536920560882079103
 GameObject:
   m_ObjectHideFlags: 0
@@ -1698,6 +1723,53 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BlackboardSystem
   schema: {fileID: 11400000, guid: 278414234cb89e94e98e12b8ec39db12, type: 2}
   debugLogging: 0
+--- !u!1 &6621928128247822838
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3241100243467544390}
+  - component: {fileID: 2325102952327978599}
+  m_Layer: 8
+  m_Name: Dialogue_System
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3241100243467544390
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6621928128247822838}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8373627434070198267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2325102952327978599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6621928128247822838}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bacac2ef9eef7e34ca3066f1f4f2eb33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueSystem
+  isEnabled: 1
+  dialogueCameraMode: Dialogue
+  defaultCameraMode: Default
 --- !u!1 &7539060194227579230
 GameObject:
   m_ObjectHideFlags: 0
@@ -1811,12 +1883,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraModule
   cameraTransform: {fileID: 2956264965644508688}
-  distance: 1.3
-  pivotHeight: 1.5
-  shoulderOffset: 0.4
-  sensitivity: 0.15
-  minPitch: -35
-  maxPitch: 60
+  modes:
+  - modeName: Default
+    distance: 1.3
+    pivotHeight: 1.5
+    shoulderOffset: 0.4
+    sensitivity: 0.15
+    minPitch: -35
+    maxPitch: 60
+  - modeName: Dialogue
+    distance: 0.6
+    pivotHeight: 1.6
+    shoulderOffset: 0.2
+    sensitivity: 0.05
+    minPitch: -20
+    maxPitch: 30
+  startingMode: Default
+  modeBlendDuration: 0.35
 --- !u!1 &7591293930480927091
 GameObject:
   m_ObjectHideFlags: 0
