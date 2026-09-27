@@ -330,17 +330,10 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
             return false;
         }
 
-        FactionSystem targetFaction = targetBrain.Faction;
-        string myFactionId = factionSystem.CurrentFactionId;
-        string theirFactionId = targetFaction.CurrentFactionId;
+        FactionRelationship relationship = factionSystem.GetStanceTo(targetBrain);
 
         if (debugMode)
-            Debug.Log($"[PerceptionModule] Faction check: My={myFactionId}, Their={theirFactionId}");
-
-        FactionType myFaction = ConvertFactionIdToType(myFactionId);
-        FactionType theirFaction = ConvertFactionIdToType(theirFactionId);
-
-        FactionRelationship relationship = FactionManager.GetRelationship(myFaction, theirFaction);
+            Debug.Log($"[PerceptionModule] Faction check: My={factionSystem.CurrentFactionName}, Their={targetBrain.Faction.CurrentFactionName} → {relationship}");
 
         if (debugMode)
             Debug.Log($"[PerceptionModule] Relationship: {relationship}");
@@ -473,25 +466,6 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
 
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position + Vector3.up * eyeHeight, 0.2f);
-    }
-
-    private FactionType ConvertFactionIdToType(string factionId)
-    {
-        return factionId switch
-        {
-            "faction_humans" => FactionType.Humans,
-            "faction_elves" => FactionType.Elves,
-            "faction_dwarves" => FactionType.Dwarves,
-            "faction_undead" => FactionType.Undead,
-            "faction_warlocks" => FactionType.Warlocks,
-            "faction_monsters" => FactionType.Monsters,
-            "faction_wildlife" => FactionType.Wildlife,
-            "faction_neutral" => FactionType.Neutral,
-            "faction_player" => FactionType.Player,
-            "faction_hostile" => FactionType.Hostile,
-            "faction_friendly" => FactionType.Friendly,
-            _ => FactionType.Neutral
-        };
     }
 
     #endregion

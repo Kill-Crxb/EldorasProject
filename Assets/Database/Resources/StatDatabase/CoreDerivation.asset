@@ -1,0 +1,191 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e274185e2d6344273441de93c1341e6c, type: 3}
+  m_Name: CoreDerivation
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatDerivationTable
+  derivations:
+  - sourceStatId: core.mind
+    breakpoints:
+    - threshold: 3
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 5
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 7
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 9
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 11
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 13
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 15
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 17
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 19
+      rewards:
+      - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+  - sourceStatId: core.body
+    breakpoints:
+    - threshold: 3
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 5
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 7
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 9
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 11
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 13
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 15
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 17
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 19
+      rewards:
+      - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+  - sourceStatId: core.spirit
+    breakpoints:
+    - threshold: 3
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 5
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 7
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 9
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 11
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 13
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 15
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 17
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 19
+      rewards:
+      - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+  - sourceStatId: core.endurance
+    breakpoints:
+    - threshold: 3
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 5
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 7
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 9
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 11
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 13
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 15
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 17
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 19
+      rewards:
+      - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+  - sourceStatId: core.resilience
+    breakpoints:
+    - threshold: 3
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 5
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 7
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 9
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 11
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 13
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 15
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 17
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 19
+      rewards:
+      - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+  - sourceStatId: core.insight
+    breakpoints:
+    - threshold: 3
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 5
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 7
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 9
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 11
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 13
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 15
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 17
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 19
+      rewards:
+      - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+  - sourceStatId: character.level
+    breakpoints: []

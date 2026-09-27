@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 363290f52f26784448e90f1bf412c12f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 112000000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Demo/URP/Scenes/CustomizationDemo/LightingData.asset
+  uploadId: 497923

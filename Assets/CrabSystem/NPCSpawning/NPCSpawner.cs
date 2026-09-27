@@ -135,7 +135,7 @@ public class NPCSpawner : MonoBehaviour
 
         var configData = new CharacterConfigData(
             displayName: config.archetype.archetypeName,
-            factionId: config.archetype.factionId,
+            factionId: config.archetype.FactionId,
             modelId: config.archetype.modelPool?.Count > 0 ? config.archetype.modelPool[0] : null,
             baseStatOverrides: config.archetype.baseStatOverrides,
             level: effectiveLevel

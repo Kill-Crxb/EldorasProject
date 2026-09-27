@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿// Editor-only. Three of these scan the scene with FindObjectsOfType every frame, and
+// none of them belong in a player build.
+#if UNITY_EDITOR
+using UnityEngine;
 
 /// <summary>
 /// Debug script to trace why items aren't loading into chest inventory
@@ -186,3 +189,5 @@ public class ChestInventoryDebugger : MonoBehaviour
         Debug.Log("========================================");
     }
 }
+
+#endif

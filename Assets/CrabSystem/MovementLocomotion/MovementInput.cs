@@ -27,14 +27,42 @@ public struct MovementInput
     public bool Sprint;
 
     /// <summary>
-    /// Should the entity jump?
+    /// Pressed this frame: start a jump. A discrete edge, so it is what jump BUFFERING keys off.
+    /// It is false again on the next frame and must never be used to ask "is jump still down".
     /// </summary>
     public bool Jump;
+
+    /// <summary>
+    /// Jump is currently held. This is what variable jump height reads: releasing it cuts the
+    /// rising velocity. Reading the Jump edge here instead cuts every jump on the frame after
+    /// launch, which costs most of the height and reads as a broken jump rather than a bug.
+    /// </summary>
+    public bool JumpHold;
 
     /// <summary>
     /// Should the entity dash?
     /// </summary>
     public bool Dash;
+
+    /// <summary>
+    /// Pressed this frame: crouch, or start a slide. Which one is decided by SPEED at the moment
+    /// of the press, not by how long the key is held — a tap window cannot resolve until release,
+    /// which delays the crouch and starts the slide late, and the slide is the half already
+    /// losing the momentum it exists to spend.
+    /// </summary>
+    public bool Crouch;
+
+    /// <summary>
+    /// Crouch is currently held. A slide runs while this is down; releasing ends it early.
+    /// Crouch itself is a toggle and does not need the hold.
+    /// </summary>
+    public bool CrouchHold;
+
+    /// <summary>
+    /// Pressed this frame: swap the walk/run gait. A discrete edge, not a held state — the
+    /// handler owns which gait is current, this only asks it to flip.
+    /// </summary>
+    public bool ToggleGait;
 
     /// <summary>
     /// Custom data for game-specific features (e.g., MilSim ADS, lean, stance)
@@ -50,7 +78,11 @@ public struct MovementInput
         LookDirection = Vector2.zero,
         Sprint = false,
         Jump = false,
+        JumpHold = false,
         Dash = false,
+        Crouch = false,
+        CrouchHold = false,
+        ToggleGait = false,
         CustomData = new Dictionary<string, object>()
     };
 

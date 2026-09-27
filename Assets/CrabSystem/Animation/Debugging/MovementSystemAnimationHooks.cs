@@ -1,3 +1,5 @@
+// Editor-only: references AnimationDebugger, which is editor-only.
+#if UNITY_EDITOR
 using UnityEngine;
 
 public class MovementSystemAnimationHooks : MonoBehaviour
@@ -87,3 +89,5 @@ public class MovementSystemAnimationHooks : MonoBehaviour
         return null;
     }
 }
+
+#endif

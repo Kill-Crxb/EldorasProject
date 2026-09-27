@@ -13,22 +13,19 @@ MonoBehaviour:
   m_Name: RegenerationDefinition
   m_EditorClassIdentifier: Assembly-CSharp::ResourceDefinition
   resourceId: regeneration
-  isHealthLike: 0
   isTemporary: 0
   displayName: Regeneration
   description: Regeneration Points
   maxStatId: character.max_regeneration
-  currentStatId: 
-  regenPerSecond: 0
-  regenDelay: 0
-  regenOutOfCombatOnly: 0
-  combatTimeout: 5
   minValue: 0
   allowNegative: 0
+  regenSource: {fileID: 0}
+  amountPerSourcePoint: 0
+  secondsPerSourcePoint: 0
+  regenPerSecond: 0
+  regenDelay: 0
   resourceColor: {r: 1, g: 0, b: 0, a: 1}
   icon: {fileID: 0}
   depletedSound: {fileID: 0}
   restoredSound: {fileID: 0}
   triggerDeathOnDepletion: 0
-  resetOnDeath: 0
-  tags: []

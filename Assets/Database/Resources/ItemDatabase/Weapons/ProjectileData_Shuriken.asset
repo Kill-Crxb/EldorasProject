@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 147ac473d03d09043b304344e47499e4, type: 3}
+  m_Name: ProjectileData_Shuriken
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
+  speed: 25
+  lifetime: 10
+  damageMultiplier: 1
+  gravity: 0
+  homingStrength: 0.05
+  scale: 1
+  pierceCount: 0
+  targetStance: 0
+  archetypePrefab: {fileID: 507452933039259751, guid: d99e64f616b3985428cc64fae95e4845, type: 3}
+  spawn:
+    origin: 0
+    anchor: 1
+    socketId: hand_l
+    skyHeight: 12
+    untargetedDistance: 8
+  aim:
+    directionMode: 0
+    targetSources: 2
+    targetHeightOffset: 1.2
+    probeRange: 40
+    probeRadius: 1.5
+  movement:
+    mode: 0
+    spinDegreesPerSecond: 720
+    hitscanRange: 100
+    hitscanLingerTime: 0
+    maxTurnDegreesPerSecond: 180
+    homingDelay: 0
+    minSteerDistance: 0.5
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 6153
+  collisionRadius: 0.15
+  collisionLength: 0.1
+  hitEnvironment: 1
+  weaponData: {fileID: 11400000, guid: 04eb7a85eb5aa574e98dd237da4c26d3, type: 2}
+  fallbackDamage: 2
+  fallbackDamageType: 0
+  visualPrefab: {fileID: 2728478167243015479, guid: 287364ffa2adcba4ebc8505c2e38d9fd, type: 3}
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  tintProperty: _BaseColor
+  impactVfxPrefab: {fileID: 0}
+  impactVfxLifetime: 3
+  prewarmCount: 8

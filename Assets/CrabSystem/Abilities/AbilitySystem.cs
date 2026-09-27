@@ -11,6 +11,15 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     [SerializeField] private AbilityLoadoutModule loadoutModule;
     [SerializeField] private List<AbilityDefinition> abilities = new List<AbilityDefinition>();
 
+    [Header("Debug")]
+    [Tooltip("Log animation events, forwarder binding, and hitbox toggling.")]
+    [SerializeField] private bool debugLogging = false;
+
+    [Header("Animation Blending")]
+    [Tooltip("Seconds to blend the combat animation layer back out when an ability completes. " +
+             "The clip's recovery frames keep playing during the fade instead of snapping to locomotion.")]
+    [SerializeField] private float layerBlendOutTime = 0.25f;
+
     private class AbilityState
     {
         public AbilityDefinition definition;
@@ -28,17 +37,19 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private Blackboard blackboard;
     private RuntimeAbilityManager runtimeAbilityManager;
     private IAnimationProvider animationProvider;
+    private AnimationLayerController layerController;
     private IResourceProvider resources;
     private IHealthProvider healthProvider;
     private MovementSystem movementSystem;
     private DamageSystem damageSystem;
     private VFXSystem vfxSystem;
     private AnimationEventForwarder eventForwarder;
+    private ModelModule modelModule;
 
     private Dictionary<string, AbilityState> abilityStates = new Dictionary<string, AbilityState>();
 
     private ItemInstance cachedEquippedWeapon;
-    private WeaponData cachedNaturalWeapon;
+    private DiceProfile cachedNaturalWeapon;
 
     private AbilityDefinition currentAbility = null;
     private float abilityStartTime;
@@ -95,12 +106,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         if (stateMachine == null)
             Debug.LogError("[AbilitySystem] StateMachineModule not found");
 
-        var blackboardSystem = brain.GetModule<BlackboardSystem>();
-        if (blackboardSystem != null)
-            blackboard = blackboardSystem.Blackboard;
-        else
-            Debug.LogError("[AbilitySystem] BlackboardSystem not found");
-
         runtimeAbilityManager = brain.GetModule<RuntimeAbilityManager>();
 
         animationProvider = brain.Animation;
@@ -111,6 +116,10 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         vfxSystem = brain.GetModule<VFXSystem>();
 
         
+
+        modelModule = brain.GetModule<ModelModule>();
+        if (modelModule != null)
+            modelModule.OnModelChanged += HandleModelChanged;
 
         SetupAnimationEventForwarder();
         GameEvents.OnLoadCompleted += HandleLoadCompleted;
@@ -126,6 +135,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     public void LateInitialize()
     {
+        layerController = brain?.GetModule<AnimationLayerController>();
+
+        // Here, not in Initialize: ControllerBrain initializes this module before BlackboardSystem,
+        // which only creates its Blackboard in its own Initialize. Read earlier, this was always
+        // null — every forbidden fact passed and IsBlocking / IsInvincible were never written.
+        blackboard = brain?.GetModule<BlackboardSystem>()?.Blackboard;
+        if (blackboard == null)
+            Debug.LogError("[AbilitySystem] BlackboardSystem not found");
     }
 
     public void UpdateModule()
@@ -142,29 +159,73 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     {
         GameEvents.OnLoadCompleted -= HandleLoadCompleted;
 
-        if (eventForwarder != null) return;
+        // The model (and its forwarder, which lives next to the Animator) may have
+        // been spawned during the load — always re-resolve rather than keeping a
+        // forwarder found before the model existed.
+        SetupAnimationEventForwarder();
+    }
 
+    /// <summary>
+    /// SwapModel destroys the old model — and with it the forwarder we were
+    /// subscribed to. Fires after the new Animator reference is set, so we can
+    /// re-resolve immediately.
+    /// </summary>
+    private void HandleModelChanged(string modelId)
+    {
         SetupAnimationEventForwarder();
     }
 
     private void SetupAnimationEventForwarder()
     {
-        Transform playerRoot = brain.transform.parent;
-        if (playerRoot != null)
-            eventForwarder = playerRoot.GetComponentInChildren<AnimationEventForwarder>();
-        else
-            eventForwarder = brain.GetComponentInChildren<AnimationEventForwarder>();
+        // Unity only delivers animation events to components on the same
+        // GameObject as the Animator — resolve the forwarder from there first.
+        AnimationEventForwarder found = null;
+
+        Animator animator = brain.EntityAnimator;
+        if (animator != null)
+            found = animator.GetComponent<AnimationEventForwarder>();
+
+        if (found == null)
+        {
+            // Fallback: hierarchy search (model may not be spawned yet;
+            // HandleLoadCompleted / HandleModelChanged will re-resolve later).
+            Transform playerRoot = brain.transform.parent;
+            if (playerRoot != null)
+                found = playerRoot.GetComponentInChildren<AnimationEventForwarder>(true);
+            else
+                found = brain.GetComponentInChildren<AnimationEventForwarder>(true);
+
+            if (found != null && animator != null && found.GetComponent<Animator>() == null)
+                Debug.LogWarning($"[AbilitySystem] AnimationEventForwarder on '{found.name}' is not on the Animator's GameObject ('{animator.name}') — animation events will not reach it. Move the component next to the Animator.");
+        }
+
+        BindEventForwarder(found);
+    }
+
+    private void BindEventForwarder(AnimationEventForwarder forwarder)
+    {
+        if (forwarder == eventForwarder && forwarder != null)
+            return; // already bound to the right one
+
+        if (eventForwarder != null)
+        {
+            eventForwarder.OnAnimationEvent -= HandleAnimationEvent;
+            eventForwarder.OnStateTransitionEvent -= HandleStateTransition;
+        }
+
+        eventForwarder = forwarder;
 
         if (eventForwarder == null)
         {
             Debug.LogWarning($"[AbilitySystem] No AnimationEventForwarder found on {gameObject.name}");
+            return;
         }
-        else
-        {
-            eventForwarder.Initialize(brain);
-            eventForwarder.OnAnimationEvent += HandleAnimationEvent;
-            eventForwarder.OnStateTransitionEvent += HandleStateTransition;
-        }
+
+        eventForwarder.Initialize(brain);
+        eventForwarder.OnAnimationEvent += HandleAnimationEvent;
+        eventForwarder.OnStateTransitionEvent += HandleStateTransition;
+        if (debugLogging)
+            Debug.Log($"[AbilitySystem] Subscribed to AnimationEventForwarder on {eventForwarder.name}");
     }
 
     private void BuildAbilityLookup()
@@ -192,6 +253,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private void OnDestroy()
     {
         GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+
+        if (modelModule != null)
+            modelModule.OnModelChanged -= HandleModelChanged;
 
         if (eventForwarder != null)
         {
@@ -362,7 +426,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     {
         if (blackboard == null) return true;
 
-        var (requiredAny, requiredAll, forbiddenAll) = ability.GetBlackboardRequirements();
+        var (requiredAny, requiredAll, forbidden) = ability.GetBlackboardRequirements();
 
         if (requiredAny.Count > 0)
         {
@@ -386,19 +450,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
                 return false;
         }
 
-        if (forbiddenAll.Count > 0)
+        foreach (var fact in forbidden)
         {
-            bool allForbidden = true;
-            foreach (var fact in forbiddenAll)
-            {
-                if (!blackboard.GetBool(fact.GetHashCode()))
-                {
-                    allForbidden = false;
-                    break;
-                }
-            }
-
-            if (allForbidden)
+            if (blackboard.GetBool(fact.GetHashCode()))
                 return false;
         }
 
@@ -438,15 +492,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         abilityStartTime = Time.time;
         UpdateExecutingFact();
 
-        if (animationProvider is AnimationSystem animSys)
-        {
-            int fullBodyLayer = animSys.GetLayerIndex("Full Body Actions");
-            int upperBodyLayer = animSys.GetLayerIndex("Upper Body Combat");
-            bool isFullBody = ability.animationLayer == AbilityAnimationLayer.FullBodyActions;
-
-            if (fullBodyLayer >= 0) animSys.SetLayerWeight(fullBodyLayer, isFullBody ? 1f : 0f);
-            if (upperBodyLayer >= 0) animSys.SetLayerWeight(upperBodyLayer, isFullBody ? 0f : 1f);
-        }
+        ApplyAbilityLayerWeights(ability.animationLayer == AbilityAnimationLayer.FullBodyActions);
 
         if (animationProvider != null && !string.IsNullOrEmpty(ability.animationTrigger))
             animationProvider.TriggerCombatAnimation(ability.animationTrigger);
@@ -515,14 +561,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         if (stateMachine != null)
             stateMachine.TryTransitionUpperBody(UpperBodyState.Idle);
 
-        if (animationProvider is AnimationSystem animSys)
-        {
-            int fullBodyLayer = animSys.GetLayerIndex("Full Body Actions");
-            int upperBodyLayer = animSys.GetLayerIndex("Upper Body Combat");
-
-            if (fullBodyLayer >= 0) animSys.SetLayerWeight(fullBodyLayer, 0f);
-            if (upperBodyLayer >= 0) animSys.SetLayerWeight(upperBodyLayer, 0f);
-        }
+        ReleaseAbilityLayerWeights();
 
         lastCompletedAbility = ability;
         lastAbilityCompleteTime = Time.time;
@@ -544,7 +583,20 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     private void HandleAnimationEvent(AnimationEventType eventType)
     {
+        if (debugLogging)
+            Debug.Log($"[AbilitySystem] HandleAnimationEvent received: {eventType} (currentAbility: {currentAbility?.abilityId ?? "null"})");
+
         OnAbilityAnimationEvent?.Invoke(eventType);
+
+        switch (eventType)
+        {
+            case AnimationEventType.HitboxStart:
+                EnableAbilityHitboxes();
+                break;
+            case AnimationEventType.HitboxEnd:
+                DisableAbilityHitboxes();
+                break;
+        }
 
         if (currentAbility == null) return;
 
@@ -559,16 +611,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         if (eventType == AnimationEventType.ComboWindowEnd)
             CloseChainWindow();
-
-        switch (eventType)
-        {
-            case AnimationEventType.HitboxStart:
-                EnableAbilityHitboxes();
-                break;
-            case AnimationEventType.HitboxEnd:
-                DisableAbilityHitboxes();
-                break;
-        }
     }
 
     private void HandleAnimationUnlocked()
@@ -748,16 +790,41 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         return state.definition.cooldown;
     }
 
+    /// <summary>
+    /// Enables only the hitboxes the executing ability names. An ability with no tags enables
+    /// every hitbox, which is how weapon abilities behaved before tagging existed.
+    /// Enable() can still refuse on its own stance filter, so a match is not a guarantee.
+    /// </summary>
     private void EnableAbilityHitboxes()
     {
         var hitboxes = brain.GetComponentsInChildren<WeaponHitbox>(true);
+        var tags = currentAbility != null ? currentAbility.hitboxTags : null;
+
+        int matched = 0;
+
         foreach (var hitbox in hitboxes)
+        {
+            if (!hitbox.MatchesTags(tags)) continue;
+
             hitbox.Enable();
+            matched++;
+        }
+
+        if (matched == 0 && tags != null && tags.Count > 0)
+            Debug.LogWarning($"[AbilitySystem] '{currentAbility.abilityName}' names hitbox tag(s) " +
+                             $"[{string.Join(", ", tags)}] but nothing under {brain.name} carries them — " +
+                             $"this attack cannot connect. Check the tags on the model's hitboxes.");
+
+        if (debugLogging)
+            Debug.Log($"[AbilitySystem] EnableAbilityHitboxes — {matched}/{hitboxes.Length} matched for " +
+                      $"'{currentAbility?.abilityName ?? "(none)"}'");
     }
 
     private void DisableAbilityHitboxes()
     {
         var hitboxes = brain.GetComponentsInChildren<WeaponHitbox>(true);
+        if (debugLogging)
+            Debug.Log($"[AbilitySystem] DisableAbilityHitboxes — found {hitboxes.Length} WeaponHitbox component(s) under {brain.name}");
         foreach (var hitbox in hitboxes)
             hitbox.Disable();
     }
@@ -835,5 +902,50 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
                                          proc.windowSeconds, 30);
             }
         }
+    }
+
+    // ── Layer weights ─────────────────────────────────────────────────────
+
+    // With an AnimationLayerController present the ability CLAIMS the layer it needs and releases
+    // the other, rather than writing 1 to one and 0 to the other. Writing 0 is what used to stomp
+    // anything else holding that layer — a jump in flight, most obviously.
+    private void ApplyAbilityLayerWeights(bool isFullBody)
+    {
+        if (layerController != null)
+        {
+            string claimed = isFullBody ? AnimationLayerNames.FullBodyActions : AnimationLayerNames.UpperBodyCombat;
+            string released = isFullBody ? AnimationLayerNames.UpperBodyCombat : AnimationLayerNames.FullBodyActions;
+
+            layerController.Claim(this, claimed, 1f, AnimationLayerController.PriorityAbility);
+            layerController.Release(this, released);
+            return;
+        }
+
+        if (!(animationProvider is AnimationSystem animSys)) return;
+
+        int fullBodyLayer = animSys.GetLayerIndex(AnimationLayerNames.FullBodyActions);
+        int upperBodyLayer = animSys.GetLayerIndex(AnimationLayerNames.UpperBodyCombat);
+
+        if (fullBodyLayer >= 0) animSys.SetLayerWeight(fullBodyLayer, isFullBody ? 1f : 0f);
+        if (upperBodyLayer >= 0) animSys.SetLayerWeight(upperBodyLayer, isFullBody ? 0f : 1f);
+    }
+
+    private void ReleaseAbilityLayerWeights()
+    {
+        if (layerController != null)
+        {
+            layerController.ReleaseAll(this);
+            return;
+        }
+
+        if (!(animationProvider is AnimationSystem animSys)) return;
+
+        int fullBodyLayer = animSys.GetLayerIndex(AnimationLayerNames.FullBodyActions);
+        int upperBodyLayer = animSys.GetLayerIndex(AnimationLayerNames.UpperBodyCombat);
+
+        // Fade out instead of snapping — the clip's recovery frames keep playing on the layer
+        // while its weight blends back to locomotion.
+        if (fullBodyLayer >= 0) animSys.FadeLayerWeight(fullBodyLayer, 0f, layerBlendOutTime);
+        if (upperBodyLayer >= 0) animSys.FadeLayerWeight(upperBodyLayer, 0f, layerBlendOutTime);
     }
 }

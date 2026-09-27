@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 357b461b661da2645b2057e88b2bf2ae
+timeCreated: 1472072075
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Scripts/Controllers/Editor/SkyboxDayNightCycleEditor.cs
+  uploadId: 497923

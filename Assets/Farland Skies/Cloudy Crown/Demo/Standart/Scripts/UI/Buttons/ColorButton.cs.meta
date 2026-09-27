@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 282d11450969d074aabc5dc34d8c5d7a
+timeCreated: 1472213455
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Demo/Standart/Scripts/UI/Buttons/ColorButton.cs
+  uploadId: 497923

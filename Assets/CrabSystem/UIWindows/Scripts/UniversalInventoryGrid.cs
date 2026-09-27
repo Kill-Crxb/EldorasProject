@@ -1,9 +1,9 @@
 using UnityEngine;
 
+/// <summary>Grid backed by an entity's InventorySystem — the player's bag or a container's.</summary>
 public class UniversalInventoryGrid : UniversalGrid
 {
     private InventorySystem inventorySystem;
-    private string sourceName = "Unnamed";
     private ControllerBrain ownerBrain;
 
     public ControllerBrain OwnerBrain => ownerBrain;
@@ -18,34 +18,34 @@ public class UniversalInventoryGrid : UniversalGrid
             inventorySystem.OnInventoryChanged -= OnInventoryDataChanged;
 
         inventorySystem = system;
-        sourceName = displayName;
         isPlayerInventory = isPlayer;
         gridName = displayName;
         ownerBrain = brain;
 
-        var contents = inventorySystem.GetCurrentContents();
-        if (contents != null)
-        {
-            gridWidth = contents.gridWidth;
-            gridHeight = contents.gridHeight;
-        }
-        else
-        {
-            var containerDataField = inventorySystem.GetType()
-                .GetField("containers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            var containers = containerDataField?.GetValue(inventorySystem) as ContainerData[];
-            if (containers != null && containers.Length > 0)
-            {
-                gridWidth = containers[0].gridWidth;
-                gridHeight = containers[0].gridHeight;
-            }
-        }
+        AdoptSourceSize();
 
         if (!isInitialized)
             Initialize();
         else
             ConnectToDataSource();
+    }
+
+    // Live contents win; the authored container is the fallback before anything is loaded.
+    private void AdoptSourceSize()
+    {
+        var contents = inventorySystem.GetCurrentContents();
+        if (contents != null)
+        {
+            gridWidth = contents.gridWidth;
+            gridHeight = contents.gridHeight;
+            return;
+        }
+
+        var container = inventorySystem.DefaultContainer;
+        if (container == null) return;
+
+        gridWidth = container.gridWidth;
+        gridHeight = container.gridHeight;
     }
 
     public void SetPlayerInventory(InventorySystem playerSystem, ControllerBrain playerBrain = null)
@@ -140,9 +140,7 @@ public class UniversalInventoryGrid : UniversalGrid
         var item = inventorySystem?.GetItemInstance(itemId);
         if (item == null) return;
 
-        bool transferred = GridTransferManager.Instance.QuickTransfer(this, item);
-        if (!transferred && debugMode)
-            Debug.Log($"[UniversalInventoryGrid] Shift-click transfer failed for {item.Definition?.displayName} — no space in target grid");
+        GridTransferManager.Instance.QuickTransfer(this, item);
     }
 
     public override void OnItemRightClicked(string itemId)
@@ -159,18 +157,7 @@ public class UniversalInventoryGrid : UniversalGrid
         var equipmentSystem = ownerBrain.GetModule<EquipmentSystem>();
         if (equipmentSystem == null) return;
 
-        // Check if slot already has an item — swap it back to inventory first
-        var currentlyEquipped = equipmentSystem.GetEquippedItem(targetSlot);
-        if (currentlyEquipped != null)
-        {
-            // Unequip to slot only (no inventory add yet — inventory may not have space with current item still in it)
-            equipmentSystem.UnequipItem(targetSlot);
-            // Add displaced item back to inventory
-            inventorySystem.AddItem(currentlyEquipped);
-        }
-
-        // Remove clicked item from inventory and equip it
-        inventorySystem.RemoveItem(itemId);
-        equipmentSystem.EquipItem(item, targetSlot);
+        // Handles the bag side of the swap, and leaves the inventory untouched if it fails.
+        equipmentSystem.EquipFromInventory(item, targetSlot);
     }
 }

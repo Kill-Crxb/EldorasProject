@@ -37,7 +37,6 @@ public class UniversalWindowManager : MonoBehaviour
 
     [Header("Window Prefabs")]
     [SerializeField] private GameObject universalWindowPrefab;
-    [SerializeField] private GameObject equipmentWindowPrefab;
 
     [Header("World Space Container Settings")]
     [SerializeField] private bool useWorldSpaceContainers = false;
@@ -122,7 +121,6 @@ public class UniversalWindowManager : MonoBehaviour
 
     private Dictionary<string, UniversalInventoryWindow> activeWindows = new Dictionary<string, UniversalInventoryWindow>();
     private UniversalInventoryWindow playerInventoryWindow;
-    private EquipmentWindow equipmentWindow;
     private bool isDialogueOpen;
 
     #endregion
@@ -167,7 +165,7 @@ public class UniversalWindowManager : MonoBehaviour
     {
         if (containerBrain == null) { Debug.LogError("[UniversalWindowManager] Container brain is null!"); return null; }
 
-        string windowId = $"Container_{containerBrain.GetInstanceID()}";
+        string windowId = $"Container_{containerBrain.GetEntityId()}";
 
         if (activeWindows.ContainsKey(windowId))
         {
@@ -194,7 +192,7 @@ public class UniversalWindowManager : MonoBehaviour
     {
         if (containerBrain == null) return;
 
-        string windowId = $"Container_{containerBrain.GetInstanceID()}";
+        string windowId = $"Container_{containerBrain.GetEntityId()}";
         if (!activeWindows.ContainsKey(windowId)) return;
 
         var window = activeWindows[windowId];
@@ -244,63 +242,6 @@ public class UniversalWindowManager : MonoBehaviour
         isDialogueOpen = false;
 
         if (debugMode) Debug.Log("[UniversalWindowManager] Closed dialogue window");
-    }
-
-    #endregion
-
-    #region Equipment Window
-
-    public void OpenEquipmentWindow(ControllerBrain playerBrain)
-    {
-        if (playerBrain == null) { Debug.LogError("[UniversalWindowManager] Player brain is null!"); return; }
-        if (equipmentWindow != null && equipmentWindow.IsOpen) return;
-
-        if (equipmentWindow == null) equipmentWindow = CreateEquipmentWindow();
-        if (equipmentWindow == null) { Debug.LogError("[UniversalWindowManager] Failed to create equipment window!"); return; }
-
-        equipmentWindow.Initialize("Equipment", playerBrain, null);
-        equipmentWindow.gameObject.SetActive(true);
-
-        if (debugMode) Debug.Log("[UniversalWindowManager] Opened equipment window");
-    }
-
-    public void CloseEquipmentWindow()
-    {
-        if (equipmentWindow != null && equipmentWindow.IsOpen)
-        {
-            equipmentWindow.OnClose();
-            equipmentWindow.gameObject.SetActive(false);
-
-            if (debugMode) Debug.Log("[UniversalWindowManager] Closed equipment window");
-        }
-    }
-
-    public void ToggleEquipmentWindow(ControllerBrain playerBrain)
-    {
-        if (equipmentWindow != null && equipmentWindow.IsOpen)
-            CloseEquipmentWindow();
-        else
-            OpenEquipmentWindow(playerBrain);
-    }
-
-    private EquipmentWindow CreateEquipmentWindow()
-    {
-        if (equipmentWindowPrefab == null) { Debug.LogError("[UniversalWindowManager] Equipment window prefab not assigned!"); return null; }
-
-        Transform parent = uiCanvas != null ? uiCanvas.transform : transform;
-        GameObject windowObj = Instantiate(equipmentWindowPrefab, parent);
-        windowObj.name = "EquipmentWindow";
-
-        var window = windowObj.GetComponent<EquipmentWindow>();
-        if (window == null)
-        {
-            Debug.LogError("[UniversalWindowManager] Equipment window prefab missing EquipmentWindow component!");
-            Destroy(windowObj);
-            return null;
-        }
-
-        windowObj.SetActive(false);
-        return window;
     }
 
     #endregion

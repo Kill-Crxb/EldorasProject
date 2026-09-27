@@ -1,24 +1,11 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
-/// UniversalGrid - Base class for all grid-based inventory displays
-/// 
-/// Can represent:
-/// - Player inventory
-/// - Container (chest, crate, corpse)
-/// - Stash
-/// - Trade window
-/// - Crafting bench
-/// - Any other grid-based item storage
-/// 
-/// Architecture:
-/// - Registers with GridTransferManager on enable
-/// - Provides data through IGridDataProvider interface
-/// - Handles visual updates only - manager handles logic
-/// - Works with any data source (InventorySystem, custom storage, etc.)
-/// 
-/// Created: February 13, 2026
+/// Base for every grid-based item display — player inventory, container, stash, bench.
+/// Owns the visuals only: GridTransferManager owns drag logic, and contents come through
+/// the abstract data hooks so any storage can back a grid.
 /// </summary>
 public abstract class UniversalGrid : MonoBehaviour
 {
@@ -43,9 +30,6 @@ public abstract class UniversalGrid : MonoBehaviour
     [SerializeField] protected GameObject slotBackgroundPrefab;
     [SerializeField] protected GameObject itemOverlayPrefab;
     [SerializeField] protected GameObject itemIconPrefab;
-
-    [Header("Debug")]
-    [SerializeField] protected bool debugMode = false;
 
     #endregion
 
@@ -88,18 +72,12 @@ public abstract class UniversalGrid : MonoBehaviour
     {
         if (isInitialized) return;
 
-        if (debugMode)
-            Debug.Log($"[UniversalGrid] Initializing {gridName}...");
-
         backgrounds = new GridSlotBackground[gridWidth, gridHeight];
 
         CreateBackgroundGrid();
         ConnectToDataSource();
 
         isInitialized = true;
-
-        if (debugMode)
-            Debug.Log($"[UniversalGrid] {gridName} initialized ({gridWidth}x{gridHeight})");
     }
 
     protected virtual void CreateBackgroundGrid()
@@ -134,9 +112,6 @@ public abstract class UniversalGrid : MonoBehaviour
                 backgrounds[x, y] = bg;
             }
         }
-
-        if (debugMode)
-            Debug.Log($"[UniversalGrid] Created {gridWidth * gridHeight} background slots");
     }
 
     /// <summary>
@@ -177,9 +152,6 @@ public abstract class UniversalGrid : MonoBehaviour
 
     #region Public API - Called by GridTransferManager
 
-    /// <summary>
-    /// Check if a screen point is over this grid
-    /// </summary>
     public bool IsPointOverGrid(Vector2 screenPos)
     {
         if (backgroundLayer == null) return false;
@@ -191,9 +163,6 @@ public abstract class UniversalGrid : MonoBehaviour
         );
     }
 
-    /// <summary>
-    /// Convert screen position to grid position
-    /// </summary>
     public GridPosition ScreenToGridPosition(Vector2 screenPos)
     {
         if (backgroundLayer == null) return GridPosition.Invalid;
@@ -210,9 +179,6 @@ public abstract class UniversalGrid : MonoBehaviour
         return new GridPosition(x, y);
     }
 
-    /// <summary>
-    /// Check if an item can be placed at a position
-    /// </summary>
     public bool CanPlaceItemAt(ItemInstance item, GridPosition pos, string excludeItemId = null)
     {
         if (!pos.IsValid) return false;
@@ -222,60 +188,28 @@ public abstract class UniversalGrid : MonoBehaviour
         return CanPlaceInData(item, pos.x, pos.y, excludeItemId);
     }
 
-    /// <summary>
-    /// Add an item to this grid
-    /// </summary>
     public bool AddItem(ItemInstance item, GridPosition pos)
     {
-        if (!CanPlaceItemAt(item, pos))
-        {
-            if (debugMode)
-                Debug.Log($"[UniversalGrid] Cannot place {item.Definition.displayName} at {pos}");
-            return false;
-        }
+        if (!CanPlaceItemAt(item, pos)) return false;
 
         bool success = AddItemToData(item, pos.x, pos.y);
-
-        if (success)
-        {
-            RefreshVisuals();
-            if (debugMode)
-                Debug.Log($"[UniversalGrid] Added {item.Definition.displayName} to {gridName}");
-        }
+        if (success) RefreshVisuals();
 
         return success;
     }
 
-    /// <summary>
-    /// Remove an item from this grid
-    /// </summary>
     public bool RemoveItem(string itemId)
     {
         bool success = RemoveItemFromData(itemId);
-
-        if (success)
-        {
-            RefreshVisuals();
-            if (debugMode)
-                Debug.Log($"[UniversalGrid] Removed item {itemId} from {gridName}");
-        }
+        if (success) RefreshVisuals();
 
         return success;
     }
 
-    /// <summary>
-    /// Move an item within this grid
-    /// </summary>
     public bool MoveItem(string itemId, GridPosition newPos)
     {
         bool success = MoveItemInData(itemId, newPos.x, newPos.y);
-
-        if (success)
-        {
-            RefreshVisuals();
-            if (debugMode)
-                Debug.Log($"[UniversalGrid] Moved item {itemId} to {newPos}");
-        }
+        if (success) RefreshVisuals();
 
         return success;
     }
@@ -341,9 +275,6 @@ public abstract class UniversalGrid : MonoBehaviour
                 backgrounds[x, y].ClearDragHighlight();
     }
 
-    /// <summary>
-    /// Called when an item drag starts from this grid
-    /// </summary>
     public virtual void OnItemDragStarted(string itemId, GridArea area)
     {
         // Hide the overlay
@@ -353,25 +284,17 @@ public abstract class UniversalGrid : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called when drag is cancelled - restore item visuals
-    /// </summary>
     public virtual void OnItemDragCancelled(string itemId)
     {
-        // Show the overlay again
-        if (overlays.ContainsKey(itemId))
-        {
-            overlays[itemId]?.gameObject.SetActive(true);
-        }
+        // The icon was reparented to the root canvas on drag start, so re-showing the
+        // overlay is not enough — rebuild both from the unchanged data.
+        RefreshVisuals();
     }
 
     #endregion
 
     #region Visual Management
 
-    /// <summary>
-    /// Refresh all item visuals based on current data
-    /// </summary>
     public void RefreshVisuals()
     {
         ClearAllVisuals();
@@ -384,9 +307,6 @@ public abstract class UniversalGrid : MonoBehaviour
             if (item == null || !item.IsPlaced) continue;
             CreateItemVisuals(item);
         }
-
-        if (debugMode)
-            Debug.Log($"[UniversalGrid] Refreshed {items.Length} item visuals");
     }
 
     protected virtual void CreateItemVisuals(ItemInstance item)
@@ -399,37 +319,60 @@ public abstract class UniversalGrid : MonoBehaviour
 
     protected virtual void CreateItemOverlay(ItemInstance item, GridArea area)
     {
-        GameObject overlayObj = new GameObject($"Overlay_{item.instanceId}");
-        overlayObj.transform.SetParent(overlayLayer, false);
+        GameObject overlayObj = InstantiateVisual(itemOverlayPrefab, overlayLayer, $"Overlay_{item.instanceId}");
 
-        var image = overlayObj.AddComponent<UnityEngine.UI.Image>();
-        image.raycastTarget = false;
+        var image = overlayObj.GetComponent<Image>();
+        if (image != null) image.raycastTarget = false;
 
-        ItemOverlayVisual overlay = overlayObj.AddComponent<ItemOverlayVisual>();
+        var overlay = overlayObj.GetComponent<ItemOverlayVisual>();
+        if (overlay == null) overlay = overlayObj.AddComponent<ItemOverlayVisual>();
+
         overlay.Initialize(item.instanceId, area, (int)item.currentTier, slotSize, slotSpacing);
-
         overlays[item.instanceId] = overlay;
     }
 
     protected virtual void CreateItemIcon(ItemInstance item, GridArea area)
     {
-        GameObject iconObj = new GameObject($"Icon_{item.instanceId}");
-        iconObj.transform.SetParent(iconLayer, false);
+        GameObject iconObj = InstantiateVisual(itemIconPrefab, iconLayer, $"Icon_{item.instanceId}");
 
-        var image = iconObj.AddComponent<UnityEngine.UI.Image>();
-        image.sprite = item.Definition.icon;
-        image.raycastTarget = true;
+        var image = iconObj.GetComponent<Image>();
+        if (image != null)
+        {
+            image.sprite = item.Definition.icon;
+            image.raycastTarget = true;
+        }
 
-        var canvasGroup = iconObj.AddComponent<CanvasGroup>();
+        var icon = iconObj.GetComponent<ItemIconVisual>();
+        if (icon == null) icon = iconObj.AddComponent<ItemIconVisual>();
 
-        ItemIconVisual icon = iconObj.AddComponent<ItemIconVisual>();
-        icon.InitializeUniversal(item.instanceId, item, item.Definition.icon, area, slotSize, slotSpacing, this);
-
+        icon.Initialize(item.instanceId, item, item.Definition.icon, area, slotSize, slotSpacing, this);
         icons[item.instanceId] = icon;
+    }
+
+    /// <summary>
+    /// Uses the authored prefab so the look lives in the asset rather than in code,
+    /// and falls back to a bare Image so a grid with no art assigned still works.
+    /// </summary>
+    private GameObject InstantiateVisual(GameObject prefab, Transform layer, string objectName)
+    {
+        if (prefab != null)
+        {
+            GameObject spawned = Instantiate(prefab, layer);
+            spawned.name = objectName;
+            return spawned;
+        }
+
+        var built = new GameObject(objectName, typeof(RectTransform), typeof(Image));
+        built.transform.SetParent(layer, false);
+        return built;
     }
 
     protected virtual void ClearAllVisuals()
     {
+        // A destroyed icon never receives OnPointerExit, so a tooltip opened over one
+        // would hang around with nothing left to dismiss it.
+        if (icons.Count > 0) UniversalWindowManager.Instance?.HideTooltip();
+
         foreach (var overlay in overlays.Values)
         {
             if (overlay != null) Destroy(overlay.gameObject);
@@ -447,45 +390,14 @@ public abstract class UniversalGrid : MonoBehaviour
 
     #region Tooltips
 
-    /// <summary>
-    /// Show tooltip when hovering over an item
-    /// Called by ItemIconVisual
-    /// </summary>
     public virtual void OnItemHoverEnter(string itemId, Vector2 pointerPosition)
     {
-        var item = GetItemInstance(itemId);
-        if (item == null) return;
+        var tooltip = ItemTooltipData.For(GetItemInstance(itemId));
+        if (tooltip == null) return;
 
-        var definition = ItemManager.GetDefinition(item.definitionId);
-        if (definition == null) return;
-
-        string description = definition.description;
-
-        // Add stat modifiers to description
-        if (item.calculatedModifiers != null && item.calculatedModifiers.Length > 0)
-        {
-            description += "\n\nStats:";
-            foreach (var modifier in item.calculatedModifiers)
-            {
-                description += $"\n+{modifier.value:F1} {modifier.statName}";
-            }
-        }
-
-        var tooltipData = new ItemTooltipData(
-            definition.displayName,
-            description,
-            definition.category.ToString(),
-            item.currentTier,
-            item.stackCount
-        );
-
-        UniversalWindowManager.Instance?.ShowTooltip(tooltipData, pointerPosition);
+        UniversalWindowManager.Instance?.ShowTooltip(tooltip, pointerPosition);
     }
 
-    /// <summary>
-    /// Hide tooltip when mouse leaves item
-    /// Called by ItemIconVisual
-    /// </summary>
     public virtual void OnItemHoverExit()
     {
         UniversalWindowManager.Instance?.HideTooltip();

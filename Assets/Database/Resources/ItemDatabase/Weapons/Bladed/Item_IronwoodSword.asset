@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e6c78387218e045b0c95d0596c57f3, type: 3}
+  m_Name: Item_IronwoodSword
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  itemId: ironwood_sword
+  displayName: Ironwood Sword
+  description: A practice weapon handed to you by the Nature Spirit.
+  icon: {fileID: 0}
+  worldPrefab: {fileID: 0}
+  equippedPrefab: {fileID: 0}
+  category: {fileID: 11400000, guid: 3a1a0cc2fa1f1d24297bde78aa943866, type: 2}
+  subType: {fileID: 11400000, guid: 75cd0f09c4ebb74ab8337b781be3b5b2, type: 2}
+  baseType: {fileID: 11400000, guid: 715fb7f984a11f8458f6bad0ea8bf78b, type: 2}
+  gridWidth: 1
+  gridHeight: 3
+  weaponData: {fileID: 0}
+  rarity: 0
+  maxStackSize: 1
+  tags:
+  - mainwep
+  baseValue: 0
+  dropsOnDeath: 1
+  isTradeable: 1
+  isDestructible: 1

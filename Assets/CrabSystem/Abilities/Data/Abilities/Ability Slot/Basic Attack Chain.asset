@@ -16,7 +16,6 @@ MonoBehaviour:
   displayIcon: {fileID: 0}
   abilityChain:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
-  - {fileID: 11400000, guid: 4123ca96c374ad4419ab9f91888476df, type: 2}
   - {fileID: 11400000, guid: 9ebeac94c51d0744e9c6909a78ae9f95, type: 2}
   requiresUnlock: 0
   requiredLevel: 1

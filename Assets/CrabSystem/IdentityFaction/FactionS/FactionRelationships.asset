@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239c678dd719f7a42b53597c89a74e6d, type: 3}
+  m_Name: FactionRelationships
+  m_EditorClassIdentifier: Assembly-CSharp::RPG.Factions.FactionRelationshipConfig
+  relationships:
+  - faction1: {fileID: 11400000, guid: 282d6d700f9c7a042ad8cc0bac0e22c8, type: 2}
+    faction2: {fileID: 11400000, guid: 84d0b30c4b3cc3d45b99e4804234c7e7, type: 2}
+    relationship: 0
+    damageMultiplier: 1
+    canAssist: 0
+    notes: 
+  - faction1: {fileID: 11400000, guid: 282d6d700f9c7a042ad8cc0bac0e22c8, type: 2}
+    faction2: {fileID: 11400000, guid: e26ccb0af0df91d43a0082e9f21a5b5e, type: 2}
+    relationship: 0
+    damageMultiplier: 1
+    canAssist: 0
+    notes: 
+  - faction1: {fileID: 11400000, guid: 282d6d700f9c7a042ad8cc0bac0e22c8, type: 2}
+    faction2: {fileID: 11400000, guid: fb7ad98bd5f18864f8e3f1077f184803, type: 2}
+    relationship: 2
+    damageMultiplier: 1
+    canAssist: 0
+    notes: 
+  - faction1: {fileID: 11400000, guid: 282d6d700f9c7a042ad8cc0bac0e22c8, type: 2}
+    faction2: {fileID: 11400000, guid: 07d1b83f4f7fa4d41887d28a2d6fc0d6, type: 2}
+    relationship: 2
+    damageMultiplier: 1
+    canAssist: 0
+    notes: 
+  defaultRelationship: 1
+  showDebugLogs: 0

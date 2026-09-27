@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class FeetDetectionModule : MonoBehaviour, IPlayerModule
+public class FeetDetectionModule : MonoBehaviour, IBrainModule
 {
     [Header("Detection Settings")]
     [SerializeField] private LayerMask groundLayers = 256; // Layer 8 (Ground) = 2^8 = 256

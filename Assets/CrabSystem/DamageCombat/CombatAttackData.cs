@@ -1,5 +1,9 @@
 using UnityEngine;
 
+// Which landing path produced a hit. Presentation reads it to tell a sword contact from a poison
+// tick or a projectile arriving far from its thrower — all three reach the same two events.
+public enum DamageSource { Other, Melee, Projectile, Tick }
+
 /// <summary>
 /// Context information about an attack before damage calculation.
 /// Passed from combat system to DamageModule.
@@ -36,6 +40,14 @@ public class CombatAttackData
 
     [Header("Damage Type")]
     public DamageType damageType = DamageType.Physical;
+
+    [Header("Source")]
+    public DamageSource source = DamageSource.Other;
+
+    [Header("Explosions")]
+    [Tooltip("The exploded part of the roll, kept apart from baseDamage — a glancing hit drops it.")]
+    public float explosionDamage;
+    public int explosions;
 
     /// <summary>Create basic attack data with minimal information</summary>
     public static CombatAttackData CreateBasic(Transform attacker, Vector3 hitPoint)

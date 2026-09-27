@@ -62,4 +62,29 @@ public struct BlackboardKey
     public static readonly int IsExecutingAbility = "IsExecutingAbility".GetHashCode();
     public static readonly int IsInvincible       = "IsInvincible".GetHashCode();
     public static readonly int IsBlocking         = "IsBlocking".GetHashCode();
+    public static readonly int IsInConversation   = "IsInConversation".GetHashCode();
+    public static readonly int IsUnarmed          = "IsUnarmed".GetHashCode();
+
+    // Published directly by MovementSystem, not by a BlackboardCondition — see
+    // MovementSystem.UpdateSpeedState. Do NOT author conditions with these OutputFactKeys or
+    // SemanticBridgeSystem becomes a second writer and the two fight every frame.
+    public static readonly int IsRunning          = "IsRunning".GetHashCode();
+    public static readonly int IsSprinting        = "IsSprinting".GetHashCode();
+
+    /// <summary>Float, 0 at the run threshold and 1 at the sprint threshold.</summary>
+    public static readonly int SpeedBlend         = "SpeedBlend".GetHashCode();
+
+    /// <summary>
+    /// Sprint GRANTED — a tag any system may raise: an ability, a status, a stat gate. While it is
+    /// up, the run gait is served at sprint speed; walking is unaffected, because a grant cannot
+    /// turn a walk into a sprint.
+    ///
+    /// Distinct from IsSprinting above, and deliberately so. That one is MEASURED — MovementSystem
+    /// publishes it from speed hysteresis and it answers "is this character observably moving
+    /// fast". This one is INTENT, and answers "has something given them permission to". Collapsing
+    /// them would make MovementSystem and the granting system two writers on one key.
+    ///
+    /// Single writer, like the keys above: whatever raises it also lowers it.
+    /// </summary>
+    public static readonly int SprintGranted      = "SprintGranted".GetHashCode();
 }

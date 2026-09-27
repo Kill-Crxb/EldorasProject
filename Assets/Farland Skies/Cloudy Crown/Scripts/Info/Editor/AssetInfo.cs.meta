@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 3fa793fe0ccfbc6498e168da5278084a
+timeCreated: 1477238805
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Scripts/Info/Editor/AssetInfo.cs
+  uploadId: 497923

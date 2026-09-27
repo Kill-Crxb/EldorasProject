@@ -1,3 +1,6 @@
+// Editor-only. Three of these scan the scene with FindObjectsOfType every frame, and
+// none of them belong in a player build.
+#if UNITY_EDITOR
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -429,3 +432,5 @@ public class BlackboardDebugDisplay : MonoBehaviour
         }
     }
 }
+
+#endif

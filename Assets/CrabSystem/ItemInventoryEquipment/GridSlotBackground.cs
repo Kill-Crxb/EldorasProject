@@ -54,7 +54,7 @@ public class GridSlotBackground : MonoBehaviour, IDropHandler
     {
         // NOTE: Equipment-to-inventory drag removed (old system)
         // New system uses right-click on equipped items to unequip
-        // EquipmentSlotVisual.UnequipItem() → EquipmentSystem.UnequipItemToInventory()
+        // the socket icon → EquipmentSystem.UnequipItemToInventory()
 
         /* COMMENTED OUT - Old EquipmentSlotComponent system
         EquipmentSlotComponent draggedEquip = EquipmentSlotComponent.GetCurrentDraggedEquipmentSlot();

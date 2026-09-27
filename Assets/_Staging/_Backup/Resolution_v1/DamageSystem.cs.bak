@@ -1,0 +1,278 @@
+using NinjaGame.Stats;
+using RPG.Factions;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// Mutable args passed to OnDamageIntercept listeners so they can modify incoming damage.
+/// AbilitySystem subscribes while a defensive ability is active.
+/// </summary>
+public class DamageInterceptArgs
+{
+    public float damage;
+    public readonly Vector3 attackDirection;
+    public DamageInterceptArgs(float damage, Vector3 dir) { this.damage = damage; attackDirection = dir; }
+}
+
+/// <summary>
+/// Handles damage calculation, damage reception, and death for any entity with a Brain.
+/// Includes automatic hurtbox setup for clean damage detection.
+/// </summary>
+public class DamageSystem : MonoBehaviour, IBrainModule
+{
+    [Header("System State")]
+    [SerializeField] private bool isEnabled = true;
+
+    [Header("Hurtbox Configuration")]
+    [Tooltip("The collider that receives damage. Auto-created if null.")]
+    [SerializeField] private Collider hurtbox;
+    [SerializeField] private bool autoSetupHurtbox = true;
+    [SerializeField] private float hurtboxRadius = 0.5f;
+    [SerializeField] private float hurtboxHeight = 2f;
+    [SerializeField] private Vector3 hurtboxCenter = new Vector3(0, 1, 0);
+
+    // IBrainModule implementation
+    public bool IsEnabled
+    {
+        get => isEnabled;
+        set => isEnabled = value;
+    }
+
+    private ControllerBrain brain;
+    private IStatProvider stats;
+    private IHealthProvider health;
+    private Blackboard blackboard;
+
+    private bool isDead;
+    private ControllerBrain incomingAttacker;
+
+    // Public accessors
+    public ControllerBrain Brain => brain;
+    public Collider Hurtbox => hurtbox;
+    // Whoever landed the killing hit. Null for deaths that came from no attacker, and for self-kills.
+    public ControllerBrain Killer { get; private set; }
+
+    public event Action<float> OnHealthChanged;
+    public event Action<float, float> OnHealthChangedDetailed;
+    public event Action OnDeath;
+    // Victim side, right after OnDeath. The killer may be null.
+    public event Action<ControllerBrain> OnKilledBy;
+    // Attacker side — this entity landed a killing hit on the victim passed in.
+    public event Action<ControllerBrain> OnKill;
+    public event Action<CombatDamagePacket> OnDamageDealt;
+    public event Action<CombatDamagePacket> OnDamageTaken;
+    // Same moment as OnDamageTaken, with the damage actually applied — post-mitigation, post-block.
+    public event Action<CombatDamagePacket, float> OnDamageApplied;
+    // Fired before damage is applied when the target is blocking. Listeners may reduce args.damage.
+    public event Action<DamageInterceptArgs> OnDamageIntercept;
+
+    private void Awake()
+    {
+        if (autoSetupHurtbox)
+            SetupHurtbox();
+    }
+
+    private void SetupHurtbox()
+    {
+        if (hurtbox != null)
+            return;
+
+        var hurtboxGO = new GameObject("Hurtbox");
+        hurtboxGO.transform.SetParent(transform);
+        hurtboxGO.transform.localPosition = Vector3.zero;
+        hurtboxGO.transform.localRotation = Quaternion.identity;
+
+        // New GameObjects default to layer 0 (Default), which weapon hitLayers
+        // masks don't include — the hurtbox would be invisible to WeaponHitbox.
+        // Use the project's Hurtbox layer, falling back to this GO's own layer.
+        int hurtboxLayer = LayerMask.NameToLayer("Hurtbox");
+        hurtboxGO.layer = hurtboxLayer >= 0 ? hurtboxLayer : gameObject.layer;
+
+        var capsule = hurtboxGO.AddComponent<CapsuleCollider>();
+        capsule.isTrigger = true;
+        capsule.radius = hurtboxRadius;
+        capsule.height = hurtboxHeight;
+        capsule.center = hurtboxCenter;
+
+        hurtbox = capsule;
+    }
+
+    public void Initialize(ControllerBrain controllerBrain)
+    {
+        brain = controllerBrain;
+        stats = brain.Stats;
+        health = brain.ResourceSys;
+        blackboard = brain.GetModule<BlackboardSystem>()?.Blackboard;
+
+        if (stats == null || health == null)
+        {
+            isEnabled = false;
+            Debug.LogError($"[DamageSystem] Missing dependencies on {brain.name} - Stats: {stats != null}, Health: {health != null}");
+            return;
+        }
+
+        health.OnDeath += Die;
+        health.OnHealthChanged += HandleHealthChanged;
+    }
+
+    public void UpdateModule() { }
+
+    private void HandleHealthChanged(float current)
+    {
+        OnHealthChanged?.Invoke(current);
+        OnHealthChangedDetailed?.Invoke(current, health.GetMaxHealth());
+    }
+
+    public CombatDamagePacket CalculateDamage(CombatAttackData attackData)
+    {
+        var config = DamageManager.Instance?.ActiveConfig?.GetConfig(attackData.damageType);
+        float damage = attackData.baseDamage + GetDynamicStat(config?.attackerStatIds, config?.attackerStatMultipliers);
+
+        // Attack context multipliers (<= 0 treated as unset → ×1)
+        if (attackData.comboMultiplier > 0f) damage *= attackData.comboMultiplier;
+        if (attackData.weaponDamageMultiplier > 0f) damage *= attackData.weaponDamageMultiplier;
+        if (attackData.isHeavyAttack && attackData.heavyAttackMultiplier > 0f)
+            damage *= attackData.heavyAttackMultiplier;
+
+        // Crits are not stat-driven. Core_Foundations.md specifies exploding dice
+        // resolved at the roll, not a crit-chance stat. Left flat until that lands.
+        bool crit = false;
+        float critMult = 1f;
+
+        // NOTE: no mitigation here — the ATTACKER builds this packet, so it has
+        // no business reading defender stats. Mitigation is applied by the
+        // defender in TakeDamage(), using the defender's own StatSystem.
+        var packet = new CombatDamagePacket(
+            attackData.baseDamage,
+            damage,
+            crit,
+            critMult,
+            attackData.damageType,
+            attackData.attackerTransform,
+            attackData.attackerTransform?.name ?? "Unknown",
+            attackData.hitPoint,
+            attackData.hitNormal,
+            attackData.hitPoint - (attackData.attackerTransform?.position ?? Vector3.zero),
+            attackData.comboCount,
+            attackData.isHeavyAttack,
+            attackData.weaponId ?? "",
+            attackData.source
+        );
+
+        OnDamageDealt?.Invoke(packet);
+        return packet;
+    }
+
+    /// <summary>
+    /// Apply an incoming damage packet. Mitigation runs HERE, on the defender,
+    /// using this entity's own stats (config.defenderStatIds — e.g. combat.armor).
+    /// Returns the damage actually applied to health (post-mitigation, post-block).
+    /// </summary>
+    public float TakeDamage(CombatDamagePacket packet)
+    {
+        if (!isEnabled || isDead) return 0f;
+        if (blackboard != null && blackboard.GetBool(BlackboardKey.IsInvincible)) return 0f;
+
+        var config = DamageManager.Instance?.ActiveConfig?.GetConfig(packet.damageType);
+        float dmg = ApplyMitigation(packet.finalDamage, config);
+
+        ControllerBrain attackerBrain = packet.attacker != null
+            ? packet.attacker.GetComponentInParent<ControllerBrain>()
+            : null;
+
+        // Faction damage modifier — per-relationship multiplier from the
+        // FactionRelationships matrix (1.0 when factions unknown or unlisted).
+        if (attackerBrain != null && attackerBrain.Faction != null && brain != null && brain.Faction != null)
+            dmg *= FactionManager.GetDamageModifier(
+                attackerBrain.Faction.CurrentFaction,
+                brain.Faction.CurrentFaction);
+
+        if (OnDamageIntercept != null && blackboard != null && blackboard.GetBool(BlackboardKey.IsBlocking))
+        {
+            var args = new DamageInterceptArgs(dmg, packet.attackDirection);
+            OnDamageIntercept.Invoke(args);
+            dmg = args.damage;
+        }
+
+        // Health raises OnDeath from inside ApplyDamage, so the attacker is parked here for Die.
+        incomingAttacker = attackerBrain != brain ? attackerBrain : null;
+        health.ApplyDamage(dmg);
+        incomingAttacker = null;
+
+        OnDamageTaken?.Invoke(packet);
+        OnDamageApplied?.Invoke(packet, dmg);
+        return dmg;
+    }
+
+    /// <summary>
+    /// Two curves, meeting at zero.
+    ///
+    /// Positive mitigation is the usual diminishing-returns hyperbola — 100 armour halves
+    /// the hit, and no amount of armour reaches immunity.
+    ///
+    /// Negative mitigation is LINEAR, and that is not a stylistic choice. Running the same
+    /// hyperbola below zero puts a pole at -100: the denominator hits zero, reduction goes
+    /// to negative infinity, and the entity takes an infinite hit. It misbehaves long before
+    /// that — -90 armour is already a 10x multiplier — so the curve cannot simply be clamped
+    /// away from its asymptote either.
+    ///
+    /// Negative armour became reachable when mitigation moved onto atr.arm, whose schema
+    /// range is -100..100. Armour shred is the obvious first debuff, and the status layer's
+    /// whole job is contributing to stats like this one.
+    ///
+    ///     +100 → x0.5      0 → x1.0      -50 → x1.5      -100 → x2.0
+    /// </summary>
+    private float ApplyMitigation(float dmg, DamageTypeConfig config)
+    {
+        if (config == null) return dmg;
+
+        float mitigation = GetDynamicStat(config.defenderStatIds, config.defenderStatMultipliers);
+
+        float reduction = mitigation >= 0f
+            ? mitigation / (mitigation + 100f)
+            : mitigation / 100f;
+
+        return dmg * (1f - reduction);
+    }
+
+    /// <summary>
+    /// Sum stat values, each scaled by its paired multiplier from the config
+    /// (e.g. penetration ×0.5). Missing/short multiplier lists default to ×1.
+    /// </summary>
+    private float GetDynamicStat(List<string> statIds, List<float> multipliers)
+    {
+        if (stats == null || statIds == null) return 0f;
+        float total = 0f;
+        for (int i = 0; i < statIds.Count; i++)
+        {
+            float mult = (multipliers != null && i < multipliers.Count) ? multipliers[i] : 1f;
+            total += stats.GetValue(statIds[i]) * mult;
+        }
+        return total;
+    }
+
+    private void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+        Killer = incomingAttacker;
+
+        OnDeath?.Invoke();
+        OnKilledBy?.Invoke(Killer);
+        if (Killer != null && Killer.Damage != null) Killer.Damage.RaiseKill(brain);
+    }
+
+    private void RaiseKill(ControllerBrain victim)
+    {
+        OnKill?.Invoke(victim);
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (hurtbox != null)
+            hurtbox.isTrigger = true;
+    }
+#endif
+}

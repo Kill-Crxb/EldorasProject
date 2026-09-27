@@ -91,7 +91,8 @@ public class DamageOverTimeEffect
             damageType = damageType,
             attackerTransform = attackerDamage.transform,
             hitPoint = targetDamage.transform.position,
-            hitNormal = Vector3.up
+            hitNormal = Vector3.up,
+            source = DamageSource.Tick
         };
 
         CombatDamagePacket packet = attackerDamage.CalculateDamage(attackData);

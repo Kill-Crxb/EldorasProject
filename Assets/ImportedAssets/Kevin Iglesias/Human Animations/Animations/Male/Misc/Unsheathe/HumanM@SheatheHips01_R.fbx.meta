@@ -968,8 +968,8 @@ ModelImporter:
   assetBundleVariant: 
 AssetOrigin:
   serializedVersion: 1
-  productId: 151650
-  packageName: Human Melee Animations
-  packageVersion: 2.0.2
-  assetPath: Assets/Kevin Iglesias/Human Animations/Animations/Male/Misc/Unsheathe/HumanM@SheatheHips01_R.fbx
-  uploadId: 771796
+  productId: 345572
+  packageName: Human Throwing Animations FREE
+  packageVersion: 1.0
+  assetPath: Assets/ImportedAssets/Kevin Iglesias/Human Animations/Animations/Male/Misc/Unsheathe/HumanM@SheatheHips01_R.fbx
+  uploadId: 825318

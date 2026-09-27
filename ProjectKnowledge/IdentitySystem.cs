@@ -29,13 +29,8 @@ public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
 
     public EntityType GetEntityType() => type;
 
-    // Get faction type via brain's FactionSystem
-    public FactionType GetFactionType()
-    {
-        // FactionSystem uses string IDs, not FactionType enum
-        // For now return Neutral; can be extended to map faction IDs to types
-        return FactionType.Neutral;
-    }
+    /// <summary>This entity's faction asset, via the brain's FactionSystem. Null if unaffiliated.</summary>
+    public FactionDefinition GetFaction() => brain?.Faction?.CurrentFaction;
 
     public void Initialize(ControllerBrain controllerBrain)
     {

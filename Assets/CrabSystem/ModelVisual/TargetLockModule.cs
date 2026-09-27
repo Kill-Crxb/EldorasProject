@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class TargetLockModule : MonoBehaviour, IPlayerModule, IInputHandler
+public class TargetLockModule : MonoBehaviour, IBrainModule, IInputHandler
 {
     [Header("Target Lock Settings")]
     [SerializeField] private float lockOnRange = 15f;
@@ -25,7 +25,7 @@ public class TargetLockModule : MonoBehaviour, IPlayerModule, IInputHandler
     public Vector3 TargetPoint => lockedTarget != null ? GetTargetPoint() : Vector3.zero;
     public float LockOnRange => lockOnRange;
 
-    // IPlayerModule implementation
+    // IBrainModule implementation
     public bool IsEnabled { get; set; } = true;
 
     public void Initialize(ControllerBrain brain)

@@ -1,42 +1,36 @@
 using System;
 
 /// <summary>
-/// Universal stat provider interface
-/// Allows different stat implementations (local, networked, cached)
-/// 
-/// Implementations:
-/// - StatSystem: Local stat calculation (single-player, server)
-/// - NetworkStatCache: Client-side read-only cache (multiplayer client)
-/// - MockStatProvider: Testing/debugging
-/// 
-/// Phase 1.8: Server-Ready Architecture
+/// Read/write access to one entity's stat values.
+/// Implemented by StatSystem; kept as an interface so consumers never depend on the store.
 /// </summary>
 public interface IStatProvider
 {
-    /// <summary>
-    /// Get final calculated stat value
-    /// </summary>
+    /// <summary>Effective value — base plus contributions — or defaultValue when not loaded.</summary>
     float GetValue(string statId, float defaultValue = 0f);
 
     /// <summary>
-    /// Get base stat value (before modifiers)
+    /// Sets what the character owns. Rejected for derived stats, whose value belongs to
+    /// their contributors. For anything that can be taken away again, use AddContribution.
     /// </summary>
-    float GetBaseValue(string statId, float defaultValue = 0f);
+    void SetValue(string statId, float value);
 
     /// <summary>
-    /// Set base stat value
-    /// NOTE: Clients should NOT call this in multiplayer!
+    /// Adds or replaces one source's contribution. The key identifies the source
+    /// — "item:{instanceId}", "talent:{id}" — and re-adding under it replaces the amount.
     /// </summary>
-    void SetBaseValue(string statId, float value);
+    void AddContribution(string statId, string sourceKey, float amount);
 
-    /// <summary>
-    /// Check if stat exists
-    /// </summary>
+    void RemoveContribution(string statId, string sourceKey);
+
+    /// <summary>Drops everything one source gave, across every stat.</summary>
+    void ClearContributions(string sourceKey);
+
     bool HasStat(string statId);
 
-    /// <summary>
-    /// Fired when a stat value changes
-    /// Args: (statId, oldValue, newValue)
-    /// </summary>
+    /// <summary>True when this stat is produced by its contributors rather than owned.</summary>
+    bool IsDerived(string statId);
+
+    /// <summary>Fired after a value changes. Args: statId, oldValue, newValue.</summary>
     event Action<string, float, float> OnStatChanged;
 }

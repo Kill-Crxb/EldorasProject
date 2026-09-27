@@ -1,469 +1,272 @@
-﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
 using NinjaGame.Stats;
-using System.Linq;
-
-#if UNITY_EDITOR
-using UnityEngine.InputSystem;
-#endif
+using UnityEngine;
 
 /// <summary>
-/// Universal Stat System - Per-Entity Stat Values
-/// Follows the same architectural pattern as IdentitySystem, MovementSystem, AnimationSystem.
-/// 
-/// Phase 1.7b Refactor: Now uses StatsManager for schema definitions
-/// 
-/// Responsibilities:
-/// - Hold RUNTIME stat values for this entity
-/// - Initialize StatEngine with schemas from StatsManager
-/// - Provide interface for other modules to query/modify stats
-/// - Handle stat persistence (ISaveable)
-/// - Support hot-reload of stat schemas
-/// 
-/// NOT Responsible For:
-/// - Storing schema definitions (that's StatsManager)
-/// - Defining what stats exist (that's StatsManager)
-/// 
-/// Architecture:
-/// StatsManager (Global) → Provides schema definitions
-///     ↓
-/// StatsSystem (Per-Entity) → Holds runtime values
-///     ↓
-/// Items/Buffs → Apply modifiers
-/// 
-/// Integration:
-/// - ControllerBrain.Stats (direct property access)
-/// - Modules query stats via brain.Stats.GetValue("character.health")
-/// - Items/buffs apply modifiers via brain.Stats.AddFlatModifier(...)
-/// 
-/// Phase 1.7b: System Consolidation
-/// Updated: January 09, 2026
+/// Holds this entity's stat values. Each stat has a base the character owns and any number
+/// of contributions from elsewhere — gear, talents, core-stat bonuses. The effective value
+/// is base + contributions, clamped to the range authored in its schema.
+///
+/// Contributions are keyed by their source, so removing one is exact: nothing subtracts a
+/// remembered number, and two sources feeding the same stat cannot corrupt each other.
+///
+/// This module never asks who its contributors are — sources push, StatSystem sums. That
+/// keeps it ignorant of equipment, talents and everything else that might feed a stat.
 /// </summary>
-public partial class StatSystem : MonoBehaviour, IBrainModule, ISaveable
+public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
 {
-    [Header("Stat Configuration")]
-    [Tooltip("Schema IDs to load from StatsManager (e.g., 'RPGCoreStats', 'RPGCombatStats')")]
-    [SerializeField] private List<string> schemaIds = new List<string>();
-    [SerializeField] private bool autoLoadSchemas = true;
+    #region Inspector
 
-    [Header("Runtime Settings")]
-    [SerializeField] private bool hotReloadEnabled = true;
-    [SerializeField] private bool debugLogging = false;
+    [Header("Schemas")]
+    [Tooltip("Schema asset names to load from StatsManager, e.g. 'CoreStats'.")]
+    [SerializeField] private List<string> schemaIds = new();
 
-    [Header("NPC Stat Masking (Optional)")]
-    [Tooltip("For NPCs, hide stats they don't use (e.g., bears don't show magic stats)")]
-    [SerializeField] private StatMaskFlags enabledStats = StatMaskFlags.CalculateAll;
+    #endregion
 
-    // Core engine (holds this entity's stat values)
-    private StatEngine engine;
+    #region State
+
+    // What the character owns. This is what gets saved.
+    private readonly Dictionary<string, float> baseValues = new();
+
+    // base + contributions, clamped. This is what everything reads.
+    private readonly Dictionary<string, float> values = new();
+
+    // statId -> sourceKey -> amount
+    private readonly Dictionary<string, Dictionary<string, float>> contributions = new();
+
+    // Ids from schemas marked derived. Excluded from the save on both sides.
+    private readonly HashSet<string> derivedIds = new();
+
     private ControllerBrain brain;
 
-    // Quick access caches (code-generated properties in StatSystem_Generated.cs)
-    private Dictionary<string, StatNode> quickAccessCache = new Dictionary<string, StatNode>();
+    public bool IsEnabled { get; set; } = true;
 
-    // Events
     public event Action<string, float, float> OnStatChanged;
 
-    // Properties
-    public bool IsEnabled { get; set; } = true;
-    public StatEngine Engine => engine;
+    #endregion
 
-    #region IBrainModule Implementation
+    #region IBrainModule
 
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
-
-        // Verify StatsManager exists
-        if (StatsManager.Instance == null)
-        {
-            Debug.LogError($"[StatSystem] StatsManager not found! Create a StatsManager under Managers GameObject. Entity: {brain.name}");
-            return;
-        }
-
-        // Create engine (this entity's runtime stat values)
-        engine = new StatEngine(debugLogging);
-        engine.OnStatChanged += (statId, oldVal, newVal) => OnStatChanged?.Invoke(statId, oldVal, newVal);
-
-        // Load stat definitions from StatsManager
-        if (autoLoadSchemas)
-        {
-            LoadStatSchemas();
-        }
-
-        // Initial calculation
-        engine.RecalculateAll();
-
-        if (debugLogging)
-            Debug.Log($"[StatSystem] Initialized with {schemaIds.Count} schemas on {brain.name}");
+        LoadSchemas();
     }
 
-    public void UpdateModule()
-    {
-        if (!IsEnabled) return;
+    public void LateInitialize() { }
 
-        // Hot-reload support (editor only)
-#if UNITY_EDITOR
-        if (hotReloadEnabled)
-        {
-            // Use new Input System (Unity.InputSystem)
-            var keyboard = UnityEngine.InputSystem.Keyboard.current;
-            if (keyboard != null && keyboard.f5Key.wasPressedThisFrame)
-            {
-                ReloadStatSchemas();
-            }
-        }
-#endif
-    }
+    public void UpdateModule() { }
 
     #endregion
 
     #region Schema Loading
 
-    /// <summary>
-    /// Load all stat definitions from StatsManager
-    /// Phase 1.7b: Now pulls schemas from global StatsManager instead of local list
-    /// </summary>
-    private void LoadStatSchemas()
+    private void LoadSchemas()
     {
+        values.Clear();
+        baseValues.Clear();
+        contributions.Clear();
+        derivedIds.Clear();
+
         if (StatsManager.Instance == null)
         {
-            Debug.LogError($"[StatSystem] StatsManager not found! Cannot load schemas. Entity: {brain.name}");
+            Debug.LogError($"[StatSystem] No StatsManager in scene. {name} has no stats.");
             return;
         }
-
-        if (schemaIds == null || schemaIds.Count == 0)
-        {
-            Debug.LogWarning($"[StatSystem] No schema IDs assigned to {brain.name}! Assign schema IDs in inspector (e.g., 'RPGCoreStats').");
-            return;
-        }
-
-        int loadedCount = 0;
 
         foreach (var schemaId in schemaIds)
         {
-            if (string.IsNullOrEmpty(schemaId))
-            {
-                Debug.LogWarning($"[StatSystem] Empty schema ID in list for {brain.name}, skipping.");
-                continue;
-            }
+            if (string.IsNullOrEmpty(schemaId)) continue;
 
-            // Get schema from global StatsManager
             var schema = StatsManager.Instance.GetSchema(schemaId);
-
             if (schema == null)
             {
-                Debug.LogWarning($"[StatSystem] Schema '{schemaId}' not found in StatsManager! Entity: {brain.name}");
+                Debug.LogWarning($"[StatSystem] Schema '{schemaId}' not found for {name}");
                 continue;
             }
 
-            // Load this schema's stats
-            LoadSchema(schema);
-            loadedCount++;
-        }
-
-        if (debugLogging)
-            Debug.Log($"[StatSystem] Loaded {loadedCount}/{schemaIds.Count} schemas from StatsManager for {brain.name}");
-    }
-
-    /// <summary>
-    /// Load a single stat schema into this entity's engine
-    /// </summary>
-    private void LoadSchema(StatSchema schema)
-    {
-        foreach (var statDef in schema.stats)
-        {
-            // Check stat masking (for NPCs - skip stats they don't use)
-            if (!IsStatEnabled(statDef.statId))
+            foreach (var entry in schema.Entries)
             {
-                if (debugLogging)
-                    Debug.Log($"[StatSystem] Skipping masked stat: {statDef.statId} on {brain.name}");
-                continue;
+                if (entry == null || string.IsNullOrEmpty(entry.id)) continue;
+
+                baseValues[entry.id] = entry.defaultValue;
+                values[entry.id] = entry.Clamp(entry.defaultValue);
+
+                if (schema.Derived) derivedIds.Add(entry.id);
             }
-
-            // Create stat node WITH CATEGORY
-            var stat = new StatNode(
-                statDef.statId,
-                statDef.displayName,
-                statDef.baseValue,
-                statDef.formula,
-                statDef.category
-            );
-
-            stat.description = statDef.description;
-
-            // Register with this entity's engine
-            engine.RegisterStat(stat);
-
-            // Cache for quick access
-            quickAccessCache[statDef.statId] = stat;
-
-           
         }
-    }
-
-    /// <summary>
-    /// Reload schemas (hot-reload support)
-    /// </summary>
-    private void ReloadStatSchemas()
-    {
-        Debug.Log($"[StatSystem] Hot-reloading stat schemas for {brain.name}...");
-
-        // Clear engine
-        engine = new StatEngine(debugLogging);
-        engine.OnStatChanged += (statId, oldVal, newVal) => OnStatChanged?.Invoke(statId, oldVal, newVal);
-        quickAccessCache.Clear();
-
-        // Reload from StatsManager
-        LoadStatSchemas();
-        engine.RecalculateAll();
-
-        Debug.Log($"[StatSystem] Hot-reload complete for {brain.name}!");
     }
 
     #endregion
 
-    #region Stat Access
+    #region IStatProvider
 
-    /// <summary>
-    /// Get final value of a stat (after all modifiers)
-    /// </summary>
     public float GetValue(string statId, float defaultValue = 0f)
     {
-        return engine.GetValue(statId, defaultValue);
+        if (string.IsNullOrEmpty(statId)) return defaultValue;
+        return values.TryGetValue(statId, out float value) ? value : defaultValue;
     }
 
     /// <summary>
-    /// Get base value of a stat (before modifiers)
+    /// Sets what the character owns. Contributions still stack on top, so this is the
+    /// wrong call for gear or a buff — use AddContribution for anything temporary.
     /// </summary>
-    public float GetBaseValue(string statId, float defaultValue = 0f)
+    public void SetValue(string statId, float value)
     {
-        return engine.GetBaseValue(statId, defaultValue);
+        if (string.IsNullOrEmpty(statId)) return;
+
+        if (!baseValues.ContainsKey(statId))
+        {
+            Debug.LogWarning($"[StatSystem] '{statId}' is not loaded on {name}");
+            return;
+        }
+
+        if (derivedIds.Contains(statId))
+        {
+            Debug.LogWarning($"[StatSystem] '{statId}' is derived — write it with AddContribution, not SetValue");
+            return;
+        }
+
+        baseValues[statId] = value;
+        Recalculate(statId);
     }
 
-    /// <summary>
-    /// Set base value directly
-    /// </summary>
-    public void SetBaseValue(string statId, float value)
-    {
-        engine.SetBaseValue(statId, value);
-    }
+    public bool HasStat(string statId) => !string.IsNullOrEmpty(statId) && values.ContainsKey(statId);
+
+    public IEnumerable<string> GetStatIds() => values.Keys;
+
+    /// <summary>True when this stat comes from elsewhere and is not part of the save.</summary>
+    public bool IsDerived(string statId) => derivedIds.Contains(statId);
+
+    #endregion
+
+    #region Contributions
 
     /// <summary>
-    /// Get stat node directly (for advanced use)
+    /// Adds or replaces one source's contribution to a stat. The key identifies the source
+    /// — "item:{instanceId}", "talent:{id}", "core" — and re-adding under the same key
+    /// replaces the previous amount rather than stacking with it.
     /// </summary>
-    public StatNode GetStat(string statId)
+    public void AddContribution(string statId, string sourceKey, float amount)
     {
-        return engine.GetStat(statId);
+        if (string.IsNullOrEmpty(statId) || string.IsNullOrEmpty(sourceKey)) return;
+
+        if (!values.ContainsKey(statId))
+        {
+            Debug.LogWarning($"[StatSystem] '{statId}' is not loaded on {name}");
+            return;
+        }
+
+        if (!contributions.TryGetValue(statId, out var sources))
+        {
+            sources = new Dictionary<string, float>();
+            contributions[statId] = sources;
+        }
+
+        sources[sourceKey] = amount;
+        Recalculate(statId);
     }
 
-    /// <summary>
-    /// Check if stat exists
-    /// </summary>
-    public bool HasStat(string statId)
+    public void RemoveContribution(string statId, string sourceKey)
     {
-        return engine.HasStat(statId);
+        if (!contributions.TryGetValue(statId, out var sources)) return;
+        if (!sources.Remove(sourceKey)) return;
+
+        Recalculate(statId);
+    }
+
+    /// <summary>Drops everything one source gave, across every stat. Unequipping an item.</summary>
+    public void ClearContributions(string sourceKey)
+    {
+        if (string.IsNullOrEmpty(sourceKey)) return;
+
+        foreach (var pair in contributions)
+        {
+            if (pair.Value.Remove(sourceKey)) Recalculate(pair.Key);
+        }
+    }
+
+    /// <summary>What the character owns, before anything is added to it.</summary>
+    public float GetBaseValue(string statId)
+    {
+        return baseValues.TryGetValue(statId, out float value) ? value : 0f;
+    }
+
+    private void Recalculate(string statId)
+    {
+        float total = baseValues.TryGetValue(statId, out float baseValue) ? baseValue : 0f;
+
+        if (contributions.TryGetValue(statId, out var sources))
+        {
+            foreach (var amount in sources.Values) total += amount;
+        }
+
+        var entry = StatsManager.Instance != null ? StatsManager.Instance.GetEntry(statId) : null;
+        float clamped = entry != null ? entry.Clamp(total) : total;
+
+        float previous = values.TryGetValue(statId, out float existing) ? existing : 0f;
+        if (Mathf.Approximately(clamped, previous)) return;
+
+        values[statId] = clamped;
+        OnStatChanged?.Invoke(statId, previous, clamped);
     }
 
     #endregion
 
-    #region Modifier Management
-
-    /// <summary>
-    /// Add a flat modifier from a source (item, buff, talent)
-    /// Example: AddFlatModifier("combat.damage", "sword_123", 50) → +50 damage
-    /// </summary>
-    public void AddFlatModifier(string statId, string sourceId, float value)
-    {
-        engine.AddFlatModifier(statId, sourceId, value);
-    }
-
-    /// <summary>
-    /// Add a percentage modifier (0.25 = +25%)
-    /// Example: AddPercentModifier("combat.damage", "buff_123", 0.25f) → +25% damage
-    /// </summary>
-    public void AddPercentModifier(string statId, string sourceId, float percent)
-    {
-        engine.AddPercentModifier(statId, sourceId, percent);
-    }
-
-    /// <summary>
-    /// Add a contribution bonus (e.g., "+2 crit per point of Insight")
-    /// Example: AddContributionBonus("character.insight", "talent_123", "combat.crit_chance", 2f)
-    /// </summary>
-    public void AddContributionBonus(string statId, string sourceId, string targetStatId, float multiplier)
-    {
-        engine.AddContributionBonus(statId, sourceId, targetStatId, multiplier);
-    }
-
-    /// <summary>
-    /// Remove all modifiers from a specific source
-    /// Example: RemoveAllModifiersFromSource("sword_123") → Removes all sword modifiers
-    /// </summary>
-    public void RemoveAllModifiersFromSource(string sourceId)
-    {
-        engine.RemoveAllModifiersFromSource(sourceId);
-    }
-
-    #endregion
-
-    #region Stat Masking (NPC Optimization)
-
-    /// <summary>
-    /// Check if a stat should be calculated for this entity
-    /// Allows NPCs to skip stats they don't use (e.g., bears don't need magic stats)
-    /// </summary>
-    private bool IsStatEnabled(string statId)
-    {
-        // If masking disabled, enable all stats
-        if (enabledStats == StatMaskFlags.CalculateAll)
-            return true;
-
-        // Map stat IDs to mask flags
-        if (statId.Contains("magic") && !enabledStats.HasFlag(StatMaskFlags.MagicalPower))
-            return false;
-
-        if (statId.Contains("physical") && !enabledStats.HasFlag(StatMaskFlags.PhysicalPower))
-            return false;
-
-        // Add more mappings as needed
-        return true;
-    }
-
-    #endregion
-
-    #region ISaveable Implementation
+    #region ISaveable
 
     public string GetSaveId() => "stats";
 
-    public int GetSaveVersion() => 1;
+    public int GetSaveVersion() => 2;
 
+    /// <summary>
+    /// Writes base values, never effective ones — saving the total would bake a temporary
+    /// bonus into the character permanently the first time they saved while wearing gear.
+    /// </summary>
     public string GetSaveData()
     {
-        var saveData = new StatSystemSaveData();
-        saveData.statValues = new Dictionary<string, float>();
+        var data = new StatSaveData { version = GetSaveVersion() };
 
-        // Save only base values (modifiers come from items/buffs and are re-applied)
-        foreach (var statId in engine.GetAllStatIds())
+        foreach (var pair in baseValues)
         {
-            var stat = engine.GetStat(statId);
-            if (stat != null && string.IsNullOrEmpty(stat.formula))
-            {
-                // Only save stats with no formula (they have independent base values)
-                saveData.statValues[statId] = stat.baseValue;
-            }
+            if (derivedIds.Contains(pair.Key)) continue;
+
+            data.stats.Add(new StatValuePair { id = pair.Key, value = pair.Value });
         }
 
-        return JsonUtility.ToJson(saveData);
+        return JsonUtility.ToJson(data);
     }
 
-    public void LoadSaveData(string data)
+    public void LoadSaveData(string json)
     {
-        var saveData = JsonUtility.FromJson<StatSystemSaveData>(data);
+        if (string.IsNullOrEmpty(json)) return;
 
-        if (saveData?.statValues != null)
+        var data = JsonUtility.FromJson<StatSaveData>(json);
+        if (data?.stats == null) return;
+
+        // A save written before a stat became derived still lists it. Ignore those rather
+        // than restoring a number the sources are about to recalculate anyway.
+        foreach (var pair in data.stats)
         {
-            foreach (var kvp in saveData.statValues)
-            {
-                engine.SetBaseValue(kvp.Key, kvp.Value);
-            }
+            if (derivedIds.Contains(pair.id)) continue;
 
-            // Recalculate after loading
-            engine.RecalculateAll();
-
-            if (debugLogging)
-                Debug.Log($"[StatSystem] Loaded {saveData.statValues.Count} stat base values from save for {brain.name}");
+            SetValue(pair.id, pair.value);
         }
     }
 
-    [System.Serializable]
-    private class StatSystemSaveData
+    [Serializable]
+    private class StatSaveData
     {
-        public Dictionary<string, float> statValues;
+        public int version;
+        public List<StatValuePair> stats = new();
     }
 
-    #endregion
-
-
-    #region Debug & Utilities
-
-    public void EnableDebugLogging(bool enable)
+    [Serializable]
+    private class StatValuePair
     {
-        debugLogging = enable;
-        engine?.EnableDebugLogging(enable);
-    }
-
-    [ContextMenu("Print All Stats")]
-    public void PrintAllStats()
-    {
-        if (engine != null)
-        {
-            Debug.Log(engine.GetDebugSummary());
-        }
-    }
-
-    [ContextMenu("Force Recalculate All")]
-    public void ForceRecalculateAll()
-    {
-        engine?.ForceRecalculateAll();
-        Debug.Log($"[StatSystem] Forced recalculation complete for {brain.name}");
-    }
-
-    [ContextMenu("Debug: Validate StatsManager Connection")]
-    public void DebugValidateStatsManagerConnection()
-    {
-        Debug.Log($"=== STATS SYSTEM VALIDATION ({brain.name}) ===");
-
-        // Check StatsManager
-        if (StatsManager.Instance == null)
-        {
-            Debug.LogError("❌ StatsManager.Instance is NULL! Create a StatsManager in the scene.");
-        }
-        else
-        {
-            Debug.Log("✅ StatsManager.Instance exists");
-            Debug.Log($"   Available schemas: {string.Join(", ", StatsManager.Instance.GetSchemaIds())}");
-        }
-
-        // Check schema IDs
-        if (schemaIds == null || schemaIds.Count == 0)
-        {
-            Debug.LogError("❌ No schema IDs assigned! Assign schema IDs in inspector.");
-        }
-        else
-        {
-            Debug.Log($"✅ {schemaIds.Count} schema IDs assigned");
-
-            foreach (var schemaId in schemaIds)
-            {
-                if (string.IsNullOrEmpty(schemaId))
-                {
-                    Debug.LogWarning("⚠️ Empty schema ID in list");
-                }
-                else if (StatsManager.Instance != null)
-                {
-                    var schema = StatsManager.Instance.GetSchema(schemaId);
-                    if (schema == null)
-                        Debug.LogWarning($"⚠️ Schema '{schemaId}' not found in StatsManager");
-                    else
-                        Debug.Log($"   ✅ '{schemaId}' ({schema.stats.Count} stats)");
-                }
-            }
-        }
-
-        // Check engine
-        if (engine == null)
-        {
-            Debug.LogWarning("⚠️ StatEngine not initialized (call Initialize() first)");
-        }
-        else
-        {
-            var allStatIds = engine.GetAllStatIds();
-            Debug.Log($"✅ StatEngine initialized with {allStatIds.Count()} stats");
-        }
-
-        Debug.Log("=== VALIDATION COMPLETE ===");
+        public string id;
+        public float value;
     }
 
     #endregion

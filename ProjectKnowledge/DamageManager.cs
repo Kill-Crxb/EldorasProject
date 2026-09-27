@@ -258,22 +258,15 @@ public class DamageManager : MonoBehaviour, IGameManager, IManagerDependency
     #region Coordination: Faction Damage Modifiers
 
     /// <summary>
-    /// COORDINATION: Get faction-based damage modifier for PvP combat
-    /// Queries FactionManager for relationship between factions
+    /// COORDINATION: Get faction-based damage modifier for combat.
+    /// Reads the damage multiplier from the relationship entry in FactionRelationships.
     /// </summary>
-    /// <param name="attackerFaction">Attacker's faction</param>
-    /// <param name="defenderFaction">Defender's faction</param>
+    /// <param name="attackerFaction">Attacker's faction asset</param>
+    /// <param name="defenderFaction">Defender's faction asset</param>
     /// <returns>Damage multiplier (1.0 = normal damage)</returns>
-    public float GetFactionDamageModifier(FactionType attackerFaction, FactionType defenderFaction)
+    public float GetFactionDamageModifier(FactionDefinition attackerFaction, FactionDefinition defenderFaction)
     {
-        var factions = ManagerBrain.Instance?.Factions;
-        if (factions == null)
-        {
-            // FactionManager not available - use normal damage
-            return 1f;
-        }
-
-        return factions.GetFactionDamageModifier(attackerFaction, defenderFaction);
+        return FactionManager.GetDamageModifier(attackerFaction, defenderFaction);
     }
 
     #endregion

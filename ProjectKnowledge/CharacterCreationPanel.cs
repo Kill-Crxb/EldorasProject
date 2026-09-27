@@ -9,18 +9,13 @@ using UnityEngine.UI;
 ///
 /// Attach to: CharacterCreationPanel root GameObject (child of MenuUI)
 ///
-/// Drives the character creation flow:
-///   - Name entry and validation
-///   - Stat allocation against a configurable point pool (self-contained,
-///     no RPGSystem dependency — menu scene has no player brain)
-///   - Finalise: writes seed save files via SaveManager, returns to CharacterSelectScreen
+/// Name entry plus a rolled statline. There is no manual allocation — the six core
+/// stats are rolled from a fixed pool with a guaranteed minimum each, and the player
+/// rerolls until they like what they see.
 ///
-/// Stat allocation rules:
-///   - All stats start at statFloor (inspector field)
-///   - Player has totalStatPoints to distribute freely across the six stats
-///   - A stat can never be reduced below statFloor
-///   - Plus buttons disable when the pool is exhausted
-///   - Minus buttons disable when a stat is already at the floor
+/// Randomize is the seam for the rest of character generation. Starting passives,
+/// class and family each become another Roll* call inside Randomize(), so the button
+/// keeps meaning "give me a whole new character" as those systems land.
 ///
 /// Inspector wiring:
 ///
@@ -28,23 +23,11 @@ using UnityEngine.UI;
 ///   nameInputField        — TMP_InputField
 ///
 ///   [Stat Display]
-///   mindText              — TextMeshProUGUI
-///   bodyText              — TextMeshProUGUI
-///   spiritText            — TextMeshProUGUI
-///   resilienceText        — TextMeshProUGUI
-///   enduranceText         — TextMeshProUGUI
-///   insightText           — TextMeshProUGUI
-///   remainingPointsText   — TextMeshProUGUI  (pool remaining)
-///
-///   [Stat Buttons]
-///   mindPlus / mindMinus  — Button (repeat for each stat)
-///   bodyPlus / bodyMinus
-///   spiritPlus / spiritMinus
-///   resiliencePlus / resilienceMinus
-///   endurancePlus / enduranceMinus
-///   insightPlus / insightMinus
+///   mindText … insightText — TextMeshProUGUI, one per core stat
+///   pointsText            — TextMeshProUGUI, shows the rolled total
 ///
 ///   [Navigation]
+///   randomizeButton       — Button (reroll)
 ///   finaliseButton        — Button (write saves + return to select)
 ///   cancelButton          — Button (discard + return to select)
 ///
@@ -52,11 +35,10 @@ using UnityEngine.UI;
 ///   feedbackText          — TextMeshProUGUI
 ///
 ///   [Config]
-///   statFloor             — Minimum value any stat can reach (default 8)
-///   totalStatPoints       — Points the player distributes at creation (default 10)
-///   minNameLength         — Minimum character name length (default 2)
-///   maxNameLength         — Maximum character name length (default 20)
-///   defaultModelId        — Placeholder until appearance system is built
+///   minPerStat            — Every stat is guaranteed at least this (default 3)
+///   statPointPool         — Total points across all six stats (default 30)
+///   minNameLength / maxNameLength
+///   defaultModelId        — Placeholder until the appearance system is built
 /// </summary>
 public class CharacterCreationPanel : MonoBehaviour
 {
@@ -72,23 +54,12 @@ public class CharacterCreationPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI resilienceText;
     [SerializeField] private TextMeshProUGUI enduranceText;
     [SerializeField] private TextMeshProUGUI insightText;
-    [SerializeField] private TextMeshProUGUI remainingPointsText;
 
-    [Header("Stat Buttons")]
-    [SerializeField] private Button mindPlus;
-    [SerializeField] private Button mindMinus;
-    [SerializeField] private Button bodyPlus;
-    [SerializeField] private Button bodyMinus;
-    [SerializeField] private Button spiritPlus;
-    [SerializeField] private Button spiritMinus;
-    [SerializeField] private Button resiliencePlus;
-    [SerializeField] private Button resilienceMinus;
-    [SerializeField] private Button endurancePlus;
-    [SerializeField] private Button enduranceMinus;
-    [SerializeField] private Button insightPlus;
-    [SerializeField] private Button insightMinus;
+    [Tooltip("Shows the rolled total. Always equals the pool — it is there to make the budget visible.")]
+    [SerializeField] private TextMeshProUGUI pointsText;
 
     [Header("Navigation")]
+    [SerializeField] private Button randomizeButton;
     [SerializeField] private Button finaliseButton;
     [SerializeField] private Button cancelButton;
 
@@ -96,13 +67,13 @@ public class CharacterCreationPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI feedbackText;
 
     [Header("Config")]
-    [Tooltip("The value all stats start at and cannot be reduced below.")]
+    [Tooltip("Every stat is guaranteed at least this much before anything is rolled.")]
     [Min(1)]
-    [SerializeField] private int statFloor = 8;
+    [SerializeField] private int minPerStat = 3;
 
-    [Tooltip("Total points the player can freely distribute across all six stats at creation.")]
-    [Min(0)]
-    [SerializeField] private int totalStatPoints = 10;
+    [Tooltip("Total points shared across all six stats, minimums included.")]
+    [Min(1)]
+    [SerializeField] private int statPointPool = 30;
 
     [Tooltip("Minimum character name length.")]
     [SerializeField] private int minNameLength = 2;
@@ -113,30 +84,34 @@ public class CharacterCreationPanel : MonoBehaviour
     [Tooltip("Model ID written to metadata. Placeholder until appearance system is built.")]
     [SerializeField] private string defaultModelId = "female_base_v1";
 
-    [Header("Debug")]
-    [SerializeField] private bool debugLogging = false;
+    // ── Stats ─────────────────────────────────────────────────────────────
 
-    // ── Stat Indices ──────────────────────────────────────────────────────
+    // Index order is the display order, and the only place stat ids are written down.
+    private static readonly string[] StatIds =
+    {
+        "core.mind", "core.body", "core.spirit", "core.resilience", "core.endurance", "core.insight"
+    };
 
-    private const int MIND = 0;
-    private const int BODY = 1;
-    private const int SPIRIT = 2;
-    private const int RESILIENCE = 3;
-    private const int ENDURANCE = 4;
-    private const int INSIGHT = 5;
-    private const int STAT_COUNT = 6;
+    private const int StatCount = 6;
+
+    private readonly int[] stats = new int[StatCount];
+    private TextMeshProUGUI[] statTexts;
 
     // ── State ─────────────────────────────────────────────────────────────
 
     private AccountManager accountManager;
     private SaveManager saveManager;
-
-    private int[] stats = new int[STAT_COUNT];
-    private int remainingPoints;
     private bool isBusy;
     private Action onComplete;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
+
+    private void Awake()
+    {
+        // Cached here rather than in OnEnable so Randomize() is safe to call from an
+        // inspector-wired onClick before the panel has ever been opened.
+        statTexts = new[] { mindText, bodyText, spiritText, resilienceText, enduranceText, insightText };
+    }
 
     private void OnEnable()
     {
@@ -171,116 +146,98 @@ public class CharacterCreationPanel : MonoBehaviour
         gameObject.SetActive(true);
     }
 
+    /// <summary>
+    /// Rolls a fresh character. Every stat starts on the minimum and the leftover
+    /// points are dealt out one at a time, so results cluster around the average
+    /// instead of producing one maxed stat and five floors.
+    ///
+    /// Public so the Randomize button can call it directly, and so later generation
+    /// steps (passives, class, family) have one obvious place to hang off.
+    /// </summary>
+    public void Randomize()
+    {
+        RollStats();
+        RefreshStatDisplay();
+    }
+
     // ── Setup ─────────────────────────────────────────────────────────────
 
     private void WireButtons()
     {
-        mindPlus?.onClick.AddListener(() => AdjustStat(MIND, +1));
-        mindMinus?.onClick.AddListener(() => AdjustStat(MIND, -1));
-        bodyPlus?.onClick.AddListener(() => AdjustStat(BODY, +1));
-        bodyMinus?.onClick.AddListener(() => AdjustStat(BODY, -1));
-        spiritPlus?.onClick.AddListener(() => AdjustStat(SPIRIT, +1));
-        spiritMinus?.onClick.AddListener(() => AdjustStat(SPIRIT, -1));
-        resiliencePlus?.onClick.AddListener(() => AdjustStat(RESILIENCE, +1));
-        resilienceMinus?.onClick.AddListener(() => AdjustStat(RESILIENCE, -1));
-        endurancePlus?.onClick.AddListener(() => AdjustStat(ENDURANCE, +1));
-        enduranceMinus?.onClick.AddListener(() => AdjustStat(ENDURANCE, -1));
-        insightPlus?.onClick.AddListener(() => AdjustStat(INSIGHT, +1));
-        insightMinus?.onClick.AddListener(() => AdjustStat(INSIGHT, -1));
+        // A missing reference here used to mean a button that looked fine and did nothing.
+        if (randomizeButton == null)
+            Debug.LogWarning("[CharacterCreationPanel] No randomize button assigned — rerolling is unavailable.", this);
 
+        randomizeButton?.onClick.AddListener(Randomize);
         finaliseButton?.onClick.AddListener(OnFinaliseClicked);
         cancelButton?.onClick.AddListener(OnCancelClicked);
     }
 
     private void UnwireButtons()
     {
-        mindPlus?.onClick.RemoveAllListeners();
-        mindMinus?.onClick.RemoveAllListeners();
-        bodyPlus?.onClick.RemoveAllListeners();
-        bodyMinus?.onClick.RemoveAllListeners();
-        spiritPlus?.onClick.RemoveAllListeners();
-        spiritMinus?.onClick.RemoveAllListeners();
-        resiliencePlus?.onClick.RemoveAllListeners();
-        resilienceMinus?.onClick.RemoveAllListeners();
-        endurancePlus?.onClick.RemoveAllListeners();
-        enduranceMinus?.onClick.RemoveAllListeners();
-        insightPlus?.onClick.RemoveAllListeners();
-        insightMinus?.onClick.RemoveAllListeners();
-
+        randomizeButton?.onClick.RemoveListener(Randomize);
         finaliseButton?.onClick.RemoveListener(OnFinaliseClicked);
         cancelButton?.onClick.RemoveListener(OnCancelClicked);
     }
 
     private void ResetToDefaults()
     {
-        for (int i = 0; i < STAT_COUNT; i++)
-            stats[i] = statFloor;
-
-        remainingPoints = totalStatPoints;
-
         if (nameInputField != null)
             nameInputField.text = "";
 
         ClearFeedback();
         SetInteractable(true);
-        RefreshStatDisplay();
+        Randomize();
     }
 
-    // ── Stat Allocation ───────────────────────────────────────────────────
+    // ── Rolling ───────────────────────────────────────────────────────────
 
-    private void AdjustStat(int statIndex, int delta)
+    private void RollStats()
     {
-        if (delta > 0)
-        {
-            if (remainingPoints <= 0) return;
+        int floorTotal = minPerStat * StatCount;
 
-            stats[statIndex] += 1;
-            remainingPoints -= 1;
-        }
-        else
+        if (statPointPool < floorTotal)
         {
-            if (stats[statIndex] <= statFloor) return;
-
-            stats[statIndex] -= 1;
-            remainingPoints += 1;
+            Debug.LogWarning($"[CharacterCreationPanel] A pool of {statPointPool} cannot cover " +
+                             $"{StatCount} stats at {minPerStat} each. Rolling everything at the minimum.", this);
         }
 
-        RefreshStatDisplay();
+        for (int i = 0; i < StatCount; i++)
+            stats[i] = minPerStat;
+
+        int spare = Mathf.Max(0, statPointPool - floorTotal);
+
+        for (int i = 0; i < spare; i++)
+            stats[UnityEngine.Random.Range(0, StatCount)] += 1;
     }
 
     private void RefreshStatDisplay()
     {
-        if (mindText != null) mindText.text = stats[MIND].ToString();
-        if (bodyText != null) bodyText.text = stats[BODY].ToString();
-        if (spiritText != null) spiritText.text = stats[SPIRIT].ToString();
-        if (resilienceText != null) resilienceText.text = stats[RESILIENCE].ToString();
-        if (enduranceText != null) enduranceText.text = stats[ENDURANCE].ToString();
-        if (insightText != null) insightText.text = stats[INSIGHT].ToString();
+        for (int i = 0; i < StatCount; i++)
+            if (statTexts[i] != null) statTexts[i].text = stats[i].ToString();
 
-        if (remainingPointsText != null)
-            remainingPointsText.text = remainingPoints.ToString();
-
-        RefreshButtonStates();
+        if (pointsText != null)
+            pointsText.text = Total().ToString();
     }
 
-    private void RefreshButtonStates()
+    private int Total()
     {
-        // Plus buttons — disabled when the pool is exhausted
-        bool canAdd = remainingPoints > 0;
-        if (mindPlus != null) mindPlus.interactable = canAdd;
-        if (bodyPlus != null) bodyPlus.interactable = canAdd;
-        if (spiritPlus != null) spiritPlus.interactable = canAdd;
-        if (resiliencePlus != null) resiliencePlus.interactable = canAdd;
-        if (endurancePlus != null) endurancePlus.interactable = canAdd;
-        if (insightPlus != null) insightPlus.interactable = canAdd;
+        int total = 0;
 
-        // Minus buttons — disabled when stat is at the floor
-        if (mindMinus != null) mindMinus.interactable = stats[MIND] > statFloor;
-        if (bodyMinus != null) bodyMinus.interactable = stats[BODY] > statFloor;
-        if (spiritMinus != null) spiritMinus.interactable = stats[SPIRIT] > statFloor;
-        if (resilienceMinus != null) resilienceMinus.interactable = stats[RESILIENCE] > statFloor;
-        if (enduranceMinus != null) enduranceMinus.interactable = stats[ENDURANCE] > statFloor;
-        if (insightMinus != null) insightMinus.interactable = stats[INSIGHT] > statFloor;
+        for (int i = 0; i < StatCount; i++)
+            total += stats[i];
+
+        return total;
+    }
+
+    private StatBaseOverride[] BuildStatOverrides()
+    {
+        var overrides = new StatBaseOverride[StatCount];
+
+        for (int i = 0; i < StatCount; i++)
+            overrides[i] = new StatBaseOverride { statId = StatIds[i], baseValue = stats[i] };
+
+        return overrides;
     }
 
     // ── Finalise ──────────────────────────────────────────────────────────
@@ -305,11 +262,9 @@ public class CharacterCreationPanel : MonoBehaviour
         {
             characterName = characterName,
             accountName = accountManager.ActiveAccountName,
-            modelId = defaultModelId
+            modelId = defaultModelId,
+            baseStats = BuildStatOverrides()
         };
-
-        if (debugLogging)
-            Debug.Log($"[CharacterCreationPanel] Finalising: {data.characterName}");
 
         string characterId = await saveManager.CreateCharacter(data);
 
@@ -320,9 +275,6 @@ public class CharacterCreationPanel : MonoBehaviour
             SetFeedback("Failed to create character. Please try again.", isError: true);
             return;
         }
-
-        if (debugLogging)
-            Debug.Log($"[CharacterCreationPanel] Character created: {characterId}");
 
         Close();
     }
@@ -386,26 +338,9 @@ public class CharacterCreationPanel : MonoBehaviour
     private void SetInteractable(bool value)
     {
         if (nameInputField != null) nameInputField.interactable = value;
+        if (randomizeButton != null) randomizeButton.interactable = value;
         if (finaliseButton != null) finaliseButton.interactable = value;
         if (cancelButton != null) cancelButton.interactable = value;
-
-        if (value)
-            RefreshButtonStates(); // Restore pool/floor-aware states
-        else
-            SetAllStatButtonsInteractable(false);
-    }
-
-    private void SetAllStatButtonsInteractable(bool value)
-    {
-        Button[] buttons =
-        {
-            mindPlus, mindMinus, bodyPlus, bodyMinus,
-            spiritPlus, spiritMinus, resiliencePlus, resilienceMinus,
-            endurancePlus, enduranceMinus, insightPlus, insightMinus
-        };
-
-        foreach (var b in buttons)
-            if (b != null) b.interactable = value;
     }
 
     private void SetFeedback(string message, bool isError = false)

@@ -35,6 +35,14 @@ public class CombatDamagePacket
     public readonly int comboCount;
     public readonly bool isHeavyAttack;
     public readonly string weaponId;
+    public readonly DamageSource source;
+
+    [Header("Resolution")]
+    // finalDamage is the base part. The exploded part rides separately because the DEFENDER decides
+    // full or glancing, and glancing drops it. accuracy is the attacker's Finesse, added to the d20.
+    public readonly float explosionDamage;
+    public readonly int explosions;
+    public readonly float accuracy;
 
     /// <summary>
     /// Constructor - creates an immutable damage packet
@@ -52,7 +60,11 @@ public class CombatDamagePacket
         Vector3 attackDirection,
         int comboCount = 0,
         bool isHeavyAttack = false,
-        string weaponId = "")
+        string weaponId = "",
+        DamageSource source = DamageSource.Other,
+        float explosionDamage = 0f,
+        int explosions = 0,
+        float accuracy = 0f)
     {
         this.baseDamage = baseDamage;
         this.finalDamage = finalDamage;
@@ -67,6 +79,10 @@ public class CombatDamagePacket
         this.comboCount = comboCount;
         this.isHeavyAttack = isHeavyAttack;
         this.weaponId = weaponId;
+        this.source = source;
+        this.explosionDamage = explosionDamage;
+        this.explosions = explosions;
+        this.accuracy = accuracy;
     }
 
     /// <summary>Create a simple damage packet for testing</summary>
@@ -113,5 +129,17 @@ public enum DamageType
     Earth,
     Magma,
     Crystal,
-    Nature
+    Nature,
+
+    /// <summary>
+    /// The other face of Aether. Radiant is Holy above; raw Aether is undifferentiated.
+    ///
+    /// Only AUTHORED spells can name a face — primitive casting throws Aether and nothing else,
+    /// which is the whole difference between the two tiers: not power, precision. An enemy that
+    /// shrugs off raw Aether but folds to Shadow is a legible reason to go and learn the spell.
+    ///
+    /// APPENDED, never inserted — DamageType serializes by index on every ability asset in the
+    /// game.
+    /// </summary>
+    Shadow
 }

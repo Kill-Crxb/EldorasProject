@@ -54,6 +54,9 @@ public partial class AbilityDefinition
     [Tooltip("VFX spawned on hit/impact")]
     public GameObject hitEffectPrefab;
 
-    [Tooltip("Projectile prefab (if projectile ability)")]
-    public GameObject projectilePrefab;
+    [Tooltip("Projectile fired by this ability, or none for a melee ability.\n\n" +
+             "Points at the DATA, not the prefab — the ProjectileData names its own archetype " +
+             "prefab, so several abilities can fire different projectiles that share one " +
+             "physical archetype and one pool.")]
+    public ProjectileData projectileData;
 }

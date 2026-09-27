@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 343c81389df5bea428fd193525123ad3
+timeCreated: 1471988923
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Prefabs/SkyboxController.prefab
+  uploadId: 497923

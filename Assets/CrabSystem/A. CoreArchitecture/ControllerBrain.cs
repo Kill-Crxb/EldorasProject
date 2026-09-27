@@ -274,6 +274,7 @@ public class ControllerBrain : MonoBehaviour
     {
         feetDetection = GetComponentInChildren<FeetDetectionModule>();
         var initialized = new HashSet<IBrainModule>();
+        var declined = new HashSet<IBrainModule>();
 
         void InitOrdered(IBrainModule module)
         {
@@ -282,13 +283,25 @@ public class ControllerBrain : MonoBehaviour
             initialized.Add(module);
         }
 
+        // A module the ordered pass deliberately skipped. Without this the IsPlayer guards below
+        // only change ORDERING — the fallback loop initializes them anyway, and CameraModule's
+        // Initialize ends by locking the cursor, so every NPC spawn steals it from the player.
+        void Decline(IBrainModule module)
+        {
+            if (module == null) return;
+            declined.Add(module);
+            module.IsEnabled = false;
+        }
+
         InitOrdered(identitySystem);
         InitOrdered(factionSystem);
         InitOrdered(modelModule);
 
         if (IsPlayer) InitOrdered(inputSystem);
+        else Decline(inputSystem);
 
         if (IsPlayer) InitOrdered(cameraModule);
+        else Decline(cameraModule);
 
         InitOrdered(stateMachineModule);
 
@@ -310,7 +323,7 @@ public class ControllerBrain : MonoBehaviour
 
         foreach (var module in updateModules)
         {
-            if (!initialized.Contains(module))
+            if (!initialized.Contains(module) && !declined.Contains(module))
                 module.Initialize(this);
         }
 
@@ -327,13 +340,25 @@ public class ControllerBrain : MonoBehaviour
 
     void LateInitializeModules()
     {
-        foreach (var module in updateModules)
-            module.LateInitialize();
+        var lateInitialized = new HashSet<IBrainModule>();
 
+        foreach (var module in updateModules)
+        {
+            if (!ShouldRun(module)) continue;
+
+            module.LateInitialize();
+            lateInitialized.Add(module);
+        }
+
+        // Dormant while nothing implements IPhysicsModule, but the first one written would be
+        // both an update module and a physics module, and would get LateInitialize twice.
         foreach (var module in physicsModules)
         {
-            if (module is IBrainModule brainModule)
-                brainModule.LateInitialize();
+            if (!(module is IBrainModule brainModule)) continue;
+            if (!lateInitialized.Add(brainModule)) continue;
+            if (!ShouldRun(brainModule)) continue;
+
+            brainModule.LateInitialize();
         }
     }
 
@@ -385,18 +410,41 @@ public class ControllerBrain : MonoBehaviour
 
     #region Update Loops
 
+    /// <summary>
+    /// Modules are discovered with includeInactive, and the loops below drive them directly rather
+    /// than through Unity's own Update — so without this neither IsEnabled nor the inspector's
+    /// enable checkbox did anything, and turning a module off was a silent no-op.
+    /// </summary>
+    static bool ShouldRun(IBrainModule module)
+    {
+        if (module == null) return false;
+        if (!module.IsEnabled) return false;
+        if (module is Behaviour behaviour && !behaviour.enabled) return false;
+        return true;
+    }
+
+
     void Update()
     {
         if (!IsInitialized || updateModules == null) return;
         for (int i = 0; i < updateModules.Length; i++)
-            if (updateModules[i] != null) updateModules[i].UpdateModule();
+            if (ShouldRun(updateModules[i])) updateModules[i].UpdateModule();
     }
 
     void FixedUpdate()
     {
         if (!IsInitialized || physicsModules == null) return;
         for (int i = 0; i < physicsModules.Length; i++)
-            if (physicsModules[i] != null) physicsModules[i].PhysicsUpdate();
+        {
+            if (physicsModules[i] == null) continue;
+
+            // Only gate the ones that are also brain modules. A physics module that is not an
+            // IBrainModule has no IsEnabled to consult, and silently dropping it would be a
+            // behaviour change rather than a fix.
+            if (physicsModules[i] is IBrainModule brainModule && !ShouldRun(brainModule)) continue;
+
+            physicsModules[i].PhysicsUpdate();
+        }
     }
 
     #endregion

@@ -28,12 +28,52 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     [Tooltip("Feet detection module for grounded state (optional - will auto-discover)")]
     [SerializeField] private FeetDetectionModule feetDetection;
 
+    [Header("Gait States")]
+    [Tooltip("With a gait-aware locomotion handler, IsRunning and IsSprinting come from the gait " +
+             "the player chose, gated only by actually moving. This is the speed (m/s) at which " +
+             "'moving' turns ON.")]
+    [SerializeField] private float moveEnterSpeed = 1f;
+
+    [Tooltip("Speed at which 'moving' turns OFF. Lower than the enter speed, so stopping does not " +
+             "flicker the camera between modes.")]
+    [SerializeField] private float moveExitSpeed = 0.5f;
+
+    [Header("Speed States")]
+    [Tooltip("Horizontal speed (m/s) at which Running turns ON — used for SpeedBlend, and for " +
+             "IsRunning only when the locomotion handler has no gait. Sits above your walk speed.")]
+    [SerializeField] private float runEnterSpeed = 4f;
+
+    [Tooltip("Speed at which Running turns OFF. LOWER than the enter speed on purpose. A single " +
+             "threshold flickers whenever you hover on it — clip a corner, drop under for two " +
+             "frames — and a flickering fact makes the camera pump and the speed lines stutter.")]
+    [SerializeField] private float runExitSpeed = 3.2f;
+
+    [Tooltip("Speed at which Sprinting turns ON.")]
+    [SerializeField] private float sprintEnterSpeed = 8f;
+
+    [Tooltip("Speed at which Sprinting turns OFF. Again lower than the enter speed.")]
+    [SerializeField] private float sprintExitSpeed = 6.8f;
+
+    [Header("Speed Blend")]
+    [Tooltip("Blend gained per second while accelerating.")]
+    [SerializeField] private float blendAttack = 4f;
+
+    [Tooltip("Blend lost per second while slowing. LOWER than attack — effects that snap in and " +
+             "ease out read as momentum; a symmetric fade reads as a toggle.")]
+    [SerializeField] private float blendRelease = 2f;
+
     [Header("Debug")]
     [SerializeField] private bool showDebugInfo = false;
 
     // References
     private ControllerBrain brain;
     private StateMachineModule stateMachine;
+    private Blackboard blackboard;
+
+    private bool isRunning;
+    private bool isSprinting;
+    private bool isInMotion;
+    private float speedBlend;
     private IMovementControlSource activeControlSource;
     private List<IMovementControlSource> availableControlSources;
 
@@ -52,13 +92,55 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     public ControllerBrain Brain => brain;
 
     /// <summary>
-    /// Grounded state from FeetDetectionModule (if available) or Brain fallback
+    /// Grounded state from the locomotion handler when it owns grounding, otherwise from
+    /// FeetDetectionModule, otherwise the Brain fallback.
+    ///
+    /// A sweep-based handler already runs a downward capsule cast every step and knows the ground
+    /// normal and distance, not just a bool — asking a trigger volume the same question in
+    /// parallel gives two answers that disagree on stairs, slopes and anything moving. The
+    /// handler flag decides which source is authoritative, so handlers that do NOT own grounding
+    /// keep the existing behaviour untouched.
     /// </summary>
-    public bool IsGrounded => feetDetection?.IsGrounded ?? brain?.IsGrounded ?? false;
+    public bool IsGrounded => locomotionHandler != null && locomotionHandler.ProvidesGrounding
+        ? locomotionHandler.IsGrounded
+        : feetDetection?.IsGrounded ?? brain?.IsGrounded ?? false;
 
     // Locomotion state passthrough
     public bool IsMoving => locomotionHandler?.IsMoving ?? false;
     public Vector3 Velocity => locomotionHandler?.Velocity ?? Vector3.zero;
+
+    /// <summary>
+    /// Horizontal speed in m/s. Vertical motion is excluded deliberately — falling is not
+    /// sprinting, and including Y would trip every speed state off a long drop.
+    /// </summary>
+    public float Speed
+    {
+        get
+        {
+            Vector3 flat = Velocity;
+            flat.y = 0f;
+            return flat.magnitude;
+        }
+    }
+
+    /// <summary>
+    /// In the run or sprint gait AND moving. Gait is what the player chose (or was granted), not
+    /// how fast momentum is carrying them — a jump burst at walk gait is not running. Falls back to
+    /// speed hysteresis for a handler with no gait.
+    /// </summary>
+    public bool IsRunning => isRunning;
+
+    /// <summary>In the sprint gait AND moving. A player with no sprint grant never sprints.</summary>
+    public bool IsSprinting => isSprinting;
+
+    /// <summary>
+    /// 0 at the run threshold, 1 at the sprint threshold, damped asymmetrically.
+    ///
+    /// This is the CONTINUOUS half of the same information the two bools carry. Anything that
+    /// fades — camera FOV, speed lines, wind audio — reads this rather than building its own
+    /// ramp from a boolean, which is how two effects end up disagreeing about the same moment.
+    /// </summary>
+    public float SpeedBlend => speedBlend;
 
     // ========================================
     // IBrainModule Implementation
@@ -114,9 +196,20 @@ public class MovementSystem : MonoBehaviour, IBrainModule
         }
     }
 
+    /// <summary>
+    /// The blackboard belongs to another module, so it is resolved here rather than in
+    /// Initialize — InitializeModules() runs before every module exists.
+    /// </summary>
+    public void LateInitialize()
+    {
+        blackboard = brain != null ? brain.Blackboard : null;
+    }
+
     public void UpdateModule()
     {
         if (!isEnabled || locomotionHandler == null) return;
+
+        UpdateSpeedState();
 
         // Rebind if control source becomes inactive
         if (activeControlSource == null || !activeControlSource.IsActive)
@@ -143,6 +236,60 @@ public class MovementSystem : MonoBehaviour, IBrainModule
         }
 
         locomotionHandler.ExecuteMovement(input);
+    }
+
+    /// <summary>
+    /// Derive the speed states and publish them.
+    ///
+    /// THIS IS THE ONLY PLACE SPEED THRESHOLDS LIVE. The camera, the speed lines and anything
+    /// else that reacts to going fast read the facts or the blend rather than re-deriving them
+    /// from Velocity with their own numbers, which is how they drift apart.
+    ///
+    /// The facts are written DIRECTLY rather than authored as BlackboardConditions. A condition
+    /// would give SemanticBridgeSystem a second writer for the same key and the two would fight
+    /// every frame. MovementValueSource exists so conditions can still read speed as an INPUT
+    /// and produce their own, different facts.
+    /// </summary>
+    private void UpdateSpeedState()
+    {
+        float speed = Speed;
+        Gait gait = locomotionHandler != null ? locomotionHandler.CurrentGait : Gait.None;
+
+        if (gait == Gait.None)
+        {
+            isRunning = Hysteresis(isRunning, speed, runEnterSpeed, runExitSpeed);
+            isSprinting = Hysteresis(isSprinting, speed, sprintEnterSpeed, sprintExitSpeed);
+        }
+        else
+        {
+            isInMotion = Hysteresis(isInMotion, speed, moveEnterSpeed, moveExitSpeed);
+            isRunning = isInMotion && (gait == Gait.Run || gait == Gait.Sprint);
+            isSprinting = isInMotion && gait == Gait.Sprint;
+        }
+
+        // SpeedBlend stays MEASURED on purpose — effects that should answer "how fast", however the
+        // speed was reached (the speed vignette), read this; effects that answer "which gait" read
+        // the bools.
+        float target = Mathf.InverseLerp(runEnterSpeed, sprintEnterSpeed, speed);
+        float rate = target > speedBlend ? blendAttack : blendRelease;
+        speedBlend = Mathf.MoveTowards(speedBlend, target, rate * Time.deltaTime);
+
+        if (blackboard == null) return;
+
+        // SetBool/SetFloat only fire their change events when the value actually moves, so
+        // publishing every frame costs a dictionary lookup and nothing else.
+        blackboard.SetBool(BlackboardKey.IsRunning, isRunning);
+        blackboard.SetBool(BlackboardKey.IsSprinting, isSprinting);
+        blackboard.SetFloat(BlackboardKey.SpeedBlend, speedBlend);
+    }
+
+    /// <summary>
+    /// Two thresholds, not one: rising past `enter` turns it on, and it only turns off once the
+    /// value falls back below `exit`. The gap between them is what stops the chatter.
+    /// </summary>
+    private static bool Hysteresis(bool current, float value, float enter, float exit)
+    {
+        return current ? value > exit : value >= enter;
     }
 
     /// <summary>
@@ -246,6 +393,7 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     // Debug Info
     // ========================================
 
+#if UNITY_EDITOR
     private void OnGUI()
     {
         if (!showDebugInfo || !Application.isPlaying) return;
@@ -257,6 +405,9 @@ public class MovementSystem : MonoBehaviour, IBrainModule
         GUILayout.Label($"Grounded: {IsGrounded}");
         GUILayout.Label($"Moving: {IsMoving}");
         GUILayout.Label($"Velocity: {Velocity.magnitude:F2}");
+        GUILayout.Label($"Speed (flat): {Speed:F2}");
+        GUILayout.Label($"Run/Sprint: {isRunning} / {isSprinting}   Blend: {speedBlend:F2}");
         GUILayout.EndArea();
     }
+#endif
 }

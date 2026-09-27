@@ -41,6 +41,33 @@ public enum AbilityTargetType
     Direction
 }
 
+/// <summary>
+/// Who a status lands on when this ability resolves.
+///
+/// Both are real and neither is an obvious default: a debuff rides the hit onto whoever was
+/// struck, while a rage stack or a lifesteal buff belongs to whoever swung. On a self-targeted
+/// ability the two resolve to the same brain.
+/// </summary>
+public enum StatusRecipient
+{
+    Target,
+    Caster
+}
+
+/// <summary>
+/// One status this ability applies, and to whom.
+/// </summary>
+[System.Serializable]
+public struct StatusApplication
+{
+    [Tooltip("The status asset to apply. Its own duration and stacking rule decide what a second " +
+             "application does — the ability does not get an opinion.")]
+    public StatusDefinition status;
+
+    [Tooltip("Whoever was hit, or whoever swung.")]
+    public StatusRecipient recipient;
+}
+
 // ========================================
 // RESOURCE COST STRUCTURE
 // ========================================
@@ -132,6 +159,12 @@ public partial class AbilityDefinition : ScriptableObject
     // COMBAT EFFECTS (Legacy - Transitioning to Polymorphic)
     // ========================================
 
+    [Header("Hitboxes")]
+    [Tooltip("Which WeaponHitbox tags this attack activates — e.g. 'FistR', 'FootL', 'Blade'.\n" +
+             "Leave empty to activate every hitbox on the entity. That is the original behaviour, " +
+             "and what every weapon ability still does, so existing assets need no change.")]
+    public List<string> hitboxTags = new List<string>();
+
     [Header("Combat Effects")]
     public List<DamageEffect> damageEffects = new List<DamageEffect>();
     public List<DamageOverTimeEffect> damageOverTimeEffects = new List<DamageOverTimeEffect>();
@@ -141,6 +174,65 @@ public partial class AbilityDefinition : ScriptableObject
 
     [Header("Movement Effects")]
     public List<MovementEffect> movementEffects = new List<MovementEffect>();
+
+    // ========================================
+    // STATUS EFFECTS
+    // ========================================
+
+    [Header("Status Effects")]
+    [Tooltip("Statuses pushed onto whoever this ability reaches. Same authoring model as the " +
+             "effect lists above — a list on the asset, applied wherever the ability lands.\n\n" +
+             "The ability carries no duration, stacking or magnitude of its own; all of that is " +
+             "on the StatusDefinition, so the same buff granted by an ability, a talent or a " +
+             "potion behaves identically.")]
+    public List<StatusApplication> statusEffects = new List<StatusApplication>();
+
+    /// <summary>
+    /// Push this ability's statuses onto whoever it reached.
+    ///
+    /// Called from all three places an ability actually lands — Execute (self-targeted),
+    /// WeaponHitbox (melee contact) and ProjectilePayload (arrival) — for the same reason all
+    /// three already read damageEffects: an ability is authored once, and how it was delivered
+    /// is not supposed to change what it does.
+    ///
+    /// Early-outs on an empty list before touching the hierarchy, because GetModule falls
+    /// through to GetComponentInChildren for anything not in the brain's provider cache and
+    /// this runs per contact.
+    /// </summary>
+    /// <param name="target">Whoever was hit. May be null for a self-cast with no victim.</param>
+    /// <param name="caster">Whoever used the ability. Recorded on the instance as the source.</param>
+    public void ApplyStatuses(ControllerBrain target, ControllerBrain caster)
+    {
+        if (statusEffects == null || statusEffects.Count == 0) return;
+
+        for (int i = 0; i < statusEffects.Count; i++)
+        {
+            StatusDefinition status = statusEffects[i].status;
+            if (status == null) continue;
+
+            ControllerBrain bearer = statusEffects[i].recipient == StatusRecipient.Caster ? caster : target;
+            if (bearer == null) continue;
+
+            bearer.GetModule<StatusSystem>()?.Apply(status, caster);
+        }
+    }
+
+    // Same shape as ApplyStatuses, called from the same two landing paths. The attacker is the
+    // frame a relative direction is read in: the wielder for melee, the projectile for a shot.
+    public void ApplyKnockback(ControllerBrain target, Transform attacker)
+    {
+        if (knockbackEffects == null || knockbackEffects.Count == 0) return;
+        if (target == null) return;
+
+        for (int i = 0; i < knockbackEffects.Count; i++)
+        {
+            KnockbackEffect effect = knockbackEffects[i];
+            if (effect == null) continue;
+
+            effect.SetAttacker(attacker);
+            effect.Apply(target.gameObject);
+        }
+    }
 
     // TODO Phase 4: Migrate to polymorphic effect list
     // [SerializeReference]

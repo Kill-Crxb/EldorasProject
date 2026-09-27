@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
+  m_Name: Dash
+  m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
+  effectTrigger: 19
+  waitForAnimUnlock: 0
+  maxDuration: 2
+  animationLayer: 1
+  animationTrigger: Dash
+  castEffectPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 0}
+  projectileData: {fileID: 0}
+  requiredFactsAny: []
+  requiredFactsAll: []
+  forbiddenFactsAll: []
+  overrideDefaults: 0
+  customRequiredFacts: []
+  customForbiddenFacts: []
+  nextInChain: {fileID: 0}
+  chainWindow: 0.5
+  resourceCosts: []
+  cooldown: 1
+  castTime: 0
+  blockDamageReduction: 0.5
+  blockAngle: 120
+  parryWindowDuration: 0.2
+  parryDamageReduction: 1
+  parryEnablesCounter: 1
+  counterWindowDuration: 1
+  blockStartupTime: 0.1
+  abilityId: dash1
+  abilityName: Dash
+  description: its just a dash WIP
+  icon: {fileID: 21300000, guid: a4922756e8141e64398159b9f48fc42f, type: 3}
+  abilityType: 2
+  abilityCategory: 2
+  targetType: 4
+  range: 0
+  requiresLineOfSight: 0
+  hitboxTags: []
+  damageEffects: []
+  damageOverTimeEffects: []
+  healEffects: []
+  healOverTimeEffects: []
+  knockbackEffects: []
+  movementEffects:
+  - movementType: 0
+    directionSource: 1
+    direction: {x: 0, y: 1, z: 1}
+    speed: 8
+    speedCap: 9.2
+    duration: 2
+    frictionHoliday: 0.25
+    teleportDistance: 0
+  statusEffects: []
+  hitProcs: []
+  sequencePrerequisites: []
+  resourceThresholds: []
+  buffTransforms: []
+  targetConditions: []
+  chargeAbility: {fileID: 0}
+  chargeThreshold: 0.8

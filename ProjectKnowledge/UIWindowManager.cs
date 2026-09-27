@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
@@ -55,18 +55,8 @@ public class UIWindowManager : MonoBehaviour
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
 
-        if (keyboard.iKey.wasPressedThisFrame)
-            ToggleInventoryWindow();
-
-        if (keyboard.cKey.wasPressedThisFrame)
-            ToggleStatsWindow();
-
-        if (keyboard.kKey.wasPressedThisFrame)
-            ToggleEquipmentWindow();
-
-        if (keyboard.pKey.wasPressedThisFrame)
-            Toggle("Spellbook");
-
+        // UIInputRouter owns the panel hotkey and Escape. This stays only for
+        // legacy windows opened by other means, and retires with them.
         if (keyboard.escapeKey.wasPressedThisFrame)
             CloseTopWindow();
     }

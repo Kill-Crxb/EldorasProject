@@ -16,5 +16,16 @@ MonoBehaviour:
   options:
   - optionText: Got anything for me?
     actionType: 1
-    itemToGive: {fileID: 11400000, guid: e8a8b0209ef5634488ffe7183c7c177f, type: 2}
-    itemQuantity: 1
+    itemsToGive:
+    - item: {fileID: 11400000, guid: ff1f7b6b0edb01c4289c6347d4670ca3, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: 9d226d0a1258244468f7ce8a8f0562f4, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: a56efaba9420fa64d99dd646ac77c3e2, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: b7a4c7e48d54f70489187d1ec8b36bb7, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: 25af0459e9a26cd48bafde89a643f9e4, type: 2}
+      quantity: 1
+    onceOnly: 1
+    onceOnlyId: NS-StarterKit

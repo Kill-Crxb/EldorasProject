@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -46,6 +47,10 @@ public class VFXSystem : MonoBehaviour, IBrainModule
     [SerializeField] private bool debugVFX = false;
 
     private ControllerBrain brain;
+
+    // Socket ids already complained about, so a missing one is reported once rather than on
+    // every spawn. Cleared on model change, because a new rig deserves a fresh look.
+    private readonly HashSet<string> warnedSockets = new HashSet<string>();
 
     public bool IsEnabled { get; set; } = true;
 
@@ -124,6 +129,80 @@ public class VFXSystem : MonoBehaviour, IBrainModule
 
         GameObject instance = Instantiate(prefab, worldPos, Quaternion.identity);
 
+        AutoDestroy(instance, prefab);
+
+        return instance;
+    }
+
+    /// <summary>
+    /// Spawn on a named socket of the CURRENT model — a hand, a shoulder, a staff tip —
+    /// PARENTED to it, so the effect follows the bone while it plays.
+    ///
+    /// The anchors this system owns live on the brain and therefore survive model swaps, which
+    /// is exactly why they are not on the rig — and exactly why they cannot follow a hand. An
+    /// effect that belongs to a moving limb has to come off the rig, so this resolves through
+    /// ModelModule, which re-resolves its socket provider whenever the model changes.
+    ///
+    /// Named sockets are authored on the model's ModelSocketProvider, under Named Sockets —
+    /// the list whose own description names VFX anchors as its purpose. A model that has none
+    /// falls back to a brain anchor, so an effect still plays somewhere sensible rather than
+    /// vanishing.
+    /// </summary>
+    /// <param name="keepAuthoredScale">
+    /// Neutralise the socket's inherited scale so the effect ends up the size it was authored
+    /// at. Almost always what you want — see SocketScale. Untick only for an effect that
+    /// should genuinely grow with the thing it is attached to.
+    /// </param>
+    public GameObject SpawnAtSocket(GameObject prefab, string socketId, VFXAnchor fallbackAnchor,
+                                    bool parentToSocket = true, bool keepAuthoredScale = true)
+    {
+        if (prefab == null) return null;
+
+        Transform socket = brain != null && brain.Model != null
+            ? brain.Model.GetNamedSocket(socketId)
+            : null;
+
+        if (socket == null)
+        {
+            // Warned ONCE, and not behind the debug flag — a missing socket is a setup mistake
+            // whose only symptom is an effect playing somewhere slightly wrong, which is easy to
+            // stare past. Once, because a hand-sign burst spawns six times a spell and the same
+            // message on every one would bury the console. Same pattern as ProjectileSpawn.
+            if (!warnedSockets.Contains(socketId))
+            {
+                warnedSockets.Add(socketId);
+                Debug.LogWarning($"[VFXSystem] No named socket '{socketId}' on {brain?.name}'s model — " +
+                                 $"effects will play at the {fallbackAnchor} anchor instead. Add it to " +
+                                 $"the model's ModelSocketProvider under Named Sockets.", this);
+            }
+
+            socket = GetAnchor(fallbackAnchor);
+        }
+
+        GameObject instance = parentToSocket
+            ? Instantiate(prefab, socket)
+            : Instantiate(prefab, socket.position, socket.rotation);
+
+        if (parentToSocket)
+        {
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+
+            if (keepAuthoredScale)
+                SocketScale.Normalise(instance.transform, prefab.transform.localScale);
+        }
+
+        AutoDestroy(instance, prefab);
+
+        return instance;
+    }
+
+    /// <summary>
+    /// Play it and schedule its death, measured from its own ParticleSystem where it has one so
+    /// an artist retiming an effect does not also have to find a number in code.
+    /// </summary>
+    private void AutoDestroy(GameObject instance, GameObject prefab)
+    {
         float destroyDelay = 3f; // fallback lifetime
 
         var particles = instance.GetComponent<ParticleSystem>();
@@ -136,8 +215,6 @@ public class VFXSystem : MonoBehaviour, IBrainModule
         Destroy(instance, destroyDelay);
 
         if (debugVFX)
-            Debug.Log($"[VFXSystem] Spawned '{prefab.name}' at {worldPos} (destroy in {destroyDelay:F1}s)");
-
-        return instance;
+            Debug.Log($"[VFXSystem] Spawned '{prefab.name}' (destroy in {destroyDelay:F1}s)");
     }
 }

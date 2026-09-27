@@ -336,7 +336,6 @@ GameObject:
   - component: {fileID: 5222950475717516949}
   - component: {fileID: 3048650025211705339}
   - component: {fileID: 3529163464307328708}
-  - component: {fileID: 2961237591114744401}
   m_Layer: 5
   m_Name: Spellbook
   m_TagString: Untagged
@@ -428,28 +427,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &2961237591114744401
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2559009935478524099}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f353058ad3d983644a353853c80e7975, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpellbookWindow
-  windowBackground: {fileID: 7924630673542871707}
-  headerBar: {fileID: 5159691825947570960}
-  rememberPosition: 1
-  defaultPosition: {x: 0, y: 0}
-  debugMode: 0
-  entryContainer: {fileID: 1923728759257071106}
-  entryPrefab: {fileID: 8330878154145246909, guid: 687fb623967ee4742be0f501dc5b94ad, type: 3}
-  scrollRect: {fileID: 7520548210081167778}
-  titleText: {fileID: 9189903392231040128}
-  scrollSensitivity: 0.1
 --- !u!1 &2568418487859069441
 GameObject:
   m_ObjectHideFlags: 0

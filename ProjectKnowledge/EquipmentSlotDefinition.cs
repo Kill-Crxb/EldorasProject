@@ -1,22 +1,22 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// EquipmentSlotDefinition - Defines where items can be equipped on character
-/// 
+///
 /// Purpose: Replace hardcoded EquipmentSlot enum with data-driven system
-/// 
+///
 /// Examples:
 /// - "Head" (helmet, circlet, headband)
 /// - "Weapon1" (main hand weapon)
 /// - "Weapon2" (off-hand weapon/shield)
 /// - "Chest" (armor, robes, shirts)
 /// - "Ring1", "Ring2" (jewelry slots)
-/// 
+///
 /// Usage:
 /// - Create assets: Right-click → Items/Equipment Slot
 /// - Configure slot properties
 /// - Reference in ItemSubType for equipment binding
-/// 
+///
 /// Benefits:
 /// - Add new equipment slots without code changes
 /// - Configure UI layout via displayOrder
@@ -61,6 +61,13 @@ public class EquipmentSlotDefinition : ScriptableObject
     [Tooltip("Name of the bone socket to attach equipped item to (must match ModelSocketConfig, e.g. 'weapon', 'shield', 'helmet')")]
     public string socketName;
 
+    [Header("Slot Sharing")]
+    [Tooltip("Also accept items bound to this slot. Use for paired slots like a second ring.")]
+    public EquipmentSlotDefinition pairedSlot;
+
+    [Tooltip("Accept any item regardless of the slot its subtype names. Use for a miscellaneous slot.")]
+    public bool acceptsAnySubType = false;
+
     [Header("Layout")]
     [Tooltip("Is this a weapon/tall slot? Uses 1x2 grid area instead of 1x1")]
     public bool isWeaponSlot = false;
@@ -84,11 +91,17 @@ public class EquipmentSlotDefinition : ScriptableObject
     /// </summary>
     public bool CanEquip(ItemDefinition item)
     {
-        // Guard clause - null check
-        if (item == null || item.subType == null) return false;
+        if (item == null) return false;
 
-        // Check if item's subtype is configured for this slot
-        if (item.subType.equipmentSlot != this) return false;
+        // An item is normally bound to one slot by its subtype. A paired slot accepts the
+        // same binding, and a miscellaneous slot skips the check entirely.
+        if (!acceptsAnySubType)
+        {
+            if (item.subType == null) return false;
+
+            var bound = item.subType.equipmentSlot;
+            if (bound != this && (pairedSlot == null || bound != pairedSlot)) return false;
+        }
 
         // Check category restrictions
         if (allowedCategories != null && allowedCategories.Length > 0)

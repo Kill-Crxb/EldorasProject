@@ -42,7 +42,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     private bool pendingLoad = false;
     private string savedModelId = string.Empty;
 
-    private static readonly string[] LoadOrder = { "stats", "model", "inputProfile", "inventory", "equipment", "hotbar", "resources" };
+    private static readonly string[] LoadOrder = { "stats", "model", "inputProfile", "inventory", "equipment", "hotbar", "resources", "dialogue" };
 
     #endregion
 
@@ -207,15 +207,13 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
             }
 
             var configData = JsonUtility.FromJson<CharacterConfigData>(configJson);
-            if (configData != null)
-            {
-                Debug.Log($"[{ManagerName}] Loaded config for {characterId}: name='{configData.displayName}', overrides={configData.baseStatOverrides?.Length ?? 0}");
-                GameEvents.CharacterConfigDataReady(configData);
-            }
-            else
+            if (configData == null)
             {
                 Debug.LogWarning($"[{ManagerName}] Failed to parse config JSON for {characterId}");
+                return;
             }
+
+            GameEvents.CharacterConfigDataReady(configData);
         }
         catch (Exception ex)
         {
@@ -265,8 +263,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
             Debug.LogError($"[{ManagerName}] Failed to load '{saveId}': {e.Message}");
         }
     }
-
-
 
     #region Save
 
@@ -406,39 +402,47 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         if (string.IsNullOrEmpty(characterId))
             return characterId;
 
-        var baseStatOverrides = new StatBaseOverride[]
-        {
-            new StatBaseOverride { statId = "core.mind", baseValue = 3 },
-            new StatBaseOverride { statId = "core.body", baseValue = 3 },
-            new StatBaseOverride { statId = "core.spirit", baseValue = 3 },
-            new StatBaseOverride { statId = "core.resilience", baseValue = 3 },
-            new StatBaseOverride { statId = "core.endurance", baseValue = 3 },
-            new StatBaseOverride { statId = "core.insight", baseValue = 3 },
-        };
+        // The rolled statline, or a flat baseline for callers that only pass a name.
+        var seedStats = data.baseStats != null && data.baseStats.Length > 0
+            ? data.baseStats
+            : DefaultBaseStats();
 
+        // config.json carries identity and appearance only. Stats live in stats.json,
+        // which StatSystem owns as an ISaveable — one writer, one reader, no drift.
         var configData = new CharacterConfigData
         {
             characterId = characterId,
             displayName = data.characterName,
-            factionId = "faction_player",
+            // EMPTY ON PURPOSE. There is no "the player faction" — the player belongs to one of
+            // the world's real factions like anyone else, and which one is a property of the
+            // character, not of the save layer.
+            //
+            // CharacterConfigurationHandler.ConfigureFaction skips an empty id specifically so
+            // it does not wipe the faction configured on the prefab, so leaving this blank means
+            // the character keeps whatever Base_PC is set to. When faction becomes a creation
+            // choice, it gets written here from CharacterCreationData instead.
+            factionId = "",
             level = 1,
-            modelId = data.modelId,
-            baseStatOverrides = baseStatOverrides
+            modelId = data.modelId
         };
 
         try
         {
-            string configJson = JsonUtility.ToJson(configData);
-            await provider.Save(characterId, "config", configJson);
+            await provider.Save(characterId, "config", JsonUtility.ToJson(configData));
 
-            var statSaveData = new StatSystemSaveData();
-            statSaveData.statValues = new System.Collections.Generic.Dictionary<string, float>();
-            foreach (var stat in baseStatOverrides)
-            {
-                statSaveData.statValues[stat.statId] = stat.baseValue;
-            }
-            string statsJson = JsonUtility.ToJson(statSaveData);
-            await provider.Save(characterId, "stats", statsJson);
+            var statSaveData = new StatSeedData();
+            foreach (var stat in seedStats)
+                statSaveData.stats.Add(new StatSeedPair { id = stat.statId, value = stat.baseValue });
+
+            await provider.Save(characterId, "stats", JsonUtility.ToJson(statSaveData));
+
+            // Write an explicit empty equipment file. Without this, a fresh character
+            // has no "equipment.json" on disk, so LoadModuleData's `if (string.IsNullOrEmpty(json)) return;`
+            // guard skips calling EquipmentSystem.LoadSaveData() entirely on first login.
+            // That leaves whatever items happen to be serialized in EquipmentSystem's
+            // inspector-visible "equippedItems" debug list (e.g. a sword equipped once
+            // in the editor) as the character's equipment, instead of an empty loadout.
+            await provider.Save(characterId, "equipment", "{\"version\":1,\"slots\":[]}");
         }
         catch (Exception ex)
         {
@@ -448,10 +452,33 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         return characterId;
     }
 
-    [System.Serializable]
-    private class StatSystemSaveData
+    private static StatBaseOverride[] DefaultBaseStats()
     {
-        public System.Collections.Generic.Dictionary<string, float> statValues;
+        return new StatBaseOverride[]
+        {
+            new StatBaseOverride { statId = "core.mind", baseValue = 3 },
+            new StatBaseOverride { statId = "core.body", baseValue = 3 },
+            new StatBaseOverride { statId = "core.spirit", baseValue = 3 },
+            new StatBaseOverride { statId = "core.resilience", baseValue = 3 },
+            new StatBaseOverride { statId = "core.endurance", baseValue = 3 },
+            new StatBaseOverride { statId = "core.insight", baseValue = 3 },
+        };
+    }
+
+    // Mirrors StatSystem's save shape. JsonUtility cannot serialise a Dictionary,
+    // so both sides use a list of pairs.
+    [System.Serializable]
+    private class StatSeedData
+    {
+        public int version = 2;
+        public System.Collections.Generic.List<StatSeedPair> stats = new();
+    }
+
+    [System.Serializable]
+    private class StatSeedPair
+    {
+        public string id;
+        public float value;
     }
 
     public async Task<List<CharacterMetadata>> GetAllCharacters()

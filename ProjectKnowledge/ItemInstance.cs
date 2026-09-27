@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
@@ -124,35 +124,9 @@ public class ItemInstance
 
         var modifiers = new List<RuntimeItemStatModifier>();
 
-        AddBaseStatModifiers(modifiers);
         AddUpgradeModifiers(modifiers);
 
         calculatedModifiers = modifiers.ToArray();
-    }
-
-    private void AddBaseStatModifiers(List<RuntimeItemStatModifier> modifiers)
-    {
-        float tierMultiplier = GetTierMultiplier(currentTier);
-
-        // Use new statModifiers system only (Phase 3)
-        // Legacy baseStats removed - all items should use ItemStatModifier[]
-
-        // Guard clause: Skip if no archetype
-        if (cachedDefinition.archetype == ItemArchetype.None) return;
-
-        float regenBonus = GetArchetypeRegenBonus(currentTier);
-        string regenStat = GetArchetypeRegenStat(cachedDefinition.archetype);
-
-        // Guard clause: Skip if no regen stat mapping
-        if (string.IsNullOrEmpty(regenStat)) return;
-
-        modifiers.Add(new RuntimeItemStatModifier
-        {
-            statName = regenStat,
-            value = regenBonus,
-            source = $"{cachedDefinition.displayName} (Archetype)",
-            isPercentage = false
-        });
     }
 
     private void AddUpgradeModifiers(List<RuntimeItemStatModifier> modifiers)
@@ -166,131 +140,10 @@ public class ItemInstance
         }
     }
 
-    private float GetTierMultiplier(ItemRarity tier)
-    {
-        switch (tier)
-        {
-            case ItemRarity.Common: return 1.0f;
-            case ItemRarity.Uncommon: return 1.25f;
-            case ItemRarity.Rare: return 1.6f;
-            case ItemRarity.Epic: return 2.0f;
-            case ItemRarity.Legendary: return 2.5f;
-            default: return 1.0f;
-        }
-    }
-
-    private float GetArchetypeRegenBonus(ItemRarity tier)
-    {
-        float baseBonus = 0.5f;
-        return baseBonus * GetTierMultiplier(tier);
-    }
-
-    private string GetArchetypeRegenStat(ItemArchetype archetype)
-    {
-        switch (archetype)
-        {
-            case ItemArchetype.Strength: return "character.health_regen";
-            case ItemArchetype.Agility: return "character.stamina_regen";
-            case ItemArchetype.Magic: return "character.mana_regen";
-            default: return null;
-        }
-    }
-
-    public void ApplyToStatsSystem(StatSystem statSystem, ResourceSystem resourceSystem = null)
-    {
-        // Guard clause: Need stat system
-        if (statSystem == null) return;
-
-        // Guard clause: Need valid definition
-        if (cachedDefinition == null) return;
-
-        // Remove old modifiers first
-        statSystem.Engine.RemoveAllModifiersFromSource(instanceId);
-
-        // Apply legacy runtime modifiers
-        ApplyLegacyModifiers(statSystem);
-
-        // Apply new stat modifiers (Phase 3 system)
-        ApplyNewStatModifiers(statSystem);
-
-        // Apply resource modifiers (Phase 3 system)
-        ApplyResourceModifiers(resourceSystem);
-    }
-
-    private void ApplyLegacyModifiers(StatSystem statSystem)
-    {
-        // Guard clause: No legacy modifiers
-        if (calculatedModifiers == null) return;
-
-        foreach (var modifier in calculatedModifiers)
-        {
-            // Handle percentage modifiers and skip to next
-            if (modifier.isPercentage)
-            {
-                statSystem.Engine.AddPercentModifier(
-                    modifier.statName,
-                    instanceId,
-                    modifier.value / 100f
-                );
-                continue;
-            }
-
-            // Handle flat modifiers
-            statSystem.Engine.AddFlatModifier(
-                modifier.statName,
-                instanceId,
-                modifier.value
-            );
-        }
-    }
-
-    private void ApplyNewStatModifiers(StatSystem statSystem)
-    {
-        // Guard clause: No new modifiers
-        if (cachedDefinition.statModifiers == null) return;
-
-        foreach (var modifier in cachedDefinition.statModifiers)
-        {
-            modifier.ApplyToStatEngine(statSystem.Engine, instanceId);
-        }
-    }
-
-    private void ApplyResourceModifiers(ResourceSystem resourceSystem)
-    {
-        // Guard clause: No resource system provided
-        if (resourceSystem == null) return;
-
-        // Guard clause: No resource modifiers
-        if (cachedDefinition.resourceModifiers == null) return;
-
-        foreach (var modifier in cachedDefinition.resourceModifiers)
-        {
-            modifier.ApplyToResourceSystem(resourceSystem, instanceId);
-        }
-    }
-
-    public void RemoveFromStatsSystem(StatSystem statSystem, ResourceSystem resourceSystem = null)
-    {
-        // Guard clause: Need stat system
-        if (statSystem == null) return;
-
-        // Remove stat modifiers
-        statSystem.Engine.RemoveAllModifiersFromSource(instanceId);
-
-        // Guard clause: No resource system
-        if (resourceSystem == null) return;
-
-        // Guard clause: No resource modifiers
-        if (cachedDefinition?.resourceModifiers == null) return;
-
-        foreach (var modifier in cachedDefinition.resourceModifiers)
-        {
-            modifier.RemoveFromResourceSystem(resourceSystem, instanceId);
-        }
-    }
+    // Item stat modifiers are display-only in this pass: calculatedModifiers still
+    // drives tooltips, but nothing writes them into the entity's stats.
 }
 
-// Legacy stat modifier structure (Phase 1.6 Days 7-8)
 [System.Serializable]
 public class RuntimeItemStatModifier
 {
@@ -300,7 +153,6 @@ public class RuntimeItemStatModifier
     public bool isPercentage;
 }
 
-// Legacy upgrade structure
 [System.Serializable]
 public class ItemUpgrade
 {
@@ -311,30 +163,4 @@ public class ItemUpgrade
     {
         return new RuntimeItemStatModifier[0];
     }
-}
-
-// Deprecated enums (Phase 3 migration)
-public enum ItemArchetype
-{
-    None,
-    Strength,
-    Agility,
-    Magic
-}
-
-public enum LegacyItemCategory
-{
-    Weapon,
-    Armor,
-    Consumable,
-    Material,
-    Quest,
-    Misc
-}
-
-public enum LegacyUpgradeSlotType
-{
-    Offensive,
-    Defensive,
-    Utility
 }

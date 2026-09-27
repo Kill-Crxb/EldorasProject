@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Dice roll expression — e.g. 2d6, 1d4, 1d12.
-/// Serialises cleanly as an inspector field on WeaponData or DamageOverTimeEffect.
+/// Serialises cleanly as an inspector field on DiceProfile or DamageOverTimeEffect.
 /// Standard die sizes (d4/d6/d8/d10/d12/d20) are just diceFaces values; any value works.
 /// </summary>
 [Serializable]
@@ -18,6 +18,43 @@ public struct DiceRoll
         for (int i = 0; i < diceCount; i++)
             total += UnityEngine.Random.Range(1, diceFaces + 1);
         return total;
+    }
+
+    public const int MaxExplosions = 5;
+
+    // Exploding roll. A die that lands on its top face rolls again and adds, chaining, up to
+    // MaxExplosions per roll. The extra rolls come back separately in 'extra' — a glancing hit
+    // drops them, so the caller has to be able to tell them apart from the base roll.
+    public int RollExploding(out int extra, out int explosions)
+    {
+        int total = 0;
+        extra = 0;
+        explosions = 0;
+
+        for (int i = 0; i < diceCount; i++)
+        {
+            int face = UnityEngine.Random.Range(1, diceFaces + 1);
+            total += face;
+
+            while (face == diceFaces && explosions < MaxExplosions)
+            {
+                explosions++;
+                face = UnityEngine.Random.Range(1, diceFaces + 1);
+                extra += face;
+            }
+        }
+
+        return total;
+    }
+
+    // A stat modifier rolled as a die: Might 6 rolls 1d6. A modifier of 1 is a flat 1, and 0 or
+    // below adds nothing. Any size is legal — Might 7 rolls a d7.
+    public static int RollModifier(float modifier)
+    {
+        int faces = Mathf.FloorToInt(modifier);
+        if (faces <= 0) return 0;
+        if (faces == 1) return 1;
+        return UnityEngine.Random.Range(1, faces + 1);
     }
 
     public int Min() => diceCount;

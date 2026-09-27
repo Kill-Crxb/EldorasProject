@@ -1,3 +1,6 @@
+// Editor-only. Three of these scan the scene with FindObjectsOfType every frame, and
+// none of them belong in a player build.
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -431,3 +434,5 @@ public class ResourceDebugDisplay : MonoBehaviour
 
     #endregion
 }
+
+#endif

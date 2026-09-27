@@ -16,8 +16,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: Rig/B-root
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -33,8 +31,8 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: HumanF@StrafeRun01_ForwardLeft [RM]
-      takeName: HumanF@StrafeRun01_ForwardLeft [RM]
+      name: 'HumanF@StrafeRun01_ForwardLeft [RM]'
+      takeName: 'HumanF@StrafeRun01_ForwardLeft [RM]'
       internalID: 8545602498690177154
       firstFrame: 0
       lastFrame: 18
@@ -949,7 +947,7 @@ ModelImporter:
     legStretch: 0.05
     feetSpacing: 0
     globalScale: 1
-    rootMotionBoneName: Rig/B-root
+    rootMotionBoneName: 
     hasTranslationDoF: 0
     hasExtraRoot: 0
     skeletonHasParents: 1
@@ -970,7 +968,7 @@ AssetOrigin:
   serializedVersion: 1
   productId: 151650
   packageName: Human Melee Animations
-  packageVersion: 2.0.2
-  assetPath: Assets/Kevin Iglesias/Human Animations/Animations/Female/Movement/Strafe/StrafeRun/RootMotion/HumanF@StrafeRun01_ForwardLeft
+  packageVersion: 2.1
+  assetPath: Assets/ImportedAssets/Kevin Iglesias/Human Animations/Animations/Female/Movement/Strafe/StrafeRun/RootMotion/HumanF@StrafeRun01_ForwardLeft
     [RM].fbx
-  uploadId: 771796
+  uploadId: 937378

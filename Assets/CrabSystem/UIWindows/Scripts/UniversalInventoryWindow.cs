@@ -205,7 +205,7 @@ public class UniversalInventoryWindow : MonoBehaviour, IBeginDragHandler, IDragH
         }
 
         string title = containerName ?? containerBrain.Identity?.DisplayName ?? "Container";
-        windowId = $"Container_{containerBrain.GetInstanceID()}";
+        windowId = $"Container_{containerBrain.GetEntityId()}";
 
         Open(inventorySystem, containerBrain, title, isPlayerInv: false);
     }

@@ -1,8 +1,18 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace RPG.Factions
 {
+    /// <summary>
+    /// Per-entity faction module. Holds a FactionDefinition asset reference —
+    /// the single runtime representation of "what faction am I".
+    ///
+    /// Consumers ask stance questions here (IsHostileTo / GetStanceTo) and the
+    /// module delegates to FactionManager's relationship matrix.
+    ///
+    /// Strings appear only at the persistence boundary: CurrentFactionId
+    /// (used by saves and CharacterConfigData) resolves through
+    /// FactionManager.Resolve on set.
+    /// </summary>
     public class FactionSystem : MonoBehaviour, IBrainModule, ISaveable
     {
         #region Inspector
@@ -11,14 +21,14 @@ namespace RPG.Factions
         [SerializeField] private bool isEnabled = true;
 
         [Header("Faction Data")]
-        [SerializeField] private string currentFactionId = "faction_neutral";
+        [Tooltip("This entity's faction. Drag a FactionDefinition asset here for scene-placed entities; spawned NPCs get it from their archetype.")]
+        [SerializeField] private FactionDefinition currentFaction;
 
         #endregion
 
         #region Private Fields
 
         private ControllerBrain brain;
-        private Dictionary<string, int> factionReputation = new Dictionary<string, int>();
 
         #endregion
 
@@ -26,21 +36,41 @@ namespace RPG.Factions
 
         public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
 
+        public FactionDefinition CurrentFaction
+        {
+            get => currentFaction;
+            set => currentFaction = value;
+        }
+
+        /// <summary>
+        /// String id view of the faction — persistence boundary only.
+        /// Setting resolves the id to its asset via FactionManager.
+        ///
+        /// An id that does NOT resolve leaves the current faction alone. This used to assign
+        /// the null straight through, so one stale or misspelled id anywhere upstream did not
+        /// merely fail to set a faction — it WIPED the one configured on the prefab, silently
+        /// turning that entity factionless. Everything downstream then reads as non-friendly,
+        /// because ProjectileAim.IsFriendly and WeaponHitbox both treat "no faction" as "not an
+        /// ally", so heals and buffs quietly stop finding anyone.
+        ///
+        /// LoadSaveData below already guarded against exactly this for save data. The setter is
+        /// the same boundary and needed the same rule.
+        /// </summary>
         public string CurrentFactionId
         {
-            get => currentFactionId;
-            set => currentFactionId = value;
+            get => currentFaction != null ? currentFaction.FactionId : "";
+            set
+            {
+                var resolved = FactionManager.Resolve(value);
+                if (resolved != null) currentFaction = resolved;
+            }
         }
 
         public string CurrentFactionName
-        {
-            get => FactionManager.GetFactionDisplayName(currentFactionId);
-        }
+            => currentFaction != null ? currentFaction.DisplayName : "Unaffiliated";
 
         public Color CurrentFactionColor
-        {
-            get => FactionManager.GetFactionDisplayColor(currentFactionId);
-        }
+            => currentFaction != null ? currentFaction.FactionColor : Color.white;
 
         #endregion
 
@@ -49,7 +79,6 @@ namespace RPG.Factions
         public void Initialize(ControllerBrain controllerBrain)
         {
             brain = controllerBrain;
-            InitializeDefaultReputation();
         }
 
         public void UpdateModule()
@@ -62,40 +91,23 @@ namespace RPG.Factions
 
         #endregion
 
-        #region Reputation Management
+        #region Stance Queries
 
-        private void InitializeDefaultReputation()
-        {
-            factionReputation.Clear();
-        }
+        public FactionRelationship GetStanceTo(FactionDefinition other)
+            => FactionManager.GetStance(currentFaction, other);
 
-        public int GetReputation(string factionId)
-        {
-            return factionReputation.TryGetValue(factionId, out int rep) ? rep : 0;
-        }
+        public FactionRelationship GetStanceTo(ControllerBrain other)
+            => FactionManager.GetStance(currentFaction, other?.Faction?.CurrentFaction);
 
-        public void ModifyReputation(string factionId, int delta)
-        {
-            if (!factionReputation.ContainsKey(factionId))
-                factionReputation[factionId] = 0;
+        public bool IsHostileTo(ControllerBrain other)
+            => GetStanceTo(other) == FactionRelationship.Hostile;
 
-            factionReputation[factionId] += delta;
-        }
+        public bool IsFriendlyTo(ControllerBrain other)
+            => GetStanceTo(other) == FactionRelationship.Friendly;
 
-        public bool IsFriendly(string factionId)
-        {
-            return GetReputation(factionId) > 0;
-        }
-
-        public bool IsHostile(string factionId)
-        {
-            return GetReputation(factionId) < 0;
-        }
-
-        public bool IsNeutral(string factionId)
-        {
-            return GetReputation(factionId) == 0;
-        }
+        /// <summary>Damage multiplier when this entity attacks the target. 1.0 by default.</summary>
+        public float GetDamageMultiplierAgainst(ControllerBrain target)
+            => FactionManager.GetDamageModifier(currentFaction, target?.Faction?.CurrentFaction);
 
         #endregion
 
@@ -108,14 +120,8 @@ namespace RPG.Factions
             var data = new FactionSaveData
             {
                 characterId = brain.Identity.EntityId,
-                currentFactionId = currentFactionId,
-                reputation = new List<FactionRepEntry>()
+                currentFactionId = CurrentFactionId
             };
-
-            foreach (var kvp in factionReputation)
-            {
-                data.reputation.Add(new FactionRepEntry { factionId = kvp.Key, value = kvp.Value });
-            }
 
             return JsonUtility.ToJson(data);
         }
@@ -125,13 +131,16 @@ namespace RPG.Factions
             if (string.IsNullOrEmpty(json)) return;
 
             var data = JsonUtility.FromJson<FactionSaveData>(json);
-            currentFactionId = data.currentFactionId;
 
-            factionReputation.Clear();
-            foreach (var entry in data.reputation)
-            {
-                factionReputation[entry.factionId] = entry.value;
-            }
+            if (string.IsNullOrEmpty(data.currentFactionId))
+                return;
+
+            // Only overwrite if the saved id resolves — a stale id from an old
+            // save (e.g. pre-rework "faction_neutral") keeps the inspector value
+            // instead of wiping the faction to null. Resolve logs the warning.
+            var resolved = FactionManager.Resolve(data.currentFactionId);
+            if (resolved != null)
+                currentFaction = resolved;
         }
 
         public int GetSaveVersion() => 1;

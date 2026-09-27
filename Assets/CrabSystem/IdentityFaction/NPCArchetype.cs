@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using RPG.Factions;
 
 [CreateAssetMenu(fileName = "NPCArchetype", menuName = "RPG/NPC/Archetype")]
 public class NPCArchetype : ScriptableObject
@@ -10,7 +11,8 @@ public class NPCArchetype : ScriptableObject
     public string archetypeName;
 
     [Header("Configuration")]
-    public string factionId = "faction_neutral";
+    [Tooltip("This archetype's faction. Drag a FactionDefinition asset. Empty = unaffiliated (neutral to everyone).")]
+    public FactionDefinition faction;
     public NPCType npcType;
     public NPCImportance importance;
 
@@ -76,6 +78,9 @@ public class NPCArchetype : ScriptableObject
 
     #region Helpers
 
+    /// <summary>String id for CharacterConfigData / persistence. Empty if no faction assigned.</summary>
+    public string FactionId => faction != null ? faction.FactionId : "";
+
     public bool HasGOAPGoals => goapGoals != null && goapGoals.Count > 0;
     public bool HasGOAPActions => goapActions != null && goapActions.Count > 0;
     public bool UsesGOAP => aiSystemType == AISystemType.GOAP;
@@ -88,9 +93,6 @@ public class NPCArchetype : ScriptableObject
     {
         if (string.IsNullOrEmpty(archetypeId))
             archetypeId = $"archetype_{npcType}_{importance}".ToLower();
-
-        if (string.IsNullOrEmpty(factionId))
-            factionId = "faction_neutral";
     }
 
     #endregion

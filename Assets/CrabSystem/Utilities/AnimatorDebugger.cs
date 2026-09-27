@@ -1,3 +1,6 @@
+// Editor-only. Three of these scan the scene with FindObjectsOfType every frame, and
+// none of them belong in a player build.
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -230,3 +233,5 @@ public class AnimatorDebugger : MonoBehaviour
         Debug.Log(onScreenText.Replace("<b>", "").Replace("</b>", ""));
     }
 }
+
+#endif

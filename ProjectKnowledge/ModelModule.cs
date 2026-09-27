@@ -29,6 +29,14 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
     [Header("Database")]
     [SerializeField] private ModelDatabase modelDatabase;
 
+    [Header("Sockets")]
+    [Tooltip("Cancel the socket bone's inherited scale so equipment ends up the size it was " +
+             "authored at. Rigs commonly arrive at scale 100 from an FBX imported without unit " +
+             "conversion and every bone inherits it, so parenting a sword to such a hand makes " +
+             "the sword a hundred times too big.\n\n" +
+             "Untick only for equipment that should genuinely grow with the creature carrying it.")]
+    [SerializeField] private bool normaliseEquipmentScale = true;
+
     #endregion
 
     #region Private Fields
@@ -161,6 +169,46 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
         return null;
     }
 
+    /// <summary>
+    /// Gets a non-slot socket (sheath point, prop mount) by its free-form id.
+    /// Returns null if the model has no such socket.
+    /// </summary>
+    public Transform GetNamedSocket(string socketId)
+    {
+        if (socketProvider == null)
+            return null;
+
+        return socketProvider.GetNamedSocket(socketId);
+    }
+
+    /// <summary>
+    /// Reparents everything under one socket to another, zeroing the local transform so the
+    /// item sits on the new bone rather than keeping its old offset. Used by the stance
+    /// toggle to move a weapon between the hand and its sheath.
+    ///
+    /// World scale is carried across deliberately. SetParent(to, false) keeps localScale, so
+    /// two bones scaled differently — a hand and a spine on the same rig often are — would
+    /// resize the weapon every time it was drawn or sheathed. Capturing lossyScale and
+    /// restoring it means the sword is the same sword on the hip as in the hand.
+    /// </summary>
+    public static void MoveSocketContents(Transform from, Transform to)
+    {
+        if (from == null || to == null) return;
+
+        for (int i = from.childCount - 1; i >= 0; i--)
+        {
+            Transform child = from.GetChild(i);
+
+            Vector3 worldScale = child.lossyScale;
+
+            child.SetParent(to, false);
+            child.localPosition = Vector3.zero;
+            child.localRotation = Quaternion.identity;
+
+            SocketScale.Normalise(child, worldScale);
+        }
+    }
+
     #endregion
 
     #region Equipment Visual Handling
@@ -196,6 +244,12 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
 
         var visual = Instantiate(item.Definition.equippedPrefab, socket);
         visual.name = item.Definition.displayName;
+
+        // Instantiate-with-parent keeps the prefab's LOCAL scale, so the final size is
+        // socket.lossyScale x prefab.localScale. On a rig that imported at 100 that is a
+        // hundred-times-too-big sword, and it is not the prefab's fault — see SocketScale.
+        if (normaliseEquipmentScale)
+            SocketScale.Normalise(visual.transform, item.Definition.equippedPrefab.transform.localScale);
     }
 
     /// <summary>

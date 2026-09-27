@@ -12,6 +12,7 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
     [SerializeField] private InteractionAction interactionAction = InteractionAction.None;
     [SerializeField] private float interactionRange = 2f;
     [SerializeField] private bool canInteractMultipleTimes = true;
+    [SerializeField] private SphereCollider interactionCollider;
 
     [Header("Detection (Player Only)")]
     [SerializeField] private float detectionRadius = 3f;
@@ -37,7 +38,6 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
     private InteractionSystem currentTarget;
     private List<InteractionSystem> detectedSystems = new List<InteractionSystem>();
     private Collider[] detectionBuffer = new Collider[20];
-    private Dictionary<System.Type, object> cachedProviders = new Dictionary<System.Type, object>();
 
     public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
     public bool IsInteractable => isEnabled && isInteractable && (!hasBeenInteracted || canInteractMultipleTimes);
@@ -51,7 +51,11 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
         if (controllerBrain == null) return;
         brain = controllerBrain;
         inputSystem = brain.GetModule<InputSystem>();
-        CacheCapabilities();
+
+        if (interactionCollider == null)
+            Debug.LogError($"[InteractionSystem] {name} has no interactionCollider assigned.", this);
+        else if (!interactionCollider.isTrigger)
+            Debug.LogError($"[InteractionSystem] {name}'s interactionCollider must be marked Is Trigger.", this);
     }
 
     public void LateInitialize() { }
@@ -66,31 +70,29 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
         HandleInput();
     }
 
-    private void CacheCapabilities()
+    // Capability checks go straight to ControllerBrain's own provider cache
+    // (built in BuildProviderCache, before any module Initialize runs) instead
+    // of keeping a second cache here. Add one line per provider type that
+    // should affect interaction routing — same explicit style as
+    // ControllerBrain.BuildProviderCache, no reflection.
+    private int CountInteractionCapabilities()
     {
-        cachedProviders.Clear();
-        var inventoryProvider = brain.GetProvider<IInventoryProvider>();
-        if (inventoryProvider != null)
-            cachedProviders[typeof(IInventoryProvider)] = inventoryProvider;
+        int count = 0;
+        if (brain.GetProvider<IInventoryProvider>() != null) count++;
+        return count;
     }
-
-    public bool HasCapability<T>() where T : class => cachedProviders.ContainsKey(typeof(T));
-
-    public T GetCapability<T>() where T : class
-    {
-        cachedProviders.TryGetValue(typeof(T), out object provider);
-        return provider as T;
-    }
-
-    private int GetCapabilityCount() => cachedProviders.Count;
 
     private InteractionAction GetInteractionAction()
     {
         if (interactionAction != InteractionAction.None) return interactionAction;
 
-        int count = GetCapabilityCount();
+        // Mirrors the priority in RouteInteraction — a merchant with both Dialogue
+        // and Inventory should prompt "Talk", not "Loot", since dialogue wins routing.
+        if (brain.GetModule<DialogueSystem>() != null) return InteractionAction.Talk;
+
+        int count = CountInteractionCapabilities();
         if (count == 0) return GetContextualInteractionAction();
-        if (count == 1 && HasCapability<IInventoryProvider>()) return InteractionAction.Loot;
+        if (count == 1 && brain.GetProvider<IInventoryProvider>() != null) return InteractionAction.Loot;
         return InteractionAction.Use;
     }
 
@@ -213,24 +215,43 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
             else return false;
         }
 
-        RouteInteraction(actor);
+        bool wasDialogue = RouteInteraction(actor);
 
-        if (!canInteractMultipleTimes)
+        // Dialogue is never "used up" — canInteractMultipleTimes exists for props
+        // (chests, one-time pickups), not conversations. Otherwise the first
+        // successful conversation permanently fails IsInteractable and the NPC
+        // silently drops out of detection forever.
+        if (!canInteractMultipleTimes && !wasDialogue)
             hasBeenInteracted = true;
 
         return true;
     }
 
-    private void RouteInteraction(ControllerBrain actor)
+    // Returns true if this interaction was routed to DialogueSystem, so
+    // OnInteractedWith knows not to apply the single-use flag to conversations.
+    private bool RouteInteraction(ControllerBrain actor)
     {
-        int count = GetCapabilityCount();
+        // DialogueSystem is the interface layer whenever it's present, regardless of
+        // how many other capabilities sit alongside it — a plain villager with only
+        // dialogue still needs to reach it, not fall into the raw capability count
+        // below (which exists for non-dialogue objects like containers).
+        var dialogue = brain.GetModule<DialogueSystem>();
+        if (dialogue != null)
+        {
+            dialogue.BeginConversation(actor);
+            return true;
+        }
+
+        int count = CountInteractionCapabilities();
 
         if (count == 0)
             OnDirectInteraction?.Invoke(actor);
-        else if (count == 1 && HasCapability<IInventoryProvider>())
+        else if (count == 1 && brain.GetProvider<IInventoryProvider>() != null)
             OpenLootWindow(actor);
         else
             ShowInteractionMenu(actor);
+
+        return false;
     }
 
     private void OpenLootWindow(ControllerBrain actor)
@@ -243,7 +264,13 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
         UniversalWindowManager.Instance.OpenContainerWindow(actor, brain);
     }
 
-    private void ShowInteractionMenu(ControllerBrain actor) { }
+    // Reached only when there's no DialogueSystem to hand off to (checked earlier
+    // in RouteInteraction) but this brain has 2+ non-dialogue capabilities anyway —
+    // e.g. a future multi-capability prop. No generic menu handler exists yet.
+    private void ShowInteractionMenu(ControllerBrain actor)
+    {
+        Debug.LogWarning($"[InteractionSystem] {brain.name} has multiple capabilities but no menu handler yet.", this);
+    }
 
     private bool HasRequiredKey(ControllerBrain actor)
     {
@@ -257,7 +284,18 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
     public void SetInteractable(bool interactable) => isInteractable = interactable;
     public void SetInteractionAction(InteractionAction action) => interactionAction = action;
     public void SetDetectionRadius(float radius) => detectionRadius = Mathf.Max(0.5f, radius);
-    public void RefreshCapabilities() => CacheCapabilities();
+
+    // Ends dialogue when the actor currently in conversation physically leaves
+    // interactionCollider's trigger volume — requires interactionCollider to be a
+    // trigger and at least one side (player or this entity) to have a Rigidbody.
+    private void OnTriggerExit(Collider other)
+    {
+        var dialogue = brain?.GetModule<DialogueSystem>();
+        if (dialogue == null || !dialogue.IsInConversation) return;
+
+        var otherBrain = other.GetComponentInParent<ControllerBrain>();
+        if (otherBrain == dialogue.CurrentActor) dialogue.EndConversation();
+    }
 
     void OnDestroy()
     {

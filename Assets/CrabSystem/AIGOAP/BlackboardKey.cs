@@ -63,4 +63,44 @@ public struct BlackboardKey
     public static readonly int IsInvincible       = "IsInvincible".GetHashCode();
     public static readonly int IsBlocking         = "IsBlocking".GetHashCode();
     public static readonly int IsInConversation   = "IsInConversation".GetHashCode();
+    public static readonly int IsUnarmed          = "IsUnarmed".GetHashCode();
+
+    // Published directly by MovementSystem, not by a BlackboardCondition — see
+    // MovementSystem.UpdateSpeedState. Do NOT author conditions with these OutputFactKeys or
+    // SemanticBridgeSystem becomes a second writer and the two fight every frame.
+    //
+    // IsRunning / IsSprinting are GAIT facts (2026-09-27): the run or sprint gait AND moving. A
+    // momentum burst at walk gait is not running; no sprint grant, no sprinting. Only a handler
+    // with no gait (Gait.None) falls back to speed hysteresis. SpeedBlend stays measured speed.
+    public static readonly int IsRunning          = "IsRunning".GetHashCode();
+    public static readonly int IsSprinting        = "IsSprinting".GetHashCode();
+
+    /// <summary>Float, 0 at the run threshold and 1 at the sprint threshold.</summary>
+    public static readonly int SpeedBlend         = "SpeedBlend".GetHashCode();
+
+    /// <summary>
+    /// Sprint GRANTED — a tag any system may raise: an ability, a status, a stat gate. While it is
+    /// up, the run gait is served at sprint speed; walking is unaffected, because a grant cannot
+    /// turn a walk into a sprint.
+    ///
+    /// Distinct from IsSprinting above, and deliberately so. This one is the GRANT — "has something
+    /// given them permission to". IsSprinting is the RESULT — MovementSystem publishes it when the
+    /// grant has made the gait Sprint and the character is actually moving. Collapsing them would
+    /// make MovementSystem and the granting system two writers on one key.
+    ///
+    /// Single writer, like the keys above: whatever raises it also lowers it.
+    /// </summary>
+    public static readonly int SprintGranted      = "SprintGranted".GetHashCode();
+
+    /// <summary>
+    /// Double jump GRANTED — read by ParkourLocomotionHandler.TryAirJump, which adds one to the
+    /// profile's base air-jump budget while it is up.
+    ///
+    /// Same grant shape as SprintGranted: intent, raised by whatever confers the capability
+    /// (Featherfall, Windwalk, a talent) and lowered by that same thing. There is deliberately no
+    /// measured counterpart — how many air jumps remain is handler state, not a fact, because
+    /// nothing outside movement reads it and the register's own test is "name the system that
+    /// reads it".
+    /// </summary>
+    public static readonly int DoubleJumpGranted  = "DoubleJumpGranted".GetHashCode();
 }

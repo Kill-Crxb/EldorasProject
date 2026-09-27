@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7631b023c8302874c8ad21b5f51a9f7f
+timeCreated: 1486218828
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Prefabs/SkyboxCycleManager.prefab
+  uploadId: 497923

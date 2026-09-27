@@ -18,6 +18,14 @@ public class DamageEffect
     [Tooltip("Slot ID to read weapon from (default: mainwep). Override for off-hand abilities.")]
     public string weaponSlotId = "mainwep";
 
+    [Tooltip("TICK THIS FOR SPELLS. The dice must be supplied by the caller — there is no " +
+             "equipped weapon to fall back on.\n\n" +
+             "Without it, a spell whose dice failed to arrive silently rolls whatever is in the " +
+             "main hand, or the fists when unarmed. That reads as a balance problem for weeks " +
+             "before anyone finds the wiring bug. With it, the miss is an error and the effect " +
+             "falls back to baseDamage.")]
+    public bool requiresSuppliedDice = false;
+
     [Header("Damage Type")]
     public DamageType damageType = DamageType.Physical;
 
@@ -45,7 +53,29 @@ public class DamageEffect
         attackerDamageSystem = system;
     }
 
-    public void Apply(DamageSystem target)
+    /// <summary>
+    /// Applies this effect to a target.
+    ///
+    /// <paramref name="externalMultiplier"/> scales the final damage for THIS application only.
+    /// It exists so a caller can scale damage without writing to the serialized fields on the
+    /// shared AbilityDefinition asset — mutating those would corrupt the ability for every
+    /// future use. ProjectileRuntime.damageMultiplier arrives through here; crits and buffs
+    /// can use the same door.
+    ///
+    /// <paramref name="weaponOverride"/> supplies the dice for THIS application instead of
+    /// looking up the equipped weapon. A thrown weapon is the weapon — a shuriken must roll
+    /// its own 1d4, not the katana still sitting in the main-hand slot, and not the fist dice
+    /// when the thrower happens to be unarmed.
+    ///
+    /// Both default to their no-op, so existing callers (WeaponHitbox,
+    /// AbilityDefinition.ExecuteOnSelf) are unaffected.
+    ///
+    /// <paramref name="source"/> and <paramref name="contactPoint"/> tell presentation where the
+    /// hit came from and where it landed. Without a contact the packet's hit point falls back to
+    /// the target's Overhead anchor. The damage number always spawns at Overhead.
+    /// </summary>
+    public void Apply(DamageSystem target, float externalMultiplier = 1f, DiceProfile weaponOverride = null,
+        DamageSource source = DamageSource.Other, Vector3? contactPoint = null)
     {
         isCompleted = false;
 
@@ -65,70 +95,124 @@ public class DamageEffect
 
         if (!CheckBlackboardRequirements(attackerDamageSystem, target))
         {
-            Debug.LogWarning("[DamageEffect] BAIL — blackboard requirements not met");
             Complete();
             return;
         }
 
-        float finalDamage = CalculateDamage(attackerDamageSystem);
+        float finalDamage = CalculateDamage(attackerDamageSystem, weaponOverride, out float explosionDamage, out int explosions) * externalMultiplier;
+
+        Vector3 numberPoint = target.Brain?.GetModule<VFXSystem>()?.GetAnchorPosition(VFXAnchor.Overhead) ?? target.transform.root.position + Vector3.up * 1.5f;
 
         CombatAttackData attackData = new CombatAttackData
         {
             baseDamage = finalDamage,
             damageType = damageType,
             attackerTransform = attackerDamageSystem.transform,
-            hitPoint = target.Brain?.GetModule<VFXSystem>()?.GetAnchorPosition(VFXAnchor.Overhead) ?? target.transform.root.position + Vector3.up * 1.5f,
-            hitNormal = Vector3.up
+            hitPoint = contactPoint ?? numberPoint,
+            hitNormal = Vector3.up,
+            source = source,
+            explosionDamage = explosionDamage * externalMultiplier,
+            explosions = explosions
         };
 
         CombatDamagePacket packet = attackerDamageSystem.CalculateDamage(attackData);
 
-        Debug.Log($"[DamageEffect] Dealing {packet.finalDamage:F1} {damageType} to {target.name}");
+        float applied = target.TakeDamage(packet);
 
-        target.TakeDamage(packet);
-
-        DamageNumberManager.Spawn(packet.finalDamage, attackData.hitPoint);
+        DamageNumberManager.Spawn(applied, numberPoint);
 
         Complete();
     }
 
-    private float CalculateDamage(DamageSystem attacker)
+    // Returns the base part of the hit. The exploded part comes back separately, because the
+    // defender's hit roll decides whether it lands.
+    private float CalculateDamage(DamageSystem attacker, DiceProfile weaponOverride, out float explosionDamage, out int explosions)
     {
-        float damage = GetBaseDamage(attacker);
+        // Resolved ONCE and shared, so a bonus die is the same type as the hit it rides on
+        // rather than a second lookup that can disagree with the first.
+        DiceProfile weapon = ResolveWeapon(attacker, weaponOverride);
+
+        int extra = 0;
+        explosions = 0;
+
+        float damage = baseDamage;
+        if (weapon != null) damage += weapon.RollExploding(out extra, out explosions);
+
         damage *= baseDamageMultiplier;
-        damage += GetExternalFlatDamage(attacker);
+        damage += GetExternalFlatDamage(attacker, weapon, ref extra, ref explosions);
         damage *= finalDamageMultiplier;
+
+        explosionDamage = extra * baseDamageMultiplier * finalDamageMultiplier;
         return damage;
     }
 
-    private float GetBaseDamage(DamageSystem attacker)
+    /// <summary>
+    /// The DiceProfile this application actually rolls — a supplied override, the equipped
+    /// weapon, or the fists. Null when this effect rolls no dice at all.
+    /// </summary>
+    private DiceProfile ResolveWeapon(DamageSystem attacker, DiceProfile weaponOverride)
     {
-        if (!useWeaponDamage)
-            return baseDamage;
+        if (!useWeaponDamage) return null;
 
-        return GetWeaponDamage(attacker) + baseDamage;
-    }
+        // A supplied weapon beats the equipment lookup — the thrown thing is the weapon, and
+        // a spell's tier dice arrive the same way.
+        if (weaponOverride != null) return weaponOverride;
 
-    private float GetWeaponDamage(DamageSystem attacker)
-    {
+        // A guard, not a fallback. See requiresSuppliedDice.
+        if (requiresSuppliedDice)
+        {
+            Debug.LogError("[DamageEffect] Requires supplied dice, but none arrived — falling back " +
+                           "to baseDamage rather than rolling the equipped weapon. Check that the " +
+                           "firing path sets ProjectileLaunch.dice.");
+            return null;
+        }
+
         var brain = attacker?.Brain;
-        if (brain == null) return 0f;
+        if (brain == null) return null;
+
+        // Fists beat the slot: a sheathed weapon is still equipped, so the stance —
+        // not the equipment dictionary — decides which dice get rolled.
+        var stance = brain.GetModule<CombatStanceModule>();
+        if (stance != null && stance.IsUnarmed) return stance.UnarmedWeapon;
 
         var equipmentSystem = brain.GetModule<EquipmentSystem>();
-        if (equipmentSystem == null) return 0f;
+        if (equipmentSystem == null) return null;
 
+        // An empty slot, or a weapon carrying no DiceProfile, still swings a fist rather
+        // than dealing nothing. Null when the entity has no stance module at all.
         var equippedItem = equipmentSystem.GetEquippedItem(weaponSlotId);
-        if (equippedItem == null) return 0f;
+        var weaponData = equippedItem?.Definition?.weaponData;
 
-        var weaponData = equippedItem.Definition?.weaponData;
-        if (weaponData == null) return 0f;
-
-        return weaponData.RollDamage();
+        return weaponData != null ? weaponData : stance?.UnarmedWeapon;
     }
 
-    private float GetExternalFlatDamage(DamageSystem attacker)
+    /// <summary>
+    /// Flat damage and extra dice other systems grant this attacker — gear, talents, and the
+    /// status layer. All of it arrives as stats, so nothing here knows what a buff is, and
+    /// filling this one method makes bonus damage work for melee, thrown and spells at once.
+    ///
+    /// cmb.bonus_dice rolls the weapon's dice expression directly rather than RollDamage(),
+    /// so the weapon's own flat bonus is paid once per hit rather than once per die.
+    /// Extra dice need a weapon to copy; flat bonus applies either way. They are weapon dice, so
+    /// they explode like the weapon does.
+    /// </summary>
+    private float GetExternalFlatDamage(DamageSystem attacker, DiceProfile weapon, ref int extra, ref int explosions)
     {
-        return 0f;
+        var stats = attacker?.Brain?.Stats;
+        if (stats == null) return 0f;
+
+        float bonus = stats.GetValue("cmb.bonus_damage");
+        if (weapon == null) return bonus;
+
+        int extraDice = Mathf.RoundToInt(stats.GetValue("cmb.bonus_dice"));
+        for (int i = 0; i < extraDice; i++)
+        {
+            bonus += weapon.damageDice.RollExploding(out int bonusExtra, out int bonusExplosions);
+            extra += bonusExtra;
+            explosions += bonusExplosions;
+        }
+
+        return bonus;
     }
 
     private bool CheckBlackboardRequirements(DamageSystem attacker, DamageSystem target)
@@ -152,11 +236,7 @@ public class DamageEffect
             foreach (var fact in requiredCasterFacts)
             {
                 int key = new BlackboardKey(fact).hash;
-                if (!casterBoard.GetBool(key))
-                {
-                    Debug.LogWarning($"[DamageEffect] CheckBlackboard — caster missing fact '{fact}'");
-                    return false;
-                }
+                if (!casterBoard.GetBool(key)) return false;
             }
         }
 
@@ -179,11 +259,7 @@ public class DamageEffect
             foreach (var fact in requiredTargetFacts)
             {
                 int key = new BlackboardKey(fact).hash;
-                if (!targetBoard.GetBool(key))
-                {
-                    Debug.LogWarning($"[DamageEffect] CheckBlackboard — target missing fact '{fact}'");
-                    return false;
-                }
+                if (!targetBoard.GetBool(key)) return false;
             }
         }
 

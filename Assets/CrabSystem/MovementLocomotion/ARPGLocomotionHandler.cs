@@ -37,6 +37,21 @@ public class ARPGLocomotionHandler : LocomotionHandler
     [SerializeField] private float jumpBufferTime = 0.1f;
     [SerializeField] private int maxAirJumps = 0;
 
+    [Header("Wall Jump")]
+    [Tooltip("Needs a ParkourAssistant on the brain. Without one this is silently unavailable.")]
+    [SerializeField] private bool canWallJump = true;
+
+    [Tooltip("Wall jumps allowed per airtime. Reset on landing, NOT per wall — touching a new " +
+             "wall does not hand one back, or a corner becomes an infinite ladder.")]
+    [SerializeField] private int maxWallJumps = 2;
+
+    [Tooltip("Upward force. Left at 0 it uses jumpForce.")]
+    [SerializeField] private float wallJumpForce = 0f;
+
+    [Tooltip("Horizontal shove away from the wall. Zero means you climb straight up the face, " +
+             "which lets you scale any wall by mashing jump.")]
+    [SerializeField] private float wallJumpPush = 5f;
+
     [Header("Animation Parameters")]
     [SerializeField] private string movementSpeedParam = "MovementSpeed";
     [SerializeField] private string isGroundedParam = "IsGrounded";
@@ -67,12 +82,16 @@ public class ARPGLocomotionHandler : LocomotionHandler
     private float lastGroundedTime;
     private float lastJumpInputTime;
     private int airJumpsUsed;
+    private int wallJumpsUsed;
+
+    private ParkourAssistant parkour;
 
     public override void Initialize(MovementSystem system)
     {
         base.Initialize(system);
         animationProvider = system.Brain.GetModuleImplementing<IAnimationProvider>();
         targetLock = system.Brain.GetModule<TargetLockModule>();
+        parkour = system.Brain.GetModule<ParkourAssistant>();
 
         // Initialize walk/run toggle state
         isInWalkMode = startInWalkMode;
@@ -81,6 +100,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
         {
             Debug.Log($"[ARPGLocomotion] Initialized - " +
                      $"TargetLock: {(targetLock != null ? "Found" : "None")}, " +
+                     $"Parkour: {(parkour != null ? "Found" : "None — wall jump disabled")}, " +
                      $"Speeds [W:{walkSpeed} R:{runSpeed} S:{sprintSpeed}]");
         }
     }
@@ -365,7 +385,6 @@ public class ARPGLocomotionHandler : LocomotionHandler
         if (grounded || coyote)
         {
             verticalVelocity.y = jumpForce;
-            airJumpsUsed = 0;
             lastJumpInputTime = 0f;
 
             // Trigger jump animation
@@ -373,6 +392,10 @@ public class ARPGLocomotionHandler : LocomotionHandler
             {
                 animationProvider.SetTrigger(jumpTriggerParam);
             }
+        }
+        else if (TryWallJump())
+        {
+            lastJumpInputTime = 0f;
         }
         else if (airJumpsUsed < maxAirJumps)
         {
@@ -393,12 +416,66 @@ public class ARPGLocomotionHandler : LocomotionHandler
         }
     }
 
+    /// <summary>
+    /// Kick off a wall, if there is one and the budget allows.
+    ///
+    /// Ordered ABOVE the air jump in HandleJump on purpose: a wall jump is the more specific
+    /// move and should not silently burn an air jump charge when a wall was right there.
+    ///
+    /// ParkourAssistant only reports — it has no idea what a wall jump is. All the policy
+    /// (how many, how hard, which way) lives here, with the rest of the jump rules.
+    /// </summary>
+    bool TryWallJump()
+    {
+        if (!canWallJump || parkour == null) return false;
+        if (wallJumpsUsed >= maxWallJumps) return false;
+        if (movementSystem.IsGrounded) return false;
+
+        // Facing comes from the entity root, not from the brain object — the brain is a child
+        // and does not necessarily rotate with the character.
+        Transform body = movementSystem.Brain.EntityRoot != null
+            ? movementSystem.Brain.EntityRoot
+            : movementSystem.Brain.transform;
+
+        // A wall on either side will do. A wall on the right shoves you left, and vice versa.
+        Vector3 push;
+
+        if (parkour.HasWallLeft)
+            push = body.right;
+        else if (parkour.HasWallRight)
+            push = -body.right;
+        else
+            return false;
+
+        verticalVelocity.y = wallJumpForce > 0f ? wallJumpForce : jumpForce;
+
+        // Overwrite horizontal velocity rather than adding to it. Adding lets a player running
+        // at the wall keep their inbound speed and stick to the face instead of leaving it.
+        currentVelocity = push * wallJumpPush;
+
+        wallJumpsUsed++;
+
+        if (animationProvider != null && !string.IsNullOrEmpty(jumpTriggerParam))
+            animationProvider.SetTrigger(jumpTriggerParam);
+
+        if (showDebugInfo)
+            Debug.Log($"[WallJump] {wallJumpsUsed}/{maxWallJumps} — pushed {push}");
+
+        return true;
+    }
+
     protected override void ApplyGravity()
     {
         if (movementSystem.IsGrounded && verticalVelocity.y < 0f)
         {
             verticalVelocity.y = groundedGravity;
             lastGroundedTime = Time.time;
+
+            // Reset here, on contact with the ground — NOT in the grounded branch of
+            // HandleJump, which only runs when you actually jump. Walking off a ledge, using
+            // an air jump, landing and walking off again used to leave the counter spent.
+            airJumpsUsed = 0;
+            wallJumpsUsed = 0;
         }
         else
         {
@@ -458,40 +535,21 @@ public class ARPGLocomotionHandler : LocomotionHandler
     // Ability Support (called by MovementEffect)
     // ============================
 
-    /// <summary>
-    /// Apply an impulse force (for knockback, pushback effects)
-    /// </summary>
-    public void ApplyImpulse(Vector3 direction, float force)
-    {
-        Vector3 impulse = direction.normalized * force;
-        currentVelocity += impulse;
-    }
+    // ApplyImpulse and TeleportTo now live on LocomotionHandler. The base implementations ARE the
+    // two that used to sit here, moved up so callers stop casting to this class to reach them —
+    // that cast is what made every movement ability a silent no-op on the parkour handler.
 
     /// <summary>
-    /// Start a dash with specific direction, speed, and duration
-    /// Called by dash abilities via MovementEffect
+    /// Start a dash with specific direction, speed, and duration.
+    ///
+    /// ⚠ This coroutine is the bool-soup the movement rework replaces, kept only because NPCs still
+    /// run this handler. It is not cancellable, and the velocity it writes is invisible to friction,
+    /// gravity and collision for its whole duration. Do not copy it into a new handler.
     /// </summary>
-    public void StartDash(Vector3 direction, float speed, float duration)
+    public override bool BeginDash(Vector3 direction, float speed, float duration)
     {
-        // Ability dashes override current velocity for duration
         StartCoroutine(AbilityDashCoroutine(direction.normalized * speed, duration));
-    }
-
-    /// <summary>
-    /// Teleport to a position (for teleport abilities)
-    /// </summary>
-    public void TeleportTo(Vector3 position)
-    {
-        if (characterController != null)
-        {
-            characterController.enabled = false;
-            rootTransform.position = position;
-            characterController.enabled = true;
-
-            // Reset velocity to prevent slide/fall on arrival
-            currentVelocity = Vector3.zero;
-            verticalVelocity = Vector3.zero;
-        }
+        return true;
     }
 
     private System.Collections.IEnumerator AbilityDashCoroutine(Vector3 velocity, float duration)

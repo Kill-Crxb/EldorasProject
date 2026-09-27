@@ -1,3 +1,5 @@
+// Editor-only: references AnimationDebugger, which is editor-only.
+#if UNITY_EDITOR
 using UnityEngine;
 
 public class AnimationEventForwarderHooks : MonoBehaviour
@@ -66,3 +68,5 @@ public class AnimationEventForwarderHooks : MonoBehaviour
         debugger?.Log("⚠️  [EventForwarder] NOT FOUND - Animation events won't propagate!", true);
     }
 }
+
+#endif

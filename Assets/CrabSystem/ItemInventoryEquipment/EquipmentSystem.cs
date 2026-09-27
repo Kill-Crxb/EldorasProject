@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 
@@ -10,15 +10,13 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
     [Header("Slot Definitions")]
     [Tooltip("All EquipmentSlotDefinition SOs this entity uses. Required for visual restore on login. " +
-             "Assign the same SOs used in EquipmentWindow's slot configs.")]
+             "Assign the same SOs the equipment sockets are tagged with.")]
     [SerializeField] private List<EquipmentSlotDefinition> slotDefinitions = new List<EquipmentSlotDefinition>();
 
     [Header("NPC Configuration")]
     [SerializeField] private bool hasNaturalWeapon = false;
     [SerializeField] private string naturalWeaponItemId;
     [SerializeField] private EquipmentSlotDefinition naturalWeaponSlot;
-
-    
 
     private Dictionary<string, ItemInstance> equipment = new Dictionary<string, ItemInstance>();
 
@@ -27,11 +25,12 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
     private ControllerBrain brain;
     public ControllerBrain Brain => brain;
-    private StatSystem statSystem;
+    private IStatProvider statSystem;
     private ResourceSystem resourceSystem;
     private bool isInitialized = false;
 
     public event Action<EquipmentSlotDefinition, ItemInstance> OnEquipmentChanged;
+    public event Action<EquipmentSlotDefinition, ItemInstance> OnEquipmentVisual;
 
     #region IBrainModule
 
@@ -56,8 +55,6 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
             EquipNaturalWeapon();
 
         isInitialized = true;
-
-       
     }
 
     /// <summary>
@@ -122,8 +119,6 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
             });
         }
 
-  
-
         return JsonUtility.ToJson(saveData);
     }
 
@@ -153,14 +148,11 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
                 durability = entry.durability
             };
 
-   
-
             equipment[entry.slotId] = item;
             ApplyItemStats(item);
         }
 
         UpdateSerializedData();
-
     }
 
     // ── Save Data Structures ──────────────────────────────────────────────
@@ -200,12 +192,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
             return false;
         }
 
-        if (!slot.CanEquip(item.Definition))
-        {
-
-                Debug.Log($"[EquipmentSystem] {item.Definition.displayName} cannot be equipped to {slot.displayName}");
-            return false;
-        }
+        if (!slot.CanEquip(item.Definition)) return false;
 
         string slotId = slot.slotId;
 
@@ -215,70 +202,98 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         equipment[slotId] = item;
         ApplyItemStats(item);
         OnEquipmentChanged?.Invoke(slot, item);
+        OnEquipmentVisual?.Invoke(slot, item);
         GameEvents.ItemEquipped(slot, item);
         UpdateSerializedData();
-
-        
-            Debug.Log($"[EquipmentSystem] Equipped {item.Definition.displayName} to {slot.displayName}");
 
         return true;
     }
 
+    /// <summary>
+    /// Equips an item that is currently in this entity's inventory, taking it out of the bag
+    /// and putting anything already in the slot back. Use this for anything player-driven —
+    /// plain EquipItem leaves the item in the inventory as well, which duplicates it.
+    /// </summary>
+    public bool EquipFromInventory(ItemInstance item, EquipmentSlotDefinition slot)
+    {
+        if (item == null || slot == null) return false;
+        if (!slot.CanEquip(item.Definition)) return false;
+
+        var inventory = brain != null ? brain.GetModule<InventorySystem>() : null;
+        if (inventory == null) return EquipItem(item, slot);
+
+        // Take the incoming item out first so the outgoing one has room to land.
+        if (!inventory.RemoveItem(item.instanceId)) return false;
+
+        ItemInstance displaced = GetEquippedItem(slot);
+
+        if (displaced != null && !inventory.AddItem(displaced))
+        {
+            Debug.LogWarning($"[EquipmentSystem] No room to unequip {displaced.Definition?.displayName}");
+            inventory.AddItem(item);
+            return false;
+        }
+
+        if (displaced != null) UnequipItem(slot);
+
+        if (EquipItem(item, slot)) return true;
+
+        // Should not happen — CanEquip passed above. Put everything back rather than lose it.
+        inventory.AddItem(item);
+        if (displaced != null)
+        {
+            inventory.RemoveItem(displaced.instanceId);
+            EquipItem(displaced, slot);
+        }
+        return false;
+    }
+
+    /// <summary>Empties a slot. The item goes nowhere — callers that want it back use UnequipItemToInventory.</summary>
     public bool UnequipItem(EquipmentSlotDefinition slot)
     {
         if (slot == null) return false;
 
-        string slotId = slot.slotId;
+        ItemInstance item = GetEquippedItem(slot);
+        if (item == null) return false;
 
-        if (!equipment.ContainsKey(slotId) || equipment[slotId] == null)
-            return false;
-
-        ItemInstance item = equipment[slotId];
         RemoveItemStats(item);
-        equipment[slotId] = null;
+        equipment[slot.slotId] = null;
         OnEquipmentChanged?.Invoke(slot, null);
+        OnEquipmentVisual?.Invoke(slot, null);
         GameEvents.ItemEquipped(slot, null);
         UpdateSerializedData();
-
-        
-            Debug.Log($"[EquipmentSystem] Unequipped {item.Definition.displayName} from {slot.displayName}");
 
         return true;
     }
 
+    /// <summary>Moves the equipped item back into the bag. Stays equipped if there is no room.</summary>
     public bool UnequipItemToInventory(EquipmentSlotDefinition slot)
     {
         if (slot == null) return false;
 
-        string slotId = slot.slotId;
+        ItemInstance item = GetEquippedItem(slot);
+        if (item == null) return false;
 
-        if (!equipment.ContainsKey(slotId) || equipment[slotId] == null)
-            return false;
+        var inventory = brain != null ? brain.GetModule<InventorySystem>() : null;
 
-        ItemInstance item = equipment[slotId];
-
-        var inventorySystem = brain.GetModule<InventorySystem>();
-        if (inventorySystem != null)
+        if (inventory != null && !inventory.AddItem(item))
         {
-            if (!inventorySystem.AddItem(item))
-            {
-               
-                    Debug.LogWarning("[EquipmentSystem] Inventory full, cannot unequip!");
-                return false;
-            }
+            Debug.LogWarning($"[EquipmentSystem] No room in the bag for {item.Definition?.displayName}");
+            return false;
         }
 
-        RemoveItemStats(item);
-        equipment[slotId] = null;
-        OnEquipmentChanged?.Invoke(slot, null);
-        GameEvents.ItemEquipped(slot, null);
-        UpdateSerializedData();
-
-        
-            
-
-        return true;
+        return UnequipItem(slot);
     }
+
+    /// <summary>Resolve a slot id ("helmet", "mainwep") to its definition.</summary>
+    public EquipmentSlotDefinition GetSlotDefinition(string slotId)
+    {
+        if (string.IsNullOrEmpty(slotId)) return null;
+        return slotLookup.GetValueOrDefault(slotId);
+    }
+
+    /// <summary>Slot ids this entity has definitions for. Useful when a socket id does not match.</summary>
+    public IEnumerable<string> GetSlotIds() => slotLookup.Keys;
 
     public ItemInstance GetEquippedItem(EquipmentSlotDefinition slot)
     {
@@ -295,11 +310,11 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
     }
 
     /// <summary>
-    /// Returns the WeaponData for the item in the given slot, or null if the slot
-    /// is empty or the equipped item has no WeaponData assigned.
+    /// Returns the DiceProfile for the item in the given slot, or null if the slot
+    /// is empty or the equipped item has no DiceProfile assigned.
     /// Used by DamageEffect to resolve dice damage at hit time.
     /// </summary>
-    public WeaponData GetEquippedWeapon(string slotId)
+    public DiceProfile GetEquippedWeapon(string slotId)
     {
         var item = GetEquippedItem(slotId);
         return item?.Definition?.weaponData;
@@ -335,9 +350,8 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
                 continue;
             }
 
+            OnEquipmentVisual?.Invoke(slotDef, kvp.Value);
             GameEvents.ItemEquipped(slotDef, kvp.Value);
-
-       
         }
     }
 
@@ -354,34 +368,18 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
             if (slotDef == null || string.IsNullOrEmpty(slotDef.slotId)) continue;
             slotLookup[slotDef.slotId] = slotDef;
         }
-
-       
     }
 
     #endregion
 
     #region Stat Application
 
-    private void ApplyItemStats(ItemInstance item)
-    {
-        if (item?.calculatedModifiers == null) return;
-        if (statSystem == null) return;
+    // Item stat modifiers are not applied in this pass. The stat store holds base
+    // values only; item.* stats also need lifting out of the entity schema before
+    // equipment can feed them. Kept as seams so the call sites stay correct.
+    private void ApplyItemStats(ItemInstance item) { }
 
-        foreach (var modifier in item.calculatedModifiers)
-            statSystem.Engine.AddFlatModifier(modifier.statName, item.instanceId, modifier.value);
-
-      
-    }
-
-    private void RemoveItemStats(ItemInstance item)
-    {
-        if (item == null) return;
-        if (statSystem == null) return;
-
-        statSystem.Engine.RemoveAllModifiersFromSource(item.instanceId);
-
-      
-    }
+    private void RemoveItemStats(ItemInstance item) { }
 
     #endregion
 
@@ -404,8 +402,6 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         }
 
         EquipItem(weaponInstance, naturalWeaponSlot);
-
- 
     }
 
     #endregion
@@ -446,15 +442,4 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
     #endregion
 
-    #region Debug
-
-    [ContextMenu("Debug: Print Equipment")]
-    private void DebugPrintEquipment()
-    {
-        Debug.Log($"=== EQUIPMENT ({brain.name}) ===");
-        foreach (var kvp in equipment)
-            Debug.Log($"  [{kvp.Key}] {(kvp.Value != null ? kvp.Value.Definition.displayName : "(empty)")}");
-    }
-
-    #endregion
 }

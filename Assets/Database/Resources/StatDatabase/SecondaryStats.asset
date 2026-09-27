@@ -1,0 +1,121 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63f1401dcb445534faca4def0618a012, type: 3}
+  m_Name: SecondaryStats
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatSchema
+  derived: 1
+  entries:
+  - id: cmb.arcana
+    displayName: Arcana
+    shortName: ARC
+    description: Offensive power drawn from Mind
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: cmb.might
+    displayName: Might
+    shortName: MGT
+    description: Offensive power drawn from Body
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: cmb.initiative
+    displayName: Initiative
+    shortName: INI
+    description: Offensive power drawn from Spirit
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: cmb.efficacy
+    displayName: Efficacy
+    shortName: EFF
+    description: Offensive power drawn from Endurance
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: cmb.finesse
+    displayName: Finesse
+    shortName: FIN
+    description: Offensive power drawn from Resilience
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: cmb.cunning
+    displayName: Cunning
+    shortName: CUN
+    description: Offensive power drawn from Insight
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: cmb.bonus_damage
+    displayName: Bonus Damage
+    shortName: BDM
+    description: The flat bonus added to your damage roll.
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: cmb.bonus_dice
+    displayName: Bonus Dice
+    shortName: BDC
+    description: Extra dice added to your damage roll.
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: def.alteration
+    displayName: Alteration
+    shortName: ALT
+    description: Defence drawn from Mind
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: def.deflection
+    displayName: Deflection
+    shortName: DFL
+    description: Defence drawn from Body
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: def.dexterity
+    displayName: Dexterity
+    shortName: DEX
+    description: Defence drawn from Spirit
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: def.preparation
+    displayName: Preparation
+    shortName: PRP
+    description: Defence drawn from Endurance
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: def.toughness
+    displayName: Toughness
+    shortName: TGH
+    description: Defence drawn from Resilience
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: def.avoidance
+    displayName: Avoidance
+    shortName: AVD
+    description: Defence drawn from Insight
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99
+  - id: def.thorns
+    displayName: Thorns
+    shortName: THN
+    description: Causes damage to attackers.
+    defaultValue: 0
+    minValue: 0
+    maxValue: 99

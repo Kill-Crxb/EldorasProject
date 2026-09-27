@@ -16,8 +16,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -970,6 +968,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 151650
   packageName: Human Melee Animations
-  packageVersion: 2.0.2
-  assetPath: Assets/Kevin Iglesias/Human Animations/Animations/Female/Combat/2H/HumanF@Attack2H04.fbx
-  uploadId: 771796
+  packageVersion: 2.1
+  assetPath: Assets/ImportedAssets/Kevin Iglesias/Human Animations/Animations/Female/Combat/2H/HumanF@Attack2H04.fbx
+  uploadId: 937378

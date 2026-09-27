@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f2233380f3f845247bd35a63b623aad4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 112000000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Demo/Standart/Scenes/DayNightCycleDemo/LightingData.asset
+  uploadId: 497923

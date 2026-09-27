@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 public class GridTransferManager : MonoBehaviour
@@ -65,7 +65,8 @@ public class GridTransferManager : MonoBehaviour
 
     public void BeginDrag(UniversalGrid grid, string itemId, ItemInstance item, GridArea area)
     {
-        if (isDragging) { Debug.LogWarning("[GridTransferManager] Already dragging an item!"); return; }
+        // A drag that never got closed out would otherwise poison every drag after it.
+        if (isDragging) CancelDrag();
 
         sourceGrid = grid;
         draggedItemId = itemId;
@@ -229,6 +230,5 @@ public class GridTransferManager : MonoBehaviour
         sb.AppendLine($"[GridTransferManager] Registered grids ({registeredGrids.Count}):");
         foreach (var grid in registeredGrids)
             if (grid != null) sb.AppendLine($"  {grid.GridName} ({grid.GridWidth}x{grid.GridHeight})");
-        Debug.Log(sb.ToString());
     }
 }

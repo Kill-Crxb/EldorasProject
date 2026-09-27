@@ -170,6 +170,28 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
                       $"(type:{type} pri:{priority} dur:{duration})");
     }
 
+    /// <summary>
+    /// Drops every active override. Called when HotbarSystem swaps pages — override keys carry
+    /// no page, so a proc earned on one page would otherwise apply to whatever slot replaces it.
+    /// Reactive transforms re-apply on the next pulse if their condition still holds.
+    /// </summary>
+    public void ClearAllOverrides()
+    {
+        if (activeOverrides.Count == 0) return;
+
+        var cleared = new List<string>(activeOverrides.Keys);
+        activeOverrides.Clear();
+
+        foreach (var key in cleared)
+        {
+            ParseKey(key, out var barId, out var index);
+            OnOverrideChanged?.Invoke(barId, index);
+        }
+
+        if (debugLogging)
+            Debug.Log($"[STS] Cleared {cleared.Count} override(s) — page switch");
+    }
+
     public void ClearOverride(string barId, int index)
     {
         string key = SlotKey(barId, index);

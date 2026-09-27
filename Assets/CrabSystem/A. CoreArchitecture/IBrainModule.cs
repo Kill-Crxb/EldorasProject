@@ -3,8 +3,6 @@
 /// Used by both player characters, NPCs, and any entity with a Brain.
 /// Modules are auto-discovered and initialized by the Brain.
 /// 
-/// Migration Note: This replaces IPlayerModule with a universal interface.
-/// IPlayerModule will inherit from IBrainModule for backward compatibility.
 /// </summary>
 public interface IBrainModule
 {

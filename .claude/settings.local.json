@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__unity-mcp__Unity_ManageEditor",
+      "Bash(awk '/--- !u!114/{flag=0} /ModelModule/{flag=1} flag' \"Assets/Characters/Nature Spirit/NatureSpirit.prefab\")"
+    ]
+  }
+}

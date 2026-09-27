@@ -76,8 +76,14 @@ public class StateValueSource : ValueSourceDefinition
             case StateProperty.Sprinting:
                 if (brain.Movement != null)
                 {
-                    // TODO: Query sprint state when MovementSystem exposes it
-                    state = false;
+                    state = brain.Movement.IsSprinting;
+                }
+                break;
+
+            case StateProperty.Running:
+                if (brain.Movement != null)
+                {
+                    state = brain.Movement.IsRunning;
                 }
                 break;
 
@@ -120,5 +126,9 @@ public enum StateProperty
     Stunned,    // Unable to act
     Blocking,   // Active defense
     Sprinting,  // Movement boost
-    Alive       // Health > 0
+    Alive,      // Health > 0
+
+    // Appended, never inserted — StateProperty is serialized by INDEX on every existing
+    // value source asset, so reordering silently repoints them at the wrong state.
+    Running     // Moving at a run but below sprint
 }

@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5ef78bf9c15a6943b9fd5a3db5ec398, type: 3}
+  m_Name: LightDummy
+  m_EditorClassIdentifier: Assembly-CSharp::NPCArchetype
+  archetypeId: target_dummy
+  archetypeName: targetdummy
+  faction: {fileID: 11400000, guid: 07d1b83f4f7fa4d41887d28a2d6fc0d6, type: 2}
+  npcType: 0
+  importance: 0
+  baseStatOverrides:
+  - statId: core.mind
+    baseValue: 20
+  - statId: core.body
+    baseValue: 20
+  - statId: core.spirit
+    baseValue: 20
+  - statId: core.resilience
+    baseValue: 20
+  - statId: core.endurance
+    baseValue: 20
+  - statId: core.insight
+    baseValue: 20
+  - statId: atr.arm
+    baseValue: 15
+  baseLevel: 30
+  mainHandWeaponId: 
+  offHandWeaponId: 
+  abilities: []
+  loadoutConfig:
+    basicAttackSlot: {fileID: 0}
+    qSlot: {fileID: 0}
+    zSlot: {fileID: 0}
+    xSlot: {fileID: 0}
+    cSlot: {fileID: 0}
+    vSlot: {fileID: 0}
+  combatBehaviorClassName: 
+  aiSystemType: 2
+  goapGoals: []
+  goapActions: []
+  goalSelectionMode: 1
+  useGoalCommitment: 1
+  minimumGoalDuration: 0.5
+  combatPersonality: 2
+  hiddenStats:
+    perception: 5
+    reflexes: 5
+    intelligence: 5
+    courage: 5
+  patrolMode: 0
+  patrolWaypoints: []
+  wanderRadius: 10
+  wanderCheckInterval: 30
+  requiredResources: 
+  visionRange: 15
+  visionAngle: 90
+  requireLineOfSight: 1
+  modelPool:
+  - 
+  randomizeModel: 0
+  useGenericName: 1
+  genericName: Light Target
+  namePrefix: []
+  nameSuffix: []
+  aiBehaviorProfileId: 
+  aggressiveToHostileFactions: 1
+  assistsAlliedFactions: 0
+  defendsFactionMembers: 1

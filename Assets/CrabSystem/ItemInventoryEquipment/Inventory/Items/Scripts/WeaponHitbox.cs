@@ -17,11 +17,19 @@ using System.Collections.Generic;
 /// and delivers its damage effects to the target — no ability re-execution.
 ///
 /// Setup:
-///   1. Add any trigger Collider to the GameObject (Box recommended for blades).
-///   2. Add this component.
+///   1. Add any trigger Collider to the GameObject (Box, Capsule, Sphere — any type works).
+///   2. Add this component and drag that Collider into the Hitbox Collider field.
 ///   3. Set hitLayers to the layers you want to register hits on.
 ///   4. AbilitySystem calls Enable() / Disable() when HitboxStart / HitboxEnd fire.
 /// </summary>
+/// <summary>Which combat stance a hitbox is allowed to fire in.</summary>
+public enum HitboxStanceFilter
+{
+    Any,
+    ArmedOnly,
+    UnarmedOnly,
+}
+
 [RequireComponent(typeof(Collider))]
 public class WeaponHitbox : MonoBehaviour
 {
@@ -29,8 +37,26 @@ public class WeaponHitbox : MonoBehaviour
     [Tooltip("Display name shown in debug logs (e.g. 'Katana Blade', 'Left Fist')")]
     [SerializeField] private string weaponName = "Weapon";
 
+    [Tooltip("Identifier abilities use to pick this hitbox — 'FistL', 'FistR', 'FootL', 'FootR', 'Blade'. " +
+             "Case-insensitive. An ability that names no tags activates every hitbox, so leaving this " +
+             "empty preserves the original all-at-once behaviour.")]
+    [SerializeField] private string hitboxTag = "";
+
+    [Tooltip("The trigger collider that detects hits. Any Collider type works — Box, Capsule, Sphere, Mesh. " +
+             "Must be on this GameObject (Unity only delivers OnTriggerEnter here if it is). " +
+             "Leave empty to fall back to GetComponent<Collider>().")]
+    [SerializeField] private Collider hitboxCollider;
+
     [Tooltip("Layers this hitbox registers hits on. Set to Enemy (and Player for friendly fire).")]
     [SerializeField] private LayerMask hitLayers;
+
+    [Tooltip("If false, targets whose faction stance to the attacker is Friendly are skipped entirely.")]
+    [SerializeField] private bool allowFriendlyFire = false;
+
+    [Tooltip("Which combat stance this hitbox fires in. Set blade hitboxes to ArmedOnly and " +
+             "fist/knuckle hitboxes to UnarmedOnly — AbilitySystem enables every hitbox under " +
+             "the entity, so without this a sheathed sword cuts alongside the punch.")]
+    [SerializeField] private HitboxStanceFilter stanceFilter = HitboxStanceFilter.Any;
 
     [Header("Debug")]
     [SerializeField] private bool debugHitbox = false;
@@ -40,7 +66,7 @@ public class WeaponHitbox : MonoBehaviour
     private ControllerBrain brain;
     private AbilitySystem abilitySystem;
     private DamageSystem damageSystem;
-    private Collider hitboxCollider;
+    private CombatStanceModule stanceModule;
 
     // ── State ─────────────────────────────────────────────────────────────
     private bool isActive = false;
@@ -48,6 +74,25 @@ public class WeaponHitbox : MonoBehaviour
 
     // ── Properties ────────────────────────────────────────────────────────
     public bool IsActive => isActive;
+    public string HitboxTag => hitboxTag;
+
+    /// <summary>
+    /// True when an ability naming <paramref name="tags"/> should activate this hitbox.
+    /// An empty or null list means the ability names no hitboxes at all, which activates
+    /// everything — that is what keeps existing weapon abilities working untagged.
+    /// </summary>
+    public bool MatchesTags(List<string> tags)
+    {
+        if (tags == null || tags.Count == 0) return true;
+
+        foreach (var tag in tags)
+        {
+            if (string.IsNullOrEmpty(tag)) continue;
+            if (string.Equals(tag, hitboxTag, System.StringComparison.OrdinalIgnoreCase)) return true;
+        }
+
+        return false;
+    }
 
     // =====================================================================
     // Unity lifecycle
@@ -55,12 +100,18 @@ public class WeaponHitbox : MonoBehaviour
 
     void Awake()
     {
-        hitboxCollider = GetComponent<Collider>();
-        if (hitboxCollider != null)
+        if (hitboxCollider == null)
+            hitboxCollider = GetComponent<Collider>();
+
+        if (hitboxCollider == null)
         {
-            hitboxCollider.isTrigger = true;
-            hitboxCollider.enabled = false;
+            Debug.LogError($"[WeaponHitbox] '{weaponName}' on {name} has no Collider assigned or attached — hitbox cannot activate.");
+            return;
         }
+
+        hitboxCollider.isTrigger = true;
+        hitboxCollider.enabled = false;
+
         // Brain resolution deferred to Enable() — this GameObject may not be
         // parented to the ControllerBrain hierarchy yet when Awake fires
         // (weapon prefabs are instantiated then parented to a socket).
@@ -79,6 +130,7 @@ public class WeaponHitbox : MonoBehaviour
         brain = GetComponentInParent<ControllerBrain>();
         abilitySystem = brain?.GetModule<AbilitySystem>();
         damageSystem = brain?.GetModule<DamageSystem>();
+        stanceModule = brain?.GetModule<CombatStanceModule>();
 
         if (debugHitbox)
         {
@@ -96,11 +148,24 @@ public class WeaponHitbox : MonoBehaviour
     /// <summary>Enable the hitbox for one swing. Clears per-swing hit tracking.</summary>
     public void Enable()
     {
+        if (hitboxCollider == null)
+        {
+            Debug.LogError($"[WeaponHitbox] '{weaponName}' cannot enable — no Collider assigned.");
+            return;
+        }
+
         TryResolveBrain();
 
         if (brain == null)
         {
             Debug.LogError($"[WeaponHitbox] '{weaponName}' cannot enable — no ControllerBrain found in parent hierarchy.");
+            return;
+        }
+
+        if (!StanceAllows())
+        {
+            if (debugHitbox)
+                Debug.Log($"[WeaponHitbox] '{weaponName}' skipped — wrong stance for {stanceFilter}");
             return;
         }
 
@@ -112,12 +177,28 @@ public class WeaponHitbox : MonoBehaviour
             Debug.Log($"[WeaponHitbox] '{weaponName}' enabled");
     }
 
+    /// <summary>
+    /// True when the entity's current stance matches this hitbox's filter. Entities with no
+    /// CombatStanceModule (most NPCs) pass everything, so natural weapons are unaffected.
+    /// </summary>
+    private bool StanceAllows()
+    {
+        if (stanceFilter == HitboxStanceFilter.Any) return true;
+        if (stanceModule == null) return true;
+
+        if (stanceFilter == HitboxStanceFilter.UnarmedOnly) return stanceModule.IsUnarmed;
+
+        return !stanceModule.IsUnarmed;
+    }
+
     /// <summary>Disable the hitbox at the end of the swing.</summary>
     public void Disable()
     {
         isActive = false;
-        hitboxCollider.enabled = false;
         hitThisSwing.Clear();
+
+        if (hitboxCollider != null)
+            hitboxCollider.enabled = false;
 
         if (debugHitbox)
             Debug.Log($"[WeaponHitbox] '{weaponName}' disabled");
@@ -146,6 +227,15 @@ public class WeaponHitbox : MonoBehaviour
         var targetDamage = targetBrain.GetModule<DamageSystem>();
         if (targetDamage == null) return;
 
+        // Faction gate — don't hit friendlies unless explicitly allowed
+        if (!allowFriendlyFire && brain.Faction != null && targetBrain.Faction != null &&
+            brain.Faction.GetStanceTo(targetBrain) == RPG.Factions.FactionRelationship.Friendly)
+        {
+            if (debugHitbox)
+                Debug.Log($"[WeaponHitbox] '{weaponName}' skipped friendly target {targetBrain.transform.root.name}");
+            return;
+        }
+
         hitThisSwing.Add(other);
 
         AbilityDefinition ability = abilitySystem?.CurrentAbility;
@@ -155,10 +245,11 @@ public class WeaponHitbox : MonoBehaviour
 
         if (ability?.damageEffects != null && ability.damageEffects.Count > 0)
         {
+            Vector3 contact = other.ClosestPoint(transform.position);
             foreach (var effect in ability.damageEffects)
             {
                 effect.SetDamageSystem(damageSystem);
-                effect.Apply(targetDamage);
+                effect.Apply(targetDamage, 1f, null, DamageSource.Melee, contact);
             }
 
             // Spawn hit VFX at impact point via attacker's VFXSystem
@@ -184,6 +275,7 @@ public class WeaponHitbox : MonoBehaviour
                 comboCount = 0,
                 comboMultiplier = 1f,
                 weaponDamageMultiplier = 1f,
+                source = DamageSource.Melee,
             };
             CombatDamagePacket packet = damageSystem.CalculateDamage(fallback);
             targetDamage.TakeDamage(packet);
@@ -191,6 +283,15 @@ public class WeaponHitbox : MonoBehaviour
             if (debugHitbox)
                 Debug.Log($"[WeaponHitbox] '{weaponName}' hit {other.name} for {packet.finalDamage:F1} (fallback — ability: {ability?.abilityName ?? "none"})");
         }
+
+        // Statuses ride the contact, whichever damage branch ran.
+        //
+        // hitThisSwing dedupes per COLLIDER, not per target, so an entity carrying two hurtboxes
+        // would take a Stack status twice off one swing. Nothing in the project does today —
+        // DamageSystem auto-creates a single hurtbox — but stacking debuffs on a multi-collider
+        // boss is where that assumption breaks, and the fix belongs in the dedupe set, not here.
+        ability?.ApplyStatuses(targetBrain, brain);
+        ability?.ApplyKnockback(targetBrain, brain.transform);
     }
 
     private void TryHitLegacy(Collider other)
@@ -212,6 +313,7 @@ public class WeaponHitbox : MonoBehaviour
             comboCount = 0,
             comboMultiplier = 1f,
             weaponDamageMultiplier = 1f,
+            source = DamageSource.Melee,
         };
         CombatDamagePacket packet = damageSystem.CalculateDamage(fallback);
         damageable.TakeDamage(packet.finalDamage);
@@ -228,7 +330,7 @@ public class WeaponHitbox : MonoBehaviour
     {
         if (!showGizmos) return;
 
-        Collider col = GetComponent<Collider>();
+        Collider col = hitboxCollider != null ? hitboxCollider : GetComponent<Collider>();
         if (col == null) return;
 
         Gizmos.color = isActive
@@ -244,13 +346,24 @@ public class WeaponHitbox : MonoBehaviour
         }
         else if (col is SphereCollider sphere)
         {
-            Gizmos.DrawWireSphere(transform.position + sphere.center,
-                                  sphere.radius * transform.lossyScale.x);
+            Gizmos.DrawWireSphere(transform.TransformPoint(sphere.center), WorldRadius(sphere.radius));
         }
         else if (col is CapsuleCollider capsule)
         {
-            Gizmos.DrawWireSphere(transform.position + capsule.center,
-                                  capsule.radius * transform.lossyScale.x);
+            Gizmos.DrawWireSphere(transform.TransformPoint(capsule.center), WorldRadius(capsule.radius));
         }
+    }
+
+    /// <summary>
+    /// Sphere and capsule colliders take their radius from the LARGEST absolute axis scale,
+    /// not from x. Matching that here keeps the gizmo the same size as the real collider on
+    /// non-uniformly scaled bones.
+    /// </summary>
+    private float WorldRadius(float radius)
+    {
+        Vector3 scale = transform.lossyScale;
+        float max = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+
+        return radius * max;
     }
 }

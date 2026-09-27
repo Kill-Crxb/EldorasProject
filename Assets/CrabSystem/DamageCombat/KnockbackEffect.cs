@@ -27,8 +27,8 @@ public class KnockbackEffect
     [Tooltip("Force of the knockback")]
     public float force = 10f;
 
-    [Tooltip("Direction of knockback (relative to attacker if SetAttacker is used)")]
-    public Vector3 direction = Vector3.back;
+    [Tooltip("Direction of knockback in the attacker's frame. +Z pushes away from the attacker, +Y lifts.")]
+    public Vector3 direction = Vector3.forward;
 
     [Tooltip("Use direction relative to attacker? (false = world space direction)")]
     public bool useRelativeDirection = true;
@@ -88,10 +88,14 @@ public class KnockbackEffect
             return;
         }
 
-        var locomotionHandler = movementSystem.Locomotion as ARPGLocomotionHandler;
+        // ⚠ This used to be `movementSystem.Locomotion as ARPGLocomotionHandler`. Slice 1 swapped the
+        // player onto ParkourLocomotionHandler, the cast started returning null, and knockback has
+        // been warning-and-returning on every player hit since. ApplyImpulse now lives on
+        // LocomotionHandler — call it through the base type and do not cast to a concrete handler.
+        var locomotionHandler = movementSystem.Locomotion;
         if (locomotionHandler == null)
         {
-            Debug.LogWarning($"[KnockbackEffect] Locomotion handler is not ARPGLocomotionHandler on {brain.name}");
+            Debug.LogWarning($"[KnockbackEffect] No LocomotionHandler on {brain.name}");
             return;
         }
 

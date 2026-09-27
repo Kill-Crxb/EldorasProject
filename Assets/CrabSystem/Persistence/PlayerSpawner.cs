@@ -9,9 +9,6 @@ public class PlayerSpawner : MonoBehaviour
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
 
-    [Header("Debug")]
-    [SerializeField] private bool debugMode = false;
-
     #endregion
 
     #region Private Fields
@@ -25,8 +22,6 @@ public class PlayerSpawner : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("[PlayerSpawner] Awake");
-
         saveManager = ManagerBrain.Instance?.GetManager<SaveManager>();
         if (saveManager == null)
         {
@@ -34,7 +29,6 @@ public class PlayerSpawner : MonoBehaviour
             return;
         }
 
-        Debug.Log("[PlayerSpawner] SaveManager found, subscribing to OnGameSceneReady in Awake");
         GameEvents.OnGameSceneReady += HandleGameSceneReady;
     }
 
@@ -49,15 +43,12 @@ public class PlayerSpawner : MonoBehaviour
 
     private void HandleGameSceneReady()
     {
-        Debug.Log("[PlayerSpawner] OnGameSceneReady fired");
-
         if (!saveManager.HasActiveCharacter)
         {
             Debug.LogWarning("[PlayerSpawner] No active character to spawn");
             return;
         }
 
-        Debug.Log($"[PlayerSpawner] Active character: {saveManager.ActiveCharacterId}");
         SpawnPlayer();
     }
 
@@ -83,13 +74,10 @@ public class PlayerSpawner : MonoBehaviour
             ? Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation)
             : Instantiate(playerPrefab);
 
-        Debug.Log($"[PlayerSpawner] Spawned object: {spawnedObject.name}, active: {spawnedObject.activeInHierarchy}");
-
         spawnedPlayerBrain = spawnedObject.GetComponent<ControllerBrain>();
 
         if (spawnedPlayerBrain == null)
         {
-            Debug.Log("[PlayerSpawner] Not on root, searching children...");
             spawnedPlayerBrain = spawnedObject.GetComponentInChildren<ControllerBrain>();
         }
 
@@ -103,8 +91,6 @@ public class PlayerSpawner : MonoBehaviour
 
             return;
         }
-
-        Debug.Log($"[PlayerSpawner] Found ControllerBrain at {spawnedPlayerBrain.gameObject.name}, enabled: {spawnedPlayerBrain.enabled}");
 
         if (!spawnedPlayerBrain.enabled)
         {
@@ -152,8 +138,6 @@ public class PlayerSpawner : MonoBehaviour
             {
                 configData.characterId = spawnedPlayerBrain.Identity?.EntityId ?? saveManager.ActiveCharacterId;
                 GameEvents.CharacterConfigDataReady(configData);
-
-                Debug.Log($"[PlayerSpawner] Applied config: {configData.displayName}");
             }
         }
         catch (System.Exception ex)

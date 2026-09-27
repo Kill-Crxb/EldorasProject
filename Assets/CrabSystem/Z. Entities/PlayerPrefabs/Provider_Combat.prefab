@@ -100,7 +100,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AbilityModule
   abilities:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
-  - {fileID: 11400000, guid: 4123ca96c374ad4419ab9f91888476df, type: 2}
   - {fileID: 11400000, guid: 9ebeac94c51d0744e9c6909a78ae9f95, type: 2}
   - {fileID: 11400000, guid: c00c31af8a0f0144382988ff6732bc2f, type: 2}
   - {fileID: 11400000, guid: cade32b5cb7943b4280aa263e6ce9568, type: 2}

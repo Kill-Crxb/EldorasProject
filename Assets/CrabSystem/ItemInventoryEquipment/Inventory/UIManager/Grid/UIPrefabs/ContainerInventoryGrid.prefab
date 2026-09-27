@@ -168,4 +168,4 @@ MonoBehaviour:
   slotBackgroundPrefab: {fileID: 299990665795085155, guid: 3bc60e8a2d14af245b0267287b5a1d8c, type: 3}
   itemOverlayPrefab: {fileID: 1133267992237854258, guid: 390119f52baa7f54ab9ae64d77522193, type: 3}
   itemIconPrefab: {fileID: 3611541107377286317, guid: 209eb715830aa7c46b33ca9df1c74bbc, type: 3}
-  debugMode: 0
+  debugMode: 1

@@ -1,11 +1,14 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
 /// Which set of physical keys a bar can claim.
-/// Mutually exclusive — if two bars claim the same set, the second one wins
-/// and the first is set to None with a console warning.
+///
+/// Sets are validated by the physical keys they claim, not by enum equality, because two
+/// different sets can want the same key — QuickslotQ and ShiftCtrlQ both want Q. The first bar
+/// listed in keybindRoutes keeps the key and the later one is demoted to None with a warning.
 /// </summary>
 public enum HotbarKeybindSet
 {
@@ -15,16 +18,47 @@ public enum HotbarKeybindSet
     Hotbar5678,     // 5=slot0  6=slot1  7=slot2  8=slot3
     Hotbar9,        // 9=slot0  (single-key utility bar)
     QuickslotQ,     // Q=slot0  (ranged slot — mirrors equipped ranged inventory)
+    MouseLR,        // LMB=slot0  RMB=slot1   (the horizontal focus bar)
+    ShiftCtrlQ,     // Shift=slot0  Ctrl=slot1  Q=slot2   (the vertical focus bar)
 }
 
 /// <summary>
-/// Serialised form of the keybind routing config — three enum values.
-/// Stored as "inputProfile" in the character save.
+/// One bar's claim on a set of physical keys. heldTime is the per-slot charge timer and is
+/// deliberately not serialised — it is runtime state that belongs with the route it measures,
+/// which is what keeps the bridge from needing a per-bar array field.
+/// </summary>
+[Serializable]
+public class BarKeybindRoute
+{
+    public string barId = "";
+    public HotbarKeybindSet keybinds = HotbarKeybindSet.None;
+
+    [NonSerialized] public float[] heldTime = new float[12];
+
+    public BarKeybindRoute() { }
+
+    public BarKeybindRoute(string barId, HotbarKeybindSet keybinds)
+    {
+        this.barId = barId;
+        this.keybinds = keybinds;
+    }
+}
+
+/// <summary>
+/// Serialised form of the keybind routing config. Stored as "inputProfile" in the character save.
+///
+/// v1 stored three enum values, one per named bar. v2 stores a list of routes, so a bar added
+/// later carries its own binding. The v1 fields are kept for migration and never written.
 /// </summary>
 [Serializable]
 public class InputProfileSaveData
 {
-    public int version = 1;
+    public const int CurrentVersion = 2;
+
+    public int version = CurrentVersion;
+    public List<BarKeybindRoute> routes = new List<BarKeybindRoute>();
+
+    // ── v1 legacy — read on load, never written ───────────────────────────
     public HotbarKeybindSet centreBarKeybinds;
     public HotbarKeybindSet bottomLeftKeybinds;
     public HotbarKeybindSet bottomRightKeybinds;
@@ -52,12 +86,12 @@ public enum InputMode
 ///   4. Keybind routing config owner (ISaveable → "inputProfile")
 ///
 /// Keybind routing:
-///   Each of the three hotbars (centre / bottomLeft / bottomRight) can claim
-///   one HotbarKeybindSet. Assignment is inspector-configurable and persisted
-///   per character via ISaveable. If two bars claim the same set the second
-///   assignment loses and is demoted to None.
+///   Each bar on HotbarSystem can claim one HotbarKeybindSet, listed in keybindRoutes.
+///   Assignment is inspector-configurable and persisted per character via ISaveable.
+///   Routes are validated by physical key, first listed wins, loser demoted to None.
 ///
-///   Q / LMB always route to AbilityLoadoutModule as "BasicAttack".
+///   All player ability input reaches abilities through BridgeBarInput → HotbarSystem.
+///   AbilityLoadoutModule receives no player input.
 /// </summary>
 public class InputSystem : MonoBehaviour,
     IBrainModule,
@@ -66,9 +100,7 @@ public class InputSystem : MonoBehaviour,
     IAbilityControlSource,
     ISaveable
 {
-    // ========================================
     // Inspector
-    // ========================================
 
     [Header("Module Settings")]
     [SerializeField] private bool isEnabled = true;
@@ -80,15 +112,21 @@ public class InputSystem : MonoBehaviour,
     [Tooltip("Transform player input to camera space (Player mode only)")]
     [SerializeField] private bool cameraRelativeMovement = true;
 
+    [Header("Debug")]
+    [Tooltip("Draws the live input state on screen. Nothing is written to the console.")]
+    [SerializeField] private bool showDebugInfo = false;
+
     [Header("Keybind Routing")]
-    [Tooltip("Which keybind set the centre bar responds to")]
-    [SerializeField] private HotbarKeybindSet centreBarKeybinds = HotbarKeybindSet.ZXCV;
-
-    [Tooltip("Which keybind set the bottom-left bar responds to")]
-    [SerializeField] private HotbarKeybindSet bottomLeftKeybinds = HotbarKeybindSet.QuickslotQ;
-
-    [Tooltip("Which keybind set the bottom-right bar responds to")]
-    [SerializeField] private HotbarKeybindSet bottomRightKeybinds = HotbarKeybindSet.None;
+    [Tooltip("Which keybind set each bar responds to. barId must match a HotbarSystem bar " +
+             "definition. Order matters: on a key clash the bar listed first keeps the key.")]
+    [SerializeField] private List<BarKeybindRoute> keybindRoutes = new List<BarKeybindRoute>
+    {
+        new BarKeybindRoute("modifier", HotbarKeybindSet.ShiftCtrlQ),
+        new BarKeybindRoute("mouse", HotbarKeybindSet.MouseLR),
+        new BarKeybindRoute("centre", HotbarKeybindSet.ZXCV),
+        new BarKeybindRoute("bottomLeft", HotbarKeybindSet.Hotbar1234),
+        new BarKeybindRoute("bottomRight", HotbarKeybindSet.None),
+    };
 
     [Header("Optional Dependencies")]
     [Tooltip("Camera provider for camera-relative movement (auto-discovered)")]
@@ -101,12 +139,7 @@ public class InputSystem : MonoBehaviour,
     [Tooltip("Pathfinding module for AI movement (auto-discovered)")]
     [SerializeField] private PathfindingModule pathfinding;
 
-    [Header("Debug")]
-    [SerializeField] private bool showDebugInfo = false;
-
-    // ========================================
     // References
-    // ========================================
 
     private ControllerBrain brain;
     private PlayerInputControls inputActions;
@@ -115,21 +148,23 @@ public class InputSystem : MonoBehaviour,
 
     private string aiRequestedAbility;
 
-    // ========================================
     // Input State (IInputProvider)
-    // ========================================
 
     public Vector2 MoveInput { get; private set; }
     public Vector2 LookInput { get; private set; }
     public bool JumpPressed { get; private set; }
     public bool JumpHeld { get; private set; }
     public bool SprintHeld { get; private set; }
+    public bool CrouchPressed { get; private set; }
+    public bool CrouchHeld { get; private set; }
+    public bool GaitTogglePressed { get; private set; }
     public bool DashPressed { get; private set; }
 
     public bool LightAttackPressed { get; private set; }
     public bool HeavyAttackPressed { get; private set; }
     public bool BlockHeld { get; private set; }
     public bool ParryPressed { get; private set; }
+    public bool ToggleStancePressed { get; private set; }
 
     // Raw quickslot state — exposed for IInputProvider consumers and AI.
     // In Player mode ZXCV route to a hotbar bar via BridgeBarInput,
@@ -139,6 +174,12 @@ public class InputSystem : MonoBehaviour,
     public bool AbilityXPressed { get; private set; }
     public bool AbilityCPressed { get; private set; }
     public bool AbilityVPressed { get; private set; }
+
+    // Focus bar edges. The held side is read straight off the action in GetIsPressed — press and
+    // hold stay separate fields the whole way down, per Movement_Ability_Interface.md.
+    public bool AbilityShiftPressed { get; private set; }
+    public bool AbilityCtrlPressed { get; private set; }
+    public bool AbilityBlockPressed { get; private set; }
 
     public bool Hotbar1Pressed { get; private set; }
     public bool Hotbar2Pressed { get; private set; }
@@ -152,10 +193,6 @@ public class InputSystem : MonoBehaviour,
 
     public bool InteractPressed { get; private set; }
 
-    // ========================================
-    // Properties
-    // ========================================
-
     public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
     public ControllerBrain Brain => brain;
     public InputMode CurrentMode => currentMode;
@@ -164,9 +201,7 @@ public class InputSystem : MonoBehaviour,
         (currentMode == InputMode.Player || currentMode == InputMode.AI);
     public string SourceName => $"InputSystem ({currentMode})";
 
-    // ========================================
     // IBrainModule
-    // ========================================
 
     public void Initialize(ControllerBrain controllerBrain)
     {
@@ -203,12 +238,7 @@ public class InputSystem : MonoBehaviour,
 
     public void UpdateModule()
     {
-        if (!IsEnabled)
-        {
-            if (showDebugInfo && Time.frameCount % 60 == 0)
-                Debug.LogWarning("[InputSystem] UpdateModule called but IsEnabled = false!");
-            return;
-        }
+        if (!IsEnabled) return;
 
         switch (currentMode)
         {
@@ -217,21 +247,17 @@ public class InputSystem : MonoBehaviour,
         }
     }
 
-    // ========================================
     // ISaveable  —  "inputProfile"
-    // ========================================
 
     public string GetSaveId() => "inputProfile";
-    public int GetSaveVersion() => 1;
+    public int GetSaveVersion() => InputProfileSaveData.CurrentVersion;
 
     public string GetSaveData()
     {
         var data = new InputProfileSaveData
         {
-            version = GetSaveVersion(),
-            centreBarKeybinds = centreBarKeybinds,
-            bottomLeftKeybinds = bottomLeftKeybinds,
-            bottomRightKeybinds = bottomRightKeybinds,
+            version = InputProfileSaveData.CurrentVersion,
+            routes = keybindRoutes,
         };
         return JsonUtility.ToJson(data);
     }
@@ -243,50 +269,132 @@ public class InputSystem : MonoBehaviour,
         var data = JsonUtility.FromJson<InputProfileSaveData>(json);
         if (data == null) return;
 
-        centreBarKeybinds = data.centreBarKeybinds;
-        bottomLeftKeybinds = data.bottomLeftKeybinds;
-        bottomRightKeybinds = data.bottomRightKeybinds;
+        if (data.routes != null && data.routes.Count > 0)
+            ApplySavedRoutes(data.routes);
+        else
+            MigrateLegacyRoutes(data);
 
         ValidateKeybindRouting();
-
-        if (showDebugInfo)
-            Debug.Log($"[InputSystem] Profile loaded — centre:{centreBarKeybinds} " +
-                      $"left:{bottomLeftKeybinds} right:{bottomRightKeybinds}");
     }
 
-    // ========================================
-    // Keybind Routing Validation
-    // ========================================
+    /// <summary>
+    /// A saved route only overwrites a bar this entity still has. Bars the save does not mention
+    /// keep whatever the prefab authored, which is how a bar added since the save gets its keys.
+    /// </summary>
+    private void ApplySavedRoutes(List<BarKeybindRoute> saved)
+    {
+        foreach (var entry in saved)
+        {
+            if (entry == null) continue;
+
+            var route = FindRoute(entry.barId);
+            if (route == null) continue;
+
+            route.keybinds = entry.keybinds;
+        }
+    }
+
+    private void MigrateLegacyRoutes(InputProfileSaveData data)
+    {
+        SetRouteFromLegacy("centre", data.centreBarKeybinds);
+        SetRouteFromLegacy("bottomLeft", data.bottomLeftKeybinds);
+        SetRouteFromLegacy("bottomRight", data.bottomRightKeybinds);
+    }
 
     /// <summary>
-    /// Enforces mutual exclusivity. Priority: centre > bottomLeft > bottomRight.
-    /// If bottomRight conflicts with either other bar it loses. If bottomLeft
-    /// conflicts with centre it loses. The loser is demoted to None.
+    /// v1 saves can hand a bar QuickslotQ, which the modifier bar now claims. Left alone, that bar
+    /// would win the key by list order and take the whole ShiftCtrlQ set down with it, so Q is
+    /// dropped at migration rather than at validation.
+    /// </summary>
+    private void SetRouteFromLegacy(string barId, HotbarKeybindSet set)
+    {
+        var route = FindRoute(barId);
+        if (route == null) return;
+
+        if (set == HotbarKeybindSet.QuickslotQ)
+        {
+            Debug.LogWarning($"[InputSystem] Legacy save gave '{barId}' the Q key, now claimed by " +
+                             $"the modifier bar — '{barId}' migrated to None.");
+            set = HotbarKeybindSet.None;
+        }
+
+        route.keybinds = set;
+    }
+
+    private BarKeybindRoute FindRoute(string barId)
+    {
+        if (string.IsNullOrEmpty(barId)) return null;
+
+        foreach (var route in keybindRoutes)
+        {
+            if (route != null && route.barId == barId) return route;
+        }
+
+        return null;
+    }
+
+    // Keybind Routing Validation
+
+    /// <summary>
+    /// Enforces one owner per physical key. Routes are checked in list order, so the bar listed
+    /// first keeps a contested key and the later one is demoted to None.
     /// Called at Initialize and after LoadSaveData.
     /// </summary>
     private void ValidateKeybindRouting()
     {
-        if (bottomRightKeybinds != HotbarKeybindSet.None &&
-            (bottomRightKeybinds == centreBarKeybinds ||
-             bottomRightKeybinds == bottomLeftKeybinds))
-        {
-            Debug.LogWarning($"[InputSystem] bottomRight keybind set '{bottomRightKeybinds}' " +
-                             $"already claimed by another bar — demoted to None.");
-            bottomRightKeybinds = HotbarKeybindSet.None;
-        }
+        claimedKeys.Clear();
 
-        if (bottomLeftKeybinds != HotbarKeybindSet.None &&
-            bottomLeftKeybinds == centreBarKeybinds)
+        foreach (var route in keybindRoutes)
         {
-            Debug.LogWarning($"[InputSystem] bottomLeft keybind set '{bottomLeftKeybinds}' " +
-                             $"already claimed by centre bar — demoted to None.");
-            bottomLeftKeybinds = HotbarKeybindSet.None;
+            if (route == null || route.keybinds == HotbarKeybindSet.None) continue;
+
+            if (route.heldTime == null) route.heldTime = new float[12];
+
+            string clash = FirstClaimedKey(route.keybinds);
+            if (clash != null)
+            {
+                Debug.LogWarning($"[InputSystem] Bar '{route.barId}' set '{route.keybinds}' wants " +
+                                 $"key '{clash}', already claimed by an earlier bar — demoted to None.");
+                route.keybinds = HotbarKeybindSet.None;
+                continue;
+            }
+
+            claimedKeys.AddRange(KeysClaimedBy(route.keybinds));
         }
     }
 
-    // ========================================
+    private readonly List<string> claimedKeys = new List<string>();
+
+    private string FirstClaimedKey(HotbarKeybindSet set)
+    {
+        foreach (string key in KeysClaimedBy(set))
+        {
+            if (claimedKeys.Contains(key)) return key;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The physical keys a set occupies. Names are labels for the warning, not control paths —
+    /// the actual bindings live on PlayerInputControls.
+    /// </summary>
+    private static string[] KeysClaimedBy(HotbarKeybindSet set)
+    {
+        switch (set)
+        {
+            case HotbarKeybindSet.ZXCV:       return new[] { "z", "x", "c", "v" };
+            case HotbarKeybindSet.Hotbar1234: return new[] { "1", "2", "3", "4" };
+            case HotbarKeybindSet.Hotbar5678: return new[] { "5", "6", "7", "8" };
+            case HotbarKeybindSet.Hotbar9:    return new[] { "9" };
+            case HotbarKeybindSet.QuickslotQ: return new[] { "q" };
+            case HotbarKeybindSet.MouseLR:    return new[] { "lmb", "rmb" };
+            case HotbarKeybindSet.ShiftCtrlQ: return new[] { "shift", "ctrl", "q" };
+            default: return Array.Empty<string>();
+        }
+    }
+
     // Dependency Setup
-    // ========================================
 
     private void SetupDependencies()
     {
@@ -306,9 +414,7 @@ public class InputSystem : MonoBehaviour,
         return hotbarSystem;
     }
 
-    // ========================================
     // IMovementControlSource
-    // ========================================
 
     public MovementInput GetMovementInput()
     {
@@ -321,8 +427,8 @@ public class InputSystem : MonoBehaviour,
         }
     }
 
-    public void OnActivated() { if (showDebugInfo) Debug.Log($"[InputSystem] Activated in {currentMode} mode"); }
-    public void OnDeactivated() { if (showDebugInfo) Debug.Log("[InputSystem] Deactivated"); }
+    public void OnActivated() { }
+    public void OnDeactivated() { }
 
     public void UpdateSource()
     {
@@ -334,9 +440,7 @@ public class InputSystem : MonoBehaviour,
         }
     }
 
-    // ========================================
     // IAbilityControlSource
-    // ========================================
 
     public string GetAbilitySlotToTrigger()
     {
@@ -349,23 +453,17 @@ public class InputSystem : MonoBehaviour,
         }
     }
 
-    // ========================================
     // Mode Switching
-    // ========================================
 
     public void SetMode(InputMode mode)
     {
         if (currentMode == mode) return;
-        InputMode old = currentMode;
         currentMode = mode;
-        if (showDebugInfo) Debug.Log($"[InputSystem] Mode: {old} → {currentMode}");
     }
 
     public InputMode GetMode() => currentMode;
 
-    // ========================================
     // AI Control API
-    // ========================================
 
     public void RequestAbility(string slotKey)
     {
@@ -380,9 +478,7 @@ public class InputSystem : MonoBehaviour,
     public bool HasPendingAbilityRequest() => !string.IsNullOrEmpty(aiRequestedAbility);
     public void ClearAbilityRequest() => aiRequestedAbility = null;
 
-    // ========================================
     // Player Input Reading
-    // ========================================
 
     private int _lastReadFrame = -1;
 
@@ -407,6 +503,9 @@ public class InputSystem : MonoBehaviour,
         JumpPressed = inputActions.Player.Jump.WasPressedThisFrame();
         JumpHeld = inputActions.Player.Jump.IsPressed();
         SprintHeld = inputActions.Player.Sprint.IsPressed();
+        CrouchPressed = inputActions.Player.Crouch.WasPressedThisFrame();
+        CrouchHeld = inputActions.Player.Crouch.IsPressed();
+        GaitTogglePressed = inputActions.Player.ToggleGait.WasPressedThisFrame();
         DashPressed = false; // TODO: Add Dash to PlayerInputControls
     }
 
@@ -416,6 +515,7 @@ public class InputSystem : MonoBehaviour,
         HeavyAttackPressed = false; // TODO: Add HeavyAttack
         BlockHeld = inputActions.Player.Block.IsPressed();
         ParryPressed = false; // TODO: Add Parry
+        ToggleStancePressed = inputActions.Player.ToggleStance.WasPressedThisFrame();
     }
 
     private void ReadAbilityInput()
@@ -427,6 +527,10 @@ public class InputSystem : MonoBehaviour,
         AbilityXPressed = inputActions.Player.QuickslotX.WasPressedThisFrame();
         AbilityCPressed = inputActions.Player.QuickslotC.WasPressedThisFrame();
         AbilityVPressed = inputActions.Player.QuickslotV.WasPressedThisFrame();
+
+        AbilityShiftPressed = inputActions.Player.QuickslotShift.WasPressedThisFrame();
+        AbilityCtrlPressed = inputActions.Player.QuickslotCtrl.WasPressedThisFrame();
+        AbilityBlockPressed = inputActions.Player.Block.WasPressedThisFrame();
     }
 
     private void ReadHotbarInput()
@@ -441,50 +545,33 @@ public class InputSystem : MonoBehaviour,
         Hotbar8Pressed = inputActions.Player.Hotbar8.WasPressedThisFrame();
         Hotbar9Pressed = inputActions.Player.Hotbar9.WasPressedThisFrame();
 
-        BridgeBarInput("centre", centreBarKeybinds);
-        BridgeBarInput("bottomLeft", bottomLeftKeybinds);
-        BridgeBarInput("bottomRight", bottomRightKeybinds);
+        foreach (var route in keybindRoutes)
+            BridgeBarInput(route);
     }
 
     private void ReadInteractionInput()
     {
-        InteractPressed = Keyboard.current != null &&
-                          Keyboard.current[Key.E].wasPressedThisFrame;
+        InteractPressed = inputActions != null && inputActions.Player.Interact.WasPressedThisFrame();
     }
 
-    // ========================================
     // Hotbar Bridge
-    // ========================================
-
-    // Per-bar held-time arrays — sized to max bar capacity (12).
-    private readonly float[] _centreHeldTime = new float[12];
-    private readonly float[] _bottomLeftHeldTime = new float[12];
-    private readonly float[] _bottomRightHeldTime = new float[12];
-
-    private float[] HeldTimeFor(string barId)
-    {
-        switch (barId)
-        {
-            case "centre": return _centreHeldTime;
-            case "bottomLeft": return _bottomLeftHeldTime;
-            case "bottomRight": return _bottomRightHeldTime;
-            default: return _centreHeldTime;
-        }
-    }
 
     /// <summary>
-    /// Routes a keybind set to the given bar.
+    /// Routes one bar's keybind set to its slots.
     /// Handles charge-hold logic: waits for release on charge-ability slots,
     /// fires charge variant if held past chargeThreshold, otherwise fires base.
     /// </summary>
-    private void BridgeBarInput(string barId, HotbarKeybindSet keybindSet)
+    private void BridgeBarInput(BarKeybindRoute route)
     {
-        if (keybindSet == HotbarKeybindSet.None) return;
+        if (route == null || route.keybinds == HotbarKeybindSet.None) return;
 
         var hotbar = GetHotbarSystem();
         if (hotbar == null) return;
 
-        float[] heldTime = HeldTimeFor(barId);
+        string barId = route.barId;
+        HotbarKeybindSet keybindSet = route.keybinds;
+
+        float[] heldTime = route.heldTime;
         int slotCount = SlotCountFor(keybindSet);
 
         for (int i = 0; i < slotCount; i++)
@@ -535,6 +622,8 @@ public class InputSystem : MonoBehaviour,
             case HotbarKeybindSet.Hotbar5678: return 4;
             case HotbarKeybindSet.Hotbar9: return 1;
             case HotbarKeybindSet.QuickslotQ: return 1;
+            case HotbarKeybindSet.MouseLR: return 2;
+            case HotbarKeybindSet.ShiftCtrlQ: return 3;
             default: return 0;
         }
     }
@@ -580,6 +669,23 @@ public class InputSystem : MonoBehaviour,
 
             case HotbarKeybindSet.QuickslotQ:
                 if (i == 0) return inputActions.Player.QuickslotQ.IsPressed();
+                break;
+
+            case HotbarKeybindSet.MouseLR:
+                switch (i)
+                {
+                    case 0: return inputActions.Player.Attack.IsPressed();
+                    case 1: return inputActions.Player.Block.IsPressed();
+                }
+                break;
+
+            case HotbarKeybindSet.ShiftCtrlQ:
+                switch (i)
+                {
+                    case 0: return inputActions.Player.QuickslotShift.IsPressed();
+                    case 1: return inputActions.Player.QuickslotCtrl.IsPressed();
+                    case 2: return inputActions.Player.QuickslotQ.IsPressed();
+                }
                 break;
         }
         return false;
@@ -627,13 +733,28 @@ public class InputSystem : MonoBehaviour,
             case HotbarKeybindSet.QuickslotQ:
                 if (i == 0) return AbilityQPressed;
                 break;
+
+            case HotbarKeybindSet.MouseLR:
+                switch (i)
+                {
+                    case 0: return LightAttackPressed;
+                    case 1: return AbilityBlockPressed;
+                }
+                break;
+
+            case HotbarKeybindSet.ShiftCtrlQ:
+                switch (i)
+                {
+                    case 0: return AbilityShiftPressed;
+                    case 1: return AbilityCtrlPressed;
+                    case 2: return AbilityQPressed;
+                }
+                break;
         }
         return false;
     }
 
-    // ========================================
     // Player Ability Input  (→ AbilityLoadoutModule)
-    // ========================================
 
     /// <summary>
     /// All player ability input now routes through BridgeBarInput → HotbarSystem.
@@ -641,9 +762,7 @@ public class InputSystem : MonoBehaviour,
     /// </summary>
     private string GetPlayerAbilityInput() => null;
 
-    // ========================================
     // AI / Admin Ability Input
-    // ========================================
 
     private string GetAIAbilityInput()
     {
@@ -658,32 +777,34 @@ public class InputSystem : MonoBehaviour,
         return null;
     }
 
-    // ========================================
     // ClearPlayerInput
-    // ========================================
 
     private void ClearPlayerInput()
     {
         MoveInput = Vector2.zero;
         LookInput = Vector2.zero;
         JumpPressed = JumpHeld = SprintHeld = DashPressed = false;
+        CrouchPressed = CrouchHeld = false;
+        GaitTogglePressed = false;
         LightAttackPressed = HeavyAttackPressed = BlockHeld = ParryPressed = false;
+        ToggleStancePressed = false;
         AbilityQPressed = AbilityZPressed = AbilityXPressed =
             AbilityCPressed = AbilityVPressed = false;
+        AbilityShiftPressed = AbilityCtrlPressed = AbilityBlockPressed = false;
         Hotbar1Pressed = Hotbar2Pressed = Hotbar3Pressed = Hotbar4Pressed =
         Hotbar5Pressed = Hotbar6Pressed = Hotbar7Pressed = Hotbar8Pressed =
         Hotbar9Pressed = false;
 
-        Array.Clear(_centreHeldTime, 0, _centreHeldTime.Length);
-        Array.Clear(_bottomLeftHeldTime, 0, _bottomLeftHeldTime.Length);
-        Array.Clear(_bottomRightHeldTime, 0, _bottomRightHeldTime.Length);
+        foreach (var route in keybindRoutes)
+        {
+            if (route?.heldTime == null) continue;
+            Array.Clear(route.heldTime, 0, route.heldTime.Length);
+        }
 
         InteractPressed = false;
     }
 
-    // ========================================
     // Movement Helpers
-    // ========================================
 
     private MovementInput GetPlayerMovementInput()
     {
@@ -696,7 +817,11 @@ public class InputSystem : MonoBehaviour,
             MoveDirection = moveDir,
             LookDirection = lookDir,
             Sprint = SprintHeld,
+            ToggleGait = GaitTogglePressed,
             Jump = JumpPressed,
+            JumpHold = JumpHeld,
+            Crouch = CrouchPressed,
+            CrouchHold = CrouchHeld,
             Dash = DashPressed
         };
     }
@@ -761,10 +886,7 @@ public class InputSystem : MonoBehaviour,
         return MovementInput.Zero;
     }
 
-
-    // ========================================
     // Keybind Routing Query
-    // ========================================
 
     /// <summary>
     /// Returns the keybind set assigned to the given bar.
@@ -772,33 +894,31 @@ public class InputSystem : MonoBehaviour,
     /// </summary>
     public HotbarKeybindSet GetKeybindSetForBar(string barId)
     {
-        switch (barId)
-        {
-            case "centre": return centreBarKeybinds;
-            case "bottomLeft": return bottomLeftKeybinds;
-            case "bottomRight": return bottomRightKeybinds;
-            default: return HotbarKeybindSet.None;
-        }
+        var route = FindRoute(barId);
+        return route != null ? route.keybinds : HotbarKeybindSet.None;
     }
-    // ========================================
-    // Debug
-    // ========================================
 
+#if UNITY_EDITOR
     private void OnGUI()
     {
         if (!showDebugInfo || !Application.isPlaying) return;
 
-        GUILayout.BeginArea(new Rect(10, 10, 300, 180));
+        GUILayout.BeginArea(new Rect(10, 10, 300, 100 + keybindRoutes.Count * 20));
         GUILayout.Label("=== INPUT SYSTEM ===");
         GUILayout.Label($"Mode:        {currentMode}");
         GUILayout.Label($"Active:      {IsActive}");
         GUILayout.Label($"Move:        {MoveInput}");
         GUILayout.Label($"Sprint:      {SprintHeld}   Jump: {JumpPressed}");
-        GUILayout.Label($"Centre:      {centreBarKeybinds}");
-        GUILayout.Label($"BottomLeft:  {bottomLeftKeybinds}");
-        GUILayout.Label($"BottomRight: {bottomRightKeybinds}");
+
+        foreach (var route in keybindRoutes)
+        {
+            if (route == null) continue;
+            GUILayout.Label($"{route.barId}: {route.keybinds}");
+        }
+
         GUILayout.EndArea();
     }
+#endif
 
     // No OnDestroy needed — Brain owns and cleans up PlayerInputControls
 }

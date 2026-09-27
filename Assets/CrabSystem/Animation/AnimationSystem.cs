@@ -1,9 +1,21 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
 {
     private ControllerBrain brain;
     private Animator animator => brain?.EntityAnimator;
+
+    // ── Layer weight fading ───────────────────────────────────────────────
+    private struct LayerFade
+    {
+        public float target;
+        public float speed; // weight units per second
+    }
+    private readonly Dictionary<int, LayerFade> activeFades = new Dictionary<int, LayerFade>();
+    // Instance, not static: one list per entity. Shared as a static it was safe only because
+    // nothing yields inside the loop that uses it — a guarantee nobody was tracking.
+    private readonly List<int> fadeKeysScratch = new List<int>();
 
     private static readonly string[] LocomotionParams = { "MovementState", "IsLockedOn", "StrafeX", "StrafeY", "MovementSpeed", "IsGrounded", "VerticalVelocity", "JumpTrigger", "DashTrigger", "IsDashing" };
     private static readonly string[] CombatParams = { "BasicAttack1", "BasicAttack2", "BasicAttack3", "Cleave", "Whirlwind", "Thrust", "Slam", "HitLight", "HitHeavy", "Stagger", "Death", "IsDead" };
@@ -15,7 +27,24 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
         brain = controllerBrain;
     }
 
-    public void UpdateModule() { }
+    public void UpdateModule()
+    {
+        if (activeFades.Count == 0 || animator == null) return;
+
+        fadeKeysScratch.Clear();
+        fadeKeysScratch.AddRange(activeFades.Keys);
+
+        foreach (int layer in fadeKeysScratch)
+        {
+            var fade = activeFades[layer];
+            float current = animator.GetLayerWeight(layer);
+            float next = Mathf.MoveTowards(current, fade.target, fade.speed * Time.deltaTime);
+            animator.SetLayerWeight(layer, next);
+
+            if (Mathf.Approximately(next, fade.target))
+                activeFades.Remove(layer);
+        }
+    }
 
     public void LateInitialize() { }
 
@@ -89,7 +118,34 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
     public void SetLayerWeight(int layerIndex, float weight)
     {
         if (!IsEnabled || animator == null || layerIndex < 0 || layerIndex >= animator.layerCount) return;
+        activeFades.Remove(layerIndex); // a direct set always cancels an in-flight fade
         animator.SetLayerWeight(layerIndex, weight);
+    }
+
+    /// <summary>
+    /// Smoothly blends a layer's weight to <paramref name="targetWeight"/> over
+    /// <paramref name="duration"/> seconds. The layer's current clip keeps playing
+    /// while the weight fades, so recovery frames blend out instead of snapping.
+    /// A direct SetLayerWeight call (e.g. a new ability starting) cancels the fade.
+    /// </summary>
+    public void FadeLayerWeight(int layerIndex, float targetWeight, float duration)
+    {
+        if (!IsEnabled || animator == null || layerIndex < 0 || layerIndex >= animator.layerCount) return;
+
+        float current = animator.GetLayerWeight(layerIndex);
+
+        if (duration <= 0f || Mathf.Approximately(current, targetWeight))
+        {
+            activeFades.Remove(layerIndex);
+            animator.SetLayerWeight(layerIndex, targetWeight);
+            return;
+        }
+
+        activeFades[layerIndex] = new LayerFade
+        {
+            target = targetWeight,
+            speed = Mathf.Abs(targetWeight - current) / duration
+        };
     }
 
     public Animator GetAnimator() => animator;

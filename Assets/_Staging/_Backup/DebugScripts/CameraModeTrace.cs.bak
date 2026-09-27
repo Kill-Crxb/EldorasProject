@@ -1,0 +1,114 @@
+using System.Collections.Generic;
+using MoreMountains.Feedbacks;
+using UnityEngine;
+
+// Temporary diagnosis for camera jitter. Logs every IsRunning / IsSprinting flip, every
+// CameraModule mode change, and every Juice_ / View_ player that starts playing, each with the
+// speed, camera FOV and time since the previous event — so ConsoleMirror.log shows exactly which
+// effect fired at the moment of a wobble.
+//
+// Attaches itself on play and finds the player on its own — no inspector work. Delete this file
+// to remove it.
+public class CameraModeTrace : MonoBehaviour
+{
+    private MovementSystem movement;
+    private CameraModule cameraModule;
+    private Camera targetCamera;
+    private readonly List<MMF_Player> players = new List<MMF_Player>();
+    private readonly List<bool> wasPlaying = new List<bool>();
+    private bool running;
+    private bool sprinting;
+    private float lastEvent;
+    private float minSpeed = float.MaxValue;
+    private float maxSpeed;
+    private float windowStart;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Boot()
+    {
+        var go = new GameObject("[CameraModeTrace]");
+        DontDestroyOnLoad(go);
+        go.AddComponent<CameraModeTrace>();
+    }
+
+    private void Update()
+    {
+        if (movement == null)
+        {
+            Bind();
+            return;
+        }
+
+        float speed = movement.Speed;
+        minSpeed = Mathf.Min(minSpeed, speed);
+        maxSpeed = Mathf.Max(maxSpeed, speed);
+
+        if (movement.IsRunning != running)
+        {
+            running = movement.IsRunning;
+            Log($"IsRunning -> {running}", speed);
+        }
+
+        if (movement.IsSprinting != sprinting)
+        {
+            sprinting = movement.IsSprinting;
+            Log($"IsSprinting -> {sprinting}", speed);
+        }
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            bool playing = players[i] != null && players[i].IsPlaying;
+            if (playing && !wasPlaying[i]) Log($"played {players[i].name}", speed);
+            wasPlaying[i] = playing;
+        }
+
+        if (Time.time - windowStart < 1f) return;
+        if (maxSpeed > 0.5f) Debug.Log($"[CamTrace] 1s speed range {minSpeed:F2}–{maxSpeed:F2}  mode={cameraModule?.CurrentModeName}  fov={Fov():F1}  speedBlend={movement.SpeedBlend:F2}");
+        windowStart = Time.time;
+        minSpeed = float.MaxValue;
+        maxSpeed = 0f;
+    }
+
+    private void Bind()
+    {
+        foreach (ControllerBrain brain in FindObjectsByType<ControllerBrain>(FindObjectsSortMode.None))
+        {
+            if (!brain.IsPlayer || brain.Movement == null) continue;
+
+            movement = brain.Movement;
+            cameraModule = brain.GetComponentInChildren<CameraModule>(true);
+            if (cameraModule != null) cameraModule.OnModeChanged += OnModeChanged;
+            targetCamera = brain.GetComponentInChildren<Camera>(true);
+
+            foreach (MMF_Player player in brain.GetComponentsInChildren<MMF_Player>(true))
+            {
+                if (!player.name.StartsWith("View_") && !player.name.StartsWith("Juice_")) continue;
+                players.Add(player);
+                wasPlaying.Add(false);
+            }
+            Debug.Log($"[CamTrace] bound to {brain.name}, camera {(cameraModule != null ? "found" : "MISSING")}");
+            return;
+        }
+    }
+
+    private void OnModeChanged(string mode)
+    {
+        Log($"camera mode -> {mode}", movement != null ? movement.Speed : 0f);
+    }
+
+    private void Log(string what, float speed)
+    {
+        Debug.Log($"[CamTrace] +{Time.time - lastEvent:F2}s  {what}  speed={speed:F2}  fov={Fov():F1}");
+        lastEvent = Time.time;
+    }
+
+    private float Fov()
+    {
+        return targetCamera != null ? targetCamera.fieldOfView : 0f;
+    }
+
+    private void OnDestroy()
+    {
+        if (cameraModule != null) cameraModule.OnModeChanged -= OnModeChanged;
+    }
+}

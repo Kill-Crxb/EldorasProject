@@ -19,26 +19,11 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
     [Header("Capacity")]
     [SerializeField] private int maxItems = 100;
 
-    [Header("Auto-Save Settings")]
-    [Tooltip("Enable automatic saving of inventory changes")]
-    [SerializeField] private bool enableAutoSave = false;
-
-    [Tooltip("Auto-save interval in seconds (periodic saves)")]
-    [SerializeField] private float autoSaveInterval = 30f;
-
-    [Tooltip("Auto-save file path (relative to persistent data path)")]
-    [SerializeField] private string autoSavePath = "";
-
-    [Header("Debug")]
-    [SerializeField] private bool debugInventory = false;
-
     private ControllerBrain brain;
     private List<ItemInstance> inventoryItems = new List<ItemInstance>();
     private ContainerContents currentContents;
     private bool isInitialized = false;
-    private float lastSaveTime = 0f;
 
-    // Events
     public event Action OnInventoryChanged;
     public event Action<ItemInstance> OnItemAdded;
     public event Action<ItemInstance> OnItemRemoved;
@@ -57,9 +42,6 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
         this.brain = brain;
         isInitialized = true;
-
-        if (debugInventory)
-            Debug.Log($"[InventorySystem] Initialized for {brain.name}");
     }
 
     public void LateInitialize()
@@ -67,39 +49,14 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         // Load initial contents if assigned (non-player entities / pre-configured chests)
         // Players skip this — SaveManager loads their state via LoadSaveData()
         if (initialContents != null)
-        {
             LoadFromContents(initialContents);
-        }
         else
-        {
             CreateDefaultContents();
-        }
-
-        if (enableAutoSave)
-        {
-            OnInventoryChanged += HandleInventoryChangedForAutoSave;
-
-            if (debugInventory)
-                Debug.Log($"[InventorySystem] Auto-save enabled (interval: {autoSaveInterval}s)");
-        }
     }
 
-    public void UpdateModule()
-    {
-        if (!enableAutoSave) return;
+    public void UpdateModule() { }
 
-        if (Time.time - lastSaveTime >= autoSaveInterval)
-            PerformAutoSave();
-    }
-
-    public void Shutdown()
-    {
-        if (enableAutoSave)
-            OnInventoryChanged -= HandleInventoryChangedForAutoSave;
-
-        if (enableAutoSave && currentContents != null)
-            PerformAutoSave();
-    }
+    public void Shutdown() { }
 
     #endregion
 
@@ -132,9 +89,6 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
             });
         }
 
-        if (debugInventory)
-            Debug.Log($"[InventorySystem] GetSaveData — {saveData.items.Count} items serialised");
-
         return JsonUtility.ToJson(saveData);
     }
 
@@ -160,13 +114,9 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
             item.PlaceAtPosition(entry.gridX, entry.gridY);
 
-            // AddItem handles grid placement validation
-            if (!AddItem(item) && debugInventory)
+            if (!AddItem(item))
                 Debug.LogWarning($"[InventorySystem] Failed to restore item {entry.definitionId} at ({entry.gridX},{entry.gridY})");
         }
-
-        if (debugInventory)
-            Debug.Log($"[InventorySystem] LoadSaveData — {saveData.items.Count} items restored for {brain.name}");
     }
 
     // ── Save Data Structures ──────────────────────────────────────────────
@@ -202,17 +152,13 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
         if (!TryPlaceInAnyContainer(item))
         {
-            if (debugInventory)
-                Debug.LogWarning($"[InventorySystem] No space for {item.Definition.displayName}");
+            Debug.LogWarning($"[InventorySystem] No space for {item.Definition.displayName}");
             return false;
         }
 
         inventoryItems.Add(item);
         OnItemAdded?.Invoke(item);
         OnInventoryChanged?.Invoke();
-
-        if (debugInventory)
-            Debug.Log($"[InventorySystem] Added {item.Definition.displayName}");
 
         return true;
     }
@@ -228,9 +174,6 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         inventoryItems.Remove(item);
         OnItemRemoved?.Invoke(item);
         OnInventoryChanged?.Invoke();
-
-        if (debugInventory)
-            Debug.Log($"[InventorySystem] Removed {item.Definition?.displayName ?? instanceId}");
 
         return true;
     }
@@ -340,12 +283,9 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
             itemInstance.PlaceAtPosition(containerItem.gridX, containerItem.gridY);
 
-            if (!AddItem(itemInstance) && debugInventory)
+            if (!AddItem(itemInstance))
                 Debug.LogWarning($"[InventorySystem] Failed to load item {containerItem.itemId} at ({containerItem.gridX},{containerItem.gridY})");
         }
-
-        if (debugInventory)
-            Debug.Log($"[InventorySystem] Loaded {contents.items.Count} items from ContainerContents: {contents.containerId}");
     }
 
     private void CreateDefaultContents()
@@ -358,9 +298,6 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         currentContents.containerId = brain?.name ?? "unknown";
         currentContents.displayName = "Inventory";
         currentContents.items = new List<ContainerItem>();
-
-        if (debugInventory)
-            Debug.Log($"[InventorySystem] Created default ContainerContents: {currentContents.gridWidth}×{currentContents.gridHeight}");
     }
 
     public ContainerContents SaveToContents()
@@ -380,63 +317,10 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
     public ContainerContents GetCurrentContents() => currentContents;
 
+    /// <summary>Authored layout used before any contents exist. Grids read their size from it.</summary>
+    public ContainerData DefaultContainer => containers != null && containers.Length > 0 ? containers[0] : null;
+
     public void SetContents(ContainerContents contents) { currentContents = contents; }
-
-    #endregion
-
-    #region Auto-Save (Legacy — used when SaveManager is absent)
-
-    private void HandleInventoryChangedForAutoSave()
-    {
-        if (!enableAutoSave) return;
-        if (Time.time - lastSaveTime < 1f) return;
-        PerformAutoSave();
-    }
-
-    private void PerformAutoSave()
-    {
-        var contents = SaveToContents();
-        if (contents == null) return;
-
-        string savePath = GetAutoSavePath();
-        if (string.IsNullOrEmpty(savePath)) return;
-
-        try
-        {
-            contents.SaveToDisk(savePath);
-            lastSaveTime = Time.time;
-
-            if (debugInventory)
-                Debug.Log($"[InventorySystem] Auto-saved {contents.items.Count} items to: {savePath}");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[InventorySystem] Auto-save failed: {e.Message}");
-        }
-    }
-
-    private string GetAutoSavePath()
-    {
-        if (!string.IsNullOrEmpty(autoSavePath))
-            return System.IO.Path.Combine(Application.persistentDataPath, autoSavePath);
-
-        var identitySystem = brain?.GetModule<IdentitySystem>();
-        if (identitySystem != null)
-        {
-            string entityName = identitySystem.DisplayName.Replace(" ", "_");
-            return System.IO.Path.Combine(Application.persistentDataPath, "Saves", $"{entityName}_inventory.json");
-        }
-
-        return null;
-    }
-
-    public void SaveNow()
-    {
-        if (enableAutoSave)
-            PerformAutoSave();
-        else if (debugInventory)
-            Debug.LogWarning("[InventorySystem] SaveNow called but auto-save is disabled");
-    }
 
     #endregion
 
@@ -471,25 +355,6 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
     }
 
     void IInventoryProvider.ClearInventory() => ClearInventory();
-
-    #endregion
-
-    #region Debug
-
-    [ContextMenu("Debug: Print Inventory")]
-    private void DebugPrintInventory()
-    {
-        Debug.Log($"=== INVENTORY ({inventoryItems.Count}/{maxItems}) ===");
-        foreach (var item in inventoryItems)
-            Debug.Log($"  {item.Definition.displayName} at ({item.gridX},{item.gridY})");
-    }
-
-    [ContextMenu("Debug: Clear All")]
-    private void DebugClearAll()
-    {
-        ClearInventory();
-        Debug.Log("[InventorySystem] Cleared all items");
-    }
 
     #endregion
 }

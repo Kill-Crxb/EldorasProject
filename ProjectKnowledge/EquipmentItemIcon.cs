@@ -1,40 +1,28 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// EquipmentItemIcon - Handles equipped item display and interactions
-/// 
-/// Similar to ItemIconVisual but specialized for equipment slots:
-/// - Receives drops from inventory (via IDropHandler)
-/// - Shows tooltips on hover
-/// - Right-click to unequip
-/// - No dragging (use right-click instead to prevent accidents)
-/// 
-/// Standards Compliance:
-/// - Guard clauses throughout
-/// - Event-driven
-/// - Single responsibility
-/// 
-/// Created: February 18, 2026
+/// The item shown in one equipment socket. Takes drops from the inventory, unequips on
+/// right-click, and shows the same tooltip a bag slot would. Deliberately not draggable —
+/// right-click is harder to do by accident than a drag into empty space.
 /// </summary>
-public class EquipmentItemIcon : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+public class EquipmentItemIcon : MonoBehaviour, IDropHandler, IPointerEnterHandler,
+                                 IPointerExitHandler, IPointerClickHandler
 {
+    private const float InvalidFlashSeconds = 0.3f;
+
     [Header("Visual")]
     [SerializeField] private Image iconImage;
     [SerializeField] private Color validDropColor = new Color(0.2f, 0.8f, 0.2f, 0.6f);
     [SerializeField] private Color invalidDropColor = new Color(0.8f, 0.2f, 0.2f, 0.6f);
 
-    [Header("Debug")]
-    [SerializeField] private bool debugMode = false;
-
     private EquipmentSlotDefinition slotDefinition;
     private EquipmentSlotConfig slotConfig;
     private EquipmentSystem equipmentSystem;
     private ItemInstance currentItem;
-    private Color originalColor;
-
-    #region Initialization
+    private Color restingColor = Color.white;
 
     public void Initialize(EquipmentSlotConfig config, EquipmentSystem system)
     {
@@ -42,234 +30,122 @@ public class EquipmentItemIcon : MonoBehaviour, IDropHandler, IPointerEnterHandl
         slotDefinition = config.slotDefinition;
         equipmentSystem = system;
 
-        // Get or add image component
-        if (iconImage == null)
-        {
-            iconImage = GetComponent<Image>();
-        }
-        if (iconImage == null)
-        {
-            iconImage = gameObject.AddComponent<Image>();
-        }
+        if (iconImage == null) iconImage = GetComponent<Image>();
+        if (iconImage == null) iconImage = gameObject.AddComponent<Image>();
 
-        iconImage.raycastTarget = true; // IMPORTANT: Must receive drops!
-        originalColor = Color.white;
+        iconImage.raycastTarget = true;
     }
 
     public void SetItem(ItemInstance item)
     {
         currentItem = item;
 
-        // Guard clause: no item
+        // The image stays enabled while empty so the socket still receives drops —
+        // a disabled Graphic takes no raycasts.
         if (item == null || item.Definition == null)
         {
-            iconImage.sprite = null;
-            iconImage.enabled = false;
+            iconImage.sprite = slotConfig?.emptySlotIcon;
+            iconImage.color = iconImage.sprite != null ? restingColor : Color.clear;
+            iconImage.enabled = true;
             return;
         }
 
-        // Set sprite
         iconImage.sprite = item.Definition.icon;
-        iconImage.color = originalColor;
+        iconImage.color = restingColor;
         iconImage.enabled = true;
     }
 
-    #endregion
-
-    #region Drop Handling
+    #region Drop
 
     public void OnDrop(PointerEventData eventData)
     {
-        // Guard clause: no dragged object
         if (eventData.pointerDrag == null) return;
 
-        // Get ItemIconVisual from dragged object
-        ItemIconVisual draggedIcon = eventData.pointerDrag.GetComponent<ItemIconVisual>();
-
-        // Guard clause: not dragging an item
+        var draggedIcon = eventData.pointerDrag.GetComponent<ItemIconVisual>();
         if (draggedIcon == null) return;
 
         ItemInstance item = draggedIcon.ItemInstance;
-
-        // Guard clause: no item instance
         if (item == null)
         {
-            if (debugMode)
-                Debug.LogWarning("[EquipmentItemIcon] Dragged icon has no ItemInstance");
+            Debug.LogWarning("[EquipmentItemIcon] Dragged icon has no ItemInstance");
             return;
         }
 
-        // Always hide tooltip on any drop interaction
         HideTooltip();
 
-        // Validate and equip
-        if (CanEquipItem(item))
+        if (!CanEquip(item))
         {
-            EquipItem(item);
-        }
-        else
-        {
-            ShowInvalidDropFeedback();
-        }
-    }
-
-    private bool CanEquipItem(ItemInstance item)
-    {
-        // Guard clause: null item
-        if (item == null) return false;
-
-        // Guard clause: no definition
-        if (item.Definition == null) return false;
-
-        // Use config validation if available (more flexible)
-        if (slotConfig != null)
-        {
-            return slotConfig.CanEquipItem(item);
-        }
-
-        // If we get here, slotConfig validation passed
-        return true;
-    }
-
-    private void EquipItem(ItemInstance item)
-    {
-        // Guard clause: no equipment system
-        if (equipmentSystem == null)
-        {
-            Debug.LogError("[EquipmentItemIcon] EquipmentSystem is null!");
+            StartCoroutine(FlashInvalid());
             return;
         }
 
-        bool success = equipmentSystem.EquipItem(item, slotDefinition);
+        if (equipmentSystem == null)
+        {
+            Debug.LogError("[EquipmentItemIcon] No EquipmentSystem bound");
+            return;
+        }
 
-        if (debugMode)
-            Debug.Log($"[EquipmentItemIcon] Equip {item.Definition.displayName} to {slotDefinition.displayName}: {success}");
+        // Moves the item out of the bag as well — plain EquipItem would leave a copy behind.
+        equipmentSystem.EquipFromInventory(item, slotDefinition);
+    }
 
-        // Visual update will happen via EquipmentSlotVisual.HandleEquipmentChanged
+    private bool CanEquip(ItemInstance item)
+    {
+        if (item == null || item.Definition == null) return false;
+
+        return slotConfig == null || slotConfig.CanEquipItem(item);
     }
 
     #endregion
 
-    #region Pointer Events
+    #region Pointer
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        // Drag preview feedback
-        if (eventData.pointerDrag != null)
+        var draggedIcon = eventData.pointerDrag != null
+            ? eventData.pointerDrag.GetComponent<ItemIconVisual>()
+            : null;
+
+        if (draggedIcon != null && draggedIcon.ItemInstance != null)
         {
-            ItemIconVisual draggedIcon = eventData.pointerDrag.GetComponent<ItemIconVisual>();
-            if (draggedIcon != null && draggedIcon.ItemInstance != null)
-            {
-                bool canEquip = CanEquipItem(draggedIcon.ItemInstance);
-                if (iconImage != null)
-                {
-                    iconImage.color = canEquip ? validDropColor : invalidDropColor;
-                }
-                return;
-            }
+            iconImage.color = CanEquip(draggedIcon.ItemInstance) ? validDropColor : invalidDropColor;
+            return;
         }
 
-        // Tooltip for equipped item
-        if (currentItem != null)
-        {
-            ShowTooltip(eventData.position);
-        }
+        if (currentItem == null) return;
+
+        var tooltip = ItemTooltipData.For(currentItem);
+        if (tooltip != null) UniversalWindowManager.Instance?.ShowTooltip(tooltip, eventData.position);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        // Reset color
-        if (iconImage != null)
-        {
-            iconImage.color = originalColor;
-        }
-
-        // Hide tooltip
+        iconImage.color = restingColor;
         HideTooltip();
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        // Right-click to unequip
-        if (eventData.button == PointerEventData.InputButton.Right)
-        {
-            UnequipItem();
-        }
-    }
-
-    private void UnequipItem()
-    {
-        // Guard clause: nothing equipped
+        if (eventData.button != PointerEventData.InputButton.Right) return;
         if (currentItem == null) return;
 
-        // Guard clause: no equipment system
         if (equipmentSystem == null)
         {
-            Debug.LogError("[EquipmentItemIcon] EquipmentSystem is null!");
+            Debug.LogError("[EquipmentItemIcon] No EquipmentSystem bound");
             return;
         }
 
-        bool success = equipmentSystem.UnequipItemToInventory(slotDefinition);
-
-        if (debugMode)
-            Debug.Log($"[EquipmentItemIcon] Unequip from {slotDefinition.displayName}: {success}");
-
-        // Visual update will happen via EquipmentSlotVisual.HandleEquipmentChanged
+        equipmentSystem.UnequipItemToInventory(slotDefinition);
     }
 
     #endregion
 
-    #region Tooltips
+    private void HideTooltip() => UniversalWindowManager.Instance?.HideTooltip();
 
-    private void ShowTooltip(Vector2 position)
+    private IEnumerator FlashInvalid()
     {
-        if (currentItem == null) return;
-        if (currentItem.Definition == null) return;
-
-        string description = currentItem.Definition.description;
-
-        if (currentItem.calculatedModifiers != null && currentItem.calculatedModifiers.Length > 0)
-        {
-            description += "\n\nStats:";
-            foreach (var modifier in currentItem.calculatedModifiers)
-                description += $"\n+{modifier.value:F1} {modifier.statName}";
-        }
-
-        ItemTooltipData tooltipData = new ItemTooltipData(
-            currentItem.Definition.displayName,
-            description,
-            currentItem.Definition.category.ToString(),
-            currentItem.currentTier,
-            1
-        );
-
-        UniversalWindowManager.Instance?.ShowTooltip(tooltipData, position);
+        iconImage.color = invalidDropColor;
+        yield return new WaitForSeconds(InvalidFlashSeconds);
+        iconImage.color = restingColor;
     }
-
-    private void HideTooltip()
-    {
-        UniversalWindowManager.Instance?.HideTooltip();
-    }
-
-    #endregion
-
-    #region Visual Feedback
-
-    private void ShowInvalidDropFeedback()
-    {
-        if (iconImage == null) return;
-
-        // Flash red briefly
-        StartCoroutine(FlashColor(invalidDropColor, 0.3f));
-    }
-
-    private System.Collections.IEnumerator FlashColor(Color flashColor, float duration)
-    {
-        Color originalColor = iconImage.color;
-        iconImage.color = flashColor;
-        yield return new WaitForSeconds(duration);
-        iconImage.color = originalColor;
-    }
-
-    #endregion
 }

@@ -1,214 +1,100 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
-/// Equipment Loadout - ScriptableObject representing equipped items
-/// 
-/// Philosophy:
-/// - This is JUST data - "here's what items are equipped"
-/// - No behavior, no lifecycle logic
-/// - Can be created at runtime or pre-configured in editor
-/// - Can be saved to disk or kept in memory
-/// 
-/// Use Cases:
-/// 1. Player Equipment State
-///    - Save/load equipped items
-///    - Persist between sessions
-/// 
-/// 2. NPC Equipment Templates
-///    - Pre-configure NPC loadouts in editor
-///    - Reuse across multiple NPCs
-/// 
-/// 3. Loadout Swapping (Future)
-///    - PvE vs PvP gear sets
-///    - Quick equipment changes
-/// 
-/// Lifecycle Responsibility:
-/// - EquipmentSystem: Decides WHEN to save/load
-/// - EquipmentLoadout: Just holds the data
-/// 
-/// Created: February 11, 2026
+/// A set of equipped items as plain data — what is worn, not who wears it or when it
+/// changes. Slots are keyed by the same slotId strings EquipmentSlotDefinition uses, so
+/// adding a slot is authoring, not code.
+///
+/// Useful for NPC loadout templates and gear sets. Live player equipment is owned by
+/// EquipmentSystem, which persists itself through ISaveable.
 /// </summary>
 [CreateAssetMenu(fileName = "New Equipment Loadout", menuName = "Items/Equipment Loadout")]
 public class EquipmentLoadout : ScriptableObject
 {
     [Header("Loadout Info")]
-    [Tooltip("Loadout name (e.g., 'PvE Tank Build', 'PvP DPS Setup')")]
     public string loadoutName = "Default Loadout";
 
     [Header("Equipment Slots")]
-    [Tooltip("Equipped items per slot (editable in inspector)")]
     public List<EquipmentSlotData> slots = new List<EquipmentSlotData>();
 
     [Header("Metadata")]
-    [Tooltip("Last modified timestamp (runtime updated)")]
     public long lastModified;
-
-    [Tooltip("Owner ID (for player-specific loadouts)")]
     public string ownerId;
 
-    #region Runtime API
+    public int EquippedCount => slots.Count;
 
-    /// <summary>
-    /// Set equipped item for a specific slot
-    /// </summary>
-    public void SetSlot(EquipmentSlot slotType, string itemId, ItemRarity rarity)
+    public void SetSlot(string slotId, string itemId, ItemRarity rarity)
     {
-        // Guard clause: invalid item
-        if (string.IsNullOrEmpty(itemId)) return;
+        if (string.IsNullOrEmpty(slotId) || string.IsNullOrEmpty(itemId)) return;
 
-        // Find existing slot
-        var existing = slots.Find(s => s.slotType == slotType);
-        if (existing != null)
+        var existing = GetSlot(slotId);
+
+        if (existing == null)
         {
-            // Update existing
-            existing.itemId = itemId;
-            existing.rarity = rarity;
-            existing.equipTimestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            existing = new EquipmentSlotData { slotId = slotId };
+            slots.Add(existing);
         }
-        else
-        {
-            // Add new slot
-            slots.Add(new EquipmentSlotData
-            {
-                slotType = slotType,
-                itemId = itemId,
-                rarity = rarity,
-                equipTimestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-            });
-        }
+
+        existing.itemId = itemId;
+        existing.rarity = rarity;
+        existing.equipTimestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         UpdateTimestamp();
     }
 
-    /// <summary>
-    /// Clear equipped item from specific slot
-    /// </summary>
-    public void ClearSlot(EquipmentSlot slotType)
+    public void ClearSlot(string slotId)
     {
-        slots.RemoveAll(s => s.slotType == slotType);
+        slots.RemoveAll(s => s.slotId == slotId);
         UpdateTimestamp();
     }
 
-    /// <summary>
-    /// Get equipped item for specific slot
-    /// </summary>
-    public EquipmentSlotData GetSlot(EquipmentSlot slotType)
-    {
-        return slots.Find(s => s.slotType == slotType);
-    }
+    public EquipmentSlotData GetSlot(string slotId) => slots.Find(s => s.slotId == slotId);
 
-    /// <summary>
-    /// Clear all equipped items
-    /// </summary>
     public void ClearAll()
     {
         slots.Clear();
         UpdateTimestamp();
     }
 
-    /// <summary>
-    /// Get count of equipped items
-    /// </summary>
-    public int EquippedCount => slots.Count;
+    public void UpdateTimestamp() => lastModified = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-    /// <summary>
-    /// Update last modified timestamp
-    /// </summary>
-    public void UpdateTimestamp()
-    {
-        lastModified = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-    }
-
-    #endregion
-
-    #region Serialization
-
-    /// <summary>
-    /// Save this loadout to disk as JSON
-    /// </summary>
     public void SaveToDisk(string path)
     {
         var wrapper = new EquipmentLoadoutWrapper { loadout = this };
-        string json = JsonUtility.ToJson(wrapper, true);
-        System.IO.File.WriteAllText(path, json);
+        System.IO.File.WriteAllText(path, JsonUtility.ToJson(wrapper, true));
     }
 
-    /// <summary>
-    /// Load loadout from disk
-    /// </summary>
     public static EquipmentLoadout LoadFromDisk(string path)
     {
-        // Guard clause: file doesn't exist
-        if (!System.IO.File.Exists(path))
-            return null;
+        if (!System.IO.File.Exists(path)) return null;
 
-        string json = System.IO.File.ReadAllText(path);
-        var wrapper = JsonUtility.FromJson<EquipmentLoadoutWrapper>(json);
+        var wrapper = JsonUtility.FromJson<EquipmentLoadoutWrapper>(System.IO.File.ReadAllText(path));
         return wrapper.loadout;
     }
 
-    #endregion
-
-    #region Validation
-
     private void OnValidate()
     {
-        // Auto-generate ownerId if empty
         if (string.IsNullOrEmpty(ownerId))
-        {
             ownerId = $"loadout_{System.Guid.NewGuid().ToString().Substring(0, 8)}";
-        }
     }
-
-    #endregion
-
-    #region Debug
-
-    [ContextMenu("Clear All Slots")]
-    private void DebugClearAll()
-    {
-        ClearAll();
-        Debug.Log($"[EquipmentLoadout] Cleared all slots from {loadoutName}");
-    }
-
-    [ContextMenu("Print Loadout")]
-    private void DebugPrintLoadout()
-    {
-        Debug.Log($"=== {loadoutName} ({ownerId}) ===");
-        Debug.Log($"Equipped Items: {slots.Count}");
-        foreach (var slot in slots)
-        {
-            Debug.Log($"  - {slot.slotType}: {slot.itemId} ({slot.rarity})");
-        }
-    }
-
-    #endregion
 }
 
-/// <summary>
-/// Serializable equipment slot entry
-/// Lightweight - just item ID, rarity, and timestamp
-/// </summary>
 [System.Serializable]
 public class EquipmentSlotData
 {
-    [Tooltip("Equipment slot type")]
-    public EquipmentSlot slotType;
+    [Tooltip("Slot id, matching EquipmentSlotDefinition — 'helmet', 'mainwep', 'ring2'.")]
+    public string slotId;
 
     [Tooltip("Item ID from ItemManager")]
     public string itemId;
 
-    [Tooltip("Item rarity/tier")]
     public ItemRarity rarity = ItemRarity.Common;
 
     [Tooltip("When this item was equipped (Unix timestamp)")]
     public long equipTimestamp;
 }
 
-/// <summary>
-/// Wrapper for JSON serialization
-/// </summary>
 [System.Serializable]
 public class EquipmentLoadoutWrapper
 {

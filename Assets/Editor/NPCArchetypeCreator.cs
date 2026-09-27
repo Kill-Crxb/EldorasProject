@@ -2,11 +2,12 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using RPG.Factions;
 
 public class NPCArchetypeCreator : EditorWindow
 {
     private string archetypeName = "Bear";
-    private string factionId = "faction_wildlife";
+    private FactionDefinition faction;
     private NPCType npcType = NPCType.Beast;
     private NPCImportance importance = NPCImportance.Soldier;
 
@@ -49,7 +50,7 @@ public class NPCArchetypeCreator : EditorWindow
 
         GUILayout.Label("Identity", EditorStyles.boldLabel);
         archetypeName = EditorGUILayout.TextField("Archetype Name", archetypeName);
-        factionId = EditorGUILayout.TextField("Faction ID", factionId);
+        faction = (FactionDefinition)EditorGUILayout.ObjectField("Faction", faction, typeof(FactionDefinition), false);
         npcType = (NPCType)EditorGUILayout.EnumPopup("NPC Type", npcType);
         importance = (NPCImportance)EditorGUILayout.EnumPopup("Importance", importance);
         EditorGUILayout.Space();
@@ -97,7 +98,7 @@ public class NPCArchetypeCreator : EditorWindow
     private void LoadBearSoldierPreset()
     {
         archetypeName = "Bear";
-        factionId = "faction_wildlife";
+        faction = FindFactionAsset("faction_wildlife");
         npcType = NPCType.Beast;
         importance = NPCImportance.Soldier;
         mind = 5;
@@ -113,7 +114,7 @@ public class NPCArchetypeCreator : EditorWindow
     private void LoadBearElitePreset()
     {
         archetypeName = "Bear Elite";
-        factionId = "faction_wildlife";
+        faction = FindFactionAsset("faction_wildlife");
         npcType = NPCType.Beast;
         importance = NPCImportance.Elite;
         mind = 6;
@@ -129,7 +130,7 @@ public class NPCArchetypeCreator : EditorWindow
     private void LoadBearBossPreset()
     {
         archetypeName = "Bear King";
-        factionId = "faction_wildlife";
+        faction = FindFactionAsset("faction_wildlife");
         npcType = NPCType.Beast;
         importance = NPCImportance.Boss;
         mind = 8;
@@ -140,6 +141,17 @@ public class NPCArchetypeCreator : EditorWindow
         insight = 12;
         modelId = "bear_brown";
         combatBehaviorClassName = "BearCombatBehavior";
+    }
+
+    private static FactionDefinition FindFactionAsset(string factionId)
+    {
+        foreach (var guid in AssetDatabase.FindAssets("t:FactionDefinition"))
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<FactionDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+            if (asset != null && asset.FactionId == factionId)
+                return asset;
+        }
+        return null;
     }
 
     private string GetArchetypeFileName()
@@ -153,7 +165,7 @@ public class NPCArchetypeCreator : EditorWindow
 
         archetype.archetypeId = GetArchetypeFileName();
         archetype.archetypeName = archetypeName;
-        archetype.factionId = factionId;
+        archetype.faction = faction;
         archetype.npcType = npcType;
         archetype.importance = importance;
 

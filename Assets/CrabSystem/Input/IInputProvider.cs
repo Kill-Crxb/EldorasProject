@@ -13,6 +13,9 @@ public interface IInputProvider
     bool BlockHeld { get; }
     bool ParryPressed { get; }
 
+    /// <summary>Sheathe/draw toggle — flips CombatStanceModule between armed and unarmed.</summary>
+    bool ToggleStancePressed { get; }
+
     // Ability Quickslots (Q, Z, X, C, V)
     bool AbilityQPressed { get; }
     bool AbilityZPressed { get; }

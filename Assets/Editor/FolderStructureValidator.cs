@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using System.IO;
 using System.Collections.Generic;
@@ -137,21 +137,10 @@ public class FolderStructureValidator : AssetPostprocessor
             // -------------------------------------------------------------------------
             // Stats & RPG
             // -------------------------------------------------------------------------
-            { "StatEngine.cs",                  "StatsRPG" },
             { "StatSystem.cs",                  "StatsRPG" },
-            { "StatSystem_Generated.cs",        "StatsRPG" },
             { "StatsManager.cs",                "StatsRPG" },
             { "StatSchema.cs",                  "StatsRPG" },
-            { "StatHandle.cs",                  "StatsRPG" },
-            { "StatNode.cs",                    "StatsRPG" },
-            { "StatCoordinator.cs",             "StatsRPG" },
-            { "StatMaskFlags.cs",               "StatsRPG" },
-            { "StatEngineProfiler.cs",          "StatsRPG" },
-            { "StatAllocationUi.cs",            "StatsRPG" },
-            { "StatSystemEditor.cs",            "StatsRPG" },
-            { "StatSystemTest.cs",              "StatsRPG" },
             { "RPGSystem.cs",                   "StatsRPG" },
-            { "LevelUpTester.cs",               "StatsRPG" },
             { "CompositeValueSource.cs",        "StatsRPG" },
             { "StatValueSource.cs",             "StatsRPG" },
             { "ValueSourceDefinition.cs",       "StatsRPG" },
@@ -196,7 +185,6 @@ public class FolderStructureValidator : AssetPostprocessor
             { "EquipmentSystem.cs",             "ItemInventoryEquipment" },
             { "LootSystem.cs",                  "ItemInventoryEquipment" },
             { "ItemManager.cs",                 "ItemInventoryEquipment" },
-            { "ItemDatabase.cs",                "ItemInventoryEquipment" },
             { "ItemDefinition.cs",              "ItemInventoryEquipment" },
             { "ItemInstance.cs",                "ItemInventoryEquipment" },
             { "ItemBaseType.cs",                "ItemInventoryEquipment" },
@@ -205,7 +193,6 @@ public class FolderStructureValidator : AssetPostprocessor
             { "ItemUpgradeSlot.cs",             "ItemInventoryEquipment" },
             { "UpgradeslotDefinition.cs",       "ItemInventoryEquipment" },
             { "InventoryGridData.cs",           "ItemInventoryEquipment" },
-            { "InventoryGridController.cs",     "ItemInventoryEquipment" },
             { "InventoryEnums.cs",              "ItemInventoryEquipment" },
             { "EquipmentSlotDefinition.cs",     "ItemInventoryEquipment" },
             { "EquipmentSlotConfig.cs",         "ItemInventoryEquipment" },
@@ -232,7 +219,6 @@ public class FolderStructureValidator : AssetPostprocessor
             { "DamageCalculationConfig.cs",     "DamageCombat" },
             { "CombatDamagePacket.cs",          "DamageCombat" },
             { "CombatAttackData.cs",            "DamageCombat" },
-            { "CombatStatMapping.cs",           "DamageCombat" },
             { "SimpleAttackHitbox.cs",          "DamageCombat" },
             { "NaturalWeaponHitbox.cs",         "DamageCombat" },
             { "NaturalWeaponAnimationEvents.cs","DamageCombat" },
@@ -338,23 +324,14 @@ public class FolderStructureValidator : AssetPostprocessor
             // -------------------------------------------------------------------------
             // UI Windows
             // -------------------------------------------------------------------------
-            { "UIWindowManager.cs",             "UIWindows" },
-            { "UIWindow.cs",                    "UIWindows" },
             { "UniversalWindowManager.cs",      "UIWindows" },
-            { "InventoryWindow.cs",             "UIWindows" },
             { "UniversalInventoryWindow.cs",    "UIWindows" },
-            { "EquipmentWindow.cs",             "UIWindows" },
-            { "StatsWindow.cs",                 "UIWindows" },
-            { "ContainerWIndow.cs",             "UIWindows" },
             { "WorldspaceWindowAdapter.cs",     "UIWindows" },
-            { "CoreStatsUi.cs",                 "UIWindows" },
-            { "SecondaryStatsUi.cs",            "UIWindows" },
             { "TooltipManager.cs",              "UIWindows" },
             { "ItemTooltip.cs",                 "UIWindows" },
             { "ItemTooltipData.cs",             "UIWindows" },
             { "ItemIconVisual.cs",              "UIWindows" },
             { "ItemOverlayVisual.cs",           "UIWindows" },
-            { "EquipmentSlotVisual.cs",         "UIWindows" },
             { "EquipmentItemIcon.cs",           "UIWindows" },
             { "ContentButtons.cs",              "UIWindows" },
             { "NPCNameplate.cs",                "UIWindows" },

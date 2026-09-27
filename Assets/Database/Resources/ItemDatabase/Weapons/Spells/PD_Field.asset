@@ -1,0 +1,89 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 147ac473d03d09043b304344e47499e4, type: 3}
+  m_Name: PD_Field
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
+  speed: 0
+  lifetime: 6
+  damageMultiplier: 1
+  gravity: 0
+  homingStrength: 0.05
+  scale: 1
+  scaleOverLifetime:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  pierceCount: 0
+  targetStance: 0
+  archetypePrefab: {fileID: 507452933039259751, guid: d99e64f616b3985428cc64fae95e4845, type: 3}
+  spawn:
+    origin: 0
+    anchor: 1
+    socketId: hand_l
+    selfHeight: 0.5
+    skyHeight: 12
+    untargetedDistance: 8
+  aim:
+    directionMode: 0
+    targetSources: 2
+    targetHeightOffset: 1.2
+    probeRange: 40
+    probeRadius: 1.5
+  movement:
+    mode: 0
+    spinDegreesPerSecond: 720
+    hitscanRange: 100
+    hitscanLingerTime: 0
+    maxTurnDegreesPerSecond: 180
+    homingDelay: 0
+    minSteerDistance: 0.5
+  tickInterval: 1
+  areaRadius: 5
+  areaAngle: 360
+  followSource: 0
+  tickOnSpawn: 1
+  cosmeticOnly: 0
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 6153
+  collisionRadius: 0.4
+  collisionLength: 0.1
+  hitEnvironment: 1
+  weaponData: {fileID: 0}
+  fallbackDamage: 2
+  fallbackDamageType: 0
+  visualPrefab: {fileID: 1253314321967309013, guid: 635d833f15e3a584e9b921144bed5376, type: 3}
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  tintProperty: _BaseColor
+  impactVfxPrefab: {fileID: 0}
+  impactVfxLifetime: 3
+  prewarmCount: 8

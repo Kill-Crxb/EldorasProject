@@ -5,114 +5,100 @@ using System.Linq;
 namespace RPG.Factions
 {
     /// <summary>
-    /// Simple ScriptableObject to define faction relationships in the Inspector.
-    /// NO reputation, NO rewards, NO vendors - just combat relationships.
-    /// 
+    /// Asset-keyed faction relationship matrix.
+    ///
+    /// Entries reference FactionDefinition assets directly — no enum, no string
+    /// matching. Adding a faction to the game requires zero code changes:
+    /// create the FactionDefinition asset and author its rows here.
+    ///
     /// Usage:
     /// 1. Create asset: Right-click → Create → RPG/Factions/Faction Relationships
-    /// 2. Add relationships in Inspector (drag-and-drop friendly)
-    /// 3. Assign to FactionManager
+    /// 2. Add entries: drag two FactionDefinition assets + pick a stance
+    /// 3. Assign to FactionManager on Manager_Brain
+    ///
+    /// Unlisted pairs fall back to defaultRelationship.
+    /// Same faction on both sides is always Friendly.
     /// </summary>
     [CreateAssetMenu(fileName = "FactionRelationships", menuName = "RPG/Factions/Faction Relationships")]
     public class FactionRelationshipConfig : ScriptableObject
     {
         [Header("Faction Relationships")]
-        [Tooltip("Define how each faction views other factions")]
+        [Tooltip("Define how each faction pair relates. Entries are bidirectional.")]
         public List<FactionRelationshipEntry> relationships = new List<FactionRelationshipEntry>();
 
         [Header("Default Behavior")]
-        [Tooltip("What relationship to use if none is defined?")]
+        [Tooltip("Relationship used when no entry exists for a pair.")]
         public FactionRelationship defaultRelationship = FactionRelationship.Neutral;
 
         [Header("Debug")]
         public bool showDebugLogs = false;
 
-        // Cache for fast lookups
-        private Dictionary<(FactionType, FactionType), FactionRelationship> relationshipCache;
+        private Dictionary<(FactionDefinition, FactionDefinition), FactionRelationshipEntry> entryCache;
 
-        /// <summary>
-        /// Initialize the cache for fast lookups.
-        /// Called by FactionManager on startup.
-        /// </summary>
+        /// <summary>Initialize the lookup cache. Called by FactionManager on startup.</summary>
         public void Initialize()
         {
             BuildCache();
 
             if (showDebugLogs)
-            {
                 Debug.Log($"[FactionRelationshipConfig] Initialized with {relationships.Count} relationship entries");
-            }
         }
 
-        /// <summary>
-        /// Build the lookup cache.
-        /// </summary>
         private void BuildCache()
         {
-            relationshipCache = new Dictionary<(FactionType, FactionType), FactionRelationship>();
+            entryCache = new Dictionary<(FactionDefinition, FactionDefinition), FactionRelationshipEntry>();
 
             foreach (var entry in relationships)
             {
-                if (entry == null) continue;
+                if (entry == null || entry.faction1 == null || entry.faction2 == null)
+                    continue;
 
-                // Add bidirectional relationships
-                relationshipCache[(entry.faction1, entry.faction2)] = entry.relationship;
-                relationshipCache[(entry.faction2, entry.faction1)] = entry.relationship;
+                entryCache[(entry.faction1, entry.faction2)] = entry;
+                entryCache[(entry.faction2, entry.faction1)] = entry;
             }
         }
 
-        /// <summary>
-        /// Get relationship between two factions.
-        /// </summary>
-        public FactionRelationship GetRelationship(FactionType faction1, FactionType faction2)
+        /// <summary>Stance between two factions. Null faction on either side → Neutral.</summary>
+        public FactionRelationship GetRelationship(FactionDefinition a, FactionDefinition b)
         {
-            // Lazy initialization
-            if (relationshipCache == null || relationshipCache.Count == 0)
-            {
-                BuildCache();
-            }
-
-            // Same faction = always friendly
-            if (faction1 == faction2)
-                return FactionRelationship.Friendly;
-
-            // Special override factions
-            if (faction1 == FactionType.Friendly || faction2 == FactionType.Friendly)
-                return FactionRelationship.Friendly;
-
-            if (faction1 == FactionType.Hostile || faction2 == FactionType.Hostile)
-                return FactionRelationship.Hostile;
-
-            if (faction1 == FactionType.None || faction2 == FactionType.None)
+            if (a == null || b == null)
                 return FactionRelationship.Neutral;
 
-            // Lookup in cache
-            if (relationshipCache.TryGetValue((faction1, faction2), out FactionRelationship relationship))
-            {
-                return relationship;
-            }
+            if (a == b)
+                return FactionRelationship.Friendly;
 
-            // Use default if not found
+            var entry = GetEntry(a, b);
+            if (entry != null)
+                return entry.relationship;
+
             if (showDebugLogs)
-            {
-                Debug.LogWarning($"[FactionRelationshipConfig] No relationship defined between {faction1} and {faction2}. Using default: {defaultRelationship}");
-            }
+                Debug.LogWarning($"[FactionRelationshipConfig] No relationship defined between {a.name} and {b.name}. Using default: {defaultRelationship}");
 
             return defaultRelationship;
         }
 
-        /// <summary>
-        /// Check if a relationship exists between two factions.
-        /// </summary>
-        public bool HasRelationship(FactionType faction1, FactionType faction2)
+        /// <summary>Full entry for a pair (stance + modifiers), or null if unlisted.</summary>
+        public FactionRelationshipEntry GetEntry(FactionDefinition a, FactionDefinition b)
         {
-            if (relationshipCache == null || relationshipCache.Count == 0)
-            {
-                BuildCache();
-            }
+            if (a == null || b == null)
+                return null;
 
-            return relationshipCache.ContainsKey((faction1, faction2));
+            if (entryCache == null || entryCache.Count == 0)
+                BuildCache();
+
+            entryCache.TryGetValue((a, b), out var entry);
+            return entry;
         }
+
+        /// <summary>Damage multiplier for attacker → defender. 1.0 when unlisted or same faction.</summary>
+        public float GetDamageMultiplier(FactionDefinition attacker, FactionDefinition defender)
+        {
+            var entry = GetEntry(attacker, defender);
+            return entry != null ? entry.damageMultiplier : 1f;
+        }
+
+        public bool HasRelationship(FactionDefinition a, FactionDefinition b)
+            => GetEntry(a, b) != null;
 
         // ==================== EDITOR UTILITIES ====================
 
@@ -122,26 +108,25 @@ namespace RPG.Factions
         {
             Debug.Log("=== Faction Relationship Validation ===");
 
-            // Check for duplicates
+            int nullRefs = relationships.Count(r => r == null || r.faction1 == null || r.faction2 == null);
+            if (nullRefs > 0)
+                Debug.LogWarning($"{nullRefs} entries have missing FactionDefinition references");
+
             var duplicates = relationships
-                .GroupBy(r => (r.faction1, r.faction2))
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key);
+                .Where(r => r != null && r.faction1 != null && r.faction2 != null)
+                .GroupBy(r => r.faction1.GetHashCode() < r.faction2.GetHashCode()
+                    ? (r.faction1, r.faction2)
+                    : (r.faction2, r.faction1))
+                .Where(g => g.Count() > 1);
 
             foreach (var dup in duplicates)
-            {
-                Debug.LogWarning($"Duplicate relationship: {dup.faction1} ↔ {dup.faction2}");
-            }
+                Debug.LogWarning($"Duplicate relationship: {dup.Key.Item1.name} ↔ {dup.Key.Item2.name}");
 
-            // Check for self-references
-            var selfRefs = relationships.Where(r => r.faction1 == r.faction2).ToList();
-            if (selfRefs.Count > 0)
-            {
-                Debug.LogWarning($"Found {selfRefs.Count} self-referencing relationships (factions relating to themselves)");
-            }
+            var selfRefs = relationships.Count(r => r != null && r.faction1 != null && r.faction1 == r.faction2);
+            if (selfRefs > 0)
+                Debug.LogWarning($"Found {selfRefs} self-referencing entries (same faction always Friendly — remove them)");
 
             Debug.Log($"Total relationships: {relationships.Count}");
-            Debug.Log($"Unique faction pairs: {relationships.Select(r => (r.faction1, r.faction2)).Distinct().Count()}");
         }
 
         [ContextMenu("Debug: Print All Relationships")]
@@ -150,101 +135,35 @@ namespace RPG.Factions
             BuildCache();
 
             Debug.Log("=== ALL FACTION RELATIONSHIPS ===");
-
-            var allFactions = System.Enum.GetValues(typeof(FactionType)).Cast<FactionType>()
-                .Where(f => f != FactionType.None).ToList();
-
-            foreach (var faction1 in allFactions)
+            foreach (var entry in relationships)
             {
-                Debug.Log($"\n--- {faction1} ---");
+                if (entry == null || entry.faction1 == null || entry.faction2 == null) continue;
 
-                foreach (var faction2 in allFactions)
+                string color = entry.relationship switch
                 {
-                    if (faction1 == faction2) continue;
-
-                    var rel = GetRelationship(faction1, faction2);
-                    string color = rel switch
-                    {
-                        FactionRelationship.Friendly => "green",
-                        FactionRelationship.Hostile => "red",
-                        _ => "yellow"
-                    };
-
-                    Debug.Log($"  <color={color}>{faction1} → {faction2}: {rel}</color>");
-                }
+                    FactionRelationship.Friendly => "green",
+                    FactionRelationship.Hostile => "red",
+                    _ => "yellow"
+                };
+                Debug.Log($"<color={color}>{entry.faction1.name} ↔ {entry.faction2.name}: {entry.relationship}</color> (dmg ×{entry.damageMultiplier})");
             }
-        }
-
-        [ContextMenu("Quick Setup: Create Default Relationships")]
-        private void CreateDefaultRelationships()
-        {
-            relationships.Clear();
-
-            // Player relationships
-            AddEntry(FactionType.Player, FactionType.Elves, FactionRelationship.Friendly);
-            AddEntry(FactionType.Player, FactionType.Humans, FactionRelationship.Friendly);
-            AddEntry(FactionType.Player, FactionType.Dwarves, FactionRelationship.Friendly);
-            AddEntry(FactionType.Player, FactionType.Warlocks, FactionRelationship.Hostile);
-            AddEntry(FactionType.Player, FactionType.Undead, FactionRelationship.Hostile);
-            AddEntry(FactionType.Player, FactionType.Bandits, FactionRelationship.Hostile);
-            AddEntry(FactionType.Player, FactionType.Monsters, FactionRelationship.Hostile);
-            AddEntry(FactionType.Player, FactionType.Wildlife, FactionRelationship.Neutral);
-
-            // Civilized factions (allied)
-            AddEntry(FactionType.Elves, FactionType.Humans, FactionRelationship.Friendly);
-            AddEntry(FactionType.Elves, FactionType.Dwarves, FactionRelationship.Friendly);
-            AddEntry(FactionType.Humans, FactionType.Dwarves, FactionRelationship.Friendly);
-
-            // Civilized vs Evil
-            AddEntry(FactionType.Elves, FactionType.Warlocks, FactionRelationship.Hostile);
-            AddEntry(FactionType.Elves, FactionType.Undead, FactionRelationship.Hostile);
-            AddEntry(FactionType.Elves, FactionType.Bandits, FactionRelationship.Hostile);
-            AddEntry(FactionType.Humans, FactionType.Warlocks, FactionRelationship.Hostile);
-            AddEntry(FactionType.Humans, FactionType.Undead, FactionRelationship.Hostile);
-            AddEntry(FactionType.Humans, FactionType.Bandits, FactionRelationship.Hostile);
-            AddEntry(FactionType.Dwarves, FactionType.Warlocks, FactionRelationship.Hostile);
-            AddEntry(FactionType.Dwarves, FactionType.Undead, FactionRelationship.Hostile);
-            AddEntry(FactionType.Dwarves, FactionType.Bandits, FactionRelationship.Hostile);
-
-            // Evil factions (allied)
-            AddEntry(FactionType.Warlocks, FactionType.Undead, FactionRelationship.Friendly);
-            AddEntry(FactionType.Warlocks, FactionType.Bandits, FactionRelationship.Friendly);
-            AddEntry(FactionType.Undead, FactionType.Bandits, FactionRelationship.Friendly);
-
-            Debug.Log($"Created {relationships.Count} default relationships");
-            UnityEditor.EditorUtility.SetDirty(this);
-        }
-
-        private void AddEntry(FactionType faction1, FactionType faction2, FactionRelationship relationship)
-        {
-            relationships.Add(new FactionRelationshipEntry
-            {
-                faction1 = faction1,
-                faction2 = faction2,
-                relationship = relationship
-            });
         }
 #endif
     }
 
-    /// <summary>
-    /// Single relationship entry between two factions.
-    /// Displayed in Inspector as a clean line item.
-    /// </summary>
     [System.Serializable]
     public class FactionRelationshipEntry
     {
-        [Tooltip("First faction in the relationship")]
-        public FactionType faction1;
-
-        [Tooltip("Second faction in the relationship")]
-        public FactionType faction2;
-
-        [Tooltip("How these factions view each other (bidirectional)")]
+        public FactionDefinition faction1;
+        public FactionDefinition faction2;
         public FactionRelationship relationship = FactionRelationship.Neutral;
 
-        [Tooltip("Optional notes about this relationship")]
-        [TextArea(1, 3)]
-        public string notes = "";
+        [Tooltip("Damage multiplier applied when these factions fight each other. 1 = normal.")]
+        public float damageMultiplier = 1f;
+
+        [Tooltip("Will members of one faction assist the other when it is attacked?")]
+        public bool canAssist = false;
+
+        public string notes;
     }
 }

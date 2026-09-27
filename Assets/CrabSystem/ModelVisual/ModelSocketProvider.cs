@@ -33,13 +33,30 @@ public class ModelSocketProvider : MonoBehaviour
         public Transform socket;
     }
 
+    [System.Serializable]
+    public class NamedSocketMapping
+    {
+        [Tooltip("Free-form socket id, e.g. 'mainwep_sheathed'. Not tied to an equipment slot.")]
+        public string socketId;
+
+        [Tooltip("The bone/transform on this model's rig")]
+        public Transform socket;
+    }
+
     [Header("Slot-to-Socket Mappings")]
     [Tooltip("For each slot that needs visual rendering on this model, add an entry here.\n" +
              "Drag the EquipmentSlotDefinition asset and the bone transform.")]
     public List<SlotSocketMapping> slotSockets = new List<SlotSocketMapping>();
 
+    [Header("Named Sockets")]
+    [Tooltip("Sockets that are not equipment slots — sheath points, VFX anchors, prop mounts.\n" +
+             "Add 'mainwep_sheathed' here for the armed/unarmed stance toggle.")]
+    public List<NamedSocketMapping> namedSockets = new List<NamedSocketMapping>();
+
     private Dictionary<string, Transform> socketCache = new Dictionary<string, Transform>();
+    private Dictionary<string, Transform> namedCache = new Dictionary<string, Transform>();
     private bool isCached = false;
+    private bool isNamedCached = false;
 
     /// <summary>
     /// Returns all sockets as a dictionary keyed by slot ID.
@@ -62,6 +79,38 @@ public class ModelSocketProvider : MonoBehaviour
 
         isCached = true;
         return socketCache;
+    }
+
+    /// <summary>
+    /// Returns a non-slot socket by its free-form id. Caches on first call.
+    /// </summary>
+    public Transform GetNamedSocket(string socketId)
+    {
+        if (string.IsNullOrEmpty(socketId))
+            return null;
+
+        if (!isNamedCached)
+            BuildNamedCache();
+
+        if (namedCache.TryGetValue(socketId.ToLower(), out var socket))
+            return socket;
+
+        return null;
+    }
+
+    private void BuildNamedCache()
+    {
+        namedCache.Clear();
+
+        foreach (var mapping in namedSockets)
+        {
+            if (mapping == null || string.IsNullOrEmpty(mapping.socketId) || mapping.socket == null)
+                continue;
+
+            namedCache[mapping.socketId.ToLower()] = mapping.socket;
+        }
+
+        isNamedCached = true;
     }
 
     /// <summary>

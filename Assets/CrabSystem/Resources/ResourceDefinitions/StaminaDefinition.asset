@@ -13,22 +13,19 @@ MonoBehaviour:
   m_Name: StaminaDefinition
   m_EditorClassIdentifier: Assembly-CSharp::ResourceDefinition
   resourceId: stamina
-  isHealthLike: 0
   isTemporary: 0
   displayName: Stamina
   description: Stamina Points
   maxStatId: character.max_stamina
-  currentStatId: 
-  regenPerSecond: 0
-  regenDelay: 0
-  regenOutOfCombatOnly: 0
-  combatTimeout: 5
   minValue: 0
   allowNegative: 0
+  regenSource: {fileID: 11400000, guid: cda075c741676924f88c917236012ce0, type: 2}
+  amountPerSourcePoint: 10
+  secondsPerSourcePoint: 10
+  regenPerSecond: 0
+  regenDelay: 0
   resourceColor: {r: 0.51616734, g: 0.8962264, b: 0.15641688, a: 1}
   icon: {fileID: 0}
   depletedSound: {fileID: 0}
   restoredSound: {fileID: 0}
   triggerDeathOnDepletion: 0
-  resetOnDeath: 0
-  tags: []

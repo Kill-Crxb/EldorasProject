@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 294e2b99c3434641abb77a3f8ea8d340
+timeCreated: 1470076830
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Demo/URP/Scenes/DayNightCycleDemo.unity
+  uploadId: 497923

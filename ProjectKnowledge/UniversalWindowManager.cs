@@ -37,7 +37,6 @@ public class UniversalWindowManager : MonoBehaviour
 
     [Header("Window Prefabs")]
     [SerializeField] private GameObject universalWindowPrefab;
-    [SerializeField] private GameObject equipmentWindowPrefab;
 
     [Header("World Space Container Settings")]
     [SerializeField] private bool useWorldSpaceContainers = false;
@@ -122,7 +121,7 @@ public class UniversalWindowManager : MonoBehaviour
 
     private Dictionary<string, UniversalInventoryWindow> activeWindows = new Dictionary<string, UniversalInventoryWindow>();
     private UniversalInventoryWindow playerInventoryWindow;
-    private EquipmentWindow equipmentWindow;
+    private bool isDialogueOpen;
 
     #endregion
 
@@ -220,59 +219,29 @@ public class UniversalWindowManager : MonoBehaviour
 
     #endregion
 
-    #region Equipment Window
+    #region Dialogue Window
 
-    public void OpenEquipmentWindow(ControllerBrain playerBrain)
+    // Placeholder open/close — just toggles the reserved canvas layer. Actual dialogue
+    // content (text, options) is a separate pass; this exists so DialogueSystem has a
+    // real, testable hook and IsAnyWindowOpen() unlocks the cursor correctly.
+    public void OpenDialogueWindow(ControllerBrain playerBrain, ControllerBrain npcBrain)
     {
-        if (playerBrain == null) { Debug.LogError("[UniversalWindowManager] Player brain is null!"); return; }
-        if (equipmentWindow != null && equipmentWindow.IsOpen) return;
+        if (dialogueCanvas == null) { Debug.LogError("[UniversalWindowManager] Dialogue canvas not assigned!"); return; }
 
-        if (equipmentWindow == null) equipmentWindow = CreateEquipmentWindow();
-        if (equipmentWindow == null) { Debug.LogError("[UniversalWindowManager] Failed to create equipment window!"); return; }
+        dialogueCanvas.gameObject.SetActive(true);
+        isDialogueOpen = true;
 
-        equipmentWindow.Initialize("Equipment", playerBrain, null);
-        equipmentWindow.gameObject.SetActive(true);
-
-        if (debugMode) Debug.Log("[UniversalWindowManager] Opened equipment window");
+        if (debugMode) Debug.Log($"[UniversalWindowManager] Opened dialogue window: {npcBrain?.name}");
     }
 
-    public void CloseEquipmentWindow()
+    public void CloseDialogueWindow()
     {
-        if (equipmentWindow != null && equipmentWindow.IsOpen)
-        {
-            equipmentWindow.OnClose();
-            equipmentWindow.gameObject.SetActive(false);
+        if (dialogueCanvas == null) return;
 
-            if (debugMode) Debug.Log("[UniversalWindowManager] Closed equipment window");
-        }
-    }
+        dialogueCanvas.gameObject.SetActive(false);
+        isDialogueOpen = false;
 
-    public void ToggleEquipmentWindow(ControllerBrain playerBrain)
-    {
-        if (equipmentWindow != null && equipmentWindow.IsOpen)
-            CloseEquipmentWindow();
-        else
-            OpenEquipmentWindow(playerBrain);
-    }
-
-    private EquipmentWindow CreateEquipmentWindow()
-    {
-        if (equipmentWindowPrefab == null) { Debug.LogError("[UniversalWindowManager] Equipment window prefab not assigned!"); return null; }
-
-        Transform parent = uiCanvas != null ? uiCanvas.transform : transform;
-        GameObject windowObj = Instantiate(equipmentWindowPrefab, parent);
-        windowObj.name = "EquipmentWindow";
-
-        var window = windowObj.GetComponent<EquipmentWindow>();
-        if (window == null)
-        {
-            Debug.LogError("[UniversalWindowManager] Equipment window prefab missing EquipmentWindow component!");
-            Destroy(windowObj);
-            return null;
-        }
-
-        windowObj.SetActive(false);
-        return window;
+        if (debugMode) Debug.Log("[UniversalWindowManager] Closed dialogue window");
     }
 
     #endregion
@@ -357,6 +326,7 @@ public class UniversalWindowManager : MonoBehaviour
             if (window != null) { window.Close(); Destroy(window.gameObject); }
 
         activeWindows.Clear();
+        CloseDialogueWindow();
     }
 
     #endregion
@@ -365,6 +335,7 @@ public class UniversalWindowManager : MonoBehaviour
 
     public bool IsAnyWindowOpen()
     {
+        if (isDialogueOpen) return true;
         if (playerInventoryWindow != null && playerInventoryWindow.IsOpen) return true;
         foreach (var window in activeWindows.Values)
             if (window != null && window.IsOpen) return true;

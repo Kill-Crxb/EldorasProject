@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 3aecddbc54f883f46bc52e888a987fc7
+timeCreated: 1467563917
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 71105
+  packageName: Farland Skies - Cloudy Crown Pro
+  packageVersion: 1.4.2
+  assetPath: Assets/Farland Skies/Cloudy Crown/Scripts/DotParams/Editor/StarsParamDrawer.cs
+  uploadId: 497923

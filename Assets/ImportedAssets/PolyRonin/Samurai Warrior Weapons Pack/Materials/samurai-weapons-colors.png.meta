@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: da329099ebd8d25409d207603eb8abb9
+guid: 85e34d46baa3ca34482c89293724e70a
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -128,3 +128,10 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 310630
+  packageName: Low Poly Samurai Warrior Weapons Pack
+  packageVersion: 1.0
+  assetPath: Assets/PolyRonin/Samurai Warrior Weapons Pack/Textures/samurai-weapons-colors.png
+  uploadId: 734848

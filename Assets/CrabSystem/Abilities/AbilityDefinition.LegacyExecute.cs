@@ -94,6 +94,10 @@ public partial class AbilityDefinition
                     effect.Apply(targetGO);
             }
         }
+
+        // Statuses land AFTER the hit resolves, so a status this ability applies cannot alter
+        // the damage that delivered it. Armour shred bites the next hit, not its own.
+        ApplyStatuses(targetDamage.Brain, caster.Brain);
     }
 
     /// <summary>

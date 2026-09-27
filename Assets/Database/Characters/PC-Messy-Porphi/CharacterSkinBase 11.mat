@@ -1,0 +1,234 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-1514208953915455969
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: CharacterSkinBase 11
+  m_Shader: {fileID: 4800000, guid: 50208c5c8d3dd3e4781591322be95345, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _BASE_LIGHT
+  - _SHADOWTEXMODE_ANCHORED
+  - _TOON_RIM
+  - _TOON_SPECULAR
+  - _USE_RAMP
+  m_InvalidKeywords:
+  - _SHADOW_TEX_SCREEN
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: _BaseLightDir
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BaseSDF:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HairShiftMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OutlineWidthMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OutlineZOffsetMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShadeRamp:
+        m_Texture: {fileID: 2800000, guid: 6674c649fbacc2f4e80c57e8f0cc33af, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShadowTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AdditionalLightScale: 0.205
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Bands: 1
+    - _BaseLightSoftness: 0.01
+    - _BaseLightStrength: 0
+    - _BaseLightThreshold: 0
+    - _BaseSDFCoverage: 0.5
+    - _BaseSDFDepth: 0.5
+    - _BaseSDFFill: 0.5
+    - _BaseSDFHighlight: 0
+    - _BaseSDFHighlightCoverage: 0.9
+    - _BaseSDFSoftness: 0.01
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
+    - _BumpScale: 1
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
+    - _Cull: 2
+    - _Cutoff: 0.41
+    - _DetailAlbedoMapScale: 1
+    - _DetailNormalMapScale: 1
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _EnvironmentReflections: 1
+    - _FaceShadowLift: 0.5
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 0
+    - _HairShiftStrength: 0.5
+    - _HairSpecPower: 40
+    - _HairSpecShift: 0
+    - _HairSpecSoftness: 0.02
+    - _HairSpecThreshold: 0.5
+    - _IndirectStrength: 2
+    - _IsFace: 0
+    - _LightColorInfluence: 0.545
+    - _Metallic: 0
+    - _ObjectID: 0
+    - _OcclusionStrength: 1
+    - _OutlineFadeFar: 1
+    - _OutlineFadeNear: 1
+    - _OutlineScreenSpace: 0
+    - _OutlineSilhouetteBias: 1
+    - _OutlineTintDarkness: 0.35
+    - _OutlineTintStrength: 0.8
+    - _OutlineWidth: 0
+    - _OutlineWidthPixels: 6
+    - _OutlineZOffset: 0
+    - _Parallax: 0.005
+    - _QueueOffset: 0
+    - _ReceiveShadows: 1
+    - _RimMaskShadow: 1
+    - _RimSize: 0.5
+    - _RimSoftness: 0.02
+    - _Role: 1
+    - _ShadeSoftness: 0.02
+    - _ShadeThreshold: -0.1
+    - _ShadowPosOffset: 0
+    - _ShadowStrength: 0.531
+    - _ShadowTexAmount: 0.5
+    - _ShadowTexBlend: 0.6
+    - _ShadowTexMode: 2
+    - _ShadowTexScale: 40
+    - _ShadowTexScreenSpace: 1
+    - _ShadowTexSoftness: 0.01
+    - _ShadowTexThreshold: 0.5
+    - _Smoothness: 0.5
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SpecularSize: 0.004
+    - _SpecularSoftness: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _UseBaseLight: 1
+    - _UseBaseSDF: 0
+    - _UseEmission: 0
+    - _UseHairSpecular: 0
+    - _UseOutlineTint: 0
+    - _UseRamp: 1
+    - _UseRim: 1
+    - _UseShadowTex: 0
+    - _UseSmoothedNormals: 0
+    - _UseSpecular: 1
+    - _UseVertexWidthMask: 0
+    - _WorkflowMode: 1
+    - _XRMotionVectorsPass: 1
+    - _ZOffset: 0
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.9960785, g: 0.8235295, b: 0, a: 1}
+    - _BaseLightDir: {r: 0, g: 1, b: 0.35, a: 0}
+    - _BaseSDFHighlightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _HairSpecColor: {r: 1, g: 1, b: 1, a: 1}
+    - _IndirectMinColor: {r: 0.049999982, g: 0.049999982, b: 0.06999998, a: 1}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
+    - _RimColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ShadeColor: {r: 0.8962264, g: 0.63834995, b: 0.63834995, a: 1}
+    - _ShadowTexColor: {r: 0.62, g: 0.62, b: 0.7, a: 1}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

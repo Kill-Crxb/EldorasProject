@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 {
@@ -46,6 +46,14 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
     {
     }
 
+    // Subscribed in Initialize, so it must come off here. Without this every spawned entity leaks
+    // a delegate, and the next broadcast after a despawn or a scene round-trip reaches destroyed
+    // objects as a MissingReferenceException.
+    void OnDestroy()
+    {
+        GameEvents.OnCharacterConfigDataReady -= ConfigureEntity;
+    }
+
     #endregion
 
     #region Entity Detection
@@ -86,12 +94,7 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
         bool isNpcConfig = !string.IsNullOrEmpty(data.characterId) && brain.Identity != null && data.characterId == brain.Identity.EntityId;
 
         if (!isPlayerConfig && !isNpcConfig)
-        {
-            Debug.Log($"[CharacterConfigurationHandler] Config not for this entity, skipping");
             return;
-        }
-
-        Debug.Log($"[CharacterConfigurationHandler] Configuring entity: name='{data.displayName}', faction='{data.factionId}'");
 
         if (brain.IsNPC)
             DisablePlayerOnlySystems();
@@ -145,6 +148,11 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
         if (factionSystem == null)
             return;
 
+        // Empty = archetype has no faction assigned. Don't wipe a faction
+        // that was set directly on the prefab's FactionSystem.
+        if (string.IsNullOrEmpty(data.factionId))
+            return;
+
         factionSystem.CurrentFactionId = data.factionId;
     }
 
@@ -153,7 +161,7 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
         var statSystem = brain.Stats;
         if (statSystem == null)
         {
-            Debug.LogWarning("[CharacterConfigurationHandler] StatSystem not found");
+            Debug.LogWarning("[CharacterConfigurationHandler] No stat provider found");
             return;
         }
 
@@ -161,37 +169,30 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 
         brain.RPG?.SetLevel(level);
 
-        if (data.baseStatOverrides == null || data.baseStatOverrides.Length == 0)
-        {
-            Debug.LogWarning("[CharacterConfigurationHandler] No stat overrides in config");
-            return;
-        }
-
-        Debug.Log($"[CharacterConfigurationHandler] Applying {data.baseStatOverrides.Length} stat overrides");
+        // Overrides are the authored seed for NPC archetypes. A saved character has none:
+        // its stats came from stats.json before this runs, and must not be overwritten.
+        if (data.baseStatOverrides == null) return;
 
         foreach (var overrideEntry in data.baseStatOverrides)
         {
             if (string.IsNullOrEmpty(overrideEntry.statId))
                 continue;
 
-            var stat = statSystem.GetStat(overrideEntry.statId);
-            if (stat == null)
+            if (!statSystem.HasStat(overrideEntry.statId))
             {
-                Debug.LogWarning($"[CharacterConfigurationHandler] Stat '{overrideEntry.statId}' not found in engine");
+                Debug.LogWarning($"[CharacterConfigurationHandler] Stat '{overrideEntry.statId}' not loaded on {brain.name}");
                 continue;
             }
 
-            if (!string.IsNullOrEmpty(stat.formula))
+            // A derived stat refuses SetValue, so the archetype feeds it as a contribution instead.
+            if (statSystem.IsDerived(overrideEntry.statId))
             {
-                Debug.Log($"[CharacterConfigurationHandler] Skipping '{overrideEntry.statId}' (has formula)");
+                statSystem.AddContribution(overrideEntry.statId, "archetype", overrideEntry.baseValue);
                 continue;
             }
 
-            Debug.Log($"[CharacterConfigurationHandler] Setting {overrideEntry.statId} = {overrideEntry.baseValue}");
-            statSystem.SetBaseValue(overrideEntry.statId, overrideEntry.baseValue);
+            statSystem.SetValue(overrideEntry.statId, overrideEntry.baseValue);
         }
-
-        Debug.Log("[CharacterConfigurationHandler] Stat configuration complete");
     }
 
     private void ConfigureModel(CharacterConfigData data)

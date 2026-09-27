@@ -1,0 +1,281 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b0621af836928446b1a9fcccc5a1469, type: 3}
+  m_Name: Damage Calculation Config
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.DamageCalculationConfig
+  damageTypes:
+  - damageType: 0
+    displayName: Physical
+    description: Physical force. Scales on Might, mitigated by Deflection.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.might
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 1
+    displayName: Magical
+    description: Untyped magic. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.7, g: 0.5, b: 0.9, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 2
+    displayName: True
+    description: Pure damage. Ignores every defence and cannot crit.
+    canCrit: 0
+    calculationMode: 2
+    attackerStatIds: []
+    attackerStatMultipliers: []
+    defenderStatIds: []
+    defenderStatMultipliers: []
+    damageColor: {r: 1, g: 1, b: 1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 3
+    displayName: Fire
+    description: Fire school. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 1, g: 0.45, b: 0.15, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 4
+    displayName: Lightning
+    description: Lightning. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 1, g: 0.9, b: 0.3, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 5
+    displayName: Ice
+    description: Ice. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.6, g: 0.85, b: 1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 6
+    displayName: Poison
+    description: Poison. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.5, g: 0.8, b: 0.3, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 7
+    displayName: Holy
+    description: Radiant Aether. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 1, g: 0.95, b: 0.7, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 8
+    displayName: Aether
+    description: Raw, undifferentiated Aether. Primitive casting only.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.65, g: 0.45, b: 0.95, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 9
+    displayName: Wind
+    description: Air school. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.75, g: 0.95, b: 0.95, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 10
+    displayName: Water
+    description: Water school. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.3, g: 0.6, b: 0.95, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 11
+    displayName: Earth
+    description: Earth school. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.65, g: 0.5, b: 0.3, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 12
+    displayName: Magma
+    description: Magma. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.9, g: 0.3, b: 0.1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 13
+    displayName: Crystal
+    description: Crystal. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.8, g: 0.7, b: 0.95, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 14
+    displayName: Nature
+    description: Nature school. Scales on Arcana, mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.4, g: 0.8, b: 0.35, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  - damageType: 15
+    displayName: Shadow
+    description: The other face of Aether. Authored spells only. Scales on Arcana,
+      mitigated by Alteration.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds:
+    - cmb.arcana
+    attackerStatMultipliers:
+    - 1
+    defenderStatIds:
+    - atr.arm
+    defenderStatMultipliers:
+    - 1
+    damageColor: {r: 0.35, g: 0.2, b: 0.45, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
+  defaultConfig:
+    damageType: 0
+    displayName: UNCONFIGURED
+    description: Fallback for a DamageType with no row. Magenta so a miss is obvious.
+    canCrit: 1
+    calculationMode: 0
+    attackerStatIds: []
+    attackerStatMultipliers: []
+    defenderStatIds: []
+    defenderStatMultipliers: []
+    damageColor: {r: 1, g: 0, b: 1, a: 1}
+    impactVFX: {fileID: 0}
+    impactSound: {fileID: 0}
