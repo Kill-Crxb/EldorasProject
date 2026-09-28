@@ -63,7 +63,7 @@ public class VFXSystem : MonoBehaviour, IBrainModule
         brain = controllerBrain;
 
         if (debugVFX)
-            Debug.Log($"[VFXSystem] Initialized on {brain.name}");
+            Debug.Log($"[VFXSystem] Initialized on {brain.EntityName}");
     }
 
     public void UpdateModule() { }
@@ -91,7 +91,7 @@ public class VFXSystem : MonoBehaviour, IBrainModule
         if (result == null)
         {
             if (debugVFX)
-                Debug.LogWarning($"[VFXSystem] Anchor '{anchor}' not assigned on {brain?.name} — falling back to root");
+                Debug.LogWarning($"[VFXSystem] Anchor '{anchor}' not assigned on {brain?.EntityName} — falling back to root");
             return transform;
         }
 
@@ -171,7 +171,7 @@ public class VFXSystem : MonoBehaviour, IBrainModule
             if (!warnedSockets.Contains(socketId))
             {
                 warnedSockets.Add(socketId);
-                Debug.LogWarning($"[VFXSystem] No named socket '{socketId}' on {brain?.name}'s model — " +
+                Debug.LogWarning($"[VFXSystem] No named socket '{socketId}' on {brain?.EntityName}'s model — " +
                                  $"effects will play at the {fallbackAnchor} anchor instead. Add it to " +
                                  $"the model's ModelSocketProvider under Named Sockets.", this);
             }

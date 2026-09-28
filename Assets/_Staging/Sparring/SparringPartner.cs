@@ -65,7 +65,7 @@ public class SparringPartner : MonoBehaviour, IBrainModule
         flash = brain.GetModule<HitFlash>();
         nextWindup = Time.time + interval;
 
-        if (damage == null) Debug.LogError($"[SparringPartner] No DamageSystem on {brain.name}.", this);
+        if (damage == null) Debug.LogError($"[SparringPartner] No DamageSystem on {brain.EntityName}.", this);
     }
 
     public void UpdateModule()

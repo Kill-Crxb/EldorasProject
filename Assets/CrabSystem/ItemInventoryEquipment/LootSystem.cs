@@ -57,7 +57,7 @@ public class LootSystem : MonoBehaviour, IBrainModule
         isInitialized = true;
 
         if (debugLoot)
-            Debug.Log($"[LootSystem] Initialized for {brain.name}");
+            Debug.Log($"[LootSystem] Initialized for {brain.EntityName}");
     }
 
     public void LateInitialize() { }
@@ -112,7 +112,7 @@ public class LootSystem : MonoBehaviour, IBrainModule
         }
         else if (debugLoot)
         {
-            Debug.Log($"[LootSystem] {brain.name} dropped no loot");
+            Debug.Log($"[LootSystem] {brain.EntityName} dropped no loot");
         }
     }
 

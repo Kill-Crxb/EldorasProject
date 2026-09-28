@@ -62,7 +62,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
 
         if (stats == null)
         {
-            Debug.LogError($"[ResourceSystem] No stat provider found on {brain.name}");
+            Debug.LogError($"[ResourceSystem] No stat provider found on {brain.EntityName}");
             return;
         }
 
@@ -102,7 +102,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     {
         if (ResourceManager.Instance == null)
         {
-            Debug.LogError($"[ResourceSystem] ResourceManager.Instance is null on {brain.name}");
+            Debug.LogError($"[ResourceSystem] ResourceManager.Instance is null on {brain.EntityName}");
             return;
         }
 

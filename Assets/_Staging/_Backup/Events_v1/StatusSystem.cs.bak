@@ -77,7 +77,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         damage = brain.Damage;
 
         if (stats == null)
-            Debug.LogError($"[StatusSystem] No IStatProvider on {brain.EntityName} — every status will be inert.");
+            Debug.LogError($"[StatusSystem] No IStatProvider on {brain.name} — every status will be inert.");
 
         if (damage != null) damage.OnDeath += RemoveAll;
     }
@@ -146,7 +146,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         RefreshDebugList();
 
         if (debugStatuses)
-            Debug.Log($"[StatusSystem] +{definition.id} on {transform.root.name} ({definition.Seconds:F2}s)");
+            Debug.Log($"[StatusSystem] +{definition.id} on {name} ({definition.Seconds:F2}s)");
 
         OnStatusApplied?.Invoke(instance);
     }
@@ -170,7 +170,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         RefreshDebugList();
 
         if (debugStatuses)
-            Debug.Log($"[StatusSystem] {instance.Id} x{instance.Stacks} on {transform.root.name}");
+            Debug.Log($"[StatusSystem] {instance.Id} x{instance.Stacks} on {name}");
 
         OnStacksChanged?.Invoke(instance);
     }
@@ -219,7 +219,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         RefreshDebugList();
 
         if (debugStatuses)
-            Debug.Log($"[StatusSystem] -{instance.Id} on {transform.root.name}");
+            Debug.Log($"[StatusSystem] -{instance.Id} on {name}");
 
         OnStatusRemoved?.Invoke(instance);
     }

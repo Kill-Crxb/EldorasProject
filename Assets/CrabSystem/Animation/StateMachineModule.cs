@@ -93,7 +93,7 @@ public partial class StateMachineModule : MonoBehaviour, IBrainModule, IStatePro
 
         if (debugStateMachine)
         {
-            Debug.Log($"[StateMachineModule] Initialized on {brain.name}");
+            Debug.Log($"[StateMachineModule] Initialized on {brain.EntityName}");
             Debug.Log($"  Brain: {brainState.Current}");
             Debug.Log($"  UpperBody: {upperBodyState.Current}");
             Debug.Log($"  LowerBody: {lowerBodyState.Current}");

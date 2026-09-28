@@ -119,7 +119,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         if (stats == null || health == null)
         {
             isEnabled = false;
-            Debug.LogError($"[DamageSystem] Missing dependencies on {brain.name} - Stats: {stats != null}, Health: {health != null}");
+            Debug.LogError($"[DamageSystem] Missing dependencies on {brain.EntityName} - Stats: {stats != null}, Health: {health != null}");
             return;
         }
 

@@ -66,7 +66,7 @@ public class BlackboardSystem : MonoBehaviour, IBrainModule
 
         if (schema == null)
         {
-            Debug.LogError($"[BlackboardSystem] No schema assigned on {controllerBrain.name}!", this);
+            Debug.LogError($"[BlackboardSystem] No schema assigned on {controllerBrain.EntityName}!", this);
             return;
         }
 
@@ -85,7 +85,7 @@ public class BlackboardSystem : MonoBehaviour, IBrainModule
 
         if (debugLogging)
         {
-            Debug.Log($"[BlackboardSystem] Initialized on {brain.name} with schema: {schema.schemaId}");
+            Debug.Log($"[BlackboardSystem] Initialized on {brain.EntityName} with schema: {schema.schemaId}");
             Debug.Log($"[BlackboardSystem] Memory footprint: {blackboard.GetMemoryFootprint()} bytes");
         }
     }

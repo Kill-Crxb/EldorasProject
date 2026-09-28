@@ -135,7 +135,7 @@ public class WeaponHitbox : MonoBehaviour
         if (debugHitbox)
         {
             if (brain != null)
-                Debug.Log($"[WeaponHitbox] '{weaponName}' resolved brain: {brain.EntityName}");
+                Debug.Log($"[WeaponHitbox] '{weaponName}' resolved brain: {brain.name}");
             else
                 Debug.LogWarning($"[WeaponHitbox] '{weaponName}' could not resolve ControllerBrain — will retry on Enable()");
         }
@@ -260,7 +260,7 @@ public class WeaponHitbox : MonoBehaviour
             }
 
             if (debugHitbox)
-                Debug.Log($"[WeaponHitbox] '{weaponName}' hit {other.transform.root.name} via {ability.damageEffects.Count} effect(s) (ability: {ability.abilityName})");
+                Debug.Log($"[WeaponHitbox] '{weaponName}' hit {other.name} via {ability.damageEffects.Count} effect(s) (ability: {ability.abilityName})");
         }
         else
         {
@@ -281,7 +281,7 @@ public class WeaponHitbox : MonoBehaviour
             targetDamage.TakeDamage(packet);
 
             if (debugHitbox)
-                Debug.Log($"[WeaponHitbox] '{weaponName}' hit {other.transform.root.name} for {packet.finalDamage:F1} (fallback — ability: {ability?.abilityName ?? "none"})");
+                Debug.Log($"[WeaponHitbox] '{weaponName}' hit {other.name} for {packet.finalDamage:F1} (fallback — ability: {ability?.abilityName ?? "none"})");
         }
 
         // Statuses ride the contact, whichever damage branch ran.
@@ -319,7 +319,7 @@ public class WeaponHitbox : MonoBehaviour
         damageable.TakeDamage(packet.finalDamage);
 
         if (debugHitbox)
-            Debug.Log($"[WeaponHitbox] '{weaponName}' hit legacy destructible {other.transform.root.name} for {packet.finalDamage:F1}");
+            Debug.Log($"[WeaponHitbox] '{weaponName}' hit legacy destructible {other.name} for {packet.finalDamage:F1}");
     }
 
     // =====================================================================

@@ -101,6 +101,12 @@ public class ControllerBrain : MonoBehaviour
 
     public EntityType EntityType => entityType;
     public bool IsPlayer => entityType == EntityType.Player;
+
+    /// <summary>
+    /// The entity's name for logs — the root object ("TargetDummy_Heavy", "Porphi"), not the
+    /// module child this brain sits on, which is "Component_Brain" on every entity.
+    /// </summary>
+    public string EntityName => transform.root.name;
     public bool IsNPC => entityType == EntityType.NPC;
     public bool IsEntity => entityType == EntityType.Entity;
 

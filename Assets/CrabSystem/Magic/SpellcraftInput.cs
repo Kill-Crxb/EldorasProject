@@ -81,7 +81,7 @@ namespace NinjaGame.Magic
             if (spellcraft == null)
             {
                 isEnabled = false;
-                Debug.LogError($"[SpellcraftInput] No SpellcraftSystem on {brain.name} — nothing to drive.", this);
+                Debug.LogError($"[SpellcraftInput] No SpellcraftSystem on {brain.EntityName} — nothing to drive.", this);
             }
         }
 

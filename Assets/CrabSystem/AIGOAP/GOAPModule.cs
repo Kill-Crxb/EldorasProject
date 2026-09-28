@@ -233,7 +233,7 @@ public class GOAPModule : MonoBehaviour, IBrainModule
 
         if (debugMode)
         {
-            Debug.Log($"[GOAPModule] Initialized on {brain.name} with {goalPool.Count} goals");
+            Debug.Log($"[GOAPModule] Initialized on {brain.EntityName} with {goalPool.Count} goals");
             Debug.Log($"  Selection Mode: {selectionMode}");
             Debug.Log($"  Anti-Thrashing: {useGoalCommitment} (Min Duration: {minimumGoalDuration}s)");
         }

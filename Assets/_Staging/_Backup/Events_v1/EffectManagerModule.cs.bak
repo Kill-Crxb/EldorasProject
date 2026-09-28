@@ -51,7 +51,7 @@ public class EffectManagerModule : MonoBehaviour, IBrainModule
     public void ApplyDamageEffect(DamageEffect effect, DamageSystem target)
     {
         if (debugEffects)
-            Debug.Log($"[EffectManagerModule] Instant damage → {target.transform.root.name}");
+            Debug.Log($"[EffectManagerModule] Instant damage → {target.gameObject.name}");
 
         void OnComplete()
         {
@@ -67,7 +67,7 @@ public class EffectManagerModule : MonoBehaviour, IBrainModule
     public void ApplyDamageOverTimeEffect(DamageOverTimeEffect effect, DamageSystem target)
     {
         if (debugEffects)
-            Debug.Log($"[EffectManagerModule] DoT → {target.transform.root.name}");
+            Debug.Log($"[EffectManagerModule] DoT → {target.gameObject.name}");
 
         void OnComplete()
         {
@@ -123,7 +123,7 @@ public class EffectManagerModule : MonoBehaviour, IBrainModule
     public void ApplyKnockbackEffect(KnockbackEffect effect, Transform attacker, GameObject target)
     {
         if (debugEffects)
-            Debug.Log($"[EffectManagerModule] Knockback → {target.transform.root.name}");
+            Debug.Log($"[EffectManagerModule] Knockback → {target.name}");
 
         void OnComplete()
         {

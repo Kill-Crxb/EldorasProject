@@ -58,7 +58,7 @@ public class FateSystem : MonoBehaviour
 
         if (debugMode)
         {
-            Debug.Log($"[FateSystem] Initialized on {brain.name}");
+            Debug.Log($"[FateSystem] Initialized on {brain.EntityName}");
         }
     }
 

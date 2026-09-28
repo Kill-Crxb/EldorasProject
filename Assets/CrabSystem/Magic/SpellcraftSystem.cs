@@ -169,14 +169,14 @@ namespace NinjaGame.Magic
             if (grammar == null)
             {
                 isEnabled = false;
-                Debug.LogError($"[SpellcraftSystem] No SpellGrammar assigned on {brain.name} — magic is off.", this);
+                Debug.LogError($"[SpellcraftSystem] No SpellGrammar assigned on {brain.EntityName} — magic is off.", this);
                 return;
             }
 
             if (abilities == null)
             {
                 isEnabled = false;
-                Debug.LogError($"[SpellcraftSystem] No AbilitySystem on {brain.name} — nothing can be cast.", this);
+                Debug.LogError($"[SpellcraftSystem] No AbilitySystem on {brain.EntityName} — nothing can be cast.", this);
                 return;
             }
 

@@ -131,7 +131,7 @@ public class AISystem : MonoBehaviour, IBrainModule
         }
 
         string aiType = UsesGOAP ? "GOAP" : "None"; // UPDATED: removed legacy check
-        Debug.Log($"[AISystem] Initialized on {brain.name} using {aiType}");
+        Debug.Log($"[AISystem] Initialized on {brain.EntityName} using {aiType}");
 
         LogConfiguration();
     }

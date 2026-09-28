@@ -101,14 +101,14 @@ public class SemanticBridgeSystem : MonoBehaviour, IBrainModule
         var blackboardSystem = brain.GetModule<BlackboardSystem>();
         if (blackboardSystem == null)
         {
-            Debug.LogError($"[SemanticBridge] No BlackboardSystem found on {brain.name}!", this);
+            Debug.LogError($"[SemanticBridge] No BlackboardSystem found on {brain.EntityName}!", this);
             return;
         }
 
         blackboard = blackboardSystem.Blackboard;
         if (blackboard == null)
         {
-            Debug.LogError($"[SemanticBridge] Blackboard not initialized on {brain.name}!", this);
+            Debug.LogError($"[SemanticBridge] Blackboard not initialized on {brain.EntityName}!", this);
             return;
         }
 
@@ -121,7 +121,7 @@ public class SemanticBridgeSystem : MonoBehaviour, IBrainModule
         if (debugLogging)
         {
             string source = UsesLibrary ? $"library '{conditionLibrary.name}'" : "entity-specific list";
-            Debug.Log($"[SemanticBridge] Initialized on {brain.name}");
+            Debug.Log($"[SemanticBridge] Initialized on {brain.EntityName}");
             Debug.Log($"  Source: {source}");
             Debug.Log($"  Conditions: {ConditionCount}");
             Debug.Log($"  Update interval: {updateInterval}s ({1f / updateInterval}Hz)");
@@ -185,7 +185,7 @@ public class SemanticBridgeSystem : MonoBehaviour, IBrainModule
 
         if (debugLogging)
         {
-            Debug.Log($"[SemanticBridge:{brain.name}] {condition.name} = {result}");
+            Debug.Log($"[SemanticBridge:{brain.EntityName}] {condition.name} = {result}");
         }
     }
 

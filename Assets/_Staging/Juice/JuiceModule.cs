@@ -106,7 +106,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
         if (damage == null)
         {
             isEnabled = false;
-            Debug.LogError($"[JuiceModule] No DamageSystem on {brain.name} — nothing to juice.", this);
+            Debug.LogError($"[JuiceModule] No DamageSystem on {brain.EntityName} — nothing to juice.", this);
             return;
         }
 

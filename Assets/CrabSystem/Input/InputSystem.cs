@@ -209,7 +209,7 @@ public class InputSystem : MonoBehaviour,
 
         if (inputActions == null && brain.IsPlayer)
         {
-            Debug.LogError($"[InputSystem] PlayerInputControls is NULL on {brain.name}! " +
+            Debug.LogError($"[InputSystem] PlayerInputControls is NULL on {brain.EntityName}! " +
                            $"This IS a Player entity but has no PlayerInputControls!");
         }
         // Non-player entities (NPC, Entity, etc.) never get PlayerInputControls —
@@ -227,7 +227,7 @@ public class InputSystem : MonoBehaviour,
 
             if (stubAIControlSource == null)
             {
-                Debug.LogWarning($"[InputSystem] No StubAIControlSource found on NPC {brain.name}. Create a child GameObject with StubAIControlSource component.");
+                Debug.LogWarning($"[InputSystem] No StubAIControlSource found on NPC {brain.EntityName}. Create a child GameObject with StubAIControlSource component.");
             }
         }
 

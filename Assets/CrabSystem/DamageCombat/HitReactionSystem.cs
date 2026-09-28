@@ -68,14 +68,14 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
         if (damage == null)
         {
             isEnabled = false;
-            Debug.LogError($"[HitReactionSystem] No DamageSystem on {brain.name} — nothing to react to.", this);
+            Debug.LogError($"[HitReactionSystem] No DamageSystem on {brain.EntityName} — nothing to react to.", this);
             return;
         }
 
         if (anim == null)
         {
             isEnabled = false;
-            Debug.LogError($"[HitReactionSystem] No AnimationSystem on {brain.name} — nothing to drive.", this);
+            Debug.LogError($"[HitReactionSystem] No AnimationSystem on {brain.EntityName} — nothing to drive.", this);
             return;
         }
 

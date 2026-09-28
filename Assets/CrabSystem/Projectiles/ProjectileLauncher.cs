@@ -78,7 +78,7 @@ public class ProjectileLauncher : MonoBehaviour, IBrainModule
         if (abilitySystem == null)
         {
             isEnabled = false;
-            Debug.LogError($"[ProjectileLauncher] No AbilitySystem on {brain.name} — projectiles cannot fire.", this);
+            Debug.LogError($"[ProjectileLauncher] No AbilitySystem on {brain.EntityName} — projectiles cannot fire.", this);
             return;
         }
 

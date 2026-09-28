@@ -210,7 +210,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
         OnStanceChanged?.Invoke(stance);
 
         if (debugLogging)
-            Debug.Log($"[CombatStance] {brain.name} → {stance}");
+            Debug.Log($"[CombatStance] {brain.EntityName} → {stance}");
     }
 
     #endregion

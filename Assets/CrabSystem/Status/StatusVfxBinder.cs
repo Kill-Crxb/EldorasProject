@@ -46,7 +46,7 @@ public class StatusVfxBinder : MonoBehaviour, IBrainModule
 
         if (statuses == null)
         {
-            Debug.LogWarning($"[StatusVfxBinder] No StatusSystem on {brain.name} — no auras will play.");
+            Debug.LogWarning($"[StatusVfxBinder] No StatusSystem on {brain.EntityName} — no auras will play.");
             return;
         }
 
@@ -69,7 +69,7 @@ public class StatusVfxBinder : MonoBehaviour, IBrainModule
 
         if (vfx == null)
         {
-            Debug.LogWarning($"[StatusVfxBinder] '{instance.Id}' has an aura but {brain.name} " +
+            Debug.LogWarning($"[StatusVfxBinder] '{instance.Id}' has an aura but {brain.EntityName} " +
                              "has no VFXSystem to anchor it to.");
             return;
         }

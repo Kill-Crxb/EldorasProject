@@ -192,7 +192,7 @@ public class MovementSystem : MonoBehaviour, IBrainModule
 
         if (showDebugInfo)
         {
-            Debug.Log($"[MovementSystem] Initialized on {brain.name}");
+            Debug.Log($"[MovementSystem] Initialized on {brain.EntityName}");
             Debug.Log($"  Feet Detection: {(feetDetection != null ? "Active" : "Using Brain fallback")}");
             Debug.Log($"  Locomotion: {locomotionHandler.GetType().Name}");
             Debug.Log($"  Active Control: {activeControlSource?.SourceName ?? "NONE"}");
@@ -376,7 +376,7 @@ public class MovementSystem : MonoBehaviour, IBrainModule
             }
         }
 
-        Debug.LogWarning($"[MovementSystem] No enabled control source found on {brain.name}");
+        Debug.LogWarning($"[MovementSystem] No enabled control source found on {brain.EntityName}");
     }
 
     /// <summary>

@@ -136,12 +136,12 @@ public class PathfindingModule : MonoBehaviour, IBrainModule
             agent = gameObject.AddComponent<NavMeshAgent>();
 
             if (debugMode)
-                Debug.Log($"[PathfindingModule] Created NavMeshAgent on {brain.name}");
+                Debug.Log($"[PathfindingModule] Created NavMeshAgent on {brain.EntityName}");
         }
 
         if (agent == null)
         {
-            Debug.LogError($"[PathfindingModule] No NavMeshAgent found on {brain.name}!");
+            Debug.LogError($"[PathfindingModule] No NavMeshAgent found on {brain.EntityName}!");
             isEnabled = false;
             return;
         }

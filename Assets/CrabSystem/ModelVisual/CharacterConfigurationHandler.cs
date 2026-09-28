@@ -180,7 +180,7 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 
             if (!statSystem.HasStat(overrideEntry.statId))
             {
-                Debug.LogWarning($"[CharacterConfigurationHandler] Stat '{overrideEntry.statId}' not loaded on {brain.name}");
+                Debug.LogWarning($"[CharacterConfigurationHandler] Stat '{overrideEntry.statId}' not loaded on {brain.EntityName}");
                 continue;
             }
 

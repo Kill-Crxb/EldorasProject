@@ -94,7 +94,7 @@ public class AnimationDebugger : MonoBehaviour
         Log("\n╔════════════════════════════════════════════╗", true);
         Log("║    ANIMATION DEBUGGER INITIALIZED        ║", true);
         Log("╚════════════════════════════════════════════╝", true);
-        Log($"Entity: {brain.name}", true);
+        Log($"Entity: {brain.EntityName}", true);
         Log($"Entity Type: {brain.EntityType}", true);
         Log($"Trace Movement: {traceMovement}", true);
         Log($"Trace Abilities: {traceAbilities}", true);

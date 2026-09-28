@@ -887,7 +887,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         if (matched == 0 && tags != null && tags.Count > 0)
             Debug.LogWarning($"[AbilitySystem] '{currentAbility.abilityName}' names hitbox tag(s) " +
-                             $"[{string.Join(", ", tags)}] but nothing under {brain.name} carries them — " +
+                             $"[{string.Join(", ", tags)}] but nothing under {brain.EntityName} carries them — " +
                              $"this attack cannot connect. Check the tags on the model's hitboxes.");
 
         if (debugLogging)
@@ -899,7 +899,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     {
         var hitboxes = brain.GetComponentsInChildren<WeaponHitbox>(true);
         if (debugLogging)
-            Debug.Log($"[AbilitySystem] DisableAbilityHitboxes — found {hitboxes.Length} WeaponHitbox component(s) under {brain.name}");
+            Debug.Log($"[AbilitySystem] DisableAbilityHitboxes — found {hitboxes.Length} WeaponHitbox component(s) under {brain.EntityName}");
         foreach (var hitbox in hitboxes)
             hitbox.Disable();
     }

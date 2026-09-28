@@ -110,7 +110,7 @@ public class AbilityLoadoutModule : MonoBehaviour, IBrainModule
             }
         }
 
-        Debug.LogWarning($"[AbilityLoadoutModule] No enabled control source found on {brain.name}");
+        Debug.LogWarning($"[AbilityLoadoutModule] No enabled control source found on {brain.EntityName}");
     }
 
     public void SetControlSource(IAbilityControlSource newSource)

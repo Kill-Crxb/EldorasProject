@@ -127,7 +127,7 @@ namespace RPG.NPC.UI
             }
             else
             {
-                Debug.LogError($"[NPCNameplate] IdentitySystem missing on {brain.name}!", this);
+                Debug.LogError($"[NPCNameplate] IdentitySystem missing on {brain.EntityName}!", this);
                 npcName = "Unknown";
                 npcLevel = 1;
                 npcFaction = null;

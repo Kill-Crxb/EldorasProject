@@ -84,7 +84,7 @@ public class KnockbackEffect
         var movementSystem = brain.GetModule<MovementSystem>();
         if (movementSystem == null)
         {
-            Debug.LogWarning($"[KnockbackEffect] No MovementSystem on {brain.name}");
+            Debug.LogWarning($"[KnockbackEffect] No MovementSystem on {brain.EntityName}");
             return;
         }
 
@@ -95,7 +95,7 @@ public class KnockbackEffect
         var locomotionHandler = movementSystem.Locomotion;
         if (locomotionHandler == null)
         {
-            Debug.LogWarning($"[KnockbackEffect] No LocomotionHandler on {brain.name}");
+            Debug.LogWarning($"[KnockbackEffect] No LocomotionHandler on {brain.EntityName}");
             return;
         }
 

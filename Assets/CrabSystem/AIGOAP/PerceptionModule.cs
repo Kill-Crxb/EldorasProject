@@ -126,12 +126,12 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
 
         if (useFactionDetection && factionSystem == null)
         {
-            Debug.LogWarning($"[PerceptionModule] Faction detection enabled but no FactionSystem found on {brain.name}");
+            Debug.LogWarning($"[PerceptionModule] Faction detection enabled but no FactionSystem found on {brain.EntityName}");
         }
 
         if (debugMode)
         {
-            Debug.Log($"[PerceptionModule] Initialized on {brain.name}");
+            Debug.Log($"[PerceptionModule] Initialized on {brain.EntityName}");
             Debug.Log($"  Detection Layers: {detectionLayers.value}");
             Debug.Log($"  Obstacle Layers: {obstacleLayers.value}");
             Debug.Log($"  Vision Range: {visionRange}m, FOV: {visionAngle}°");

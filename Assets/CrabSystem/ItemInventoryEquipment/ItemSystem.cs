@@ -70,7 +70,7 @@ public class ItemSystem : MonoBehaviour, IBrainModule, IInventoryProvider
         isInitialized = true;
 
         if (debugSystem)
-            Debug.Log($"[ItemSystem] Initialized for {brain.name}");
+            Debug.Log($"[ItemSystem] Initialized for {brain.EntityName}");
     }
 
     public void LateInitialize()

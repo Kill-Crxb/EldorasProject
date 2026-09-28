@@ -269,7 +269,7 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
     // e.g. a future multi-capability prop. No generic menu handler exists yet.
     private void ShowInteractionMenu(ControllerBrain actor)
     {
-        Debug.LogWarning($"[InteractionSystem] {brain.name} has multiple capabilities but no menu handler yet.", this);
+        Debug.LogWarning($"[InteractionSystem] {brain.EntityName} has multiple capabilities but no menu handler yet.", this);
     }
 
     private bool HasRequiredKey(ControllerBrain actor)
