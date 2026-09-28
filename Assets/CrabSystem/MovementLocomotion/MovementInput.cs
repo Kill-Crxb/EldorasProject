@@ -22,11 +22,6 @@ public struct MovementInput
     public Vector2 LookDirection;
 
     /// <summary>
-    /// Should the entity sprint?
-    /// </summary>
-    public bool Sprint;
-
-    /// <summary>
     /// Pressed this frame: start a jump. A discrete edge, so it is what jump BUFFERING keys off.
     /// It is false again on the next frame and must never be used to ask "is jump still down".
     /// </summary>
@@ -76,7 +71,6 @@ public struct MovementInput
     {
         MoveDirection = Vector2.zero,
         LookDirection = Vector2.zero,
-        Sprint = false,
         Jump = false,
         JumpHold = false,
         Dash = false,

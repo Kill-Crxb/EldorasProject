@@ -39,7 +39,7 @@ using System.Collections.Generic;
 /// - Health: IsWounded, IsHealthy, IsDying, IsCritical
 /// - Stamina: LowStamina, CanDodge, CanSprint, Exhausted
 /// - Mana: LowMana, CanCastSpell, OutOfMana, HighMana
-/// - Combat: InCombat, CanParry, CanCounter, IsStunned
+/// - Combat: InCombat, CanParry, CanCounter, CannotAct
 /// - Movement: CanJump, IsFalling, IsGrounded, IsSwimming
 /// 
 /// Phase 1.3: Semantic Bridge System

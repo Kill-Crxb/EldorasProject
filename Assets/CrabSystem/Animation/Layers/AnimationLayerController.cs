@@ -11,12 +11,20 @@ using UnityEngine;
 //
 // A layer is only touched once something has claimed it. Layers nothing claims keep the weight
 // the Animator Controller authored, so adding this component changes nothing on its own.
+//
+// REST RULE (2026-09-28, Animator_Audit.md). A layer whose current state is tagged "Rest" — or
+// that is transitioning into one — is forced to weight 0, whatever is claimed. A layer shows
+// exactly while it plays something, so a stray claim can never freeze the character in an idle
+// pose. Layers with no Rest-tagged states are unaffected.
 public class AnimationLayerController : MonoBehaviour, IBrainModule
 {
     public const int PriorityLocomotion = 10;
     public const int PriorityAbility = 50;
     public const int PriorityReaction = 75;
     public const int PriorityOverride = 100;
+    public const string RestTag = "Rest";
+
+    static readonly int RestTagHash = Animator.StringToHash(RestTag);
 
     [Header("Profile")]
     [Tooltip("Optional. Per-layer fade times, rest weights and aliases.")]
@@ -40,6 +48,7 @@ public class AnimationLayerController : MonoBehaviour, IBrainModule
         public float FadeOut;
         public bool Driven;
         public bool Claimable = true;
+        public bool UsesRest;
     }
 
     private struct LayerClaim
@@ -99,9 +108,16 @@ public class AnimationLayerController : MonoBehaviour, IBrainModule
         for (int i = 0; i < layers.Count; i++)
         {
             LayerState layer = layers[i];
-            if (!layer.Driven || !layer.Claimable) continue;
+            bool resting = IsResting(layer.Index);
 
-            float target = ResolveTarget(layer);
+            // First sight of a Rest layer: start it at 0 rather than fading down from its authored 1.
+            if (resting && !layer.UsesRest) layer.Current = 0f;
+            if (resting) layer.UsesRest = true;
+
+            if (!layer.Claimable) continue;
+            if (!layer.Driven && !layer.UsesRest) continue;
+
+            float target = resting ? 0f : ResolveTarget(layer);
             float duration = target > layer.Current ? layer.FadeIn : layer.FadeOut;
             float step = duration > 0f ? dt / duration : 1f;
 
@@ -199,6 +215,16 @@ public class AnimationLayerController : MonoBehaviour, IBrainModule
         }
 
         return target;
+    }
+
+    // Current state tagged Rest, or the transition in flight is heading into one — so the weight
+    // fades during the exit blend rather than after it, and the Rest pose barely shows.
+    private bool IsResting(int index)
+    {
+        if (boundAnimator.IsInTransition(index))
+            return boundAnimator.GetNextAnimatorStateInfo(index).tagHash == RestTagHash;
+
+        return boundAnimator.GetCurrentAnimatorStateInfo(index).tagHash == RestTagHash;
     }
 
     private LayerState Resolve(string layerName)
@@ -346,6 +372,7 @@ public class AnimationLayerController : MonoBehaviour, IBrainModule
                 if (claim.LayerIndex == layer.Index) count++;
 
             string driven = layer.Claimable ? (layer.Driven ? "driven" : "idle") : "EXCLUDED";
+            if (layer.UsesRest) driven += IsResting(layer.Index) ? " · resting" : " · playing";
             report += $"  [{layer.Index}] {layer.Name,-22} rest={layer.RestWeight:0.00}  now={layer.Current:0.00}  claims={count}  {driven}\n";
         }
 

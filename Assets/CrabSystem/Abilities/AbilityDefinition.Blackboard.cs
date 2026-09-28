@@ -38,12 +38,12 @@ public partial class AbilityDefinition
     private static readonly Dictionary<AbilityCategory, string[]> CategoryForbiddenCache =
         new Dictionary<AbilityCategory, string[]>
         {
-            { AbilityCategory.Spell, new[] { "IsSilenced", "IsStunned" } },
-            { AbilityCategory.Physical, new[] { "IsDisarmed", "IsStunned" } },
-            { AbilityCategory.Movement, new[] { "IsRooted", "IsStunned" } },
-            { AbilityCategory.Defense, new[] { "IsDisarmed", "IsStunned" } },
-            { AbilityCategory.Natural, new[] { "IsStunned" } },  // Can't be disarmed
-            { AbilityCategory.Utility, System.Array.Empty<string>() }  // Minimal restrictions
+            { AbilityCategory.Spell, new[] { "CannotAct", "CannotCast" } },
+            { AbilityCategory.Physical, new[] { "CannotAct", "CannotAttack" } },
+            { AbilityCategory.Movement, new[] { "CannotAct", "CannotMove", "CannotDodge" } },
+            { AbilityCategory.Defense, new[] { "CannotAct", "CannotBlock" } },
+            { AbilityCategory.Natural, new[] { "CannotAct" } },  // Can't be disarmed
+            { AbilityCategory.Utility, new[] { "CannotAct" } }
         };
 
     // ========================================

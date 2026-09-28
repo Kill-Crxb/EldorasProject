@@ -81,7 +81,7 @@ public struct BlackboardKey
     /// <summary>
     /// Sprint GRANTED — a tag any system may raise: an ability, a status, a stat gate. While it is
     /// up, the run gait is served at sprint speed; walking is unaffected, because a grant cannot
-    /// turn a walk into a sprint.
+    /// turn a walk into a sprint. CannotSprint beats it: granted and denied is a run.
     ///
     /// Distinct from IsSprinting above, and deliberately so. This one is the GRANT — "has something
     /// given them permission to". IsSprinting is the RESULT — MovementSystem publishes it when the
@@ -103,4 +103,36 @@ public struct BlackboardKey
     /// reads it".
     /// </summary>
     public static readonly int DoubleJumpGranted  = "DoubleJumpGranted".GetHashCode();
+
+    // Capability denials (2026-09-28). Facts default to false, so "not denied" is the right state
+    // for a character with nothing on them. Each one names what it stops, not what caused it:
+    // Stunned, Paralyzed and Frozen all raise CannotAct, and StatusSystem's claim counting keeps it
+    // up until the last of them expires. Raised only by statuses (StatusSystem.ClaimFlags).
+    //
+    //   CannotAct     every ability, spell drawing and all movement; cancels the ability in flight
+    //   CannotMove    horizontal movement and Movement abilities
+    //   CannotJump    jump and air jump
+    //   CannotSprint  the sprint gait — a grant cannot win against it
+    //   CannotAttack  Physical abilities
+    //   CannotCast    Spell abilities and element drawing (a drawn element fizzles)
+    //   CannotBlock   Defense abilities
+    //   CannotDodge   Movement abilities
+    public static readonly int CannotAct          = "CannotAct".GetHashCode();
+    public static readonly int CannotMove         = "CannotMove".GetHashCode();
+    public static readonly int CannotJump         = "CannotJump".GetHashCode();
+    public static readonly int CannotSprint       = "CannotSprint".GetHashCode();
+    public static readonly int CannotAttack       = "CannotAttack".GetHashCode();
+    public static readonly int CannotCast         = "CannotCast".GetHashCode();
+    public static readonly int CannotBlock        = "CannotBlock".GetHashCode();
+    public static readonly int CannotDodge        = "CannotDodge".GetHashCode();
+
+    // AbilitySystem only, while an ability with castWhileMoving off plays. Kept apart from
+    // CannotMove so the ability and the statuses never share a key — MovementSystem ORs them.
+    public static readonly int MoveRooted         = "MoveRooted".GetHashCode();
+
+    /// <summary>
+    /// SpellcraftSystem only: a sequence is being entered, so the hands hold the sign pose between
+    /// signs. Mirrored to the animator's IsDrawing bool by AnimatorFactBridge.
+    /// </summary>
+    public static readonly int IsDrawingSigns     = "IsDrawingSigns".GetHashCode();
 }

@@ -51,22 +51,7 @@ namespace NinjaGame.Magic
         [Tooltip("The tables. One asset, shared by every caster — never written at runtime.")]
         [SerializeField] private SpellGrammar grammar;
 
-        [Header("Draw Animation")]
-        [Tooltip("Animator layer the per-element hand signs play on. It sits at weight 0 until " +
-                 "something claims it, so entering an element raises it — while you are making " +
-                 "signs your upper body IS busy — and AbilitySystem's own fade takes it back when " +
-                 "the cast completes. Leave empty to never touch layer weights.")]
-        [SerializeField] private string drawLayerName = "Upper Body Combat";
-
-        [Tooltip("Seconds to blend the draw layer back out when a sequence is abandoned rather " +
-                 "than cast. Matches AbilitySystem's own blend-out.")]
-        [SerializeField] private float drawBlendOutTime = 0.25f;
-
         [Header("Silence")]
-        [Tooltip("Blackboard fact that makes a drawn element fizzle: the hand sign still plays and " +
-                 "still costs its draw time, but the element never enters the sequence.")]
-        [SerializeField] private string silencedFact = "IsSilenced";
-
         [Tooltip("Colour of the draw burst when an element fizzles.")]
         [SerializeField] private Color fizzleColor = new Color(0.45f, 0.45f, 0.45f, 1f);
 
@@ -111,9 +96,7 @@ namespace NinjaGame.Magic
         private VFXSystem vfx;
         private IResourceProvider resources;
         private IStatProvider stats;
-        private int drawLayer = -1;
         private float nextDrawTime;
-        private float fizzleReleaseTime;
 
         private readonly SpellElement[] sequence = new SpellElement[SpellSequence.MaxLength];
         private readonly HashSet<string> unlocked = new HashSet<string>();
@@ -125,7 +108,19 @@ namespace NinjaGame.Magic
 
         // ── Sequence state, for UI ────────────────────────────────────────────
 
-        public int SequenceLength { get; private set; }
+        private int sequenceLength;
+
+        // The single place the hands-up fact is written. Every path that changes the sequence —
+        // draw, pop, clear, consume on cast — goes through here.
+        public int SequenceLength
+        {
+            get => sequenceLength;
+            private set
+            {
+                sequenceLength = value;
+                brain?.Blackboard?.SetBool(BlackboardKey.IsDrawingSigns, value > 0);
+            }
+        }
         public IReadOnlyList<SpellElement> Sequence => sequence;
         public SpellGrammar Grammar => grammar;
 
@@ -188,14 +183,9 @@ namespace NinjaGame.Magic
             RegisterSpellAbilities();
         }
 
-        // Fizzled signs never start a sequence, so nothing else would bring the hands back down.
-        public void UpdateModule()
-        {
-            if (fizzleReleaseTime <= 0f || Time.time < fizzleReleaseTime) return;
-
-            fizzleReleaseTime = 0f;
-            if (SequenceLength == 0) ReleaseDrawLayer();
-        }
+        // Hands up / down is the animator's job now: SequenceLength publishes IsDrawingSigns, the
+        // fact bridge mirrors it to IsDrawing, and the sign-hold state follows it.
+        public void UpdateModule() { }
 
         /// <summary>
         /// AbilitySystem resolves abilities BY STRING ID out of its own list, so anything this
@@ -274,8 +264,11 @@ namespace NinjaGame.Magic
             if (!isEnabled) return;
             if (SequenceLength >= SpellSequence.MaxLength) return;
             if (Time.time < nextDrawTime) return;
+            if (HasFact(BlackboardKey.CannotAct)) return;
 
-            if (IsSilenced())
+            // CannotCast: the hand sign still plays and still costs its draw time, but the element
+            // never enters the sequence.
+            if (HasFact(BlackboardKey.CannotCast))
             {
                 Fizzle(element);
                 return;
@@ -296,7 +289,6 @@ namespace NinjaGame.Magic
         private void Fizzle(SpellElement element)
         {
             nextDrawTime = Time.time + CurrentDrawInterval;
-            fizzleReleaseTime = nextDrawTime + drawBlendOutTime;
 
             ElementDefinition def = grammar.GetElement(element);
             if (def != null)
@@ -308,13 +300,7 @@ namespace NinjaGame.Magic
             OnElementFizzled?.Invoke(element);
         }
 
-        private bool IsSilenced()
-        {
-            Blackboard blackboard = brain != null ? brain.Blackboard : null;
-            if (blackboard == null || string.IsNullOrEmpty(silencedFact)) return false;
-
-            return blackboard.GetBool(new BlackboardKey(silencedFact).hash);
-        }
+        private bool HasFact(int key) => brain?.Blackboard?.GetBool(key) ?? false;
 
         /// <summary>How fast this caster's hands are, 1 at no stat. Above 1 is faster.</summary>
         public float DrawSpeedMultiplier
@@ -352,8 +338,6 @@ namespace NinjaGame.Magic
 
             SequenceLength--;
 
-            if (SequenceLength == 0) ReleaseDrawLayer();
-
             OnSequenceChanged?.Invoke();
         }
 
@@ -363,15 +347,12 @@ namespace NinjaGame.Magic
             if (SequenceLength == 0) return;
 
             SequenceLength = 0;
-            ReleaseDrawLayer();
             OnSequenceChanged?.Invoke();
         }
 
         /// <summary>
-        /// Clear because the sequence was SPENT, not abandoned. Deliberately does not release
-        /// the draw layer: AbilitySystem.ExecuteAbility has just claimed it for the cast
-        /// animation and fades it out itself on completion. Fading here would fight it and
-        /// snap the cast back to locomotion mid-swing.
+        /// Clear because the sequence was SPENT, not abandoned. The cast's own trigger takes the
+        /// hands from the sign hold straight into the cast animation.
         /// </summary>
         private void ConsumeSequence()
         {
@@ -425,8 +406,6 @@ namespace NinjaGame.Magic
             if (animation == null) return;
             if (string.IsNullOrEmpty(def.drawTrigger)) return;
 
-            ClaimDrawLayer();
-
             // The clip plays at the same speed the hands actually move, so a fast caster looks
             // fast rather than looking normal and finishing early. Skipped silently when the
             // animator has no such parameter — SetFloat on a missing one logs a Unity warning
@@ -435,38 +414,6 @@ namespace NinjaGame.Magic
                 animation.SetFloat(drawSpeedParameter, DrawSpeedMultiplier);
 
             animation.TriggerCombatAnimation(def.drawTrigger);
-        }
-
-        /// <summary>
-        /// The combat layer sits at weight 0 until an ability claims it, so a draw trigger fired
-        /// against it plays a clip nobody can see. This is the single most likely reason a hand
-        /// sign "does nothing" despite the trigger and the state both existing.
-        /// </summary>
-        private void ClaimDrawLayer()
-        {
-            if (string.IsNullOrEmpty(drawLayerName)) return;
-
-            if (drawLayer < 0)
-            {
-                drawLayer = animation.GetLayerIndex(drawLayerName);
-
-                if (drawLayer < 0)
-                {
-                    Debug.LogWarning($"[SpellcraftSystem] No animator layer named '{drawLayerName}' on " +
-                                     $"{brain.name} — draw animations will play at whatever weight the " +
-                                     $"layer already has, which is usually zero.", this);
-                    return;
-                }
-            }
-
-            animation.SetLayerWeight(drawLayer, 1f);
-        }
-
-        private void ReleaseDrawLayer()
-        {
-            if (animation == null || drawLayer < 0) return;
-
-            animation.FadeLayerWeight(drawLayer, 0f, drawBlendOutTime);
         }
 
         /// <summary>The lookup key for what is currently entered.</summary>

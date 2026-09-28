@@ -9,7 +9,7 @@ using UnityEngine;
 // TakeDamage on the player's. Hit roll, soak, block intercept, parry, Juice and HitReactionSystem
 // all see an ordinary melee hit.
 //
-// Stands down while its own blackboard says IsStunned — so Cleave (Cripple) at 3 stacks silences it.
+// Stands down while its own blackboard says CannotAct — so Cleave (Cripple) at 3 stacks silences it.
 //
 // Place on a child of Component_Brain on a dummy variant. Staging only; delete the folder to remove.
 public class SparringPartner : MonoBehaviour, IBrainModule
@@ -51,7 +51,7 @@ public class SparringPartner : MonoBehaviour, IBrainModule
     private float strikeAt;
     private bool windingUp;
 
-    private static readonly int IsStunnedKey = new BlackboardKey("IsStunned").hash;
+    private static readonly int CannotActKey = BlackboardKey.CannotAct;
 
     public void Initialize(ControllerBrain controllerBrain)
     {
@@ -175,7 +175,7 @@ public class SparringPartner : MonoBehaviour, IBrainModule
     private bool Stunned()
     {
         Blackboard blackboard = brain.Blackboard;
-        return blackboard != null && blackboard.GetBool(IsStunnedKey);
+        return blackboard != null && blackboard.GetBool(CannotActKey);
     }
 
     private static bool IsAlive(ControllerBrain target)

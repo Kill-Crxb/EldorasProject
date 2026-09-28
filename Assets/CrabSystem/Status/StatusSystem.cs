@@ -146,7 +146,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         RefreshDebugList();
 
         if (debugStatuses)
-            Debug.Log($"[StatusSystem] +{definition.id} on {name} ({definition.duration:F1}s)");
+            Debug.Log($"[StatusSystem] +{definition.id} on {name} ({definition.Seconds:F2}s)");
 
         OnStatusApplied?.Invoke(instance);
     }
@@ -154,7 +154,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     private void Reapply(StatusInstance instance, ControllerBrain source)
     {
         instance.Source = source;
-        instance.Remaining = instance.Definition.duration;
+        instance.Remaining = instance.Definition.Seconds;
 
         if (instance.Definition.stacking != StatusStacking.Stack) return;
 

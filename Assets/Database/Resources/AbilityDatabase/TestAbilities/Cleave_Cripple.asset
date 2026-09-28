@@ -44,7 +44,7 @@ MonoBehaviour:
   blockStartupTime: 0.1
   abilityId: Cleave_Cripple
   abilityName: Cleave (Cripple)
-  description: TEST - stacks Crippled on the target. IsDisarmed at 2 stacks, IsStunned at 3.
+  description: TEST - stacks Crippled on the target. CannotAttack + CannotBlock at 2 stacks, CannotAct at 3.
   icon: {fileID: 21300000, guid: 0c255b2cf8156b1418522a078ad30bbe, type: 3}
   abilityType: 0
   abilityCategory: 1

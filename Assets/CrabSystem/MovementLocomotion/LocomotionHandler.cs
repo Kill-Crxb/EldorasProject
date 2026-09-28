@@ -207,6 +207,22 @@ public abstract class LocomotionHandler : MonoBehaviour
     public virtual bool IsGrounded => characterController?.isGrounded ?? false;
     public virtual bool IsMoving => currentVelocity.magnitude > 0.1f;
     public virtual Gait CurrentGait => Gait.None;
+
+    // The one sprint rule every handler serves: granted, not denied, and allowed by what the upper
+    // body is doing (StatePermissionMatrix — guard up means no sprint). A refusal drops the gait to
+    // run rather than stopping the character, and IsSprinting drops with it.
+    //
+    // Read at the point of use, never cached: the blackboard is resolved after handlers initialize,
+    // and a grant or denial landing mid-stride is the point of putting them on the blackboard.
+    protected bool SprintAvailable()
+    {
+        Blackboard blackboard = movementSystem != null && movementSystem.Brain != null ? movementSystem.Brain.Blackboard : null;
+        if (blackboard == null) return false;
+        if (!blackboard.GetBool(BlackboardKey.SprintGranted)) return false;
+        if (blackboard.GetBool(BlackboardKey.CannotSprint)) return false;
+
+        return movementSystem.Permits(LowerBodyState.Sprinting);
+    }
     public virtual Vector3 Velocity => currentVelocity;
     public virtual Vector3 VerticalVelocity => verticalVelocity;
     public CharacterController CharacterController => characterController;

@@ -31,14 +31,14 @@ public class StatusInstance
         Definition = definition;
         Source = source;
         Stacks = 1;
-        Remaining = definition.duration;
+        Remaining = definition.Seconds;
     }
 
     public string Id => Definition.id;
 
     /// <summary>A zero duration means it lasts until something removes it explicitly.</summary>
-    public bool IsPermanent => Definition.duration <= 0f;
+    public bool IsPermanent => Definition.Seconds <= 0f;
 
     /// <summary>0 to 1, for a radial sweep on the buff bar. Always 1 while permanent.</summary>
-    public float Progress => IsPermanent ? 1f : Mathf.Clamp01(Remaining / Definition.duration);
+    public float Progress => IsPermanent ? 1f : Mathf.Clamp01(Remaining / Definition.Seconds);
 }

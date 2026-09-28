@@ -154,7 +154,6 @@ public class InputSystem : MonoBehaviour,
     public Vector2 LookInput { get; private set; }
     public bool JumpPressed { get; private set; }
     public bool JumpHeld { get; private set; }
-    public bool SprintHeld { get; private set; }
     public bool CrouchPressed { get; private set; }
     public bool CrouchHeld { get; private set; }
     public bool GaitTogglePressed { get; private set; }
@@ -502,7 +501,6 @@ public class InputSystem : MonoBehaviour,
         LookInput = inputActions.Player.Look.ReadValue<Vector2>();
         JumpPressed = inputActions.Player.Jump.WasPressedThisFrame();
         JumpHeld = inputActions.Player.Jump.IsPressed();
-        SprintHeld = inputActions.Player.Sprint.IsPressed();
         CrouchPressed = inputActions.Player.Crouch.WasPressedThisFrame();
         CrouchHeld = inputActions.Player.Crouch.IsPressed();
         GaitTogglePressed = inputActions.Player.ToggleGait.WasPressedThisFrame();
@@ -783,7 +781,7 @@ public class InputSystem : MonoBehaviour,
     {
         MoveInput = Vector2.zero;
         LookInput = Vector2.zero;
-        JumpPressed = JumpHeld = SprintHeld = DashPressed = false;
+        JumpPressed = JumpHeld = DashPressed = false;
         CrouchPressed = CrouchHeld = false;
         GaitTogglePressed = false;
         LightAttackPressed = HeavyAttackPressed = BlockHeld = ParryPressed = false;
@@ -816,7 +814,6 @@ public class InputSystem : MonoBehaviour,
         {
             MoveDirection = moveDir,
             LookDirection = lookDir,
-            Sprint = SprintHeld,
             ToggleGait = GaitTogglePressed,
             Jump = JumpPressed,
             JumpHold = JumpHeld,
@@ -874,7 +871,6 @@ public class InputSystem : MonoBehaviour,
         {
             MoveDirection = moveDir,
             LookDirection = moveDir,
-            Sprint = false,
             Jump = false,
             Dash = false
         };
@@ -908,7 +904,7 @@ public class InputSystem : MonoBehaviour,
         GUILayout.Label($"Mode:        {currentMode}");
         GUILayout.Label($"Active:      {IsActive}");
         GUILayout.Label($"Move:        {MoveInput}");
-        GUILayout.Label($"Sprint:      {SprintHeld}   Jump: {JumpPressed}");
+        GUILayout.Label($"Jump:        {JumpPressed}");
 
         foreach (var route in keybindRoutes)
         {

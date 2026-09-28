@@ -15,11 +15,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     [Tooltip("Log animation events, forwarder binding, and hitbox toggling.")]
     [SerializeField] private bool debugLogging = false;
 
-    [Header("Animation Blending")]
-    [Tooltip("Seconds to blend the combat animation layer back out when an ability completes. " +
-             "The clip's recovery frames keep playing during the fade instead of snapping to locomotion.")]
-    [SerializeField] private float layerBlendOutTime = 0.25f;
-
     private class AbilityState
     {
         public AbilityDefinition definition;
@@ -37,7 +32,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private Blackboard blackboard;
     private RuntimeAbilityManager runtimeAbilityManager;
     private IAnimationProvider animationProvider;
-    private AnimationLayerController layerController;
     private IResourceProvider resources;
     private IHealthProvider healthProvider;
     private MovementSystem movementSystem;
@@ -135,14 +129,55 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     public void LateInitialize()
     {
-        layerController = brain?.GetModule<AnimationLayerController>();
-
         // Here, not in Initialize: ControllerBrain initializes this module before BlackboardSystem,
         // which only creates its Blackboard in its own Initialize. Read earlier, this was always
         // null — every forbidden fact passed and IsBlocking / IsInvincible were never written.
         blackboard = brain?.GetModule<BlackboardSystem>()?.Blackboard;
         if (blackboard == null)
+        {
             Debug.LogError("[AbilitySystem] BlackboardSystem not found");
+            return;
+        }
+
+        blackboard.OnBoolChanged += HandleFactChanged;
+    }
+
+    // Hard CC interrupts (Combat_Framework §5, F10): the move ends the moment CannotAct rises, not
+    // when the committed swing finishes. CannotCast breaks only a spell still casting. No armoured
+    // moves exist yet — when they do, they are the exception here.
+    private void HandleFactChanged(int key, bool value)
+    {
+        if (!value) return;
+
+        bool hardControl = key == BlackboardKey.CannotAct;
+        bool silencedMidCast = key == BlackboardKey.CannotCast && IsCastingSpell();
+
+        if (!hardControl && !silencedMidCast) return;
+
+        CancelCurrentAbility();
+        RestActionsLayer();
+    }
+
+    // currentlyCastingAbility holds the id, not the definition.
+    private bool IsCastingSpell()
+    {
+        if (currentlyCastingAbility == null) return false;
+
+        AbilityDefinition casting = GetAbility(currentlyCastingAbility);
+        return casting != null && casting.abilityCategory == AbilityCategory.Spell;
+    }
+
+    // Gameplay cancelled, so the pose must not play on: send the action layer home. The synced
+    // Actions Upper layer follows it. v1 controllers have no Actions layer and are skipped.
+    private void RestActionsLayer()
+    {
+        AnimationSystem anim = brain != null ? brain.Animation : null;
+        if (anim == null) return;
+
+        int layer = anim.GetLayerIndex(AnimationLayerNames.Actions);
+        if (layer < 0) return;
+
+        anim.CrossFade("Rest", 0.1f, layer);
     }
 
     public void UpdateModule()
@@ -253,6 +288,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private void OnDestroy()
     {
         GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+
+        if (blackboard != null)
+            blackboard.OnBoolChanged -= HandleFactChanged;
 
         if (modelModule != null)
             modelModule.OnModelChanged -= HandleModelChanged;
@@ -412,13 +450,21 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         if (currentlyCastingAbility != null)
             currentlyCastingAbility = null;
 
+        SetFact(BlackboardKey.MoveRooted, false);
+
         if (currentAbility != null)
             CompleteAbility(currentAbility);
+
+        // A held guard is not currentAbility once its clip has ended, so it is dropped here too —
+        // and through the one method that also unsubscribes the damage intercept.
+        DeactivateDefensiveAbility();
+
+        if (stateMachine != null)
+            stateMachine.TryTransitionUpperBody(UpperBodyState.Idle);
 
         isAnimationLocked = false;
         isInvincible = false;
         SetFact(BlackboardKey.IsInvincible, false);
-        SetFact(BlackboardKey.IsBlocking, false);
         UpdateExecutingFact();
     }
 
@@ -461,6 +507,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     private void StartCast(AbilityDefinition ability)
     {
+        SetFact(BlackboardKey.MoveRooted, !ability.castWhileMoving);
         currentlyCastingAbility = ability.abilityId;
         castStartTime = Time.time;
         OnAbilityCastStart?.Invoke(ability.abilityId);
@@ -492,7 +539,10 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         abilityStartTime = Time.time;
         UpdateExecutingFact();
 
-        ApplyAbilityLayerWeights(ability.animationLayer == AbilityAnimationLayer.FullBodyActions);
+        // Layers need nothing: the Actions layers show while their state plays (rest rule), and
+        // ActionsLayerDriver picks arms-only or full body from speed. Rooting is the fact.
+        SetFact(BlackboardKey.MoveRooted, !ability.castWhileMoving);
+        EnterUpperBodyState(StartStateFor(ability));
 
         if (animationProvider != null && !string.IsNullOrEmpty(ability.animationTrigger))
             animationProvider.TriggerCombatAnimation(ability.animationTrigger);
@@ -566,7 +616,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         if (stateMachine != null)
             stateMachine.TryTransitionUpperBody(UpperBodyState.Idle);
 
-        ReleaseAbilityLayerWeights();
+        SetFact(BlackboardKey.MoveRooted, false);
 
         lastCompletedAbility = ability;
         lastAbilityCompleteTime = Time.time;
@@ -597,9 +647,11 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         {
             case AnimationEventType.HitboxStart:
                 EnableAbilityHitboxes();
+                EnterMeleePhase(UpperBodyState.MeleeSwing);
                 break;
             case AnimationEventType.HitboxEnd:
                 DisableAbilityHitboxes();
+                EnterMeleePhase(UpperBodyState.MeleeRecovery);
                 break;
         }
 
@@ -639,16 +691,34 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         chainWindowOpen = false;
     }
 
-    private void HandleStateTransition(UpperBodyState newState)
+    // An animation event naming a state (OnStateTransition("…")) still wins over the defaults below.
+    private void HandleStateTransition(UpperBodyState newState) => EnterUpperBodyState(newState);
+
+    // ── Upper-body state ──────────────────────────────────────────────────
+    // The state machine is the one answer to "what are the arms doing". AI, camera and the movement
+    // permission matrix read it. Phases come from the hitbox events until the CF1 move clock lands.
+
+    private void EnterUpperBodyState(UpperBodyState state)
     {
         if (stateMachine == null) return;
+        stateMachine.TryTransitionUpperBody(state);
+    }
 
-        if (stateMachine.TryTransitionUpperBody(newState))
-        {
-        }
-        else
-        {
-        }
+    private void EnterMeleePhase(UpperBodyState phase)
+    {
+        if (currentAbility == null || !IsMelee(currentAbility)) return;
+        EnterUpperBodyState(phase);
+    }
+
+    private static bool IsMelee(AbilityDefinition ability)
+        => ability.abilityCategory == AbilityCategory.Physical || ability.abilityCategory == AbilityCategory.Natural;
+
+    private static UpperBodyState StartStateFor(AbilityDefinition ability)
+    {
+        if (ability.abilityType == AbilityType.Defensive) return UpperBodyState.Blocking;
+        if (ability.abilityCategory == AbilityCategory.Spell) return UpperBodyState.CastingWindUp;
+        if (IsMelee(ability)) return UpperBodyState.MeleeWindUp;
+        return UpperBodyState.Idle;
     }
 
     private void UpdateChainWindow()
@@ -907,50 +977,5 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
                                          proc.windowSeconds, 30);
             }
         }
-    }
-
-    // ── Layer weights ─────────────────────────────────────────────────────
-
-    // With an AnimationLayerController present the ability CLAIMS the layer it needs and releases
-    // the other, rather than writing 1 to one and 0 to the other. Writing 0 is what used to stomp
-    // anything else holding that layer — a jump in flight, most obviously.
-    private void ApplyAbilityLayerWeights(bool isFullBody)
-    {
-        if (layerController != null)
-        {
-            string claimed = isFullBody ? AnimationLayerNames.FullBodyActions : AnimationLayerNames.UpperBodyCombat;
-            string released = isFullBody ? AnimationLayerNames.UpperBodyCombat : AnimationLayerNames.FullBodyActions;
-
-            layerController.Claim(this, claimed, 1f, AnimationLayerController.PriorityAbility);
-            layerController.Release(this, released);
-            return;
-        }
-
-        if (!(animationProvider is AnimationSystem animSys)) return;
-
-        int fullBodyLayer = animSys.GetLayerIndex(AnimationLayerNames.FullBodyActions);
-        int upperBodyLayer = animSys.GetLayerIndex(AnimationLayerNames.UpperBodyCombat);
-
-        if (fullBodyLayer >= 0) animSys.SetLayerWeight(fullBodyLayer, isFullBody ? 1f : 0f);
-        if (upperBodyLayer >= 0) animSys.SetLayerWeight(upperBodyLayer, isFullBody ? 0f : 1f);
-    }
-
-    private void ReleaseAbilityLayerWeights()
-    {
-        if (layerController != null)
-        {
-            layerController.ReleaseAll(this);
-            return;
-        }
-
-        if (!(animationProvider is AnimationSystem animSys)) return;
-
-        int fullBodyLayer = animSys.GetLayerIndex(AnimationLayerNames.FullBodyActions);
-        int upperBodyLayer = animSys.GetLayerIndex(AnimationLayerNames.UpperBodyCombat);
-
-        // Fade out instead of snapping — the clip's recovery frames keep playing on the layer
-        // while its weight blends back to locomotion.
-        if (fullBodyLayer >= 0) animSys.FadeLayerWeight(fullBodyLayer, 0f, layerBlendOutTime);
-        if (upperBodyLayer >= 0) animSys.FadeLayerWeight(upperBodyLayer, 0f, layerBlendOutTime);
     }
 }

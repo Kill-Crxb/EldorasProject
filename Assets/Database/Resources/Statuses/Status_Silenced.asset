@@ -21,6 +21,6 @@ MonoBehaviour:
   maxStacks: 1
   contributions: []
   blackboardFlags:
-  - fact: IsSilenced
+  - fact: CannotCast
     minStacks: 1
   auraVfx: {fileID: 0}

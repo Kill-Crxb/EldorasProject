@@ -369,7 +369,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
     /// The toggle key owns walk versus run and nothing else touches it. Sprint is a tag on the
     /// blackboard that an ability, a status or a stat gate raises — this substitutes sprint speed
     /// wherever RUN would have applied, and leaves walking alone. A grant cannot turn a walk into
-    /// a sprint; it upgrades a run.
+    /// a sprint; it upgrades a run. CannotSprint beats the grant (LocomotionHandler.SprintAvailable).
     ///
     /// Read at the point of use, never cached. The blackboard belongs to another module and is not
     /// resolved until LateInitialize, which is after this handler's Initialize has already run —
@@ -396,10 +396,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
             if (IsCrouching) return Gait.Crouch;
             if (walkMode) return Gait.Walk;
 
-            Blackboard blackboard = movementSystem != null && movementSystem.Brain != null ? movementSystem.Brain.Blackboard : null;
-            bool sprintGranted = blackboard != null && blackboard.GetBool(BlackboardKey.SprintGranted);
-
-            return sprintGranted ? Gait.Sprint : Gait.Run;
+            return SprintAvailable() ? Gait.Sprint : Gait.Run;
         }
     }
 

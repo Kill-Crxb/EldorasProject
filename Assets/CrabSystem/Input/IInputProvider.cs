@@ -6,7 +6,6 @@ public interface IInputProvider
     Vector2 LookInput { get; }
     bool JumpPressed { get; }
     bool JumpHeld { get; }
-    bool SprintHeld { get; }
     bool DashPressed { get; }
     bool LightAttackPressed { get; }
     bool HeavyAttackPressed { get; }

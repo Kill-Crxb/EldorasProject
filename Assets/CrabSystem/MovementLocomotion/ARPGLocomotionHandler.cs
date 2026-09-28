@@ -16,13 +16,10 @@ public class ARPGLocomotionHandler : LocomotionHandler
     [SerializeField] private float acceleration = 8f;
     [SerializeField] private float deceleration = 10f;
 
-    [Header("Walk/Run Toggle")]
-    [Tooltip("Enable walk/run toggle - tap sprint to toggle, hold sprint to sprint")]
-    [SerializeField] private bool enableWalkRunToggle = false;
-    [Tooltip("Start in walk mode (slower). If false, starts in run mode (faster)")]
+    [Header("Gait")]
+    [Tooltip("Start in walk mode. The gait toggle swaps walk and run; sprint is never input — it " +
+             "is the run gait while SprintGranted is up and CannotSprint is not.")]
     [SerializeField] private bool startInWalkMode = false;
-    [Tooltip("Time window to detect tap vs hold (seconds)")]
-    [SerializeField] private float tapWindow = 0.3f;
 
     [Header("Lock-On / Strafe")]
     [SerializeField] private float strafeWalkSpeed = 1.5f;
@@ -73,10 +70,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
     private bool isLockedOn;
     private bool abilityDashing; // Tracks if ability dash is active
 
-    // Walk/Run toggle state
     private bool isInWalkMode;
-    private bool wasSprintingLastFrame;
-    private float sprintPressTime;
 
     // Jump
     private float lastGroundedTime;
@@ -112,30 +106,10 @@ public class ARPGLocomotionHandler : LocomotionHandler
         // Check actual target lock state (not just look input)
         isLockedOn = targetLock != null && targetLock.IsLockedOn;
 
-        // Walk/Run toggle detection (if enabled) - do this FIRST to set sprintPressTime
-        if (enableWalkRunToggle)
-        {
-            HandleWalkRunToggle(input.Sprint);
-        }
+        if (input.ToggleGait)
+            isInWalkMode = !isInWalkMode;
 
-        // Handle sprint with tap window consideration
-        // Suppress sprint during brief taps to prevent animation flicker
-        if (enableWalkRunToggle)
-        {
-            // Only sprint if held longer than tap window
-            float heldDuration = input.Sprint ? (Time.time - sprintPressTime) : 0f;
-            isSprinting = input.Sprint && heldDuration >= tapWindow;
-
-            if (showDebugInfo && input.Sprint && !isSprinting)
-            {
-                Debug.Log($"[Sprint] Suppressed during tap window (held: {heldDuration:F3}s, need: {tapWindow:F3}s)");
-            }
-        }
-        else
-        {
-            // Walk toggle disabled - sprint works normally
-            isSprinting = input.Sprint;
-        }
+        isSprinting = CurrentGait == Gait.Sprint;
 
         ApplyGravity();
 
@@ -181,39 +155,14 @@ public class ARPGLocomotionHandler : LocomotionHandler
         }
     }
 
-    /// <summary>
-    /// Handle walk/run toggle detection
-    /// Tap sprint key = toggle walk/run mode
-    /// Hold sprint key = sprint normally
-    /// </summary>
-    void HandleWalkRunToggle(bool sprintInput)
+    // Same rule as ParkourLocomotionHandler: the walk/run toggle is the entity's, sprint is granted.
+    public override Gait CurrentGait
     {
-        // Detect sprint key press (transition from not sprinting to sprinting)
-        if (sprintInput && !wasSprintingLastFrame)
+        get
         {
-            sprintPressTime = Time.time;
+            if (isInWalkMode) return Gait.Walk;
+            return SprintAvailable() ? Gait.Sprint : Gait.Run;
         }
-
-        // Detect sprint key release (transition from sprinting to not sprinting)
-        if (!sprintInput && wasSprintingLastFrame)
-        {
-            float pressDuration = Time.time - sprintPressTime;
-
-            // Tap detected - toggle walk/run mode
-            if (pressDuration < tapWindow)
-            {
-                isInWalkMode = !isInWalkMode;
-
-                if (showDebugInfo)
-                {
-                    float currentSpeed = isInWalkMode ? walkSpeed : runSpeed;
-                    Debug.Log($"[ARPGLocomotion] Walk/Run toggled to: {(isInWalkMode ? "WALK" : "RUN")} " +
-                             $"(speed: {currentSpeed:F2})");
-                }
-            }
-        }
-
-        wasSprintingLastFrame = sprintInput;
     }
 
     // ============================
@@ -319,7 +268,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
             baseSpeed = sprintSpeed;
             speedType = "SPRINT";
         }
-        else if (enableWalkRunToggle && isInWalkMode)
+        else if (isInWalkMode)
         {
             // Walk mode toggled on
             baseSpeed = walkSpeed;
@@ -351,7 +300,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
         {
             baseSpeed = strafeSprintSpeed;
         }
-        else if (enableWalkRunToggle && isInWalkMode)
+        else if (isInWalkMode)
         {
             // Walk mode toggled on
             baseSpeed = strafeWalkSpeed;
@@ -506,7 +455,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
             movementState = 0; // Idle
         else if (isSprinting)
             movementState = 3; // Sprint
-        else if (enableWalkRunToggle && isInWalkMode)
+        else if (isInWalkMode)
             movementState = 1; // Walk
         else
             movementState = 2; // Run
@@ -591,9 +540,9 @@ public class ARPGLocomotionHandler : LocomotionHandler
     public bool IsAbilityDashing => abilityDashing;
 
     /// <summary>
-    /// Is walk mode currently active? (slower movement when toggle is enabled)
+    /// Is walk mode currently active?
     /// </summary>
-    public bool IsInWalkMode => enableWalkRunToggle && isInWalkMode;
+    public bool IsInWalkMode => isInWalkMode;
 
     // ============================
     // Debug / Testing
@@ -602,12 +551,6 @@ public class ARPGLocomotionHandler : LocomotionHandler
     [ContextMenu("Toggle Walk/Run Mode")]
     void DebugToggleWalkRun()
     {
-        if (!enableWalkRunToggle)
-        {
-            Debug.LogWarning("[ARPGLocomotion] Walk/Run toggle is disabled in Inspector!");
-            return;
-        }
-
         isInWalkMode = !isInWalkMode;
         Debug.Log($"[ARPGLocomotion] Manually toggled to: {(isInWalkMode ? "WALK" : "RUN")}");
     }

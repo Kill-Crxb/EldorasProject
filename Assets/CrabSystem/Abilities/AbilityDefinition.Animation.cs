@@ -2,18 +2,6 @@ using NinjaGame.Animation;
 using UnityEngine;
 
 /// <summary>
-/// Which animator layer an ability plays on.
-/// UpperBodyCombat — plays on the upper body layer; locomotion continues on legs.
-/// FullBodyActions  — plays on the full body layer; overrides locomotion entirely.
-/// Per-ability movement restrictions are defined in StatePermissionMatrix per UpperBodyState.
-/// </summary>
-public enum AbilityAnimationLayer
-{
-    UpperBodyCombat,
-    FullBodyActions,
-}
-
-/// <summary>
 /// AbilityDefinition - Animation Partial
 /// Animation triggers, VFX, and timing control
 /// 
@@ -37,8 +25,10 @@ public partial class AbilityDefinition
     [Tooltip("Safety timeout - force complete if AnimUnlocked never fires (0 = no timeout)")]
     public float maxDuration = 2.0f;
 
-    [Tooltip("Which animator layer this ability plays on. Movement restrictions during the ability are defined in StatePermissionMatrix per UpperBodyState.")]
-    public AbilityAnimationLayer animationLayer = AbilityAnimationLayer.UpperBodyCombat;
+    [Tooltip("On: the caster keeps walking — the clip plays on the arms while moving and on the whole " +
+             "body when standing still. Off: the caster is rooted for the move (MoveRooted) and the " +
+             "clip plays full body. Heavies and anything meant to be punishable root.")]
+    public bool castWhileMoving = true;
 
     // ========================================
     // ANIMATION & VFX

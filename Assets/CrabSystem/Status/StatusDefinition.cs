@@ -41,6 +41,13 @@ public class StatusDefinition : ScriptableObject
              "an aura you are standing in, a curse that needs cleansing.")]
     public float duration = 10f;
 
+    [Tooltip("Frames at 60 fps. Above 0 it replaces duration — hit states, blockstun and anything " +
+             "else authored against frame data. 0 = use seconds.")]
+    public int durationFrames = 0;
+
+    /// <summary>The lifetime every reader uses: frames when authored, otherwise seconds.</summary>
+    public float Seconds => durationFrames > 0 ? durationFrames / 60f : duration;
+
     [Tooltip("What a second application does. See StatusStacking.")]
     public StatusStacking stacking = StatusStacking.Refresh;
 
@@ -89,6 +96,7 @@ public class StatusDefinition : ScriptableObject
         cachedSourceKey = null;
 
         if (duration < 0f) duration = 0f;
+        if (durationFrames < 0) durationFrames = 0;
         if (maxStacks < 1) maxStacks = 1;
         if (stacking == StatusStacking.Refresh) maxStacks = 1;
     }

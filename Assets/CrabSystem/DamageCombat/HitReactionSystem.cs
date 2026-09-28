@@ -35,14 +35,6 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
     [SerializeField] private string hitDirXParam = "HitDirX";
     [SerializeField] private string hitDirZParam = "HitDirZ";
 
-    [Header("Reaction Layer")]
-    [Tooltip("Animator layer the reaction clips live on. Leave blank to drive the base layer only.")]
-    [SerializeField] private string reactionLayerName = "Full Body Actions";
-    [SerializeField] private float layerFadeIn = 0.05f;
-    [SerializeField] private float layerFadeOut = 0.15f;
-    [Tooltip("How long the reaction layer stays at full weight after a hit.")]
-    [SerializeField] private float reactionDuration = 0.4f;
-
     public bool IsEnabled
     {
         get => isEnabled;
@@ -55,11 +47,7 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
     private IHealthProvider health;
     private Transform facing;
 
-    private int reactionLayer = -1;
-    private AnimationLayerController layerController;
     private float lastReactionTime = -999f;
-    private float reactionEndTime;
-    private bool layerRaised;
     private bool isDead;
 
     /// <summary>Fired with the trigger name that was played. VFX/SFX can hang off this.</summary>
@@ -72,7 +60,6 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
 
     public void LateInitialize()
     {
-        layerController = brain?.GetModule<AnimationLayerController>();
         anim = brain.Animation;
         damage = brain.Damage;
         health = brain.ResourceSys;
@@ -103,12 +90,9 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
         damage.OnDeath -= HandleDeath;
     }
 
-    public void UpdateModule()
-    {
-        if (!layerRaised) return;
-        if (Time.time < reactionEndTime) return;
-        LowerLayer();
-    }
+    // The Reactions layer shows itself while a reaction plays and rests at 0 otherwise
+    // (AnimationLayerController's rest rule), so there is no weight to manage here.
+    public void UpdateModule() { }
 
     // ── Damage → animation ────────────────────────────────────────────────
 
@@ -127,7 +111,6 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
 
         string trigger = PickTrigger(applied);
         SetTrigger(trigger);
-        RaiseLayer();
 
         OnReactionPlayed?.Invoke(trigger);
     }
@@ -139,9 +122,6 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
 
         SetBool(isDeadParam, true);
         SetTrigger(deathParam);
-
-        RaiseLayer();
-        reactionEndTime = float.MaxValue; // death pose holds until respawn
     }
 
     private string PickTrigger(float incomingDamage)
@@ -162,48 +142,6 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
         Vector3 local = facing.InverseTransformDirection(worldDirection.normalized);
         SetFloat(hitDirXParam, local.x);
         SetFloat(hitDirZParam, local.z);
-    }
-
-    // ── Layer weight ──────────────────────────────────────────────────────
-
-    private void RaiseLayer()
-    {
-        reactionEndTime = Time.time + reactionDuration;
-        if (layerRaised) return;
-
-        if (layerController != null)
-        {
-            // Not gated on reactionLayer. The controller resolves the layer by name, late.
-            layerController.Claim(this, reactionLayerName, 1f, AnimationLayerController.PriorityReaction);
-            layerRaised = true;
-            return;
-        }
-
-        // Resolved here rather than at LateInitialize: a spawned model's Animator has not bound
-        // its controller yet at that point, so the index would always be -1.
-        if (reactionLayer < 0 && !string.IsNullOrEmpty(reactionLayerName))
-            reactionLayer = anim.GetLayerIndex(reactionLayerName);
-
-        if (reactionLayer < 0) return;
-
-        anim.FadeLayerWeight(reactionLayer, 1f, layerFadeIn);
-        layerRaised = true;
-    }
-
-    private void LowerLayer()
-    {
-        layerRaised = false;
-
-        if (layerController != null)
-        {
-            // Release, never write zero. A reaction ending must hand the layer back to whatever
-            // else still wants it — an ability mid-swing, or a jump still in the air.
-            layerController.Release(this, reactionLayerName);
-            return;
-        }
-
-        if (reactionLayer < 0) return;
-        anim.FadeLayerWeight(reactionLayer, 0f, layerFadeOut);
     }
 
     // ── Guarded animator writes (a missing parameter logs once, not every frame) ──
@@ -236,8 +174,6 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
     {
         isDead = false;
         lastReactionTime = -999f;
-        reactionEndTime = 0f;
         SetBool(isDeadParam, false);
-        LowerLayer();
     }
 }

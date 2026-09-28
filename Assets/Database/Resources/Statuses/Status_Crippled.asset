@@ -21,8 +21,10 @@ MonoBehaviour:
   maxStacks: 3
   contributions: []
   blackboardFlags:
-  - fact: IsDisarmed
+  - fact: CannotAttack
     minStacks: 2
-  - fact: IsStunned
+  - fact: CannotBlock
+    minStacks: 2
+  - fact: CannotAct
     minStacks: 3
   auraVfx: {fileID: 0}

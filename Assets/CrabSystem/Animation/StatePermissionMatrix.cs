@@ -166,38 +166,30 @@ public class StatePermissionMatrix : ScriptableObject
     {
         switch (action)
         {
-            case UpperBodyState.MeleeSwing:
-                // Committed to swing - can't move
-                bool swingLocked = desiredMovement != LowerBodyState.Idle;
-
-                if (swingLocked && debugPermissions)
-                    Debug.Log($"[Permissions] MeleeSwing locks movement");
-
-                return !swingLocked;
-
+            // WoW-style free movement (2026-09-28). MovementSystem zeroes ALL input when this says
+            // no, so a refusal here is a full stop, not a slow-down. Every melee phase lets you move;
+            // only the dash waits. Rooting is per ability (castWhileMoving → MoveRooted fact).
             case UpperBodyState.MeleeWindUp:
+            case UpperBodyState.MeleeSwing:
             case UpperBodyState.MeleeRecovery:
-                // Can walk during windup/recovery, but can't dash
-                bool windupRestricted = desiredMovement == LowerBodyState.Dashing ||
-                                       desiredMovement == LowerBodyState.Dodging ||
-                                       desiredMovement == LowerBodyState.Sprinting;
+                bool meleeRestricted = desiredMovement == LowerBodyState.Dashing;
 
-                if (windupRestricted && debugPermissions)
+                if (meleeRestricted && debugPermissions)
                     Debug.Log($"[Permissions] {action} blocks {desiredMovement}");
 
-                return !windupRestricted;
+                return !meleeRestricted;
 
+            // Guard up: walk and run, no sprint or dash. A slower guard walk is a speed modifier for
+            // CF3, not a refusal — refusing Running here stopped the character dead.
             case UpperBodyState.Blocking:
-                // Can move slowly while blocking
-                bool blockingAllowed = desiredMovement == LowerBodyState.Walking ||
-                                      desiredMovement == LowerBodyState.Backstepping ||
-                                      desiredMovement == LowerBodyState.Strafing ||
-                                      desiredMovement == LowerBodyState.Idle;
+            case UpperBodyState.Parrying:
+                bool guardRestricted = desiredMovement == LowerBodyState.Sprinting ||
+                                       desiredMovement == LowerBodyState.Dashing;
 
-                if (!blockingAllowed && debugPermissions)
-                    Debug.Log($"[Permissions] Blocking restricts to slow movement");
+                if (guardRestricted && debugPermissions)
+                    Debug.Log($"[Permissions] Guard blocks {desiredMovement}");
 
-                return blockingAllowed;
+                return !guardRestricted;
 
             case UpperBodyState.Aiming:
                 // Can move while aiming (but slower)

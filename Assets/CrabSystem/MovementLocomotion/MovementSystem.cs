@@ -91,6 +91,9 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     public IMovementControlSource ActiveControlSource => activeControlSource;
     public ControllerBrain Brain => brain;
 
+    /// <summary>Does the current upper-body state allow this movement? True with no state machine.</summary>
+    public bool Permits(LowerBodyState state) => stateMachine == null || stateMachine.CanPerformMovement(state);
+
     /// <summary>
     /// Grounded state from the locomotion handler when it owns grounding, otherwise from
     /// FeetDetectionModule, otherwise the Brain fallback.
@@ -231,11 +234,36 @@ public class MovementSystem : MonoBehaviour, IBrainModule
         if (input.HasMovementInput && stateMachine != null)
         {
             LowerBodyState desired = ResolveLowerBodyState(input);
-            if (!stateMachine.CanPerformMovement(desired))
+            if (!Permits(desired))
                 input = MovementInput.Zero;
         }
 
+        input = ApplyDenials(input);
+
         locomotionHandler.ExecuteMovement(input);
+    }
+
+    // Denial facts, each with its own writer (BlackboardKey). The Cannot* facts come from statuses;
+    // MoveRooted from AbilitySystem while a castWhileMoving-off ability plays. CannotSprint is not
+    // here — it lives in the gait (LocomotionHandler.SprintAvailable), so speed and IsSprinting
+    // drop together.
+    private MovementInput ApplyDenials(MovementInput input)
+    {
+        if (blackboard == null) return input;
+
+        if (blackboard.GetBool(BlackboardKey.CannotAct) || blackboard.GetBool(BlackboardKey.MoveRooted))
+            return MovementInput.Zero;
+
+        if (blackboard.GetBool(BlackboardKey.CannotMove))
+        {
+            input.MoveDirection = Vector2.zero;
+            input.Dash = false;
+        }
+
+        if (blackboard.GetBool(BlackboardKey.CannotJump))
+            input.Jump = false;
+
+        return input;
     }
 
     /// <summary>
@@ -298,8 +326,8 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     /// </summary>
     private LowerBodyState ResolveLowerBodyState(MovementInput input)
     {
-        if (input.Sprint) return LowerBodyState.Sprinting;
         if (input.Dash) return LowerBodyState.Dashing;
+        if (locomotionHandler.CurrentGait == Gait.Sprint) return LowerBodyState.Sprinting;
         return LowerBodyState.Running;
     }
 

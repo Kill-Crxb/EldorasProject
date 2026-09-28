@@ -91,3 +91,55 @@ New, no backup: `KatanaAbilities/BasicAttack3.asset` (copy of BasicAttack2 + Bas
 |---|---|
 | `HumanoidAnimator.controller.bak` | `Guard` sub-state machine added to Upper Body Combat, `Block` trigger added, Upper Body Block layer weight → 0. Original: `Database/3d/Humanoid/Animations/`. |
 | `KatanaBlock.asset.bak` | `animationTrigger` `Ability` → `Block`. Original: `Database/Resources/AbilityDatabase/KatanaAbilities/`. |
+
+## Animator quick fixes — 2026-09-28
+
+`Anim_v1/` — see `Animator_Audit.md`.
+
+| Backup | Why the original was edited |
+|---|---|
+| `Base_PC`, `Base_NPC`, `TargetDummy`, `Nature_Spirit` `.prefab.bak` | `HitReactionSystem.reactionLayerName` Full Body Actions → Reactions (hits froze the body in Combat Idle). |
+| `KatanaBlock.asset.bak` | `animationLayer` FullBodyActions → UpperBodyCombat (block showed Combat Idle, Guard never visible). |
+
+## Animator v2 rebuild — 2026-09-28
+
+`Anim_v2/` — every production file edited for the rebuild (Animator_Audit.md "Build status").
+
+| Backup | Why the original was edited |
+|---|---|
+| `AbilitySystem.cs.bak` | Layer-weight claims removed; MoveRooted fact; drives UpperBodyState (wind-up / swing / recovery / blocking / casting). |
+| `AbilityDefinition.Animation.cs.bak` | `animationLayer` enum → `castWhileMoving` bool. |
+| `AnimationLayerController.cs.bak` | Rest rule. |
+| `AnimationLayerNames.cs.bak` | v2 layer names. |
+| `StatePermissionMatrix.cs.bak` | Melee phases and guard no longer stop movement (only dash / sprint). |
+| `MovementSystem.cs.bak` | Reads IsRooted / IsStunned / MoveRooted. |
+| `BlackboardKey.cs.bak` | IsRooted, IsStunned, MoveRooted, IsDrawingSigns. |
+| `StatusDefinition/Instance/System.cs.bak` | `durationFrames`. |
+| `HitReactionSystem.cs.bak` | Layer-weight code removed. |
+| `SpellcraftSystem.cs.bak` | Draw-layer weights → IsDrawingSigns fact. |
+| `GuardStateBuilder.cs.bak` | Superseded by HumanoidAnimatorV2 (file left in place; safe to delete). |
+| `BasicAttack3`, `Whirlwind`, `Slam`, `UnarmedHeavy`, `Stomp`, `BasicHeal`, `CastStoneskin` `.asset.bak` | `castWhileMoving: 0` appended. |
+
+New: `CrabSystem/Animation/Layers/AnimatorFactBridge.cs`, `ActionsLayerDriver.cs`,
+`_Staging/CombatTools/Editor/HumanoidAnimatorV2.cs`. To undo the prefab install, restore the
+prefabs from git — the installer edits model and entity prefabs in place.
+
+## Capability facts + grant-only sprint — 2026-09-28
+
+`Facts_v1/` — every file edited for the pass (Blackboard_Fact_Register.md "Build status 2026-09-28").
+
+| Backup | Why the original was edited |
+|---|---|
+| `BlackboardKey.cs.bak` | IsRooted / IsStunned → the eight `Cannot*` capability denials. |
+| `AbilityDefinition.Blackboard.cs.bak` | Category cache reads capability facts (roadmap S6). |
+| `AbilitySystem.cs.bak` | CannotAct cancels the ability in flight and rests the Actions layer; CannotCast breaks a spell mid-cast; cancel drops a held guard properly. |
+| `MovementSystem.cs.bak` | Reads CannotAct / CannotMove / CannotJump / MoveRooted (S7); lower-body state from gait, not the Sprint key; `Permits()`. |
+| `LocomotionHandler.cs.bak` | `SprintAvailable()` — granted, not denied, permitted by upper-body state. |
+| `ParkourLocomotionHandler.cs.bak`, `ARPGLocomotionHandler.cs.bak` | Gait uses `SprintAvailable()`; ARPG loses the hold-to-sprint key and gains `CurrentGait`. |
+| `MovementDebugDisplay.cs.bak` | Reads `CurrentGait` instead of re-deriving it. |
+| `MovementInput.cs.bak`, `InputSystem.cs.bak`, `IInputProvider.cs.bak`, `PlayerInputControls.inputactions.bak` | Sprint input removed — sprint is only ever granted. |
+| `SpellcraftSystem.cs.bak` | `silencedFact` string → `CannotCast`; CannotAct stops drawing. |
+| `BasicNinja.asset.bak`, `Status_Crippled.asset.bak`, `Status_Silenced.asset.bak`, `Cleave_Cripple.asset.bak`, `SparringPartner.cs.bak`, `BlackboardConditionLibrary.cs.bak`, `StateValueSource.cs.bak` | Fact renames. |
+
+New: `Statuses/Status_Hasted.asset` (SprintGranted), `Statuses/Status_Rooted.asset` (CannotMove, CannotJump),
+`_Staging/DebugTools/StatusHotkeys.cs` (F5–F10 apply, F12 clear, on the player).

@@ -32,31 +32,31 @@ MonoBehaviour:
     defaultBool: 0
     defaultFloat: 0
     defaultInt: 0
-  - keyName: IsStunned
+  - keyName: CannotAct
     type: 0
-    description: '"Stunned, Unable to act"'
+    description: '"Unable to act — stuns, paralysis, freezing"'
     defaultBool: 0
     defaultFloat: 0
     defaultInt: 0
-  - keyName: IsSilenced
+  - keyName: CannotCast
     type: 0
-    description: '"Silenced, Unable to cast spells or draw elements"'
+    description: '"Unable to cast spells or draw elements"'
     defaultBool: 0
     defaultFloat: 0
     defaultInt: 0
-  - keyName: IsDisarmed
+  - keyName: CannotAttack
     type: 0
-    description: '"Disarmed, Unable to use current weapon for attacks"'
+    description: '"Unable to use Physical abilities"'
     defaultBool: 0
     defaultFloat: 0
     defaultInt: 0
-  - keyName: IsRooted
+  - keyName: CannotMove
     type: 0
-    description: '"Rooted, unable to move"'
+    description: '"Unable to move"'
     defaultBool: 0
     defaultFloat: 0
     defaultInt: 0
-  - keyName: IsBlinded
+  - keyName: CannotSee
     type: 0
     description: You cannot see. (Disadvantage on attack roles)
     defaultBool: 0

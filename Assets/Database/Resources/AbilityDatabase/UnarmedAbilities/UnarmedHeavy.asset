@@ -77,3 +77,4 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
+  castWhileMoving: 0

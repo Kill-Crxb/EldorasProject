@@ -1981,10 +1981,6 @@ MonoBehaviour:
   isDeadParam: IsDead
   hitDirXParam: HitDirX
   hitDirZParam: HitDirZ
-  reactionLayerName: Full Body Actions
-  layerFadeIn: 0.05
-  layerFadeOut: 0.15
-  reactionDuration: 0.4
 --- !u!1 &3638272781167918597
 GameObject:
   m_ObjectHideFlags: 0
@@ -2647,7 +2643,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
   - {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
   debugLogging: 1
-  layerBlendOutTime: 0.5
 --- !u!114 &4019244290200516456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3522,8 +3517,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Magic.SpellcraftSystem
   isEnabled: 1
   grammar: {fileID: 11400000, guid: bbf1eb5152f004745bec7b4d573acbbf, type: 2}
-  drawLayerName: Upper Body Combat
-  drawBlendOutTime: 0.25
+  silencedFact: IsSilenced
+  fizzleColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
   drawInterval: 0.35
   drawSpeedStatId: cmb.efficacy
   drawSpeedPerPoint: 0.01
@@ -3619,7 +3614,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5764912515546302425}
   - component: {fileID: 1489830189237062223}
-  - component: {fileID: 5794935611323263078}
+  - component: {fileID: 6721902058219364685}
+  - component: {fileID: 8142828971906138565}
   m_Layer: 8
   m_Name: AnimationLayerController
   m_TagString: Untagged
@@ -3658,7 +3654,7 @@ MonoBehaviour:
   runtimeWeighting: 1
   defaultFadeIn: 0.05
   defaultFadeOut: 0.15
---- !u!114 &5794935611323263078
+--- !u!114 &6721902058219364685
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3667,12 +3663,30 @@ MonoBehaviour:
   m_GameObject: {fileID: 8954555102084390486}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f9de5f4576ae864da0d4ef9302a307a, type: 3}
+  m_Script: {fileID: 11500000, guid: 05c8a0d6ca07e54a591fdd9ec3681e8c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AirborneLayerClaim
-  layerName: Full Body Actions
-  weight: 1
-  holdAfterLanding: 0.25
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatorFactBridge
+  bindings:
+  - fact: IsBlocking
+    parameter: IsBlocking
+    kind: 0
+  - fact: IsDrawingSigns
+    parameter: IsDrawing
+    kind: 0
+--- !u!114 &8142828971906138565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8954555102084390486}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a538a9ab134ecbe29a31755f52f54e30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ActionsLayerDriver
+  fullBodyBelow: 0.3
+  armsOnlyAbove: 1.5
 --- !u!1 &9088032853651258063
 GameObject:
   m_ObjectHideFlags: 0

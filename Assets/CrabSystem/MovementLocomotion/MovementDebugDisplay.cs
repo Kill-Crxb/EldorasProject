@@ -181,9 +181,11 @@ public class MovementDebugDisplay : MonoBehaviour
     void DrawGait(MovementProfile profile)
     {
         bool granted = blackboard != null && blackboard.GetBool(BlackboardKey.SprintGranted);
-        string sprint = granted ? "SprintGranted" : "no sprint grant";
+        bool denied = blackboard != null && blackboard.GetBool(BlackboardKey.CannotSprint);
+        string sprint = (granted ? "SprintGranted" : "no sprint grant") + (denied ? ", CannotSprint" : "");
 
-        Row("Gait", $"{(IsWalkGait(profile) ? "WALK" : "RUN")}   ({sprint})", granted ? okColor : idleColor);
+        Gait gait = movementSystem.Locomotion.CurrentGait;
+        Row("Gait", $"{gait.ToString().ToUpper()}   ({sprint})", gait == Gait.Sprint ? okColor : idleColor);
     }
 
     void DrawFacts()
@@ -313,25 +315,13 @@ public class MovementDebugDisplay : MonoBehaviour
 
     float ResolveGaitSpeed(MovementProfile profile)
     {
-        if (stateMachine != null && stateMachine.GetPostureState() == PostureState.Crouching)
-            return profile.crouchSpeed;
-
-        if (IsWalkGait(profile)) return profile.walkSpeed;
-
-        bool granted = blackboard != null && blackboard.GetBool(BlackboardKey.SprintGranted);
-        return granted ? profile.sprintSpeed : profile.runSpeed;
-    }
-
-    /// <summary>
-    /// Inferred rather than read: the gait toggle is private to the handler and does not deserve
-    /// a public accessor purely so an overlay can label a row.
-    /// </summary>
-    bool IsWalkGait(MovementProfile profile)
-    {
-        if (profile == null) return true;
-
-        float midpoint = (profile.walkSpeed + profile.runSpeed) * 0.5f;
-        return movementSystem.Speed <= midpoint && !movementSystem.IsRunning;
+        switch (movementSystem.Locomotion.CurrentGait)
+        {
+            case Gait.Crouch: return profile.crouchSpeed;
+            case Gait.Walk: return profile.walkSpeed;
+            case Gait.Sprint: return profile.sprintSpeed;
+            default: return profile.runSpeed;
+        }
     }
 
     /// <summary>

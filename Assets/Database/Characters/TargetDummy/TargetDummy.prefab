@@ -1525,7 +1525,7 @@ MonoBehaviour:
   isDeadParam: IsDead
   hitDirXParam: HitDirX
   hitDirZParam: HitDirZ
-  reactionLayerName: Full Body Actions
+  reactionLayerName: Reactions
   layerFadeIn: 0.05
   layerFadeOut: 0.15
   reactionDuration: 0.4
@@ -1646,7 +1646,7 @@ MonoBehaviour:
   isDeadParam: IsDead
   hitDirXParam: HitDirX
   hitDirZParam: HitDirZ
-  reactionLayerName: Full Body Actions
+  reactionLayerName: Reactions
   layerFadeIn: 0.05
   layerFadeOut: 0.15
   reactionDuration: 0.4

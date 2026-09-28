@@ -94,3 +94,4 @@ MonoBehaviour:
     feel: 3
     bypass: 0
   routes: []
+  castWhileMoving: 0

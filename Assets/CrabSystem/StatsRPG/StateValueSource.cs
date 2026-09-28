@@ -7,7 +7,7 @@ using UnityEngine;
 /// Use Cases:
 /// - Grounded state for "CanJump" condition
 /// - In combat state for "InCombat" condition
-/// - Stunned state for "IsStunned" condition
+/// - Stunned state for "CannotAct" condition
 /// 
 /// State Properties:
 /// - Grounded: Entity feet touching ground

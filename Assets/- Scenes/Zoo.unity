@@ -15884,6 +15884,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eff26c942d345169550e723ea499f30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1078714748
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1078714750}
+  - component: {fileID: 1078714749}
+  m_Layer: 0
+  m_Name: Debugtools
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1078714749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1078714748}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d276c11e4fcf15721906e66daad40dc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatusHotkeys
+  statuses:
+  - {fileID: 11400000, guid: 5c76a65a037044d683865e58bde20166, type: 2}
+  - {fileID: 11400000, guid: b37aed7163e84465941afae0a32f05fe, type: 2}
+  - {fileID: 11400000, guid: ffd45fed88e54b40847dcb26b78bc8d2, type: 2}
+  - {fileID: 11400000, guid: e1a1c13a67db493b8a7b589e328e54d3, type: 2}
+  - {fileID: 11400000, guid: 27c1148a276985843bc14aef83c13a85, type: 2}
+  - {fileID: 11400000, guid: 8985a12537ed4283af1c7e5b5baab014, type: 2}
+--- !u!4 &1078714750
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1078714748}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 483.9651, y: 92.62306, z: 530.6635}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1090140911
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -24814,8 +24865,45 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4711964873596398150, guid: 815d4b556e0c8f64f9cd62c94374ba85, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1845140700}
   m_SourcePrefab: {fileID: 100100000, guid: 815d4b556e0c8f64f9cd62c94374ba85, type: 3}
+--- !u!1 &1845140699 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4711964873596398150, guid: 815d4b556e0c8f64f9cd62c94374ba85, type: 3}
+  m_PrefabInstance: {fileID: 1845140698}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1845140700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1845140699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1845315185
 GameObject:
   m_ObjectHideFlags: 0
@@ -28169,3 +28257,4 @@ SceneRoots:
   - {fileID: 843928514}
   - {fileID: 748983925}
   - {fileID: 1608252146}
+  - {fileID: 1078714750}

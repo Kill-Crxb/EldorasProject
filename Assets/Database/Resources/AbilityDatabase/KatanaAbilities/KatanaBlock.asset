@@ -15,7 +15,7 @@ MonoBehaviour:
   effectTrigger: 19
   waitForAnimUnlock: 1
   maxDuration: 2
-  animationLayer: 1
+  animationLayer: 0
   animationTrigger: Block
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
