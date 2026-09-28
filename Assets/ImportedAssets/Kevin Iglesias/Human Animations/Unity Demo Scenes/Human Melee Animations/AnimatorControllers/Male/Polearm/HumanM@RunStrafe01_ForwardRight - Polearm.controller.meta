@@ -11,7 +11,5 @@ AssetOrigin:
   productId: 151650
   packageName: Human Melee Animations
   packageVersion: 2.1
-  assetPath: Assets/ImportedAssets/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human
-    Melee Animations/AnimatorControllers/Male/Polearm/HumanM@RunStrafe01_ForwardRight
-    - Polearm.controller
+  assetPath: Assets/ImportedAssets/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Melee Animations/AnimatorControllers/Male/Polearm/HumanM@RunStrafe01_ForwardRight - Polearm.controller
   uploadId: 937378

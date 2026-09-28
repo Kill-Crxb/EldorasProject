@@ -558,6 +558,11 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     private void CompleteAbility(AbilityDefinition ability)
     {
+        // A defensive ability that ends — by AnimUnlocked or the safety timeout — must drop the block,
+        // or IsBlocking stays true and the intercept stays subscribed for the rest of the session.
+        if (ability == currentDefensiveAbility)
+            DeactivateDefensiveAbility();
+
         if (stateMachine != null)
             stateMachine.TryTransitionUpperBody(UpperBodyState.Idle);
 

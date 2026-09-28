@@ -16,10 +16,10 @@ MonoBehaviour:
   waitForAnimUnlock: 1
   maxDuration: 2
   animationLayer: 1
-  animationTrigger: Ability
+  animationTrigger: Block
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
-  projectilePrefab: {fileID: 0}
+  projectileData: {fileID: 0}
   requiredFactsAny: []
   requiredFactsAll: []
   forbiddenFactsAll: []
@@ -38,6 +38,28 @@ MonoBehaviour:
   parryEnablesCounter: 1
   counterWindowDuration: 1
   blockStartupTime: 0.1
+  speedClass: 0
+  frames:
+    startup: 0
+    active: 0
+    recovery: 0
+    cancelFrom: 0
+    cancelTo: 0
+    iframeFrom: 0
+    iframeTo: 0
+    armorFrom: 0
+    armorTo: 0
+  hit:
+    guard: 0
+    onHit: 0
+    onHitFrames: 0
+    blockStamina: 0
+    blockAdvantage: 0
+    tracking: 0
+    hitStop: 0
+    feel: 0
+    bypass: 0
+  routes: []
   abilityId: kblock
   abilityName: deflect
   description: hold up your weapon and deflect hits from the front.
@@ -47,12 +69,14 @@ MonoBehaviour:
   targetType: 1
   range: 5
   requiresLineOfSight: 1
+  hitboxTags: []
   damageEffects: []
   damageOverTimeEffects: []
   healEffects: []
   healOverTimeEffects: []
   knockbackEffects: []
   movementEffects: []
+  statusEffects: []
   hitProcs: []
   sequencePrerequisites: []
   resourceThresholds: []

@@ -79,7 +79,10 @@ public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
                     type = parsedType;
             }
         }
-        catch { }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[IdentitySystem] Couldn't read identity save — keeping defaults: {e.Message}");
+        }
     }
 
     public int GetSaveVersion() => 1;

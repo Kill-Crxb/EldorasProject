@@ -72,3 +72,30 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
+  speedClass: 1
+  frames:
+    startup: 10
+    active: 4
+    recovery: 16
+    cancelFrom: 14
+    cancelTo: 24
+    iframeFrom: 0
+    iframeTo: 0
+    armorFrom: 0
+    armorTo: 0
+  hit:
+    guard: 0
+    onHit: 1
+    onHitFrames: 18
+    blockStamina: 4
+    blockAdvantage: -2
+    tracking: 0
+    hitStop: 4
+    feel: 1
+    bypass: 0
+  routes:
+  - into: {fileID: 11400000, guid: 9ebeac94c51d0744e9c6909a78ae9f95, type: 2}
+    intoCategory: 1
+    when: 1
+    costStamina: 0
+    costMana: 0

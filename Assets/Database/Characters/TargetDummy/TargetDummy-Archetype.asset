@@ -19,17 +19,17 @@ MonoBehaviour:
   importance: 0
   baseStatOverrides:
   - statId: core.mind
-    baseValue: 20
+    baseValue: 10
   - statId: core.body
-    baseValue: 20
+    baseValue: 10
   - statId: core.spirit
-    baseValue: 20
+    baseValue: 10
   - statId: core.resilience
-    baseValue: 20
+    baseValue: 10
   - statId: core.endurance
-    baseValue: 20
+    baseValue: 10
   - statId: core.insight
-    baseValue: 20
+    baseValue: 10
   baseLevel: 30
   mainHandWeaponId: 
   offHandWeaponId: 

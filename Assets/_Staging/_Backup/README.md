@@ -59,3 +59,35 @@ Implements `claude/Resolution_Build.md` stages 1–4.
 | `LightDummy/Mid DUmmy/HeavyDummy.asset.bak` | Armour re-authored to dice + flat + defense. |
 | `AbilitySystem.cs.bak` | Blackboard read moved from `Initialize` to `LateInitialize` — it initializes before `BlackboardSystem`, so it was always null: no forbidden fact ever blocked, `IsBlocking` / `IsInvincible` never written. |
 | `SpellcraftSystem.cs.bak` | Drawing while `IsSilenced`: the sign plays and costs its draw time, the element fizzles (grey burst, never enters the sequence); `OnElementFizzled`; draw layer released after fizzles. `PlayDrawBurst` takes a colour. |
+
+## Overnight — 2026-09-27 (`Night_v1/`)
+
+| Backup | Why the original was edited |
+|---|---|
+| `TargetDummy-Archetype.asset.bak` (+ Light/Mid/Heavy, unchanged) | Base TargetDummy cores 20 → 10 so hits stop mostly glancing. The three armoured variants were already at 10. |
+| `AbilitySystem.cs.bak` | **B11 (4)** — `CompleteAbility` calls `DeactivateDefensiveAbility` when the defensive ability ends, so `IsBlocking` can't stick true. |
+| `C11/*.prefab.bak` | **C11** — dead Cartoon FX components (script guids `474bcb49…`, `9205bc1b…`) removed from DrawElement, both CFXR2 Fireball, Jump, Sphere, NatureSpirit_Model 1, Floating Cube Light. |
+| `SaveManager.cs.bak`, `IdentitySystem.cs.bak` | **B9** — empty `catch { }` now logs a warning. |
+
+New, staging only (delete the folder to remove): `_Staging/DebugTools/HitTrace.cs`,
+`_Staging/Sparring/`, `_Staging/CombatTools/Editor/MoveReport.cs`.
+
+## Move block (CF1) — 2026-09-27
+
+`Move_v1/` — copies taken before move data was appended.
+
+| Backup | Why the original was edited |
+|---|---|
+| `BasicAttack1/2`, `Cleave`, `Whirlwind`, `Slam`, `Thrust` `.asset.bak` | Move data appended (frames, hit properties, routes). Originals live in `Database/Resources/AbilityDatabase/KatanaAbilities/`. |
+| `MoveReport.cs.bak` | Move-data checks and clip drift added. |
+
+New, no backup: `KatanaAbilities/BasicAttack3.asset` (copy of BasicAttack2 + BasicAttack1's damage effect), `CrabSystem/Abilities/AbilityDefinition.Move.cs`.
+
+## Guard states (CF3 prep) — 2026-09-28
+
+`Guard_v1/` — copies taken before `Tools → Combat → Build Guard States` ran.
+
+| Backup | Why the original was edited |
+|---|---|
+| `HumanoidAnimator.controller.bak` | `Guard` sub-state machine added to Upper Body Combat, `Block` trigger added, Upper Body Block layer weight → 0. Original: `Database/3d/Humanoid/Animations/`. |
+| `KatanaBlock.asset.bak` | `animationTrigger` `Ability` → `Block`. Original: `Database/Resources/AbilityDatabase/KatanaAbilities/`. |

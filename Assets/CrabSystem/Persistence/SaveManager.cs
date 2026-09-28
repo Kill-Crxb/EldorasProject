@@ -255,7 +255,10 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
                     if (!string.IsNullOrEmpty(modelData.modelId))
                         savedModelId = modelData.modelId;
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[{ManagerName}] Couldn't read modelId from '{saveId}' — keeping the default model: {e.Message}");
+                }
             }
         }
         catch (Exception e)
