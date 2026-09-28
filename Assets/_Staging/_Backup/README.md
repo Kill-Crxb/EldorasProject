@@ -143,3 +143,11 @@ prefabs from git — the installer edits model and entity prefabs in place.
 
 New: `Statuses/Status_Hasted.asset` (SprintGranted), `Statuses/Status_Rooted.asset` (CannotMove, CannotJump),
 `_Staging/DebugTools/StatusHotkeys.cs` (F5–F10 apply, F12 clear, on the player).
+
+## Doubled animation events (B15) — 2026-09-29
+
+`Events_v1/`
+
+| Backup | Why the original was edited |
+|---|---|
+| `AnimationEventForwarder.cs.bak` | Drops an event (or state transition) already broadcast this frame — the synced Actions Upper layer fires every clip event a second time. |

@@ -10,15 +10,6 @@ public class AnimationEventForwarder : MonoBehaviour
     public event Action<AnimationEventType> OnAnimationEvent;
     public event Action<UpperBodyState> OnStateTransitionEvent;
 
-    // Unity fires a clip's events once per layer that plays it with weight above 0. The v2
-    // animator's Actions Upper layer is SYNCED to Actions — same states, same clips — so while
-    // both have weight (standing still) every event arrives twice in the same frame; moving drops
-    // Actions to 0 and they arrive once (Known Issues B15). Events carry no layer index, so the
-    // duplicate is recognised instead: the same event twice in one frame is always the second
-    // layer, because one clip cannot fire one event twice in a frame.
-    private readonly int[] lastEventFrame = new int[Enum.GetValues(typeof(AnimationEventType)).Length];
-    private readonly int[] lastTransitionFrame = new int[Enum.GetValues(typeof(UpperBodyState)).Length];
-
     /// <summary>
     /// Called by AbilitySystem after it locates this component via GetComponentInChildren.
     /// Avoids the timing problem where Start() fires before the model is parented.
@@ -68,23 +59,11 @@ public class AnimationEventForwarder : MonoBehaviour
 
     private void BroadcastEvent(AnimationEventType eventType)
     {
-        if (!FirstThisFrame(lastEventFrame, (int)eventType)) return;
         OnAnimationEvent?.Invoke(eventType);
     }
 
     private void BroadcastStateTransition(UpperBodyState state)
     {
-        if (!FirstThisFrame(lastTransitionFrame, (int)state)) return;
         OnStateTransitionEvent?.Invoke(state);
-    }
-
-    // Frames are stored +1 so the zeroed array never matches frame 0.
-    private static bool FirstThisFrame(int[] lastFrame, int index)
-    {
-        int frame = Time.frameCount + 1;
-        if (lastFrame[index] == frame) return false;
-
-        lastFrame[index] = frame;
-        return true;
     }
 }
