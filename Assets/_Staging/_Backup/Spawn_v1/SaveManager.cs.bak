@@ -213,7 +213,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
                 return;
             }
 
-            configData.characterId = playerBrain.Identity?.EntityId ?? characterId;
             GameEvents.CharacterConfigDataReady(configData);
         }
         catch (Exception ex)

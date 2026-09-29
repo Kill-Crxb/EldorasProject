@@ -99,6 +99,51 @@ public class PlayerSpawner : MonoBehaviour
         }
 
         saveManager.SetPlayerBrain(spawnedPlayerBrain);
+
+        ApplyPlayerConfigDirectly();
+    }
+
+    #endregion
+
+    #region Configuration
+
+    private async void ApplyPlayerConfigDirectly()
+    {
+        await System.Threading.Tasks.Task.Delay(100);
+
+        if (saveManager == null || string.IsNullOrEmpty(saveManager.ActiveCharacterId))
+        {
+            Debug.LogWarning("[PlayerSpawner] No active character to config");
+            return;
+        }
+
+        try
+        {
+            var provider = saveManager.GetProvider();
+            if (provider == null)
+            {
+                Debug.LogError("[PlayerSpawner] SaveProvider not available");
+                return;
+            }
+
+            string configJson = await provider.Load(saveManager.ActiveCharacterId, "config");
+            if (string.IsNullOrEmpty(configJson))
+            {
+                Debug.LogWarning("[PlayerSpawner] No config file found");
+                return;
+            }
+
+            var configData = JsonUtility.FromJson<CharacterConfigData>(configJson);
+            if (configData != null)
+            {
+                configData.characterId = spawnedPlayerBrain.Identity?.EntityId ?? saveManager.ActiveCharacterId;
+                GameEvents.CharacterConfigDataReady(configData);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[PlayerSpawner] Failed to apply config: {ex.Message}");
+        }
     }
 
     #endregion

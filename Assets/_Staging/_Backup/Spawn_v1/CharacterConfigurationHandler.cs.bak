@@ -90,9 +90,10 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
             return;
         }
 
-        // The event is global: every entity hears every config. Only the one it names applies it.
-        // (The player used to accept any config, so NPC configs overwrote its faction and stats.)
-        if (brain.Identity == null || data.characterId != brain.Identity.EntityId)
+        bool isPlayerConfig = !brain.IsNPC;
+        bool isNpcConfig = !string.IsNullOrEmpty(data.characterId) && brain.Identity != null && data.characterId == brain.Identity.EntityId;
+
+        if (!isPlayerConfig && !isNpcConfig)
             return;
 
         if (brain.IsNPC)

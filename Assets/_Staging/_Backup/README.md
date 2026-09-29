@@ -151,3 +151,16 @@ New: `Statuses/Status_Hasted.asset` (SprintGranted), `Statuses/Status_Rooted.ass
 | Backup | Why the original was edited |
 |---|---|
 | `AnimationEventForwarder.cs.bak` | Drops an event (or state transition) already broadcast this frame — the synced Actions Upper layer fires every clip event a second time. |
+
+## Spawn and config routing — 2026-09-29
+
+`Spawn_v1/`
+
+| Backup | Why the original was edited |
+|---|---|
+| `PlayerSpawner.cs.bak` | `ApplyPlayerConfigDirectly` removed — a second config broadcast after a 100 ms delay; SaveManager already sends it (B3). |
+| `ModelModule.cs.bak` | `SwapModel` returns early when that model is already loaded — the player swapped three times per spawn. |
+| `CharacterConfigurationHandler.cs.bak` | A config applies only to the entity whose id it carries. The player accepted every config, so NPC configs overwrote its faction. |
+| `SaveManager.cs.bak` | Stamps the player's `EntityId` on the player's config before broadcasting it. |
+
+The save for `ass/asa` was repaired by hand (`faction.json` NatureHostile → elf); the old file sits beside it as `faction.json.bak-2026-09-29`.

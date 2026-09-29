@@ -104,10 +104,6 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
         if (modelDatabase == null)
             return false;
 
-        // Already wearing it: a second load path naming the same model is a no-op.
-        if (currentModel != null && modelId == currentModelId)
-            return true;
-
         var modelVariant = modelDatabase.GetModel(modelId);
         if (modelVariant == null)
             return false;
