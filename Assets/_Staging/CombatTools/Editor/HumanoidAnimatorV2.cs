@@ -22,8 +22,8 @@ using UnityEngine;
 // nothing here names a clip path except the guard clips.
 public static class HumanoidAnimatorV2
 {
-    const string SourcePath = "Assets/Database/3d/Humanoid/Animations/HumanoidAnimator.controller";
-    const string TargetPath = "Assets/Database/3d/Humanoid/Animations/HumanoidAnimator_v2.controller";
+    const string SourcePath = "Assets/Database/3d/Humanoid/HumanoidAnimator.controller";
+    const string TargetPath = "Assets/Database/3d/Humanoid/HumanoidAnimator_v2.controller";
     const string LayerControllerScript = "AnimationLayerController.cs";
 
     const string GuardLoopClip = "Assets/Database/3d/Humanoid/Animations/HumanM@Parry1H01_R - Loop.anim";
@@ -97,7 +97,6 @@ public static class HumanoidAnimatorV2
         foreach (string layer in ReplacedLayers) RemoveLayer(c, layer);
 
         EnsureParameter(c, "Mantle", AnimatorControllerParameterType.Trigger);
-        EnsureParameter(c, "Block", AnimatorControllerParameterType.Trigger);
         EnsureParameter(c, "IsBlocking", AnimatorControllerParameterType.Bool);
         EnsureParameter(c, "Parry", AnimatorControllerParameterType.Trigger);
         EnsureParameter(c, "BlockedHit", AnimatorControllerParameterType.Trigger);
@@ -167,7 +166,7 @@ public static class HumanoidAnimatorV2
         AddOneShot(sm, idle, "qThrow", ub["QuickThrow"], 20);
 
         BuildSigns(sm, idle, ub["DrawElement"]);
-        BuildGuard(sm, guardLoop, guardHit, parry);
+        BuildGuard(sm, idle, guardLoop, guardHit, parry);
     }
 
     // DrawElement plays per sign. Between signs the hands hold the raised pose (SealHold: the same
@@ -187,22 +186,24 @@ public static class HumanoidAnimatorV2
         When(Link(hold.AddTransition(idle), false, 0f, ExitBlend), AnimatorConditionMode.IfNot, "IsDrawing");
     }
 
-    //   Any ─Block─► BlockStart ─► BlockLoop ─Parry──────► Parry ─┐
-    //                    │            │  └─BlockedHit─► BlockHit ─┤
-    //                    └────────────┴──── IsBlocking false ─────┴─► Exit (→ Rest)
-    static void BuildGuard(AnimatorStateMachine root, AnimationClip loop, AnimationClip hit, AnimationClip parry)
+    //   Rest ─IsBlocking─► Block ─Parry──────► Parry ─┐
+    //                        └─BlockedHit─► BlockHit ─┤
+    //                  IsBlocking false ──────────────┴─► Exit (→ Rest)
+    //
+    // The guard is a hold driven by the IsBlocking bool alone — no trigger, no events (29 Sep).
+    // Entered from Rest rather than Any State, so it can't restart itself every frame while the
+    // bool is true, and an attack thrown from guard drops back into it through Rest.
+    static void BuildGuard(AnimatorStateMachine root, AnimatorState idle, AnimationClip loop, AnimationClip hit, AnimationClip parry)
     {
         AnimatorStateMachine guard = root.AddStateMachine("Guard", Grid(24, 0));
-        AnimatorState start = AddClip(guard, "BlockStart", loop, new Vector3(250f, 0f, 0f));
-        AnimatorState hold = AddClip(guard, "BlockLoop", loop, new Vector3(250f, 100f, 0f));
+        AnimatorState hold = AddClip(guard, "Block", loop, new Vector3(250f, 0f, 0f));
         AnimatorState blocked = AddClip(guard, "BlockHit", hit, new Vector3(500f, 50f, 0f));
         AnimatorState deflect = AddClip(guard, "Parry", parry, new Vector3(500f, 150f, 0f));
+        guard.defaultState = hold;
 
-        AnyTrigger(root, start, "Block", false, 0.1f);
-
-        // BlockStart borrows the 80f loop clip until a raise clip exists: leave after 6f.
-        Link(start.AddTransition(hold), true, 6f / 80f, 0f);
-        When(Link(start.AddExitTransition(), false, 0f, 0.1f), AnimatorConditionMode.IfNot, "IsBlocking");
+        AnimatorStateTransition enter = Link(idle.AddTransition(hold), false, 0f, 0.1f);
+        enter.canTransitionToSelf = false;
+        When(enter, AnimatorConditionMode.If, "IsBlocking");
 
         When(Link(hold.AddTransition(deflect), false, 0f, 0f), AnimatorConditionMode.If, "Parry");
         When(Link(hold.AddTransition(blocked), false, 0f, 0f), AnimatorConditionMode.If, "BlockedHit");
