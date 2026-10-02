@@ -107,9 +107,10 @@ public class StatusSystem : MonoBehaviour, IBrainModule
 
     /// <summary>
     /// Apply a status, or re-apply one already present. Source is who did it — informational,
-    /// and safe to leave null.
+    /// and safe to leave null. Seconds above 0 replaces the authored lifetime for this
+    /// application — a hit state scaled by the damage that caused it.
     /// </summary>
-    public void Apply(StatusDefinition definition, ControllerBrain source = null)
+    public void Apply(StatusDefinition definition, ControllerBrain source = null, float seconds = 0f)
     {
         if (definition == null) return;
 
@@ -131,12 +132,13 @@ public class StatusSystem : MonoBehaviour, IBrainModule
             }
             else
             {
-                Reapply(existing, source);
+                Reapply(existing, source, seconds);
                 return;
             }
         }
 
         StatusInstance instance = new StatusInstance(definition, source);
+        if (seconds > 0f) instance.Remaining = seconds;
 
         active.Add(instance);
         byId[definition.id] = instance;
@@ -146,15 +148,15 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         RefreshDebugList();
 
         if (debugStatuses)
-            Debug.Log($"[StatusSystem] +{definition.id} on {transform.root.name} ({definition.Seconds:F2}s)");
+            Debug.Log($"[StatusSystem] +{definition.id} on {transform.root.name} ({instance.Remaining:F2}s)");
 
         OnStatusApplied?.Invoke(instance);
     }
 
-    private void Reapply(StatusInstance instance, ControllerBrain source)
+    private void Reapply(StatusInstance instance, ControllerBrain source, float seconds)
     {
         instance.Source = source;
-        instance.Remaining = instance.Definition.Seconds;
+        instance.Remaining = seconds > 0f ? seconds : instance.Definition.Seconds;
 
         if (instance.Definition.stacking != StatusStacking.Stack) return;
 

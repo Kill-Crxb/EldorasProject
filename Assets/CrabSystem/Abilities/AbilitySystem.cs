@@ -62,7 +62,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private float chainWindowOpenTime = 0f;
 
     private AbilityDefinition currentDefensiveAbility = null;
-    private float defenseStartTime = 0f;
 
     public bool IsEnabled
     {
@@ -75,6 +74,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     public bool IsExecuting => currentAbility != null || currentlyCastingAbility != null || isAnimationLocked;
     public AbilityDefinition CurrentAbility => currentAbility;
     public string CurrentAbilityId => currentAbility?.abilityId;
+    // Frames since the current move started, at 60 fps. -1 when nothing is executing.
+    public int CurrentMoveFrame => currentAbility != null ? Mathf.FloorToInt((Time.time - abilityStartTime) * 60f) : -1;
+    public bool IsArmored => currentAbility != null && currentAbility.HasArmorAt(CurrentMoveFrame);
     public bool IsInvincible => isInvincible;
 
     public event Action<string> OnAbilityUsed;
@@ -84,7 +86,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     public event Action<AnimationEventType> OnAbilityAnimationEvent;
     public event Action OnBlockStart;
     public event Action OnBlockEnd;
-    public event Action OnPerfectBlock;
+    public event Action OnPerfectBlock;   // not raised until parry returns (CF3); Juice listens
 
     private void SetFact(int key, bool value) => blackboard?.SetBool(key, value);
 
@@ -376,18 +378,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         }
     }
 
-    private void RefundResourceCosts(AbilityDefinition ability)
-    {
-        if (ability.resourceCosts == null) return;
-        if (resources == null) return;
-
-        foreach (var cost in ability.resourceCosts)
-        {
-            if (cost.resource != null && cost.refund > 0)
-                resources.RestoreResource(cost.resource, cost.refund);
-        }
-    }
-
     public bool CanUseAbility(string abilityId)
     {
         if (!isEnabled) return false;
@@ -452,8 +442,13 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         SetFact(BlackboardKey.MoveRooted, false);
 
+        // Interrupted in its active frames, a swing never reaches HitboxEnd — the blade would stay
+        // live with no current ability and land fallback hits.
         if (currentAbility != null)
+        {
+            DisableAbilityHitboxes();
             CompleteAbility(currentAbility);
+        }
 
         // A held guard is not currentAbility once its clip has ended, so it is dropped here too —
         // and through the one method that also unsubscribes the damage intercept.
@@ -535,6 +530,15 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     private void ExecuteAbility(AbilityDefinition ability)
     {
+        // A guard is a hold, not a move: it has no clip to finish and no events to wait for. It
+        // lasts while the block key is down (UpdateDefensiveAbility) and never becomes
+        // currentAbility, so it can't time out.
+        if (ability.abilityType == AbilityType.Defensive)
+        {
+            ActivateDefensiveAbility(ability);
+            return;
+        }
+
         currentAbility = ability;
         abilityStartTime = Time.time;
         UpdateExecutingFact();
@@ -549,9 +553,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         if (ability.castEffectPrefab != null)
             vfxSystem?.SpawnEffect(ability.castEffectPrefab, VFXAnchor.CastOrigin);
-
-        if (ability.abilityType == AbilityType.Defensive)
-            ActivateDefensiveAbility(ability);
 
         bool hasEffectTrigger = ability.effectTrigger == AnimationEventType.Effect1 ||
                                ability.effectTrigger == AnimationEventType.Effect2 ||
@@ -646,6 +647,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         switch (eventType)
         {
             case AnimationEventType.HitboxStart:
+                if (currentAbility == null) break;
                 EnableAbilityHitboxes();
                 EnterMeleePhase(UpperBodyState.MeleeSwing);
                 break;
@@ -751,9 +753,11 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     private void ActivateDefensiveAbility(AbilityDefinition ability)
     {
+        if (currentDefensiveAbility != null) return;
+
         currentDefensiveAbility = ability;
-        defenseStartTime = Time.time;
         SetFact(BlackboardKey.IsBlocking, true);
+        EnterUpperBodyState(UpperBodyState.Blocking);
 
         if (damageSystem != null)
             damageSystem.OnDamageIntercept += HandleDamageIntercept;
@@ -764,6 +768,13 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private void UpdateDefensiveAbility()
     {
         if (currentDefensiveAbility == null) return;
+
+        if (!IsGuardHeld())
+        {
+            DeactivateDefensiveAbility();
+            return;
+        }
+
         if (resources == null) return;
         if (currentDefensiveAbility.resourceCosts == null) return;
 
@@ -792,23 +803,32 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         SetFact(BlackboardKey.IsBlocking, false);
         currentDefensiveAbility = null;
+
+        if (stateMachine != null && stateMachine.GetUpperBodyState() == UpperBodyState.Blocking)
+            stateMachine.TryTransitionUpperBody(UpperBodyState.Idle);
+
         OnBlockEnd?.Invoke();
+    }
+
+    // The block key read straight off the action, so the press frame counts as held whatever
+    // order the modules update in. An AI-driven entity holds its guard through AIControlSource.
+    private bool IsGuardHeld()
+    {
+        var ai = brain != null ? brain.GetModule<AIControlSource>() : null;
+        if (ai != null) return ai.GuardHeld;
+
+        var controls = brain != null ? brain.GetInputControls() : null;
+        return controls != null && controls.Player.Block.IsPressed();
     }
 
     private void HandleDamageIntercept(DamageInterceptArgs args)
     {
         if (currentDefensiveAbility == null) return;
-        if (stateMachine == null || stateMachine.GetUpperBodyState() != UpperBodyState.Blocking) return;
         if (!IsAttackWithinBlockAngle(args.attackDirection)) return;
 
-        float timeInDefense = Time.time - defenseStartTime;
-        args.damage *= currentDefensiveAbility.GetDefenseMultiplier(timeInDefense, true);
-
-        if (currentDefensiveAbility.CanParry(timeInDefense))
-        {
-            OnPerfectBlock?.Invoke();
-            RefundResourceCosts(currentDefensiveAbility);
-        }
+        // Build-time rule: anything that lands inside the guard's front arc is blocked outright.
+        // Combat_Framework §3 (base damage through soak, blockstun, stamina, parry on LMB) is CF3.
+        args.damage = 0f;
     }
 
     private bool IsAttackWithinBlockAngle(Vector3 attackDirection)

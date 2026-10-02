@@ -74,7 +74,7 @@ public class DamageEffect
     /// hit came from and where it landed. Without a contact the packet's hit point falls back to
     /// the target's Overhead anchor. The damage number always spawns at Overhead.
     /// </summary>
-    public void Apply(DamageSystem target, float externalMultiplier = 1f, DiceProfile weaponOverride = null,
+    public float Apply(DamageSystem target, float externalMultiplier = 1f, DiceProfile weaponOverride = null,
         DamageSource source = DamageSource.Other, Vector3? contactPoint = null)
     {
         isCompleted = false;
@@ -83,20 +83,20 @@ public class DamageEffect
         {
             Debug.LogWarning("[DamageEffect] BAIL — target is null");
             Complete();
-            return;
+            return 0f;
         }
 
         if (attackerDamageSystem == null)
         {
             Debug.LogError("[DamageEffect] BAIL — attackerDamageSystem is null (SetDamageSystem not called?)");
             Complete();
-            return;
+            return 0f;
         }
 
         if (!CheckBlackboardRequirements(attackerDamageSystem, target))
         {
             Complete();
-            return;
+            return 0f;
         }
 
         float finalDamage = CalculateDamage(attackerDamageSystem, weaponOverride, out float explosionDamage, out int explosions) * externalMultiplier;
@@ -122,6 +122,17 @@ public class DamageEffect
         DamageNumberManager.Spawn(applied, numberPoint);
 
         Complete();
+        return applied;
+    }
+
+    // The hit before any rolls: weapon dice at their average plus the flat part. Hit-state length
+    // scales against it (CF2). Supplied dice aren't known here, so those effects count their base only.
+    public float AverageDamage(DamageSystem attacker)
+    {
+        DiceProfile weapon = requiresSuppliedDice ? null : ResolveWeapon(attacker, null);
+        float damage = baseDamage;
+        if (weapon != null) damage += weapon.damageDice.Average() + weapon.flatBonus;
+        return damage * baseDamageMultiplier * finalDamageMultiplier;
     }
 
     // Returns the base part of the hit. The exploded part comes back separately, because the

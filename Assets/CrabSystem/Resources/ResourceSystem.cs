@@ -89,6 +89,9 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     {
         if (!isEnabled) return;
 
+        // The dead don't regenerate. Health creeping back above zero brought corpses back to life.
+        if (healthResource != null && healthResource.current <= 0f) return;
+
         float delta = Time.deltaTime;
 
         for (int i = 0; i < states.Count; i++) TickRegen(states[i], delta);

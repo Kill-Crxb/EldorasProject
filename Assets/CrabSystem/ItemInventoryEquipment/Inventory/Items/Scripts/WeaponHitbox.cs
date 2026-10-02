@@ -243,13 +243,15 @@ public class WeaponHitbox : MonoBehaviour
         // Notify hit procs — rolls HitProcEntry probability per entry on the source ability
         abilitySystem?.NotifyHitLanded(ability?.abilityId, targetBrain);
 
+        float applied = 0f;
+
         if (ability?.damageEffects != null && ability.damageEffects.Count > 0)
         {
             Vector3 contact = other.ClosestPoint(transform.position);
             foreach (var effect in ability.damageEffects)
             {
                 effect.SetDamageSystem(damageSystem);
-                effect.Apply(targetDamage, 1f, null, DamageSource.Melee, contact);
+                applied += effect.Apply(targetDamage, 1f, null, DamageSource.Melee, contact);
             }
 
             // Spawn hit VFX at impact point via attacker's VFXSystem
@@ -278,7 +280,7 @@ public class WeaponHitbox : MonoBehaviour
                 source = DamageSource.Melee,
             };
             CombatDamagePacket packet = damageSystem.CalculateDamage(fallback);
-            targetDamage.TakeDamage(packet);
+            applied = targetDamage.TakeDamage(packet);
 
             if (debugHitbox)
                 Debug.Log($"[WeaponHitbox] '{weaponName}' hit {other.transform.root.name} for {packet.finalDamage:F1} (fallback — ability: {ability?.abilityName ?? "none"})");
@@ -292,6 +294,9 @@ public class WeaponHitbox : MonoBehaviour
         // boss is where that assumption breaks, and the fix belongs in the dedupe set, not here.
         ability?.ApplyStatuses(targetBrain, brain);
         ability?.ApplyKnockback(targetBrain, brain.transform);
+
+        // A blocked or parried hit applies nothing and causes no hit state.
+        ability?.ApplyHitState(targetBrain, brain, applied);
     }
 
     private void TryHitLegacy(Collider other)
