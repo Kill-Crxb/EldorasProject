@@ -126,65 +126,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3164236b5b291e84dac30b7267002588, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationSystem
---- !u!1 &1662355121239993903
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1429729824859710832}
-  - component: {fileID: 5078434283172239652}
-  m_Layer: 8
-  m_Name: HitReaction
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1429729824859710832
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1662355121239993903}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8373627434070198267}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5078434283172239652
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1662355121239993903}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51791c7b371acf743a808b4f95c5ed26, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HitReactionSystem
-  isEnabled: 1
-  heavyHitFraction: 0.15
-  staggerFraction: 0.3
-  minTimeBetweenReactions: 0.2
-  hitLightParam: HitLight
-  hitHeavyParam: HitHeavy
-  staggerParam: Stagger
-  deathParam: Death
-  isDeadParam: IsDead
-  hitDirXParam: HitDirX
-  hitDirZParam: HitDirZ
-  reactionLayerName: Reactions
-  layerFadeIn: 0.05
-  layerFadeOut: 0.15
-  reactionDuration: 0.4
 --- !u!1 &1957058923170656946
 GameObject:
   m_ObjectHideFlags: 0
@@ -235,9 +176,6 @@ Transform:
   - {fileID: 6179109947979963437}
   - {fileID: 418606450432923941}
   - {fileID: 7547661486950331192}
-  - {fileID: 5658586967656843956}
-  - {fileID: 5806681704780818859}
-  - {fileID: 1429729824859710832}
   m_Father: {fileID: 505027778239189661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7834155014174466237
@@ -271,7 +209,6 @@ MonoBehaviour:
   blackboardSystem: {fileID: 4115196387130392266}
   inventorySystem: {fileID: 4136185658555715558}
   interactionSystem: {fileID: 440392200595385103}
-  dialogueSystem: {fileID: 3625547732155434194}
   hotbarSystem: {fileID: 8064901073675467688}
   slotTransformationSystem: {fileID: 3195358102234684433}
   entityType: 2
@@ -339,11 +276,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c0144554a60cc442a8d8bef9dcb3314, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RPGSystem
+  enableStatAllocation: 1
+  enableXPGain: 1
+  autoAllocateStats: 0
   currentLevel: 1
   maxLevel: 30
   currentXP: 0
+  unallocatedPoints: 0
   baseXPRequired: 100
   xpExponent: 1.5
+  debugLogging: 0
 --- !u!1 &2281382615982912728
 GameObject:
   m_ObjectHideFlags: 0
@@ -389,7 +331,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResourceSystem
   isEnabled: 1
-  states: []
 --- !u!1 &2620791188949794859
 GameObject:
   m_ObjectHideFlags: 0
@@ -483,7 +424,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RPG.Factions.FactionSystem
   isEnabled: 1
-  currentFaction: {fileID: 0}
+  currentFactionId: faction_neutral
 --- !u!1 &2952939074592228925
 GameObject:
   m_ObjectHideFlags: 0
@@ -533,7 +474,6 @@ MonoBehaviour:
   currentModelId: 
   modelAnimator: {fileID: 0}
   modelDatabase: {fileID: 11400000, guid: 983aec507e8af7a46a88ad5f7caabbb3, type: 2}
-  normaliseEquipmentScale: 1
 --- !u!1 &3114552748703871125
 GameObject:
   m_ObjectHideFlags: 0
@@ -631,9 +571,9 @@ MonoBehaviour:
   equippedItems:
   - slotId: mainwep
     item:
-      instanceId: 3ba18970-1c10-4aba-8fcb-ff71a97cf886
-      definitionId: steel_katana
-      createdTimestamp: 1783914335
+      instanceId: 
+      definitionId: 
+      createdTimestamp: 0
       ownerPlayerId: 0
       currentTier: 0
       stackCount: 1
@@ -743,10 +683,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8e697c92ea771048942c3d8c80fd465, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HotbarSystem
-  availableBars: []
-  pageDefinitions: []
-  pageCheckInterval: 0.1
-  debugLogging: 0
+  centreBarDefault:
+    slots: 4
+    rows: 1
+  bottomLeftBarDefault:
+    slots: 4
+    rows: 1
+  bottomRightBarDefault:
+    slots: 4
+    rows: 1
 --- !u!114 &3195358102234684433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -776,7 +721,7 @@ GameObject:
   - component: {fileID: 7654980108882286358}
   m_Layer: 8
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -803,7 +748,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3751086652204284959}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -854,7 +799,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3751086652204284959}
-  m_Enabled: 0
+  m_Enabled: 1
 --- !u!114 &1540426316359658564
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1054,12 +999,6 @@ MonoBehaviour:
   isEnabled: 1
   locomotionHandler: {fileID: 5270736256151308859}
   feetDetection: {fileID: 6975317991593524323}
-  runEnterSpeed: 4
-  runExitSpeed: 3.2
-  sprintEnterSpeed: 8
-  sprintExitSpeed: 6.8
-  blendAttack: 4
-  blendRelease: 2
   showDebugInfo: 0
 --- !u!114 &5270736256151308859
 MonoBehaviour:
@@ -1096,10 +1035,6 @@ MonoBehaviour:
   coyoteTime: 0.1
   jumpBufferTime: 0.1
   maxAirJumps: 1
-  canWallJump: 1
-  maxWallJumps: 2
-  wallJumpForce: 0
-  wallJumpPush: 5
   movementSpeedParam: MovementSpeed
   isGroundedParam: IsGrounded
   isLockedOnParam: IsLockedOn
@@ -1165,7 +1100,7 @@ GameObject:
   - component: {fileID: 5300600381356252203}
   - component: {fileID: 6867279775074711724}
   m_Layer: 8
-  m_Name: Base_NPC
+  m_Name: Nature_Spirit
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1284,12 +1219,10 @@ MonoBehaviour:
   xOffset: 10
   yOffset: 10
   lineHeight: 25
-  panelWidth: 430
   fontSize: 16
-  okColor: {r: 0.45, g: 0.95, b: 0.5, a: 1}
-  warnColor: {r: 1, g: 0.8, b: 0.3, a: 1}
-  badColor: {r: 1, g: 0.45, b: 0.4, a: 1}
-  idleColor: {r: 0.65, g: 0.65, b: 0.65, a: 1}
+  walkColor: {r: 0, g: 1, b: 1, a: 1}
+  runColor: {r: 0, g: 1, b: 0, a: 1}
+  sprintColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   backgroundColor: {r: 0, g: 0, b: 0, a: 0.7}
 --- !u!114 &5300600381356252203
 MonoBehaviour:
@@ -1390,9 +1323,10 @@ MonoBehaviour:
   schemaIds:
   - CoreStats
   - Resources
-  - SecondaryStats
-  - DefensiveCore
-  - Progression
+  autoLoadSchemas: 1
+  hotReloadEnabled: 1
+  debugLogging: 0
+  enabledStats: -1
 --- !u!1 &4171811705333573557
 GameObject:
   m_ObjectHideFlags: 0
@@ -1455,6 +1389,7 @@ GameObject:
   - component: {fileID: 4788846043127522662}
   - component: {fileID: 6425451477911453954}
   - component: {fileID: 4019244290200516456}
+  - component: {fileID: 1267513654726929429}
   m_Layer: 8
   m_Name: Ability_System
   m_TagString: Untagged
@@ -1493,10 +1428,13 @@ MonoBehaviour:
   loadoutModule: {fileID: 0}
   abilities:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
+  - {fileID: 11400000, guid: 9ebeac94c51d0744e9c6909a78ae9f95, type: 2}
+  - {fileID: 11400000, guid: c00c31af8a0f0144382988ff6732bc2f, type: 2}
+  - {fileID: 11400000, guid: cade32b5cb7943b4280aa263e6ce9568, type: 2}
+  - {fileID: 11400000, guid: 145f5201e275f5f4e8f69e41dbc252dd, type: 2}
+  - {fileID: 11400000, guid: e0b8950eaa9a4c042a3a791b7090f723, type: 2}
   - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
   - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
-  debugLogging: 0
-  layerBlendOutTime: 0.25
 --- !u!114 &4019244290200516456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1509,7 +1447,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1caf5d206513e8e4f86a2e5ff6bb7c6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeAbilityManager
-  starterAbilities: []
+  starterAbilities:
+  - {fileID: 11400000, guid: c00c31af8a0f0144382988ff6732bc2f, type: 2}
+  - {fileID: 11400000, guid: 145f5201e275f5f4e8f69e41dbc252dd, type: 2}
+  - {fileID: 11400000, guid: cade32b5cb7943b4280aa263e6ce9568, type: 2}
+--- !u!114 &1267513654726929429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4300618634935197555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e50449d9b758fc74db20f4151c493f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationEventForwarder
 --- !u!1 &4473629046579420901
 GameObject:
   m_ObjectHideFlags: 0
@@ -1520,7 +1473,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8500912184580402166}
   - component: {fileID: 440392200595385103}
-  - component: {fileID: 9201111681876391856}
   m_Layer: 8
   m_Name: Interaction_System
   m_TagString: Untagged
@@ -1556,11 +1508,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionSystem
   isEnabled: 1
-  isInteractable: 0
-  interactionAction: 0
+  isInteractable: 1
+  interactionAction: 2
   interactionRange: 2
   canInteractMultipleTimes: 0
-  interactionCollider: {fileID: 9201111681876391856}
   detectionRadius: 2
   detectionInterval: 0.2
   detectionLayer:
@@ -1573,27 +1524,6 @@ MonoBehaviour:
   OnDirectInteraction:
     m_PersistentCalls:
       m_Calls: []
---- !u!135 &9201111681876391856
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4473629046579420901}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 1.5
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4536920560882079103
 GameObject:
   m_ObjectHideFlags: 0
@@ -1691,61 +1621,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InventorySystem
   containers:
   - containerId: 
-    type: 0
-    gridWidth: 6
-    gridHeight: 3
+    type: 3
+    gridWidth: 10
+    gridHeight: 20
     lastModified: 0
     items: []
   initialContents: {fileID: 0}
   maxItems: 100
---- !u!1 &5567372075554597627
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5658586967656843956}
-  - component: {fileID: 3625547732155434194}
-  m_Layer: 8
-  m_Name: Dialogue_System
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5658586967656843956
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5567372075554597627}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8373627434070198267}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3625547732155434194
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5567372075554597627}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bacac2ef9eef7e34ca3066f1f4f2eb33, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DialogueSystem
-  isEnabled: 1
-  dialogueCameraMode: Dialogue
-  defaultCameraMode: Default
-  database: {fileID: 0}
+  enableAutoSave: 0
+  autoSaveInterval: 30
+  autoSavePath: 
+  debugInventory: 0
 --- !u!1 &5953103289079059028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1840,21 +1726,13 @@ MonoBehaviour:
   isEnabled: 1
   currentMode: 1
   cameraRelativeMovement: 1
-  showDebugInfo: 0
-  keybindRoutes:
-  - barId: modifier
-    keybinds: 7
-  - barId: mouse
-    keybinds: 6
-  - barId: centre
-    keybinds: 1
-  - barId: bottomLeft
-    keybinds: 2
-  - barId: bottomRight
-    keybinds: 0
+  centreBarKeybinds: 1
+  bottomLeftKeybinds: 5
+  bottomRightKeybinds: 0
   cameraProviderComponent: {fileID: 0}
   stubAIControlSource: {fileID: 9067905633385790202}
   pathfinding: {fileID: 0}
+  showDebugInfo: 0
 --- !u!114 &9067905633385790202
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1913,46 +1791,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraModule
   cameraTransform: {fileID: 2956264965644508688}
-  targetCamera: {fileID: 0}
-  modes:
-  - modeName: Default
-    distance: 1.3
-    pivotHeight: 1.5
-    shoulderOffset: 0.4
-    sensitivity: 0.15
-    minPitch: -35
-    maxPitch: 60
-    fovOffset: 0
-  - modeName: Dialogue
-    distance: 0.6
-    pivotHeight: 1.6
-    shoulderOffset: 0.2
-    sensitivity: 0.05
-    minPitch: -20
-    maxPitch: 30
-    fovOffset: 0
-  startingMode: Default
-  modeBlendDuration: 0.35
-  baseFieldOfView: 60
-  fovEffectScale: 1
-  verticalFollowDamping: 15
-  verticalSnapDistance: 1
-  orbitYawOffset: 0
-  shoulderSwapEnabled: 1
-  homeShoulderSide: 1
-  shoulderSwapLayers:
-    serializedVersion: 2
-    m_Bits: 72
-  shoulderProbeRadius: 0.25
-  shoulderSwapBlendDuration: 0.25
-  groundLookaheadBlends: 1.5
-  airLookaheadBlends: 3
-  maxLookahead: 2.5
-  swapTriggerMargin: 0.5
-  swapReturnMargin: 0.9
-  minSideHoldTime: 0.35
-  centeredPivotLift: 0.35
-  stateRules: []
+  distance: 1.3
+  pivotHeight: 1.5
+  shoulderOffset: 0.4
+  sensitivity: 0.15
+  minPitch: -35
+  maxPitch: 60
 --- !u!1 &7591293930480927091
 GameObject:
   m_ObjectHideFlags: 0
@@ -2063,51 +1907,6 @@ MonoBehaviour:
   conditions: []
   updateInterval: 0.1
   debugLogging: 0
---- !u!1 &8670747351954054792
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5806681704780818859}
-  - component: {fileID: 920933162231678426}
-  m_Layer: 0
-  m_Name: Stat_Derivation
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5806681704780818859
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8670747351954054792}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8373627434070198267}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &920933162231678426
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8670747351954054792}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8ef9ffa8f47894eb79ca714dfcda378, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StatDerivationSystem
-  table: {fileID: 11400000, guid: ad11645a28c5be17c60aa97104b98c07, type: 2}
 --- !u!1 &9088032853651258063
 GameObject:
   m_ObjectHideFlags: 0

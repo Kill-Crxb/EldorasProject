@@ -1621,11 +1621,6 @@ MonoBehaviour:
   loadoutModule: {fileID: 0}
   abilities:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
-  - {fileID: 11400000, guid: 9ebeac94c51d0744e9c6909a78ae9f95, type: 2}
-  - {fileID: 11400000, guid: c00c31af8a0f0144382988ff6732bc2f, type: 2}
-  - {fileID: 11400000, guid: cade32b5cb7943b4280aa263e6ce9568, type: 2}
-  - {fileID: 11400000, guid: 145f5201e275f5f4e8f69e41dbc252dd, type: 2}
-  - {fileID: 11400000, guid: e0b8950eaa9a4c042a3a791b7090f723, type: 2}
   - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
   - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
   debugLogging: 0
@@ -1642,10 +1637,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1caf5d206513e8e4f86a2e5ff6bb7c6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeAbilityManager
-  starterAbilities:
-  - {fileID: 11400000, guid: c00c31af8a0f0144382988ff6732bc2f, type: 2}
-  - {fileID: 11400000, guid: 145f5201e275f5f4e8f69e41dbc252dd, type: 2}
-  - {fileID: 11400000, guid: cade32b5cb7943b4280aa263e6ce9568, type: 2}
+  starterAbilities: []
 --- !u!114 &1267513654726929429
 MonoBehaviour:
   m_ObjectHideFlags: 0
