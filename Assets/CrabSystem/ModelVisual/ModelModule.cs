@@ -126,6 +126,8 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
         }
 
         CacheSocketsFromProvider();
+        if (preserveEquipment)
+            ReattachEquipment();
         OnModelChanged?.Invoke(modelId);
 
         return true;
@@ -249,6 +251,7 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
             return;
         }
 
+        ClearSocket(slot.slotId);
         var visual = Instantiate(item.Definition.equippedPrefab, socket);
         visual.name = item.Definition.displayName;
 
@@ -262,6 +265,19 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
     /// <summary>
     /// Clears all children from a socket (unequip visual).
     /// </summary>
+    /// <summary>
+    /// A new model has empty sockets. Put back whatever is equipped — an NPC's natural weapon is
+    /// equipped at Initialize, before its config has loaded any model to hang it on.
+    /// </summary>
+    private void ReattachEquipment()
+    {
+        // A model with no socket map can't hold anything; asking would only warn per slot.
+        if (equipment == null || socketProvider == null) return;
+
+        foreach (var pair in equipment.GetAllEquippedItems())
+            HandleItemEquipped(equipment.GetSlotDefinition(pair.Key), pair.Value);
+    }
+
     private void ClearSocket(string slotId)
     {
         var socket = GetSocket(slotId);

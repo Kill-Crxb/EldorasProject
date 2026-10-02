@@ -243,6 +243,13 @@ public class GOAPModule : MonoBehaviour, IBrainModule
     {
         if (!isEnabled) return;
 
+        // A dead entity has no goals. Ending the goal releases the AI's controls, so the body stops.
+        if (brain.Health != null && !brain.Health.IsAlive())
+        {
+            ClearCurrentGoal();
+            return;
+        }
+
         // Update world state
         context.UpdateContext();
 

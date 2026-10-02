@@ -31,6 +31,7 @@ public class GOAPContext
     public IResourceProvider resourceModule;
     public PathfindingModule pathfinding;
     public PerceptionModule perception;
+    public AIControlSource aiControl;
 
     // Unified action lock gate — GOAP never asks *why* it's locked, only *if* it is.
     public bool IsActionLocked
@@ -58,6 +59,7 @@ public class GOAPContext
         resourceModule = brain.GetModuleImplementing<IResourceProvider>();
         pathfinding    = brain.GetModule<PathfindingModule>();
         perception     = brain.GetModule<PerceptionModule>();
+        aiControl      = brain.GetModule<AIControlSource>();
     }
 
     public void UpdateContext()

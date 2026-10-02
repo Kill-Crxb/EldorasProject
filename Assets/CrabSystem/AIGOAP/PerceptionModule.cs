@@ -73,7 +73,7 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
     private bool hasMemory;
 
     // Performance optimization
-    private Collider[] detectionBuffer = new Collider[20];
+    private Collider[] detectionBuffer = new Collider[64];
     private float nextDetectionTime;
     private float detectionInterval = 0.2f; // Check every 0.2s instead of every frame
 
@@ -181,7 +181,7 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
             visionRange,
             detectionBuffer,
             detectionLayers,
-            QueryTriggerInteraction.Collide  // Detect trigger colliders
+            QueryTriggerInteraction.Ignore  // CharacterControllers are never triggers; hitboxes and sensors filled the buffer
         );
 
         if (debugMode)
@@ -232,6 +232,13 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
             {
                 if (debugMode)
                     Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Is own brain");
+                continue;
+            }
+
+            if (!IsAlive(targetBrain))
+            {
+                if (debugMode)
+                    Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Dead");
                 continue;
             }
 
@@ -286,6 +293,13 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
             }
         }
 
+        // Keep a target that slipped out of one scan until memory runs out, so a single missed
+        // scan doesn't drop the goal and reset its movement.
+        // A dead target is dropped at once, memory or not.
+        if (bestTarget == null && currentTarget != null && enableMemory && Time.time - lastSeenTime < memoryDuration
+            && IsAlive(currentTarget.GetComponent<ControllerBrain>()))
+            return;
+
         // Update current target
         if (bestTarget != currentTarget)
         {
@@ -307,6 +321,11 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
             lastSeenTime = Time.time;
             hasMemory = enableMemory;
         }
+    }
+
+    private static bool IsAlive(ControllerBrain targetBrain)
+    {
+        return targetBrain != null && (targetBrain.Health == null || targetBrain.Health.IsAlive());
     }
 
     private bool IsValidFaction(ControllerBrain targetBrain)

@@ -36,10 +36,20 @@ public class ItemInstance
     [Header("Dynamic Stats")]
     public RuntimeItemStatModifier[] calculatedModifiers;
 
-    // Cached definition - initialized once in constructor
-    private ItemDefinition cachedDefinition;
+    // Cached definition. Set in the constructor, or looked up on first use for an instance Unity
+    // deserialized (prefab, scene or ScriptableObject data) — deserialization skips constructors,
+    // and an instance with no definition is silently skipped by visuals, dice and stats.
+    [System.NonSerialized] private ItemDefinition cachedDefinition;
 
-    public ItemDefinition Definition => cachedDefinition;
+    public ItemDefinition Definition
+    {
+        get
+        {
+            if (cachedDefinition == null && !string.IsNullOrEmpty(definitionId))
+                cachedDefinition = ItemManager.GetDefinition(definitionId);
+            return cachedDefinition;
+        }
+    }
 
     public ItemInstance(string defId, ItemRarity tier = ItemRarity.Common)
     {
@@ -68,8 +78,8 @@ public class ItemInstance
 
     public bool ValidateGridProperties()
     {
-        if (cachedDefinition == null) return false;
-        return itemWidth == cachedDefinition.gridWidth && itemHeight == cachedDefinition.gridHeight;
+        if (Definition == null) return false;
+        return itemWidth == Definition.gridWidth && itemHeight == Definition.gridHeight;
     }
 
     public bool IsPlaced => gridX >= 0 && gridY >= 0;
@@ -116,7 +126,7 @@ public class ItemInstance
     public void RecalculateModifiers()
     {
         // Fail fast if definition missing (caller bug)
-        if (cachedDefinition == null)
+        if (Definition == null)
         {
             calculatedModifiers = new RuntimeItemStatModifier[0];
             return;

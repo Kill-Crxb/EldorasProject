@@ -269,7 +269,7 @@ public class ControllerBrain : MonoBehaviour
         if (dialogueSystem != null) providerCache[typeof(DialogueSystem)] = dialogueSystem;
         if (hotbarSystem != null) providerCache[typeof(HotbarSystem)] = hotbarSystem;
         if (slotTransformationSystem != null) providerCache[typeof(SlotTransformationSystem)] = slotTransformationSystem;
-        if (cameraModule != null) providerCache[typeof(ICameraProvider)] = cameraModule;
+        if (cameraModule != null && IsPlayer) providerCache[typeof(ICameraProvider)] = cameraModule;
     }
 
     #endregion
