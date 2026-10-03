@@ -5,7 +5,8 @@ public enum HitGrade { Unrolled, Full, Glancing }
 public struct HitResolution
 {
     public HitGrade grade;   // Unrolled for DoT ticks
-    public int roll;         // the d20
+    public int roll;         // the d20 (the higher of two with advantage)
+    public bool advantage;   // riposte, or the target was guard-broken
     public float accuracy;   // attacker's Finesse
     public float defense;    // 5 + Avoidance + armour's to-hit bonus
     public float rolled;     // damage carried into soak: full includes explosions, glancing is half the base

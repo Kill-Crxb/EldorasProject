@@ -21,9 +21,9 @@ MonoBehaviour:
   allowNegative: 0
   regenSource: {fileID: 11400000, guid: cda075c741676924f88c917236012ce0, type: 2}
   amountPerSourcePoint: 10
-  secondsPerSourcePoint: 10
+  secondsPerSourcePoint: 5
   regenPerSecond: 0
-  regenDelay: 0
+  regenDelay: 1
   resourceColor: {r: 0.51616734, g: 0.8962264, b: 0.15641688, a: 1}
   icon: {fileID: 0}
   depletedSound: {fileID: 0}

@@ -38,7 +38,7 @@ public partial class AbilityDefinition
         return total;
     }
 
-    static StatusDefinition LoadHitState(HitState state)
+    public static StatusDefinition LoadHitState(HitState state)
     {
         string path = HitStatePath(state);
         if (path == null) return null;

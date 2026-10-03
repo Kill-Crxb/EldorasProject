@@ -359,6 +359,9 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     public void RestoreResource(ResourceDefinition def, float amount)
         => ModifyResource(def, amount);
 
+    public ResourceDefinition FindDefinition(string resourceId)
+        => resources.TryGetValue(resourceId, out var state) ? state.definition : null;
+
     public void SetResourceToMax(ResourceDefinition def)
     {
         if (!resources.TryGetValue(def.resourceId, out var state)) return;

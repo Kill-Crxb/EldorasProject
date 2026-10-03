@@ -18,8 +18,12 @@ public class FightTargetGoal : GOAPGoal
     [Tooltip("Start swinging inside this distance (metres, root to root).")]
     public float attackRange = 2.2f;
 
-    [Tooltip("Seconds between swings, counted from the last swing that started.")]
+    [Tooltip("Seconds between strings, counted from the last press.")]
     public float attackInterval = 2f;
+
+    [Tooltip("Most presses in one string. Each string rolls 1..this. Follow-ups walk the moveset's " +
+             "Light chain; a one-step chain repeats its step.")]
+    public int maxString = 3;
 
     [Header("Spacing")]
     [Tooltip("Stop walking inside this distance. Keep it under Attack Range so she can still swing.")]
@@ -55,12 +59,51 @@ public class FightTargetGoal : GOAPGoal
         else
             control.Stop();
 
+        if (ContinueString(ctx)) return;
         if (ctx.distanceToTarget > attackRange) return;
         if (Time.time - control.LastAttackTime < attackInterval) return;
-        if (!ctx.abilityModule.CanUseAbility(attack.abilityId)) return;
+        if (!Attack(ctx)) return;
+
+        control.LastAttackTime = Time.time;
+        control.StringPressesLeft = Random.Range(0, Mathf.Max(1, maxString));
+    }
+
+    // Presses the next step of the string she started. The moveset buffers a press made while a
+    // step plays, so one press per step is enough. A string ends early when she's interrupted or
+    // the target leaves range. True while a string is running.
+    bool ContinueString(GOAPContext ctx)
+    {
+        AIControlSource control = ctx.aiControl;
+        if (control.StringPressesLeft <= 0) return false;
+
+        MovesetModule moveset = ctx.brain.GetModule<MovesetModule>();
+        Blackboard blackboard = ctx.brain.Blackboard;
+        bool interrupted = blackboard != null && blackboard.GetBool(BlackboardKey.CannotAct);
+
+        if (moveset == null || interrupted || ctx.distanceToTarget > attackRange)
+        {
+            control.StringPressesLeft = 0;
+            return false;
+        }
+
+        if (moveset.HasBufferedPress) return true;
+        if (moveset.Perform(MovesetChain.Light)) control.StringPressesLeft--;
+
+        control.LastAttackTime = Time.time;
+        return true;
+    }
+
+    // The entity's moveset when it has one, so an NPC swings the same string as the player;
+    // the authored attack otherwise.
+    bool Attack(GOAPContext ctx)
+    {
+        MovesetModule moveset = ctx.brain.GetModule<MovesetModule>();
+        if (moveset != null && moveset.ActiveMoveset != null) return moveset.Perform(MovesetChain.Light);
+
+        if (!ctx.abilityModule.CanUseAbility(attack.abilityId)) return false;
 
         ctx.abilityModule.UseAbility(attack.abilityId);
-        control.LastAttackTime = Time.time;
+        return true;
     }
 
     public override void OnEnd(GOAPContext ctx)

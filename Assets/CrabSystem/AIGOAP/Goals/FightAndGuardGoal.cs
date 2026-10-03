@@ -19,6 +19,14 @@ public class FightAndGuardGoal : FightTargetGoal
     [Tooltip("Only read attacks started inside this distance.")]
     public float threatRange = 3f;
 
+    [Header("Deflect")]
+    [Tooltip("Chance, once per swing she is guarding against, to parry it through her moveset's Parry chain.")]
+    [Range(0f, 1f)] public float deflectChance = 0.3f;
+
+    [Tooltip("Press the parry this many frames before the swing's active frames. Reads the move's " +
+             "authored frames, so it drifts with placeholder clips.")]
+    public int deflectLeadFrames = 4;
+
     public override bool CanExecute(GOAPContext ctx)
     {
         return base.CanExecute(ctx) && guard != null;
@@ -36,7 +44,11 @@ public class FightAndGuardGoal : FightTargetGoal
             if (Random.value < guardChance) control.GuardUntil = Time.time + guardHold;
             control.ReadThisSwing = true;
         }
-        if (!threatened) control.ReadThisSwing = false;
+        if (!threatened)
+        {
+            control.ReadThisSwing = false;
+            control.DeflectReadThisSwing = false;
+        }
 
         bool guarding = Time.time < control.GuardUntil && (IsBlocking(ctx) || CanGuard(ctx));
         if (!guarding) control.GuardUntil = -999f;
@@ -51,8 +63,31 @@ public class FightAndGuardGoal : FightTargetGoal
         control.Face(ctx.toTarget);
         control.Stop();
 
-        if (IsBlocking(ctx)) return;
-        ctx.abilityModule.UseAbility(guard.abilityId);
+        if (!IsBlocking(ctx))
+        {
+            ctx.abilityModule.UseAbility(guard.abilityId);
+            return;
+        }
+
+        if (threatened) TryDeflect(ctx);
+    }
+
+    // Once per swing: when the target's move nears its active frames, maybe parry it.
+    void TryDeflect(GOAPContext ctx)
+    {
+        AIControlSource control = ctx.aiControl;
+        if (control.DeflectReadThisSwing) return;
+
+        ControllerBrain targetBrain = ctx.target.GetComponent<ControllerBrain>();
+        AbilitySystem targetAbilities = targetBrain != null ? targetBrain.Abilities : null;
+        AbilityDefinition move = targetAbilities != null ? targetAbilities.CurrentAbility : null;
+        if (move == null || !move.HasMoveData) return;
+        if (targetAbilities.CurrentMoveFrame < move.ActiveStart - deflectLeadFrames) return;
+
+        control.DeflectReadThisSwing = true;
+        if (Random.value >= deflectChance) return;
+
+        ctx.brain.GetModule<MovesetModule>()?.Perform(MovesetChain.Parry);
     }
 
     bool CanGuard(GOAPContext ctx) => ctx.abilityModule.CanUseAbility(guard.abilityId);
@@ -63,9 +98,10 @@ public class FightAndGuardGoal : FightTargetGoal
 
         ControllerBrain targetBrain = ctx.target.GetComponent<ControllerBrain>();
         AbilitySystem targetAbilities = targetBrain != null ? targetBrain.Abilities : null;
-        if (targetAbilities == null || targetAbilities.CurrentAbility == null) return false;
+        AbilityDefinition move = targetAbilities != null ? targetAbilities.CurrentAbility : null;
+        if (move == null || move.IsParry) return false;
 
-        return targetAbilities.CurrentAbility.abilityType != AbilityType.Defensive;
+        return move.abilityType != AbilityType.Defensive;
     }
 
     static bool IsBlocking(GOAPContext ctx)

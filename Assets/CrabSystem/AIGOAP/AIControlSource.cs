@@ -22,6 +22,8 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     public float LastAttackTime { get; set; } = -999f;
     public float GuardUntil { get; set; } = -999f;
     public bool ReadThisSwing { get; set; }
+    public bool DeflectReadThisSwing { get; set; }
+    public int StringPressesLeft { get; set; }
 
     // The AI's block key. AbilitySystem keeps a guard up only while this is held.
     public bool GuardHeld { get; set; }

@@ -24,6 +24,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     [SerializeField] private MMF_Player blocked;
     [SerializeField] private MMF_Player hitProjectile;
     [SerializeField] private MMF_Player parry;
+    [SerializeField] private MMF_Player guardBreak;
     [SerializeField] private MMF_Player death;
 
     [Header("World Players — attacker side")]
@@ -43,6 +44,10 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     [SerializeField] private MMF_Player viewHit;
     [SerializeField] private MMF_Player viewConnect;
     [SerializeField] private MMF_Player viewParry;
+    [SerializeField] private MMF_Player viewBlocked;
+    [Tooltip("The attacker's side of a blocked hit: the blade rebounds off a guard.")]
+    [SerializeField] private MMF_Player viewBlockedRebound;
+    [SerializeField] private MMF_Player viewGuardBreak;
     [SerializeField] private MMF_Player viewKill;
     [SerializeField] private MMF_Player viewLandHard;
     [SerializeField] private MMF_Player viewLand;
@@ -56,6 +61,11 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     [SerializeField] private int blockedStopFrames = 2;
     [SerializeField] private int parryStopFrames = 10;
     [SerializeField] private int projectileStopFrames = 3;
+    [SerializeField] private int guardBreakStopFrames = 12;
+
+    [Header("Guard Break")]
+    [Tooltip("Height above the root where the guard-break burst plays.")]
+    [SerializeField] private float guardBreakHeight = 1.2f;
 
     [Header("Flash (seconds)")]
     [SerializeField] private HitFlash flash;
@@ -113,6 +123,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
         damage.OnDamageApplied += HandleDamageApplied;
         damage.OnDeath += HandleDeath;
         if (abilities != null) abilities.OnPerfectBlock += HandleParry;
+        if (abilities != null) abilities.OnGuardBreak += HandleGuardBreak;
         if (abilities != null) abilities.OnAbilityUsed += HandleAbilityUsed;
         if (landing != null) landing.OnLanded += HandleLanded;
 
@@ -129,6 +140,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
             damage.OnDeath -= HandleDeath;
         }
         if (abilities != null) abilities.OnPerfectBlock -= HandleParry;
+        if (abilities != null) abilities.OnGuardBreak -= HandleGuardBreak;
         if (abilities != null) abilities.OnAbilityUsed -= HandleAbilityUsed;
         if (landing != null) landing.OnLanded -= HandleLanded;
         if (locomotion != null) locomotion.OnMoveAction -= HandleMoveAction;
@@ -227,6 +239,18 @@ public class JuiceModule : MonoBehaviour, IBrainModule
         parryPending = true;
     }
 
+    // Fires for a guard broken by a hit (inside TakeDamage) and for posture broken by being parried
+    // (on the attacker, outside any hit), so it plays on its own rather than waiting for a damage event.
+    private void HandleGuardBreak()
+    {
+        if (!isEnabled) return;
+
+        Vector3 position = RootPosition() + Vector3.up * guardBreakHeight;
+        HitStop(guardBreakStopFrames);
+        Play(guardBreak, position, 1f);
+        PlayView(viewGuardBreak, position);
+    }
+
     private void HandleDeath()
     {
         deathPending = true;
@@ -262,13 +286,16 @@ public class JuiceModule : MonoBehaviour, IBrainModule
             return;
         }
 
-        int frames = lightStopFrames;
         if (IsBlocking())
         {
-            frames = blockedStopFrames;
-            Hit(blocked, frames, 0f, packet.hitPoint);
+            Hit(blocked, blockedStopFrames, 0f, packet.hitPoint);
+            PlayView(viewBlocked, packet.hitPoint);
+            if (attacker != null) attacker.Blocked(blockedStopFrames, packet.hitPoint);
+            return;
         }
-        else if (packet.isHeavyAttack)
+
+        int frames = lightStopFrames;
+        if (packet.isHeavyAttack)
         {
             frames = heavyStopFrames;
             Hit(hitHeavy, frames, heavyFlashTime, packet.hitPoint);
@@ -296,6 +323,14 @@ public class JuiceModule : MonoBehaviour, IBrainModule
         HitStop(frames);
         Play(connect, hitPoint, 1f);
         PlayView(viewConnect, hitPoint);
+    }
+
+    // No connect sparks: the blade met a guard, not a body.
+    public void Blocked(int frames, Vector3 hitPoint)
+    {
+        if (!isEnabled) return;
+        HitStop(frames);
+        PlayView(viewBlockedRebound, hitPoint);
     }
 
     public void Parried(int frames, Vector3 hitPoint)

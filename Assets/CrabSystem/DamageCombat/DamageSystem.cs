@@ -12,7 +12,13 @@ public class DamageInterceptArgs
 {
     public float damage;
     public readonly Vector3 attackDirection;
-    public DamageInterceptArgs(float damage, Vector3 dir) { this.damage = damage; attackDirection = dir; }
+    public readonly ControllerBrain attacker;
+    public DamageInterceptArgs(float damage, Vector3 dir, ControllerBrain attacker)
+    {
+        this.damage = damage;
+        attackDirection = dir;
+        this.attacker = attacker;
+    }
 }
 
 /// <summary>
@@ -55,6 +61,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     private const string ArmourDefenseStat = "atr.arm_def";
     private const string ArmourDiceStat = "atr.arm_dice";
     private const string ArmourStat = "atr.arm";
+    private const string GuardBrokenStatusId = "guardbroken";
 
     // Public accessors
     public ControllerBrain Brain => brain;
@@ -199,12 +206,12 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         if (!isEnabled || isDead) return 0f;
         if (blackboard != null && blackboard.GetBool(BlackboardKey.IsInvincible)) return 0f;
 
-        HitResolution hit = ResolveHit(packet);
-        float dmg = hit.applied;
-
         ControllerBrain attackerBrain = packet.attacker != null
             ? packet.attacker.GetComponentInParent<ControllerBrain>()
             : null;
+
+        HitResolution hit = ResolveHit(packet, attackerBrain);
+        float dmg = hit.applied;
 
         // Faction damage modifier — per-relationship multiplier from the
         // FactionRelationships matrix (1.0 when factions unknown or unlisted).
@@ -215,7 +222,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
         if (OnDamageIntercept != null && blackboard != null && blackboard.GetBool(BlackboardKey.IsBlocking))
         {
-            var args = new DamageInterceptArgs(dmg, packet.attackDirection);
+            var args = new DamageInterceptArgs(dmg, packet.attackDirection, attackerBrain);
             OnDamageIntercept.Invoke(args);
             dmg = args.damage;
         }
@@ -234,7 +241,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     }
 
     // Stat_Resolution.md §4, steps 2 and 4. Ticks skip both: no roll, no soak.
-    private HitResolution ResolveHit(CombatDamagePacket packet)
+    private HitResolution ResolveHit(CombatDamagePacket packet, ControllerBrain attackerBrain)
     {
         var hit = new HitResolution { grade = HitGrade.Unrolled, rolled = packet.finalDamage };
 
@@ -246,7 +253,9 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
         hit.accuracy = packet.accuracy;
         hit.defense = BaseDefense + Stat(AvoidanceStat) + Stat(ArmourDefenseStat);
+        hit.advantage = HasAdvantage(attackerBrain);
         hit.roll = UnityEngine.Random.Range(1, 21);
+        if (hit.advantage) hit.roll = Mathf.Max(hit.roll, UnityEngine.Random.Range(1, 21));
 
         bool full = hit.roll + hit.accuracy >= hit.defense;
         hit.grade = full ? HitGrade.Full : HitGrade.Glancing;
@@ -296,6 +305,17 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     }
 
     private float Stat(string statId) => stats != null ? stats.GetValue(statId) : 0f;
+
+    // Combat_Framework §3–4: a guard-broken target is open (the deathblow), and a parry's riposte
+    // makes the defender's next hit a read. Either rolls the d20 twice and keeps the higher.
+    private bool HasAdvantage(ControllerBrain attackerBrain)
+    {
+        StatusSystem statuses = brain != null ? brain.GetModule<StatusSystem>() : null;
+        if (statuses != null && statuses.Has(GuardBrokenStatusId)) return true;
+
+        AbilitySystem attackerAbilities = attackerBrain != null ? attackerBrain.GetModule<AbilitySystem>() : null;
+        return attackerAbilities != null && attackerAbilities.TakeRiposte();
+    }
 
     private void Die()
     {

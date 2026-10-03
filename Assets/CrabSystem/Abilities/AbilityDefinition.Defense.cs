@@ -36,6 +36,18 @@ public partial class AbilityDefinition
     public float blockStartupTime = 0.1f;
 
     // ========================================
+    // PARRY (an ordinary ability fired while a guard is up — LMB while blocking)
+    // ========================================
+
+    [Header("Parry")]
+    [Tooltip("Above 0 makes this a parry: using it opens a window this many frames long (60 fps). " +
+             "A hit landing inside the guard arc while the window is open is parried. " +
+             "The ability's cooldown is the lockout after the press.")]
+    public int parryFrames = 0;
+
+    public bool IsParry => parryFrames > 0;
+
+    // ========================================
     // POLICY HELPERS (Zero-allocation, side-effect-free)
     // ========================================
 
