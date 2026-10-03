@@ -244,8 +244,8 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     }
 
     // Facing comes from the camera inside the handler, not through MovementInput, so the denials
-    // below never reach it. The handler asks this instead.
-    public bool FacingLocked => IsDead;
+    // below never reach it. The handler asks this instead. Hard control (stun, flinch) holds it too.
+    public bool FacingLocked => IsDead || (blackboard != null && blackboard.GetBool(BlackboardKey.CannotAct));
 
     private bool IsDead => brain != null && brain.Damage != null && brain.Damage.IsDead;
 

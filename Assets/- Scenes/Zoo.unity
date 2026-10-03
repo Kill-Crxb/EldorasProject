@@ -15958,6 +15958,8 @@ GameObject:
   - component: {fileID: 1078714753}
   - component: {fileID: 1078714752}
   - component: {fileID: 1078714751}
+  - component: {fileID: 1078714754}
+  - component: {fileID: 1078714755}
   m_Layer: 0
   m_Name: Debugtools
   m_TagString: Untagged
@@ -16046,6 +16048,33 @@ MonoBehaviour:
   - atr.arm_dice
   - atr.arm_def
   - def.avoidance
+--- !u!114 &1078714754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1078714748}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b3b3b8b7a91558b79ed58afab828a02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ActionTrace
+  rescanInterval: 1
+--- !u!114 &1078714755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1078714748}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4d93d66b3330b7b383e04028a125f44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovesetProbe
+  movesetBarId: mouse
+  movesetSlotIndex: 0
 --- !u!1001 &1090140911
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26433,8 +26462,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7eff26c942d345169550e723ea499f30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIPanelSlot
-  slotId: Inventory / Stats
-  defaultViewId: inventory / stats
+  slotId: inventory
+  defaultViewId: inventory
 --- !u!114 &1986164066
 MonoBehaviour:
   m_ObjectHideFlags: 0
