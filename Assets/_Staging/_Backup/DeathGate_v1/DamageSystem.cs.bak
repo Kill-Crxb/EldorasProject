@@ -59,7 +59,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     // Public accessors
     public ControllerBrain Brain => brain;
     public Collider Hurtbox => hurtbox;
-    public bool IsDead => isDead;
     // Whoever landed the killing hit. Null for deaths that came from no attacker, and for self-kills.
     public ControllerBrain Killer { get; private set; }
 

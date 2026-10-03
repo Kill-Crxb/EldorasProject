@@ -109,8 +109,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         resources = brain.GetProvider<IResourceProvider>();
         healthProvider = brain.GetProvider<IHealthProvider>();
         damageSystem = brain.GetModule<DamageSystem>();
-        if (damageSystem != null)
-            damageSystem.OnDeath += HandleDeath;
         vfxSystem = brain.GetModule<VFXSystem>();
 
         
@@ -158,13 +156,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         if (!hardControl && !silencedMidCast) return;
 
-        CancelCurrentAbility();
-        RestActionsLayer();
-    }
-
-    // Death ends whatever was in flight, the same way hard control does. CanUseAbility refuses after.
-    private void HandleDeath()
-    {
         CancelCurrentAbility();
         RestActionsLayer();
     }
@@ -303,9 +294,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         if (blackboard != null)
             blackboard.OnBoolChanged -= HandleFactChanged;
 
-        if (damageSystem != null)
-            damageSystem.OnDeath -= HandleDeath;
-
         if (modelModule != null)
             modelModule.OnModelChanged -= HandleModelChanged;
 
@@ -393,7 +381,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     public bool CanUseAbility(string abilityId)
     {
         if (!isEnabled) return false;
-        if (damageSystem != null && damageSystem.IsDead) return false;
         if (currentAbility != null) return false;
         if (currentlyCastingAbility != null) return false;
         if (isAnimationLocked) return false;

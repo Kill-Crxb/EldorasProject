@@ -1021,7 +1021,6 @@ public class ParkourLocomotionHandler : LocomotionHandler
     /// </summary>
     Quaternion ResolveFacing(float dt)
     {
-        if (movementSystem.FacingLocked) return rootTransform.rotation;
         if (profile.holdFacingWhileStationary && IsStationary()) return rootTransform.rotation;
 
         return Quaternion.RotateTowards(

@@ -243,19 +243,13 @@ public class MovementSystem : MonoBehaviour, IBrainModule
         locomotionHandler.ExecuteMovement(input);
     }
 
-    // Facing comes from the camera inside the handler, not through MovementInput, so the denials
-    // below never reach it. The handler asks this instead.
-    public bool FacingLocked => IsDead;
-
-    private bool IsDead => brain != null && brain.Damage != null && brain.Damage.IsDead;
-
     // Denial facts, each with its own writer (BlackboardKey). The Cannot* facts come from statuses;
     // MoveRooted from AbilitySystem while a castWhileMoving-off ability plays. CannotSprint is not
     // here — it lives in the gait (LocomotionHandler.SprintAvailable), so speed and IsSprinting
     // drop together.
     private MovementInput ApplyDenials(MovementInput input)
     {
-        if (IsDead)
+        if (brain != null && brain.Damage != null && brain.Damage.IsDead)
             return MovementInput.Zero;
 
         if (blackboard == null) return input;
