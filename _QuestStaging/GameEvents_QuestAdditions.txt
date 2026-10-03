@@ -1,0 +1,49 @@
+Paste into Assets/CrabSystem/A. CoreArchitecture/GameEvents.cs when moving the quest
+scripts into Assets. Three blocks: events, invoke helpers, ClearAll lines.
+
+── 1. New region, beside #region Dialogue ──────────────────────────────────────────
+
+    #region Gameplay & Quests
+
+    public static event Action<GameplayEvent> OnGameplayEvent;
+    public static event Action<ControllerBrain, string> OnQuestAccepted;
+    public static event Action<ControllerBrain, string> OnQuestProgress;
+    public static event Action<ControllerBrain, string, int> OnQuestStageChanged;
+    public static event Action<ControllerBrain, string> OnQuestCompleted;
+    public static event Action<ControllerBrain, string> OnQuestFailed;
+    public static event Action<ControllerBrain, string> OnQuestAbandoned;
+
+    #endregion
+
+── 2. Inside #region Invoke Helpers ───────────────────────────────────────────────
+
+    public static void RaiseGameplayEvent(GameplayEvent gameplayEvent) =>
+        OnGameplayEvent?.Invoke(gameplayEvent);
+
+    public static void QuestAccepted(ControllerBrain brain, string questId) =>
+        OnQuestAccepted?.Invoke(brain, questId);
+
+    public static void QuestProgress(ControllerBrain brain, string questId) =>
+        OnQuestProgress?.Invoke(brain, questId);
+
+    public static void QuestStageChanged(ControllerBrain brain, string questId, int stageIndex) =>
+        OnQuestStageChanged?.Invoke(brain, questId, stageIndex);
+
+    public static void QuestCompleted(ControllerBrain brain, string questId) =>
+        OnQuestCompleted?.Invoke(brain, questId);
+
+    public static void QuestFailed(ControllerBrain brain, string questId) =>
+        OnQuestFailed?.Invoke(brain, questId);
+
+    public static void QuestAbandoned(ControllerBrain brain, string questId) =>
+        OnQuestAbandoned?.Invoke(brain, questId);
+
+── 3. Inside ClearAll() ───────────────────────────────────────────────────────────
+
+        OnGameplayEvent = null;
+        OnQuestAccepted = null;
+        OnQuestProgress = null;
+        OnQuestStageChanged = null;
+        OnQuestCompleted = null;
+        OnQuestFailed = null;
+        OnQuestAbandoned = null;
