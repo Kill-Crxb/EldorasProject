@@ -23,6 +23,7 @@ MonoBehaviour:
   gridWidth: 1
   gridHeight: 3
   weaponData: {fileID: 11400000, guid: 0109f6b66c66b6a4f809a0b9c34cb256, type: 2}
+  moveset: {fileID: 11400000, guid: 181942ccc5bbba9618fc740f9e166850, type: 2}
   rarity: 0
   maxStackSize: 1
   tags:

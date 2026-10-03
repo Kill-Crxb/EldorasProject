@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7848407c6e1d9ad2186a5326cf1b1ce9, type: 3}
+  m_Name: Moveset_Katana
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponMoveset
+  light:
+  - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
+  heavy: []
+  running:
+  - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
+  air:
+  - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
+  block: {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
+  parry:
+  - {fileID: 11400000, guid: cffd3bab6621a296cbcb8ecbfaad5b77, type: 2}
+  chainGrace: 0.5

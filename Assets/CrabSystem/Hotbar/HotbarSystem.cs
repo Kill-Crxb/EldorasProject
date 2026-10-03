@@ -32,12 +32,20 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
     [Tooltip("Seconds between activation-fact checks. Matches the SemanticBridgeSystem pulse.")]
     [SerializeField] private float pageCheckInterval = 0.1f;
 
+    [Header("Moveset")]
+    [Tooltip("Bar and slot the weapon moveset owns. While the entity has a MovesetModule the slot " +
+             "can't be assigned, and pressing it fires the moveset (Moveset_Build.md).")]
+    [SerializeField] private string movesetBarId = "mouse";
+    [SerializeField] private int movesetSlotIndex = 0;
+    [SerializeField] private int blockSlotIndex = 1;
+
     [Header("Debug")]
     [SerializeField] private bool debugLogging = false;
 
     private ControllerBrain brain;
     private AbilitySystem abilitySystem;
     private SlotTransformationSystem transformSystem;
+    private MovesetModule movesetModule;
     private Blackboard blackboard;
 
     private readonly List<HotbarPageState> pages = new List<HotbarPageState>();
@@ -82,6 +90,8 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
         if (abilitySystem == null) abilitySystem = brain.GetModule<AbilitySystem>();
 
         transformSystem = brain.GetModule<SlotTransformationSystem>();
+        movesetModule = brain.GetModule<MovesetModule>();
+        if (movesetModule != null) movesetModule.OnPreviewChanged += HandleMovesetPreviewChanged;
         blackboard = brain.Blackboard;
 
         nextPageCheck = Time.time + pageCheckInterval;
@@ -339,6 +349,7 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 
     public void AssignSlot(string barId, int index, string abilitySlotId)
     {
+        if (IsMovesetSlot(barId, index)) return;
         var config = ResolveBar(barId);
         if (config == null || !IsValidIndex(index, config)) return;
 
@@ -354,6 +365,7 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 
     public void AssignItemSlot(string barId, int index, string itemInstanceId)
     {
+        if (IsMovesetSlot(barId, index)) return;
         var config = ResolveBar(barId);
         if (config == null || !IsValidIndex(index, config)) return;
 
@@ -370,6 +382,7 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 
     public void ClearSlot(string barId, int index)
     {
+        if (IsMovesetSlot(barId, index)) return;
         var config = ResolveBar(barId);
         if (config == null || !IsValidIndex(index, config)) return;
 
@@ -385,8 +398,25 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
     public ActionBarConfig GetConfig(string barId)
         => ResolveBar(barId);
 
+    private void HandleMovesetPreviewChanged()
+    {
+        OnSlotChanged?.Invoke(movesetBarId, movesetSlotIndex);
+        OnSlotChanged?.Invoke(movesetBarId, blockSlotIndex);
+    }
+
+    private void OnDestroy()
+    {
+        if (movesetModule != null) movesetModule.OnPreviewChanged -= HandleMovesetPreviewChanged;
+    }
+
+    public bool IsMovesetSlot(string barId, int index)
+        => movesetModule != null && barId == movesetBarId && (index == movesetSlotIndex || index == blockSlotIndex);
+
     public AbilityDefinition ResolveSlotAbility(ActionBarSlotData slot)
     {
+        // Compared by reference: a slot loaded from an older save can carry a stale barId / index.
+        if (movesetModule != null && slot != null && slot == GetSlot(movesetBarId, movesetSlotIndex)) return movesetModule.PeekNext();
+        if (movesetModule != null && slot != null && slot == GetSlot(movesetBarId, blockSlotIndex)) return movesetModule.PeekBlock();
         if (slot == null || !slot.IsAssigned) return null;
         if (!slot.abilitySlotId.StartsWith("ability:")) return null;
 
@@ -419,6 +449,17 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
     public void TriggerSlot(string barId, int index)
     {
         if (abilitySystem == null) return;
+
+        if (IsMovesetSlot(barId, index))
+        {
+            if (transformSystem != null && transformSystem.HasOverride(barId, index))
+                TriggerOverride(barId, index);
+            else if (index == blockSlotIndex)
+                movesetModule.PressBlock();
+            else
+                movesetModule.Press();
+            return;
+        }
 
         var slot = GetSlot(barId, index);
         if (slot == null || !slot.IsAssigned) return;

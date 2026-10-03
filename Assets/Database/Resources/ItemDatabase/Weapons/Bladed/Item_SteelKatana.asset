@@ -20,10 +20,10 @@ MonoBehaviour:
   equippedPrefab: {fileID: 6413440490822234159, guid: a04645d8876d1a448ad847390068b125, type: 3}
   category: {fileID: 11400000, guid: 3a1a0cc2fa1f1d24297bde78aa943866, type: 2}
   subType: {fileID: 11400000, guid: 45b10114e6a9cf4429ede1e21e7a4c87, type: 2}
-  baseType: {fileID: 11400000, guid: d2316f01bcfa9fc49a6cddb69583019a, type: 2}
   gridWidth: 1
   gridHeight: 2
   weaponData: {fileID: 11400000, guid: f1c7642795390ad439818e9f715f1f0c, type: 2}
+  moveset: {fileID: 11400000, guid: 181942ccc5bbba9618fc740f9e166850, type: 2}
   rarity: 0
   maxStackSize: 1
   tags:

@@ -45,6 +45,9 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
     [Tooltip("DiceProfile rolled on every unarmed hit. Author it as 1d4 with a flat bonus of 2.")]
     [SerializeField] private DiceProfile unarmedWeapon;
 
+    [Tooltip("Moveset LMB fires while unarmed.")]
+    [SerializeField] private WeaponMoveset unarmedMoveset;
+
     [Header("Slots & Sockets")]
     [Tooltip("Equipment slot this stance sheathes and draws from.")]
     [SerializeField] private string weaponSlotId = "mainwep";
@@ -88,6 +91,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
     public CombatStance Stance => stance;
     public bool IsUnarmed => stance == CombatStance.Unarmed;
     public DiceProfile UnarmedWeapon => unarmedWeapon;
+    public WeaponMoveset UnarmedMoveset => unarmedMoveset;
 
     public event Action<CombatStance> OnStanceChanged;
 

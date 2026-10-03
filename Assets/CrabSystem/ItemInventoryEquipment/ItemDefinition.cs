@@ -46,6 +46,9 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("Dice damage and combat stats for this weapon (null for non-weapons)")]
     public DiceProfile weaponData;
 
+    [Tooltip("The weapon's default moveset — what LMB fires while it is drawn (null for non-weapons)")]
+    public WeaponMoveset moveset;
+
     [Header("Advanced")]
     [Tooltip("Item rarity level")]
     public ItemRarity rarity = ItemRarity.Common;

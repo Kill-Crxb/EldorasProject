@@ -590,7 +590,10 @@ public class InputSystem : MonoBehaviour,
                 var slot = hotbar.GetSlot(barId, i);
                 var ability = hotbar.ResolveSlotAbility(slot);
 
-                if (ability?.chargeAbility != null && duration >= ability.chargeThreshold)
+                // Only a charge slot acts on release; every other slot already fired on press.
+                if (ability?.chargeAbility == null) continue;
+
+                if (duration >= ability.chargeThreshold)
                     brain.GetModule<AbilitySystem>()?.UseAbility(ability.chargeAbility.abilityId);
                 else
                     hotbar.TriggerSlot(barId, i);
@@ -736,7 +739,7 @@ public class InputSystem : MonoBehaviour,
                 switch (i)
                 {
                     case 0: return LightAttackPressed;
-                    case 1: return AbilityBlockPressed;
+                    case 1: return BlockHeld; // a guard is a hold: keep asking until it can go up
                 }
                 break;
 

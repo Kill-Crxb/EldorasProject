@@ -29,7 +29,7 @@ MonoBehaviour:
   nextInChain: {fileID: 0}
   chainWindow: 0.5
   resourceCosts: []
-  cooldown: 5
+  cooldown: 0
   castTime: 0
   blockDamageReduction: 0.5
   blockAngle: 120

@@ -711,6 +711,7 @@ Transform:
   - {fileID: 5764912515546302425}
   - {fileID: 6365874084356424511}
   - {fileID: 9221239084164391601}
+  - {fileID: 5478355541252067953}
   m_Father: {fileID: 505027778239189661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7834155014174466237
@@ -1359,6 +1360,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatStanceModule
   unarmedWeapon: {fileID: 11400000, guid: 844c3d65c9a790546867bc71a7e1ad5b, type: 2}
+  unarmedMoveset: {fileID: 11400000, guid: acba96f629c918a079fec7e0f171809a, type: 2}
   weaponSlotId: mainwep
   sheathSocketId: mainwep_sheathed
   sheatheAbility: {fileID: 0}
@@ -2066,6 +2068,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 77917c6cafde6fa4e951b6afece738ed, type: 2}
   - {fileID: 11400000, guid: 3edae4ff41e326a4c902f207139ba046, type: 2}
   pageCheckInterval: 0.1
+  movesetBarId: mouse
+  movesetSlotIndex: 0
   debugLogging: 1
 --- !u!114 &3195358102234684433
 MonoBehaviour:
@@ -2080,6 +2084,52 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotTransformationSystem
   debugLogging: 0
+--- !u!1 &3891972329148586399
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5478355541252067953}
+  - component: {fileID: 4019653497779162157}
+  m_Layer: 8
+  m_Name: MovesetModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5478355541252067953
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3891972329148586399}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8373627434070198267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4019653497779162157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3891972329148586399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 917dedcf759bf525694c130569eb585d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovesetModule
+  bufferLifetime: 1
+  weaponSlotId: mainwep
 --- !u!1 &4021773971344676622
 GameObject:
   m_ObjectHideFlags: 0
@@ -2655,6 +2705,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
   - {fileID: 11400000, guid: d2a2c77dd656fa26a90cec8c9b87b943, type: 2}
   - {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
+  - {fileID: 11400000, guid: 6fa7aba0d21542bfb62a69d93ce97400, type: 2}
 --- !u!1 &4473629046579420901
 GameObject:
   m_ObjectHideFlags: 0
