@@ -23,9 +23,10 @@ public class FightAndGuardGoal : FightTargetGoal
     [Tooltip("Chance, once per swing she is guarding against, to parry it through her moveset's Parry chain.")]
     [Range(0f, 1f)] public float deflectChance = 0.3f;
 
-    [Tooltip("Press the parry this many frames before the swing's active frames. Reads the move's " +
-             "authored frames, so it drifts with placeholder clips.")]
-    public int deflectLeadFrames = 4;
+    [Tooltip("Seconds after the target's blade goes live before she presses. The blade is live a little " +
+             "before it reaches her, and the parry window is only 8 frames.")]
+    public float deflectDelay = 0.08f;
+
 
     public override bool CanExecute(GOAPContext ctx)
     {
@@ -72,7 +73,8 @@ public class FightAndGuardGoal : FightTargetGoal
         if (threatened) TryDeflect(ctx);
     }
 
-    // Once per swing: when the target's move nears its active frames, maybe parry it.
+    // Once per swing: the moment the target's blade goes live, maybe parry it. Reads the hitboxes rather
+    // than the move's frame data, which placeholder clips don't match.
     void TryDeflect(GOAPContext ctx)
     {
         AIControlSource control = ctx.aiControl;
@@ -80,9 +82,7 @@ public class FightAndGuardGoal : FightTargetGoal
 
         ControllerBrain targetBrain = ctx.target.GetComponent<ControllerBrain>();
         AbilitySystem targetAbilities = targetBrain != null ? targetBrain.Abilities : null;
-        AbilityDefinition move = targetAbilities != null ? targetAbilities.CurrentAbility : null;
-        if (move == null || !move.HasMoveData) return;
-        if (targetAbilities.CurrentMoveFrame < move.ActiveStart - deflectLeadFrames) return;
+        if (targetAbilities == null || targetAbilities.HitboxesLiveFor < deflectDelay) return;
 
         control.DeflectReadThisSwing = true;
         if (Random.value >= deflectChance) return;

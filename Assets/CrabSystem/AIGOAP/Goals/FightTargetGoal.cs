@@ -86,7 +86,8 @@ public class FightTargetGoal : GOAPGoal
             return false;
         }
 
-        if (moveset.HasBufferedPress) return true;
+        // Press as each step ends rather than buffering early: placeholder swings outlast the buffer.
+        if (moveset.StepInFlight || moveset.HasBufferedPress) return true;
         if (moveset.Perform(MovesetChain.Light)) control.StringPressesLeft--;
 
         control.LastAttackTime = Time.time;

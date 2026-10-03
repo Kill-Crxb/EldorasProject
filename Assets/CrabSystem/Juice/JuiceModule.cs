@@ -66,6 +66,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     [Header("Guard Break")]
     [Tooltip("Height above the root where the guard-break burst plays.")]
     [SerializeField] private float guardBreakHeight = 1.2f;
+    [SerializeField] private float guardBreakFlashTime = 0.15f;
 
     [Header("Flash (seconds)")]
     [SerializeField] private HitFlash flash;
@@ -247,6 +248,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
 
         Vector3 position = RootPosition() + Vector3.up * guardBreakHeight;
         HitStop(guardBreakStopFrames);
+        if (flash != null) flash.Flash(guardBreakFlashTime);
         Play(guardBreak, position, 1f);
         PlayView(viewGuardBreak, position);
     }

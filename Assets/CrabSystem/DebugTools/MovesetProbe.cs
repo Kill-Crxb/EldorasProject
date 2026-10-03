@@ -15,6 +15,12 @@ public class MovesetProbe : MonoBehaviour
     private readonly Dictionary<MovesetModule, string> last = new();
     private bool reportedNone;
 
+    // A copy placed in a scene loaded after the self-spawned one stands down, so lines aren't doubled.
+    private void Awake()
+    {
+        if (FindObjectsByType<MovesetProbe>().Length > 1) Destroy(this);
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Spawn()
     {

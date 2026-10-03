@@ -25,8 +25,18 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     [Tooltip("Seconds after a parry in which this entity's next hit rolls with advantage.")]
     [SerializeField] private float riposteSeconds = 1f;
 
-    [Tooltip("Stamina a guarded hit costs when the attacking move has no block stamina authored.")]
+    [Tooltip("Stamina and posture a guarded hit costs when the attacking move has no block stamina authored.")]
     [SerializeField] private int defaultGuardStamina = 5;
+
+    [Tooltip("A parried attacker takes the move's block stamina times this as posture.")]
+    [SerializeField] private float parryPostureMultiplier = 1.5f;
+
+    [Tooltip("Blockstun frames when the attacking move has no frame data authored.")]
+    [SerializeField] private int defaultBlockstunFrames = 12;
+
+    [Tooltip("Blockstun never drops below this. Placeholder clips run longer than their authored frames, " +
+             "so the hit often lands after the move's frame data says it has ended.")]
+    [SerializeField] private int minBlockstunFrames = 8;
 
     [Header("Debug")]
     [Tooltip("Log animation events, forwarder binding, and hitbox toggling.")]
@@ -83,10 +93,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private float lastParryPressAt = -999f;
     private int parryPresses;
     private float riposteUntil = -999f;
+    private AbilityDefinition riposteMove;
+    private float blockstunUntil = -999f;
 
     private const string StaminaId = "stamina";
+    private const string DeflectionStat = "def.deflection";
     private const string DeflectSideParam = "DeflectSide";
     private const string BlockedHitTrigger = "BlockedHit";
+    private const string ParriedTrigger = "Parried";
 
     public bool IsEnabled
     {
@@ -104,6 +118,10 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     public bool IsArmored => currentAbility != null && currentAbility.HasArmorAt(CurrentMoveFrame);
     public bool IsInvincible => isInvincible;
     public bool ParryWindowOpen => Time.time <= parryWindowEndsAt;
+    public bool InBlockstun => Time.time < blockstunUntil;
+    public bool HitboxesLive { get; private set; }
+    public float HitboxesLiveFor => HitboxesLive ? Time.time - hitboxesLiveAt : 0f;
+    private float hitboxesLiveAt;
 
     public event Action<string> OnAbilityUsed;
     public event Action<string, float> OnAbilityCooldownChanged;
@@ -114,9 +132,10 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     public event Action OnBlockEnd;
     public event Action OnPerfectBlock;   // a hit landed inside an open parry window; Juice listens
     public event Action<int> OnParryWindowOpened;   // window length in frames
-    public event Action<int> OnGuardedHit;          // stamina the blocked hit cost
-    public event Action<int> OnPostureDamaged;      // stamina a parry took from this entity as the attacker
+    public event Action<int, int, int> OnGuardedHit; // stamina cost, posture added, blockstun frames
+    public event Action<float> OnPostureDamaged;    // posture a parry put on this entity as the attacker
     public event Action OnGuardBreak;               // stamina ran out: guard or posture broken
+    public event Action<float> OnGuardFlanked;      // a hit landed outside the guard arc; its angle off facing
 
     private void SetFact(int key, bool value) => blackboard?.SetBool(key, value);
 
@@ -431,6 +450,8 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         if (!abilityStates.TryGetValue(abilityId, out var state)) return false;
         if (state.IsOnCooldown) return false;
         if (currentDefensiveAbility != null && state.definition.abilityType == AbilityType.Defensive) return false;
+        if (InBlockstun && !CanActWhileGuarding(state.definition)) return false;
+        if (currentDefensiveAbility != null && !CanActWhileGuarding(state.definition)) return false;
 
         var ability = state.definition;
 
@@ -584,6 +605,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         }
 
         if (ability.IsParry) OpenParryWindow(ability);
+        MarkRiposte(ability);
 
         currentAbility = ability;
         abilityStartTime = Time.time;
@@ -627,7 +649,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         if (currentAbility == ability)
         {
-            Debug.LogWarning($"[AbilitySystem] {ability.abilityName} timed out - AnimUnlocked never fired!");
+            // A parry ends on its maxDuration by design: its clip carries no events.
+            if (!ability.IsParry)
+                Debug.LogWarning($"[AbilitySystem] {ability.abilityName} timed out - AnimUnlocked never fired!");
             CompleteAbility(ability);
         }
 
@@ -870,34 +894,66 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private void HandleDamageIntercept(DamageInterceptArgs args)
     {
         if (currentDefensiveAbility == null) return;
-        if (!IsAttackWithinBlockAngle(args.attackDirection)) return;
-
-        int cost = GuardStamina(args.attacker);
-
-        if (ParryWindowOpen)
+        if (!IsAttackWithinBlockAngle(args.attackDirection))
         {
-            Parry(args, cost);
+            OnGuardFlanked?.Invoke(Vector3.Angle(transform.forward, -args.attackDirection));
             return;
         }
 
-        // Combat_Framework §3.1. Damage is still zeroed at build time; base damage through guard soak
-        // and blockstun are the rest of CF3. Stamina is the posture bar: a guard it can't pay for breaks.
-        if (!DrainStamina(brain, cost))
+        AbilitySystem attacker = args.attacker != null ? args.attacker.GetModule<AbilitySystem>() : null;
+        int cost = GuardStamina(attacker);
+
+        if (ParryWindowOpen)
         {
+            Parry(args, attacker, cost);
+            return;
+        }
+
+        // Combat_Framework §3.1. A guarded hit costs stamina and fills posture. Running out of stamina
+        // only empties the bar; a full posture bar breaks the guard and the hit lands normally.
+        // DamageSystem resolves a blocked hit's damage through guard soak.
+        int blockCost = Mathf.Max(1, cost - Mathf.FloorToInt(Stat(DeflectionStat)));
+        DrainStamina(brain, blockCost);
+
+        if (AddPosture(cost))
+        {
+            args.outcome = GuardOutcome.Broken;
             BreakGuard();
             return;
         }
 
-        args.damage = 0f;
+        int blockstun = BlockstunFrames(attacker);
+        blockstunUntil = Time.time + blockstun / 60f;
+        args.outcome = GuardOutcome.Blocked;
+
         animationProvider?.TriggerCombatAnimation(BlockedHitTrigger);
-        OnGuardedHit?.Invoke(cost);
+        OnGuardedHit?.Invoke(blockCost, cost, blockstun);
     }
 
-    // Combat_Framework §3.2: free for the defender, the attacker pays the move's block stamina, and the
-    // defender's next hit is a riposte. The attacker's string carries on unless their posture breaks.
-    private void Parry(DamageInterceptArgs args, int cost)
+    // Blockstun lasts the attacker's remaining recovery plus the move's on-block advantage (usually
+    // minus), so "-2 on block" means the attacker recovers 2 frames after the defender.
+    private int BlockstunFrames(AbilitySystem attacker)
     {
-        args.damage = 0f;
+        AbilityDefinition move = attacker != null ? attacker.CurrentAbility : null;
+        if (move == null || !move.HasMoveData) return defaultBlockstunFrames;
+
+        int total = move.frames.startup + move.frames.active + move.frames.recovery;
+        int remaining = Mathf.Max(0, total - attacker.CurrentMoveFrame);
+        return Mathf.Max(minBlockstunFrames, remaining + move.hit.blockAdvantage);
+    }
+
+    // While guarding, and in blockstun, only the guard itself and a parry can fire. Lower the guard to attack.
+    private static bool CanActWhileGuarding(AbilityDefinition ability)
+        => ability.abilityType == AbilityType.Defensive || ability.IsParry;
+
+    private float Stat(string statId) => brain.Stats != null ? brain.Stats.GetValue(statId) : 0f;
+
+    // Combat_Framework §3.2: free for the defender; the attacker pays the move's block stamina and takes
+    // posture, and the defender's next attack is a riposte. The attacker's string carries on unless
+    // their posture breaks.
+    private void Parry(DamageInterceptArgs args, AbilitySystem attacker, int cost)
+    {
+        args.outcome = GuardOutcome.Parried;
         parryWindowEndsAt = -999f;
         lastParryPressAt = -999f;
         riposteUntil = Time.time + riposteSeconds;
@@ -905,26 +961,40 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         FlipDeflectSide();
         OnPerfectBlock?.Invoke();
 
-        AbilitySystem attacker = args.attacker != null ? args.attacker.GetModule<AbilitySystem>() : null;
-        if (attacker != null) attacker.TakePostureDamage(cost);
+        if (attacker != null) attacker.TakeParried(cost);
     }
 
-    public void TakePostureDamage(int cost)
+    // This entity's swing was parried: the blade rebounds (the animator's Parried trigger, if authored).
+    public void TakeParried(int cost)
     {
-        bool covered = DrainStamina(brain, cost);
-        OnPostureDamaged?.Invoke(cost);
-        if (!covered) BreakGuard();
+        DrainStamina(brain, cost);
+        TriggerIfPresent(ParriedTrigger);
+
+        float posture = cost * parryPostureMultiplier;
+        bool broken = AddPosture(posture);
+        OnPostureDamaged?.Invoke(posture);
+        if (broken) BreakGuard();
     }
 
-    // Guard Break (§3.3): open and unable to act for the GuardBroken hit state. The next hit on a
-    // guard-broken target rolls with advantage (DamageSystem) — the deathblow.
+    // True when this fills the posture bar. A fighter without a PostureModule never breaks.
+    private bool AddPosture(float amount)
+    {
+        PostureModule posture = brain.GetModule<PostureModule>();
+        return posture != null && posture.Damage(amount);
+    }
+
+    // Guard Break (§3.3): the guard drops and the fighter is open for the GuardBroken hit state, for as
+    // long as the PostureModule says.
     private void BreakGuard()
     {
         DeactivateDefensiveAbility();
 
+        PostureModule posture = brain.GetModule<PostureModule>();
+        float seconds = posture != null ? posture.BreakSeconds : 0f;
+
         StatusDefinition status = AbilityDefinition.LoadHitState(HitState.GuardBreak);
         StatusSystem statuses = brain.GetModule<StatusSystem>();
-        if (status != null && statuses != null) statuses.Apply(status, null);
+        if (status != null && statuses != null) statuses.Apply(status, null, seconds);
 
         OnGuardBreak?.Invoke();
     }
@@ -941,18 +1011,28 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         OnParryWindowOpened?.Invoke(frames);
     }
 
+    // The riposte belongs to the first attack STARTED inside the window, so a slow swing that lands
+    // after the window has closed still counts.
+    private void MarkRiposte(AbilityDefinition ability)
+    {
+        if (ability.IsParry || ability.abilityType == AbilityType.Defensive) return;
+
+        riposteMove = Time.time <= riposteUntil ? ability : null;
+        riposteUntil = -999f;
+    }
+
+    // True once, for the first hit of the riposte move.
     public bool TakeRiposte()
     {
-        if (Time.time > riposteUntil) return false;
+        if (riposteMove == null || currentAbility != riposteMove) return false;
 
-        riposteUntil = -999f;
+        riposteMove = null;
         return true;
     }
 
-    private int GuardStamina(ControllerBrain attacker)
+    private int GuardStamina(AbilitySystem attacker)
     {
-        AbilitySystem attackerAbilities = attacker != null ? attacker.GetModule<AbilitySystem>() : null;
-        AbilityDefinition move = attackerAbilities != null ? attackerAbilities.CurrentAbility : null;
+        AbilityDefinition move = attacker != null ? attacker.CurrentAbility : null;
 
         int cost = move != null && move.HasMoveData ? move.hit.blockStamina : 0;
         return cost > 0 ? cost : defaultGuardStamina;
@@ -969,6 +1049,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         resources.ConsumeResource(stamina, resources.GetResource(stamina));
         return false;
+    }
+
+    private void TriggerIfPresent(string trigger)
+    {
+        Animator animator = brain.EntityAnimator;
+        if (animator == null || !HasParameter(animator, trigger)) return;
+
+        animator.SetTrigger(trigger);
     }
 
     // Alternates the deflect pose on each parry, if the animator has the parameter.
@@ -1063,6 +1151,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
             matched++;
         }
 
+        if (matched > 0 && !HitboxesLive) hitboxesLiveAt = Time.time;
+        HitboxesLive = matched > 0;
+
         if (matched == 0 && tags != null && tags.Count > 0)
             Debug.LogWarning($"[AbilitySystem] '{currentAbility.abilityName}' names hitbox tag(s) " +
                              $"[{string.Join(", ", tags)}] but nothing under {brain.EntityName} carries them — " +
@@ -1080,6 +1171,8 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
             Debug.Log($"[AbilitySystem] DisableAbilityHitboxes — found {hitboxes.Length} WeaponHitbox component(s) under {brain.EntityName}");
         foreach (var hitbox in hitboxes)
             hitbox.Disable();
+
+        HitboxesLive = false;
     }
 
     public int GetAbilityRemainingUses(string abilityId)

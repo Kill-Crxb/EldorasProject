@@ -96,6 +96,13 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
 
     // ── Damage → animation ────────────────────────────────────────────────
 
+    // A guarded hit plays the guard's BlockHit reaction (AbilitySystem), not a flinch.
+    private bool IsBlocking()
+    {
+        Blackboard blackboard = brain.Blackboard;
+        return blackboard != null && blackboard.GetBool(BlackboardKey.IsBlocking);
+    }
+
     // Reads the damage actually applied, so armour, block and faction modifiers set the severity.
     // DoT ticks never flinch, and a hit reduced to nothing (a parry) doesn't either.
     private void HandleDamageApplied(CombatDamagePacket packet, float applied)
@@ -103,6 +110,7 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
         if (!isEnabled || isDead) return;
         if (packet.source == DamageSource.Tick) return;
         if (applied <= 0f) return;
+        if (IsBlocking()) return;
         if (Time.time - lastReactionTime < minTimeBetweenReactions) return;
 
         lastReactionTime = Time.time;

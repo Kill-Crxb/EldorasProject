@@ -14,11 +14,21 @@ namespace RPG.NPC.UI
         [SerializeField] private Image healthBarFill;
         [SerializeField] private GameObject healthBarPanel;
 
+        [Tooltip("Posture (PostureModule): the bar grows from its pivot as posture builds and hides when " +
+                 "empty. Set the fill's pivot X to 0.5 so it grows from the centre.")]
+        [SerializeField] private RectTransform postureBarFill;
+        [SerializeField] private GameObject postureBarPanel;
+        [SerializeField] private Image postureBarImage;
+
         [Header("Settings")]
         [SerializeField] private Vector3 nameplateOffset = new Vector3(0, 2.5f, 0);
         [SerializeField] private bool alwaysFaceCamera = true;
         [SerializeField] private bool showHealthBar = true;
         [SerializeField] private float healthBarUpdateSpeed = 5f;
+        [SerializeField] private Color postureColor = new Color(1f, 0.75f, 0.2f);
+        [SerializeField] private Color postureDangerColor = new Color(1f, 0.25f, 0.1f);
+        [Tooltip("Posture at or above this (0–1) shows the danger colour: close to a guard break.")]
+        [SerializeField] private float postureDanger = 0.75f;
 
         [Header("Level Color Coding")]
         [SerializeField] private bool useLevelColorCoding = true;
@@ -98,6 +108,8 @@ namespace RPG.NPC.UI
 
             if (alwaysFaceCamera && mainCamera != null)
                 transform.rotation = Quaternion.LookRotation(transform.position - mainCamera.transform.position);
+
+            UpdatePosture();
 
             if (showHealthBar && healthBarFill != null && currentHealthPercent != targetHealthPercent)
             {
@@ -234,6 +246,24 @@ namespace RPG.NPC.UI
             var resourceSystem = npcBrain.ResourceSys;
             if (resourceSystem != null) resourceSystem.OnHealthChanged -= healthChangedCallback;
             healthChangedCallback = null;
+        }
+
+        private void UpdatePosture()
+        {
+            if (postureBarFill == null || npcBrain == null) return;
+
+            float posture = PostureOf(npcBrain);
+            bool show = posture > 0.01f;
+            if (postureBarPanel != null && postureBarPanel.activeSelf != show) postureBarPanel.SetActive(show);
+
+            postureBarFill.localScale = new Vector3(posture, 1f, 1f);
+            if (postureBarImage != null) postureBarImage.color = posture >= postureDanger ? postureDangerColor : postureColor;
+        }
+
+        private static float PostureOf(ControllerBrain brain)
+        {
+            PostureModule posture = brain.GetModule<PostureModule>();
+            return posture != null ? posture.Fraction : 0f;
         }
 
         void OnDrawGizmosSelected()

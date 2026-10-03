@@ -18,6 +18,12 @@ public class ActionTrace : MonoBehaviour
     private readonly HashSet<AbilitySystem> tracked = new();
     private float nextScan;
 
+    // A copy placed in a scene loaded after the self-spawned one stands down, so lines aren't doubled.
+    private void Awake()
+    {
+        if (FindObjectsByType<ActionTrace>().Length > 1) Destroy(this);
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Spawn()
     {
@@ -43,10 +49,19 @@ public class ActionTrace : MonoBehaviour
             a.OnBlockEnd += () => Log(a, "guard DOWN");
             a.OnPerfectBlock += () => Log(a, "PARRY");
             a.OnParryWindowOpened += frames => Log(a, $"parry window {frames}f");
-            a.OnGuardedHit += cost => Log(a, $"blocked  -{cost} stamina  {Stamina(a)}");
-            a.OnPostureDamaged += cost => Log(a, $"parried  -{cost} posture  {Stamina(a)}");
+            a.OnGuardedHit += (cost, posture, stun) => Log(a, $"blocked  -{cost} stamina {Stamina(a)}  +{posture} posture {Posture(a)}  blockstun {stun}f");
+            a.OnPostureDamaged += posture => Log(a, $"parried  +{posture:0.#} posture {Posture(a)}");
             a.OnGuardBreak += () => Log(a, "GUARD BROKEN");
+            a.OnGuardFlanked += angle => Log(a, $"hit OUTSIDE guard arc ({angle:0}° off facing)");
         }
+    }
+
+    private static string Posture(AbilitySystem abilities)
+    {
+        PostureModule posture = abilities.Brain != null ? abilities.Brain.GetModule<PostureModule>() : null;
+        if (posture == null) return "(no PostureModule)";
+
+        return $"({posture.Current:0}/{posture.Max:0})";
     }
 
     private static string Stamina(AbilitySystem abilities)

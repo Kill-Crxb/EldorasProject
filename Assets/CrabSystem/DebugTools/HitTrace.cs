@@ -53,6 +53,8 @@ public class HitTrace : MonoBehaviour
     private static string Roll(HitResolution hit)
     {
         if (hit.grade == HitGrade.Unrolled) return "unrolled";
+        if (hit.grade == HitGrade.Blocked) return "BLOCKED (no roll)";
+        if (hit.grade == HitGrade.Parried) return "PARRIED (no roll)";
 
         float total = hit.roll + hit.accuracy;
         string grade = hit.grade == HitGrade.Full ? "FULL" : "glancing";

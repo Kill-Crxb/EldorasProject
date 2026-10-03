@@ -75,6 +75,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
     public void Press() => Perform(ResolveChain());
 
     public bool HasBufferedPress => buffered;
+    public bool StepInFlight => stepInFlight != null;
 
     public bool Perform(MovesetChain requested)
     {
@@ -86,7 +87,10 @@ public class MovesetModule : MonoBehaviour, IBrainModule
 
         Grant(ability);
 
-        if (stepInFlight != null)
+        // Held while a step plays or the guard is in blockstun, so a punish comes out on the first free
+        // frame. A parry is never held: it can be pressed in blockstun.
+        bool stunned = abilities.InBlockstun && requested != MovesetChain.Parry;
+        if (stepInFlight != null || stunned)
         {
             Buffer(requested, step);
             return true;
@@ -205,6 +209,13 @@ public class MovesetModule : MonoBehaviour, IBrainModule
     {
         if (!buffered || stepInFlight != null) return;
 
+        // Raising the guard cancels a held attack; only a held parry survives it.
+        if (IsBlocking() && bufferedChain != MovesetChain.Parry)
+        {
+            buffered = false;
+            return;
+        }
+
         if (Time.time - bufferedAt > bufferLifetime)
         {
             buffered = false;
@@ -233,6 +244,12 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         lastPreview = preview;
         lastBlockPreview = blockPreview;
         OnPreviewChanged?.Invoke();
+    }
+
+    private bool IsBlocking()
+    {
+        Blackboard blackboard = brain.Blackboard;
+        return blackboard != null && blackboard.GetBool(BlackboardKey.IsBlocking);
     }
 
     private bool Interrupted()

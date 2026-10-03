@@ -1,6 +1,6 @@
 // What the defender's resolution of one hit came to. Built in DamageSystem.TakeDamage and handed
 // out through OnHitResolved — the breakdown a damage log prints and a talent reads.
-public enum HitGrade { Unrolled, Full, Glancing }
+public enum HitGrade { Unrolled, Full, Glancing, Blocked, Parried }
 
 public struct HitResolution
 {

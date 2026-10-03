@@ -4,18 +4,19 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum GuardOutcome { None, Blocked, Parried, Broken }
+
 /// <summary>
-/// Mutable args passed to OnDamageIntercept listeners so they can modify incoming damage.
-/// AbilitySystem subscribes while a defensive ability is active.
+/// Passed to OnDamageIntercept listeners while the defender is blocking. The guard (AbilitySystem)
+/// says what it made of the hit; DamageSystem then resolves the damage for that outcome.
 /// </summary>
 public class DamageInterceptArgs
 {
-    public float damage;
+    public GuardOutcome outcome;
     public readonly Vector3 attackDirection;
     public readonly ControllerBrain attacker;
-    public DamageInterceptArgs(float damage, Vector3 dir, ControllerBrain attacker)
+    public DamageInterceptArgs(Vector3 dir, ControllerBrain attacker)
     {
-        this.damage = damage;
         attackDirection = dir;
         this.attacker = attacker;
     }
@@ -61,7 +62,9 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     private const string ArmourDefenseStat = "atr.arm_def";
     private const string ArmourDiceStat = "atr.arm_dice";
     private const string ArmourStat = "atr.arm";
-    private const string GuardBrokenStatusId = "guardbroken";
+    private const string DeflectionStat = "def.deflection";
+    private const int GuardSoakDice = 2;
+    private const int ParrySoakDice = 4;
 
     // Public accessors
     public ControllerBrain Brain => brain;
@@ -210,7 +213,10 @@ public class DamageSystem : MonoBehaviour, IBrainModule
             ? packet.attacker.GetComponentInParent<ControllerBrain>()
             : null;
 
-        HitResolution hit = ResolveHit(packet, attackerBrain);
+        GuardOutcome guard = AskGuard(packet, attackerBrain);
+        bool guarded = guard == GuardOutcome.Blocked || guard == GuardOutcome.Parried;
+
+        HitResolution hit = guarded ? ResolveGuardedHit(packet, guard) : ResolveHit(packet, attackerBrain);
         float dmg = hit.applied;
 
         // Faction damage modifier — per-relationship multiplier from the
@@ -219,13 +225,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
             dmg *= FactionManager.GetDamageModifier(
                 attackerBrain.Faction.CurrentFaction,
                 brain.Faction.CurrentFaction);
-
-        if (OnDamageIntercept != null && blackboard != null && blackboard.GetBool(BlackboardKey.IsBlocking))
-        {
-            var args = new DamageInterceptArgs(dmg, packet.attackDirection, attackerBrain);
-            OnDamageIntercept.Invoke(args);
-            dmg = args.damage;
-        }
 
         // Health raises OnDeath from inside ApplyDamage, so the attacker is parked here for Die.
         incomingAttacker = attackerBrain != brain ? attackerBrain : null;
@@ -238,6 +237,44 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         OnDamageApplied?.Invoke(packet, dmg);
         OnHitResolved?.Invoke(packet, hit);
         return dmg;
+    }
+
+    // The guard decides first, so a guard broken by this hit lets it through as a normal hit. Ticks
+    // aren't guarded.
+    private GuardOutcome AskGuard(CombatDamagePacket packet, ControllerBrain attackerBrain)
+    {
+        if (OnDamageIntercept == null || blackboard == null) return GuardOutcome.None;
+        if (packet.source == DamageSource.Tick) return GuardOutcome.None;
+        if (!blackboard.GetBool(BlackboardKey.IsBlocking)) return GuardOutcome.None;
+
+        var args = new DamageInterceptArgs(packet.attackDirection, attackerBrain);
+        OnDamageIntercept.Invoke(args);
+        return args.outcome;
+    }
+
+    // Combat_Framework §3.1–3.2: no roll, no explosions. Base damage through armour soak plus guard
+    // soak (+2d4 + 1dDeflection on a block, +4d4 + 1dDeflection on a parry). A block never goes below
+    // 1; a parry may reach 0.
+    private HitResolution ResolveGuardedHit(CombatDamagePacket packet, GuardOutcome guard)
+    {
+        bool parried = guard == GuardOutcome.Parried;
+        var hit = new HitResolution
+        {
+            grade = parried ? HitGrade.Parried : HitGrade.Blocked,
+            rolled = packet.finalDamage
+        };
+
+        hit.soak = RollSoak(packet.damageType) + RollGuardSoak(parried ? ParrySoakDice : GuardSoakDice);
+        float floor = parried ? 0f : 1f;
+        hit.applied = hit.rolled > 0f ? Mathf.Max(floor, hit.rolled - hit.soak) : 0f;
+        return hit;
+    }
+
+    private float RollGuardSoak(int dice)
+    {
+        float soak = DiceRoll.RollModifier(Stat(DeflectionStat));
+        for (int i = 0; i < dice; i++) soak += UnityEngine.Random.Range(1, 5);
+        return soak;
     }
 
     // Stat_Resolution.md §4, steps 2 and 4. Ticks skip both: no roll, no soak.
@@ -306,13 +343,10 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
     private float Stat(string statId) => stats != null ? stats.GetValue(statId) : 0f;
 
-    // Combat_Framework §3–4: a guard-broken target is open (the deathblow), and a parry's riposte
-    // makes the defender's next hit a read. Either rolls the d20 twice and keeps the higher.
+    // Combat_Framework §3.2: a parry's riposte makes the defender's next attack a read, rolled twice
+    // keeping the higher.
     private bool HasAdvantage(ControllerBrain attackerBrain)
     {
-        StatusSystem statuses = brain != null ? brain.GetModule<StatusSystem>() : null;
-        if (statuses != null && statuses.Has(GuardBrokenStatusId)) return true;
-
         AbilitySystem attackerAbilities = attackerBrain != null ? attackerBrain.GetModule<AbilitySystem>() : null;
         return attackerAbilities != null && attackerAbilities.TakeRiposte();
     }
