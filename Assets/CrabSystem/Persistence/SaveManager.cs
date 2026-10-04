@@ -41,6 +41,10 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     private float autoSaveTimer;
     private bool pendingLoad = false;
 
+    // Only a character that finished loading is saved on shutdown. Saving a half-loaded one would
+    // write its defaults over the real files.
+    private bool characterLoaded;
+
     private static readonly string[] LoadOrder = { "stats", "model", "inputProfile", "inventory", "equipment", "hotbar", "resources", "dialogue" };
 
     #endregion
@@ -72,6 +76,8 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
     public void Shutdown()
     {
+        SaveAllNow();
+
         GameEvents.OnCharacterSelected -= HandleCharacterSelected;
         GameEvents.OnGameSceneReady -= HandleGameSceneReady;
         GameEvents.OnSaveRequested -= HandleSaveRequested;
@@ -160,6 +166,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
         ActiveCharacterId = characterId;
         autoSaveTimer = autoSaveInterval;
+        characterLoaded = false;
 
         if (playerBrain == null)
         {
@@ -174,6 +181,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
             await LoadModulesInOrder(characterId);
             SubscribeToSaveableEvents();
             await FirePlayerConfigAfterLoad(characterId);
+            characterLoaded = true;
             GameEvents.LoadCompleted();
         }
         catch (Exception ex)
@@ -265,6 +273,15 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
                 Debug.LogError($"[{ManagerName}] Failed to save '{kvp.Key}': {e.Message}");
             }
         }
+    }
+
+    // Quit and leaving play mode (B25). Synchronous, because an async write can be cut off by the exit.
+    private void SaveAllNow()
+    {
+        if (!characterLoaded || playerBrain == null || provider == null) return;
+
+        foreach (var kvp in BuildSaveableLookup())
+            provider.SaveNow(ActiveCharacterId, kvp.Key, kvp.Value.GetSaveData());
     }
 
     public async Task SaveFile(string saveId, string json)

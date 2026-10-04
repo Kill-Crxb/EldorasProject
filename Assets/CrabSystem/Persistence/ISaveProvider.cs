@@ -52,6 +52,9 @@ public interface ISaveProvider
     /// </summary>
     Task<bool> Save(string characterId, string filename, string json);
 
+    // Synchronous write for shutdown, where an async write can be cut off by the process exiting.
+    bool SaveNow(string characterId, string filename, string json);
+
     /// <summary>
     /// Read {characterId}/{filename}.json and return its contents.
     /// Returns null if the file does not exist or on I/O failure.

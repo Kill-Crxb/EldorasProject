@@ -166,6 +166,38 @@ public class LocalSaveProvider : ISaveProvider
         }
     }
 
+    public bool SaveNow(string characterId, string filename, string json)
+    {
+        if (string.IsNullOrEmpty(characterId)) return false;
+        if (string.IsNullOrEmpty(filename)) return false;
+        if (string.IsNullOrEmpty(json)) return false;
+
+        string characterPath = ResolveCharacterPath(characterId);
+        EnsureDirectoryExists(characterPath);
+
+        string filePath = Path.Combine(characterPath, $"{filename}.json");
+
+        // An async write already holding this file finishes on the main thread, so waiting for it
+        // here would deadlock. Its data is moments old; let it stand.
+        var sem = GetFileLock(filePath);
+        if (!sem.Wait(0)) return false;
+
+        try
+        {
+            File.WriteAllText(filePath, json);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[LocalSaveProvider] Save failed ({characterId}/{filename}): {e}");
+            return false;
+        }
+        finally
+        {
+            sem.Release();
+        }
+    }
+
     public async Task<string> Load(string characterId, string filename)
     {
         if (string.IsNullOrEmpty(characterId)) return null;
