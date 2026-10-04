@@ -3104,7 +3104,7 @@ MonoBehaviour:
   weightFadeSpeed: 4
   noiseAngle: 1.5
   noiseSpeed: 0.35
-  suppressFactKey: 
+  suppressFactKey: CannotAct
 --- !u!1 &7539060194227579230
 GameObject:
   m_ObjectHideFlags: 0
@@ -3166,7 +3166,6 @@ MonoBehaviour:
     keybinds: 0
   cameraProviderComponent: {fileID: 0}
   stubAIControlSource: {fileID: 0}
-  pathfinding: {fileID: 0}
 --- !u!1 &7591293930480927091
 GameObject:
   m_ObjectHideFlags: 0
