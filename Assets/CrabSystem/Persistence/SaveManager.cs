@@ -45,6 +45,9 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     // write its defaults over the real files.
     private bool characterLoaded;
 
+    // Character select's index for the loaded character, refreshed from the owning modules on every save.
+    private CharacterMetadata activeMetadata;
+
     private static readonly string[] LoadOrder = { "stats", "model", "inputProfile", "inventory", "equipment", "hotbar", "resources", "dialogue" };
 
     #endregion
@@ -167,6 +170,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         ActiveCharacterId = characterId;
         autoSaveTimer = autoSaveInterval;
         characterLoaded = false;
+        activeMetadata = null;
 
         if (playerBrain == null)
         {
@@ -178,6 +182,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
         try
         {
+            activeMetadata = await LoadMetadata(characterId);
             await LoadModulesInOrder(characterId);
             SubscribeToSaveableEvents();
             await FirePlayerConfigAfterLoad(characterId);
@@ -273,6 +278,8 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
                 Debug.LogError($"[{ManagerName}] Failed to save '{kvp.Key}': {e.Message}");
             }
         }
+
+        await SaveFile("metadata", BuildMetadataJson());
     }
 
     // Quit and leaving play mode (B25). Synchronous, because an async write can be cut off by the exit.
@@ -282,6 +289,30 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
         foreach (var kvp in BuildSaveableLookup())
             provider.SaveNow(ActiveCharacterId, kvp.Key, kvp.Value.GetSaveData());
+
+        provider.SaveNow(ActiveCharacterId, "metadata", BuildMetadataJson());
+    }
+
+    private async Task<CharacterMetadata> LoadMetadata(string characterId)
+    {
+        string json = await provider.Load(characterId, "metadata");
+        if (string.IsNullOrEmpty(json)) return null;
+        return JsonUtility.FromJson<CharacterMetadata>(json);
+    }
+
+    // Metadata owns nothing: each field is copied from the module that owns the fact (Audit 2 P2).
+    private string BuildMetadataJson()
+    {
+        if (activeMetadata == null || playerBrain == null) return null;
+
+        if (playerBrain.Identity != null) activeMetadata.characterName = playerBrain.Identity.DisplayName;
+        if (playerBrain.RPG != null) activeMetadata.level = playerBrain.RPG.CurrentLevel;
+
+        var model = playerBrain.GetModule<ModelModule>();
+        if (model != null) activeMetadata.modelId = model.CurrentModelId;
+
+        activeMetadata.lastPlayedTime = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        return JsonUtility.ToJson(activeMetadata, prettyPrint: true);
     }
 
     public async Task SaveFile(string saveId, string json)
@@ -381,7 +412,8 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
             characterName = characterName,
             accountName = accountName,
             characterId = characterId,
-            level = 1
+            level = 1,
+            creationTime = timestamp
         };
 
         bool success = await provider.Save(characterId, "metadata", JsonUtility.ToJson(metadata, prettyPrint: true));
