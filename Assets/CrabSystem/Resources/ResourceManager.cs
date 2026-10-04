@@ -130,13 +130,7 @@ public class ResourceManager : MonoBehaviour, IGameManager, IManagerDependency, 
 
     private void ValidateStatReferences()
     {
-        if (ManagerBrain.Instance == null)
-        {
-            Debug.LogWarning($"[{ManagerName}] Cannot validate stat references - ManagerBrain not initialized");
-            return;
-        }
-
-        var stats = ManagerBrain.Instance.Stats;
+        var stats = StatsManager.Instance;
         if (stats == null)
         {
             Debug.LogWarning($"[{ManagerName}] Cannot validate stat references - StatsManager not found");

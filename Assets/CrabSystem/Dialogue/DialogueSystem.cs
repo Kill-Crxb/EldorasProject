@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class DialogueSystem : MonoBehaviour, IBrainModule
 {
+    public int InitOrder => 160;
+
     [Header("Module")]
     [SerializeField] private bool isEnabled = true;
 

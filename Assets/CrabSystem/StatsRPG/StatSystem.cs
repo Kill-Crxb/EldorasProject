@@ -16,6 +16,8 @@ using UnityEngine;
 /// </summary>
 public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
 {
+    public int InitOrder => 90;
+
     #region Inspector
 
     [Header("Schemas")]

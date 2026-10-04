@@ -100,6 +100,9 @@ public class InputSystem : MonoBehaviour,
     IAbilityControlSource,
     ISaveable
 {
+    public int InitOrder => 30;
+    public bool PlayerOnly => true;
+
     // Inspector
 
     [Header("Module Settings")]

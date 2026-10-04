@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using RPG.Factions;
@@ -14,31 +15,6 @@ public class ControllerBrain : MonoBehaviour
     [SerializeField] private Transform e_Root;
     [SerializeField] private Transform m_Root;
     [SerializeField] private Animator animator;
-
-    [Header("Core Systems")]
-    [SerializeField] private IdentitySystem identitySystem;
-    [SerializeField] private FactionSystem factionSystem;
-    [SerializeField] private ModelModule modelModule;
-    [SerializeField] private StateMachineModule stateMachineModule;
-    [SerializeField] private MovementSystem movementSystem;
-    [SerializeField] private AnimationSystem animationSystem;
-    [SerializeField] private AbilitySystem abilitySystem;
-    [SerializeField] private StatSystem statSystem;
-    [SerializeField] private ResourceSystem resourceSystem;
-
-    [Header("Player-Only Systems")]
-    [SerializeField] private InputSystem inputSystem;
-    [SerializeField] private CameraModule cameraModule;
-
-    [Header("Gameplay Systems")]
-    [SerializeField] private RPGSystem rpgSystem;
-    [SerializeField] private DamageSystem damageSystem;
-    [SerializeField] private BlackboardSystem blackboardSystem;
-    [SerializeField] private InventorySystem inventorySystem;
-    [SerializeField] private InteractionSystem interactionSystem;
-    [SerializeField] private DialogueSystem dialogueSystem;
-    [SerializeField] private HotbarSystem hotbarSystem;
-    [SerializeField] private SlotTransformationSystem slotTransformationSystem;
 
     [Header("Entity Identity")]
     [SerializeField] private EntityType entityType = EntityType.Entity;
@@ -77,24 +53,25 @@ public class ControllerBrain : MonoBehaviour
 
     #region Properties — Systems (Ordered by Init Dependency)
 
-    public IdentitySystem Identity => identitySystem;
-    public FactionSystem Faction => factionSystem;
-    public ModelModule Model => modelModule;
-    public InputSystem Input => inputSystem;
-    public StateMachineModule StateMachine => stateMachineModule;
-    public MovementSystem Movement => movementSystem;
-    public AnimationSystem Animation => animationSystem;
-    public AbilitySystem Abilities => abilitySystem;
-    public StatSystem Stats => statSystem;
-    public ResourceSystem Resources => resourceSystem;
-    public RPGSystem RPG => rpgSystem;
-    public DamageSystem Damage => damageSystem;
-    public Blackboard Blackboard => blackboardSystem?.Blackboard;
-    public InventorySystem Inventory => inventorySystem;
-    public InteractionSystem Interaction => interactionSystem;
-    public DialogueSystem Dialogue => dialogueSystem;
-    public HotbarSystem Hotbar => hotbarSystem;
-    public SlotTransformationSystem SlotTransform => slotTransformationSystem;
+    // Shortcuts into the provider cache, which discovery fills; null when the entity lacks the module.
+    public IdentitySystem Identity => GetProvider<IdentitySystem>();
+    public FactionSystem Faction => GetProvider<FactionSystem>();
+    public ModelModule Model => GetProvider<ModelModule>();
+    public InputSystem Input => GetProvider<InputSystem>();
+    public StateMachineModule StateMachine => GetProvider<StateMachineModule>();
+    public MovementSystem Movement => GetProvider<MovementSystem>();
+    public AnimationSystem Animation => GetProvider<AnimationSystem>();
+    public AbilitySystem Abilities => GetProvider<AbilitySystem>();
+    public StatSystem Stats => GetProvider<StatSystem>();
+    public ResourceSystem Resources => GetProvider<ResourceSystem>();
+    public RPGSystem RPG => GetProvider<RPGSystem>();
+    public DamageSystem Damage => GetProvider<DamageSystem>();
+    public Blackboard Blackboard => GetProvider<BlackboardSystem>()?.Blackboard;
+    public InventorySystem Inventory => GetProvider<InventorySystem>();
+    public InteractionSystem Interaction => GetProvider<InteractionSystem>();
+    public DialogueSystem Dialogue => GetProvider<DialogueSystem>();
+    public HotbarSystem Hotbar => GetProvider<HotbarSystem>();
+    public SlotTransformationSystem SlotTransform => GetProvider<SlotTransformationSystem>();
 
     #endregion
 
@@ -181,22 +158,11 @@ public class ControllerBrain : MonoBehaviour
 
     #region Initialization — Phase 2: Module Discovery
 
+    // OrderBy is stable, so modules sharing an InitOrder keep their hierarchy order.
     void CacheModuleArrays()
     {
-        var allModules = GetComponentsInChildren<IBrainModule>(true);
-        var updateList = new List<IBrainModule>();
-        var inputList = new List<IInputHandler>();
-
-        foreach (var module in allModules)
-        {
-            updateList.Add(module);
-
-            if (module is IInputHandler ih)
-                inputList.Add(ih);
-        }
-
-        updateModules = updateList.ToArray();
-        inputHandlers = inputList.ToArray();
+        updateModules = GetComponentsInChildren<IBrainModule>(true).OrderBy(m => m.InitOrder).ToArray();
+        inputHandlers = updateModules.OfType<IInputHandler>().ToArray();
     }
 
     #endregion
@@ -216,122 +182,53 @@ public class ControllerBrain : MonoBehaviour
 
     void BuildProviderCache()
     {
-        if (identitySystem != null) providerCache[typeof(IdentitySystem)] = identitySystem;
-        if (factionSystem != null) providerCache[typeof(FactionSystem)] = factionSystem;
-        if (modelModule != null) providerCache[typeof(ModelModule)] = modelModule;
-        if (stateMachineModule != null)
+        foreach (var module in updateModules)
         {
-            providerCache[typeof(StateMachineModule)] = stateMachineModule;
-            providerCache[typeof(IStateProvider)] = stateMachineModule;
-        }
-        if (statSystem != null) providerCache[typeof(StatSystem)] = statSystem;
+            RegisterProvider(module.GetType(), module);
 
-        if (inputSystem != null)
-        {
-            providerCache[typeof(InputSystem)] = inputSystem;
-            providerCache[typeof(IInputProvider)] = inputSystem;
-            providerCache[typeof(IMovementControlSource)] = inputSystem;
-            providerCache[typeof(IAbilityControlSource)] = inputSystem;
+            // A declined module stays findable by its own type but answers for no interface: an
+            // NPC's switched-off camera answering ICameraProvider would steer it by the player's view.
+            if (IsDeclined(module)) continue;
+
+            foreach (var contract in module.GetType().GetInterfaces())
+                if (!providerCache.ContainsKey(contract)) providerCache[contract] = module;
         }
 
-        if (movementSystem != null)
-        {
-            providerCache[typeof(MovementSystem)] = movementSystem;
-        }
-
-        if (animationSystem != null)
-        {
-            providerCache[typeof(AnimationSystem)] = animationSystem;
-            providerCache[typeof(IAnimationProvider)] = animationSystem;
-        }
-
-        if (abilitySystem != null)
-        {
-            providerCache[typeof(AbilitySystem)] = abilitySystem;
-            providerCache[typeof(IAbilityProvider)] = abilitySystem;
-        }
-
-        if (resourceSystem != null)
-        {
-            providerCache[typeof(ResourceSystem)] = resourceSystem;
-            providerCache[typeof(IResourceProvider)] = resourceSystem;
-            providerCache[typeof(IHealthProvider)] = resourceSystem;
-        }
-
-        if (rpgSystem != null) providerCache[typeof(RPGSystem)] = rpgSystem;
-        if (damageSystem != null) providerCache[typeof(DamageSystem)] = damageSystem;
-        if (blackboardSystem != null) providerCache[typeof(BlackboardSystem)] = blackboardSystem;
-        if (inventorySystem != null)
-        {
-            providerCache[typeof(InventorySystem)] = inventorySystem;
-            providerCache[typeof(IInventoryProvider)] = inventorySystem;
-        }
-        if (interactionSystem != null) providerCache[typeof(InteractionSystem)] = interactionSystem;
-        if (dialogueSystem != null) providerCache[typeof(DialogueSystem)] = dialogueSystem;
-        if (hotbarSystem != null) providerCache[typeof(HotbarSystem)] = hotbarSystem;
-        if (slotTransformationSystem != null) providerCache[typeof(SlotTransformationSystem)] = slotTransformationSystem;
-        if (cameraModule != null && IsPlayer) providerCache[typeof(ICameraProvider)] = cameraModule;
+        feetDetection = GetProvider<FeetDetectionModule>();
     }
+
+    // Interfaces may have several implementers (control sources); the first in InitOrder answers.
+    // Two modules of one concrete type is a prefab mistake.
+    void RegisterProvider(Type type, IBrainModule module)
+    {
+        if (providerCache.TryGetValue(type, out object existing))
+        {
+            Debug.LogError($"[ControllerBrain] {EntityName} has two {type.Name} modules ({(existing as Component)?.name}, {(module as Component)?.name}); using the first.", this);
+            return;
+        }
+
+        providerCache[type] = module;
+    }
+
+    bool IsDeclined(IBrainModule module) => module.PlayerOnly && !IsPlayer;
 
     #endregion
 
     #region Initialization — Phase 5: Module Initialization
 
+    // A declined module is switched off, not merely skipped: CameraModule's Initialize locks the
+    // cursor, so initializing it on an NPC would take the cursor from the player.
     void InitializeModules()
     {
-        feetDetection = GetComponentInChildren<FeetDetectionModule>();
-        var initialized = new HashSet<IBrainModule>();
-        var declined = new HashSet<IBrainModule>();
-
-        void InitOrdered(IBrainModule module)
-        {
-            if (module == null) return;
-            module.Initialize(this);
-            initialized.Add(module);
-        }
-
-        // A module the ordered pass deliberately skipped. Without this the IsPlayer guards below
-        // only change ORDERING — the fallback loop initializes them anyway, and CameraModule's
-        // Initialize ends by locking the cursor, so every NPC spawn steals it from the player.
-        void Decline(IBrainModule module)
-        {
-            if (module == null) return;
-            declined.Add(module);
-            module.IsEnabled = false;
-        }
-
-        InitOrdered(identitySystem);
-        InitOrdered(factionSystem);
-        InitOrdered(modelModule);
-
-        if (IsPlayer) InitOrdered(inputSystem);
-        else Decline(inputSystem);
-
-        if (IsPlayer) InitOrdered(cameraModule);
-        else Decline(cameraModule);
-
-        InitOrdered(stateMachineModule);
-
-        InitOrdered(movementSystem);
-        InitOrdered(animationSystem);
-        InitOrdered(abilitySystem);
-
-        InitOrdered(statSystem);
-        InitOrdered(resourceSystem);
-
-        InitOrdered(blackboardSystem);
-        InitOrdered(damageSystem);
-        InitOrdered(inventorySystem);
-        InitOrdered(rpgSystem);
-        InitOrdered(interactionSystem);
-        InitOrdered(dialogueSystem);
-        InitOrdered(hotbarSystem);
-        InitOrdered(slotTransformationSystem);
-
         foreach (var module in updateModules)
         {
-            if (!initialized.Contains(module) && !declined.Contains(module))
-                module.Initialize(this);
+            if (IsDeclined(module))
+            {
+                module.IsEnabled = false;
+                continue;
+            }
+
+            module.Initialize(this);
         }
     }
 
@@ -446,9 +343,6 @@ public class ControllerBrain : MonoBehaviour
         if (m_Root != null) animator = m_Root.GetComponentInChildren<Animator>();
         if (animator == null && e_Root != null) animator = e_Root.GetComponentInChildren<Animator>();
     }
-    // Add this method to ControllerBrain.cs after RefreshAnimatorReference() (around line 449)
-
-
 
     public void SetAnimatorDirect(Animator newAnimator)
     {

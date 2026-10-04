@@ -14,6 +14,8 @@ using UnityEngine;
 /// </summary>
 public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider, IBrainModule, ISaveable
 {
+    public int InitOrder => 100;
+
     private const float DEFAULT_MAX_VALUE = 100f;
     private const float EPSILON = 0.001f;
 

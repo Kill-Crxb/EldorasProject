@@ -7,6 +7,8 @@ using UnityEngine.UIElements;
 
 public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 {
+    public int InitOrder => 80;
+
     [SerializeField] private bool isEnabled = true;
     [SerializeField] private AbilityLoadoutModule loadoutModule;
     [SerializeField] private List<AbilityDefinition> abilities = new List<AbilityDefinition>();

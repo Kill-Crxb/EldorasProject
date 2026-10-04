@@ -40,45 +40,14 @@ public class ManagerBrain : MonoBehaviour
 {
     #region Singleton
 
+    // Set in Awake. No scene search: anything that runs before the brain wakes gets null and
+    // must cope, which is what it already got from an uninitialised registry.
     private static ManagerBrain instance;
-    public static ManagerBrain Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                instance = FindFirstObjectByType<ManagerBrain>();
-            }
-            return instance;
-        }
-    }
+    public static ManagerBrain Instance => instance;
 
     #endregion
 
     #region Inspector Fields
-
-    [Header("Core Managers (Required)")]
-    [Tooltip("Global stat schemas and configuration")]
-    [SerializeField] private StatsManager statsManager;
-
-    [Tooltip("Resource definitions (health, mana, stamina)")]
-    [SerializeField] private ResourceManager resourceManager;
-
-    [Tooltip("Item definitions and registry")]
-    [SerializeField] private ItemManager itemManager;
-
-    [Tooltip("Damage calculation rules and configs")]
-    [SerializeField] private DamageManager damageManager;
-
-    [Tooltip("Faction relationships and reputation")]
-    [SerializeField] private FactionManager factionManager;
-
-    [Header("Persistence Managers (Required)")]
-    [Tooltip("Account registration, login and session state")]
-    [SerializeField] private AccountManager accountManager;
-
-    [Tooltip("Character save/load orchestration")]
-    [SerializeField] private SaveManager saveManager;
 
     [Header("Settings")]
     [Tooltip("Persist managers across scene loads")]
@@ -86,9 +55,6 @@ public class ManagerBrain : MonoBehaviour
 
     [Tooltip("Automatically initialize managers on Awake")]
     [SerializeField] private bool autoInitialize = true;
-
-    [Tooltip("Validate all required managers assigned in Inspector")]
-    [SerializeField] private bool validateRequiredManagers = true;
 
     [Header("Debug")]
     [SerializeField] private bool debugLogging = true;
@@ -117,15 +83,6 @@ public class ManagerBrain : MonoBehaviour
 
     public bool IsInitialized => isInitialized;
     public int ManagerCount => allManagers.Count;
-
-    // Core manager properties (like ControllerBrain.Stats, etc.)
-    public StatsManager Stats => statsManager;
-    public ResourceManager Resources => resourceManager;
-    public ItemManager Items => itemManager;
-    public DamageManager Damage => damageManager;
-    public FactionManager Factions => factionManager;
-    public AccountManager Account => accountManager;
-    public SaveManager Save => saveManager;
 
     #endregion
 
@@ -200,109 +157,25 @@ public class ManagerBrain : MonoBehaviour
 
     #region Manager Discovery
 
-    /// <summary>
-    /// Discover all managers in hierarchy
-    /// </summary>
+    // Discovery is the one wiring path: a manager signs up by being a child of the brain (AU16).
     private void DiscoverManagers()
     {
         allManagers.Clear();
         updatableManagers.Clear();
         managerRegistry.Clear();
 
-        // PHASE 1: Register explicitly assigned core managers first
-        RegisterCoreManagers();
-
-        // PHASE 2: Auto-discover additional managers
-        var components = GetComponentsInChildren<MonoBehaviour>(includeInactive: true);
-
-        foreach (var component in components)
+        foreach (var manager in GetComponentsInChildren<IGameManager>(true))
         {
-            if (component is IGameManager manager)
+            Type managerType = manager.GetType();
+            if (managerRegistry.TryGetValue(managerType, out IGameManager existing))
             {
-                // Skip if already registered as core manager
-                if (managerRegistry.ContainsKey(component.GetType()))
-                {
-                    continue;
-                }
-
-                allManagers.Add(manager);
-
-                // Track updatable managers separately
-                if (component is IUpdatableManager updatable)
-                {
-                    updatableManagers.Add(updatable);
-                }
-
-                // Register by component type for lookup
-                Type managerType = component.GetType();
-                managerRegistry[managerType] = manager;
-
-                if (verboseLogging)
-                {
-                    Debug.Log($"[ManagerBrain] Discovered (optional): {manager.ManagerName} " +
-                             $"(Priority: {manager.InitializationPriority})");
-                }
-            }
-        }
-
-        if (debugLogging)
-        {
-            Debug.Log($"[ManagerBrain] Discovered {allManagers.Count} managers " +
-                     $"({updatableManagers.Count} updatable)");
-        }
-    }
-
-    /// <summary>
-    /// Register core managers from explicit Inspector references
-    /// </summary>
-    private void RegisterCoreManagers()
-    {
-        RegisterManager(statsManager, "StatsManager");
-        RegisterManager(resourceManager, "ResourceManager");
-        RegisterManager(itemManager, "ItemManager");
-        RegisterManager(damageManager, "DamageManager");
-        RegisterManager(factionManager, "FactionManager");
-        RegisterManager(accountManager, "AccountManager");
-        RegisterManager(saveManager, "SaveManager");
-    }
-
-    /// <summary>
-    /// Register a single manager
-    /// </summary>
-    private void RegisterManager(MonoBehaviour component, string managerName)
-    {
-        if (component == null)
-        {
-            if (validateRequiredManagers)
-            {
-                Debug.LogError($"[ManagerBrain] Required manager missing: {managerName}!");
-            }
-            return;
-        }
-
-        if (component is IGameManager manager)
-        {
-            allManagers.Add(manager);
-
-            // Track updatable managers
-            if (component is IUpdatableManager updatable)
-            {
-                updatableManagers.Add(updatable);
+                Debug.LogError($"[ManagerBrain] Two {managerType.Name}s ({existing.ManagerName}, {manager.ManagerName}); using the first.", this);
+                continue;
             }
 
-            // Register by type
-            Type managerType = component.GetType();
             managerRegistry[managerType] = manager;
-
-            if (verboseLogging)
-            {
-                Debug.Log($"[ManagerBrain] Registered (core): {manager.ManagerName} " +
-                         $"(Priority: {manager.InitializationPriority})");
-            }
-        }
-        else
-        {
-            Debug.LogError($"[ManagerBrain] Component {managerName} does not implement IGameManager!");
+            allManagers.Add(manager);
+            if (manager is IUpdatableManager updatable) updatableManagers.Add(updatable);
         }
     }
 
@@ -323,13 +196,6 @@ public class ManagerBrain : MonoBehaviour
 
         if (debugLogging)
             Debug.Log("=== ManagerBrain: Starting Initialization ===");
-
-        // Validate required managers are assigned
-        if (!ValidateRequiredManagersAssigned())
-        {
-            Debug.LogError("[ManagerBrain] Required managers missing! Initialization aborted.");
-            return;
-        }
 
         // Discover all managers
         DiscoverManagers();
@@ -399,60 +265,6 @@ public class ManagerBrain : MonoBehaviour
 
         // Fire event
         OnAllManagersInitialized?.Invoke();
-    }
-
-    /// <summary>
-    /// Validate that all required managers are assigned
-    /// </summary>
-    private bool ValidateRequiredManagersAssigned()
-    {
-        if (!validateRequiredManagers) return true;
-
-        bool allValid = true;
-
-        if (statsManager == null)
-        {
-            Debug.LogError("[ManagerBrain] StatsManager is required but not assigned!");
-            allValid = false;
-        }
-
-        if (resourceManager == null)
-        {
-            Debug.LogError("[ManagerBrain] ResourceManager is required but not assigned!");
-            allValid = false;
-        }
-
-        if (damageManager == null)
-        {
-            Debug.LogError("[ManagerBrain] DamageManager is required but not assigned!");
-            allValid = false;
-        }
-
-        if (itemManager == null)
-        {
-            Debug.LogWarning("[ManagerBrain] ItemManager not assigned (optional but recommended)");
-            // Not an error - items might be optional for some games
-        }
-
-        if (factionManager == null)
-        {
-            Debug.LogWarning("[ManagerBrain] FactionManager not assigned (optional but recommended)");
-            // Not an error - factions might be optional for some games
-        }
-
-        if (accountManager == null)
-        {
-            Debug.LogError("[ManagerBrain] AccountManager is required but not assigned!");
-            allValid = false;
-        }
-
-        if (saveManager == null)
-        {
-            Debug.LogError("[ManagerBrain] SaveManager is required but not assigned!");
-            allValid = false;
-        }
-
-        return allValid;
     }
 
     #endregion

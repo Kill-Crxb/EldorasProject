@@ -36,6 +36,8 @@ using UnityEngine;
 /// </summary>
 public class BlackboardSystem : MonoBehaviour, IBrainModule
 {
+    public int InitOrder => 110;
+
     [Header("Configuration")]
     [Tooltip("Schema defining semantic facts for this entity type")]
     [SerializeField] private BlackboardSchema schema;

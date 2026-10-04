@@ -18,6 +18,8 @@ using System.Linq;
 /// </summary>
 public class MovementSystem : MonoBehaviour, IBrainModule
 {
+    public int InitOrder => 60;
+
     [Header("Module Settings")]
     [SerializeField] private bool isEnabled = true;
 

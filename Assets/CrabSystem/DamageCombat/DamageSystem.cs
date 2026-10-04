@@ -28,6 +28,8 @@ public class DamageInterceptArgs
 /// </summary>
 public class DamageSystem : MonoBehaviour, IBrainModule
 {
+    public int InitOrder => 120;
+
     [Header("System State")]
     [SerializeField] private bool isEnabled = true;
 

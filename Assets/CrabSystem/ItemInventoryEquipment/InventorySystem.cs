@@ -9,6 +9,8 @@ using System.Linq;
 /// </summary>
 public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, ISaveable
 {
+    public int InitOrder => 130;
+
     [Header("Container Configuration")]
     [SerializeField] private ContainerData[] containers;
 

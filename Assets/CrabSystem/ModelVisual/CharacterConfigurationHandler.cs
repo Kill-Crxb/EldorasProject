@@ -134,11 +134,7 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
         if (identity == null)
             return;
 
-        if (brain.IsNPC)
-            identity.Type = EntityType.NPC;
-
         identity.DisplayName = data.displayName;
-        identity.Level = data.level;
     }
 
     private void ConfigureFaction(CharacterConfigData data)

@@ -13,6 +13,8 @@ using UnityEngine;
 /// </summary>
 public class SlotTransformationSystem : MonoBehaviour, IBrainModule
 {
+    public int InitOrder => 180;
+
     [Header("Debug")]
     [SerializeField] private bool debugLogging = false;
 

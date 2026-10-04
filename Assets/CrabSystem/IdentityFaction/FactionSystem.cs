@@ -15,6 +15,8 @@ namespace RPG.Factions
     /// </summary>
     public class FactionSystem : MonoBehaviour, IBrainModule, ISaveable
     {
+        public int InitOrder => 10;
+
         #region Inspector
 
         [Header("Module Settings")]

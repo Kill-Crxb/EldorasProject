@@ -200,8 +200,7 @@ public class DamageManager : MonoBehaviour, IGameManager, IManagerDependency
     /// </summary>
     private void ValidateDamageFormulas()
     {
-        // Get StatsManager through ManagerBrain
-        var stats = ManagerBrain.Instance?.Stats;
+        var stats = StatsManager.Instance;
         if (stats == null)
         {
             Debug.LogError($"[{ManagerName}] StatsManager not available for validation!");

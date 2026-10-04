@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class CameraModule : MonoBehaviour, IBrainModule, ICameraProvider
 {
+    public int InitOrder => 40;
+    public bool PlayerOnly => true;
+
     [Serializable]
     public class CameraModeSettings
     {

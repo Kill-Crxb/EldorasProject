@@ -3,13 +3,13 @@ using RPG.Factions;
 
 public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
 {
+    public int InitOrder => 0;
+
     [Header("Module Settings")]
     [SerializeField] private bool isEnabled = true;
 
     [Header("Identity Data")]
     [SerializeField] private string displayName = "Entity";
-    [SerializeField] private EntityType type = EntityType.Entity;
-    [SerializeField] private int level = 1;
 
     private ControllerBrain brain;
 
@@ -17,17 +17,19 @@ public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
     public ControllerBrain Brain => brain;
 
     public string DisplayName { get => displayName; set => displayName = value; }
-    public EntityType Type { get => type; set => type = value; }
-    public int Level { get => level; set => level = value; }
+    // The brain owns entity type and RPGSystem owns level; Identity only forwards them, so neither
+    // can disagree with its owner or be saved twice (Audit 1 E1, Audit 4 S2).
+    public EntityType Type => brain != null ? brain.EntityType : EntityType.Entity;
+    public int Level => brain != null && brain.RPG != null ? brain.RPG.CurrentLevel : 1;
 
     // Entity unique identifier
     private string entityId = System.Guid.NewGuid().ToString();
     public string EntityId { get => entityId; set => entityId = value; }
 
-    public bool IsPlayer => type == EntityType.Player;
-    public bool IsNPC => type == EntityType.NPC || type == EntityType.Enemy || type == EntityType.Neutral;
+    public bool IsPlayer => Type == EntityType.Player;
+    public bool IsNPC => Type == EntityType.NPC || Type == EntityType.Enemy || Type == EntityType.Neutral;
 
-    public EntityType GetEntityType() => type;
+    public EntityType GetEntityType() => Type;
 
     /// <summary>This entity's faction asset, via the brain's FactionSystem. Null if unaffiliated.</summary>
     public FactionDefinition GetFaction() => brain?.Faction?.CurrentFaction;
@@ -54,9 +56,7 @@ public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
         var data = new IdentitySaveData
         {
             entityId = entityId,
-            displayName = displayName,
-            type = type.ToString(),
-            level = level
+            displayName = displayName
         };
         return JsonUtility.ToJson(data);
     }
@@ -74,9 +74,6 @@ public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
                 if (!string.IsNullOrEmpty(data.entityId))
                     entityId = data.entityId;
                 displayName = data.displayName;
-                level = data.level;
-                if (System.Enum.TryParse<EntityType>(data.type, out var parsedType))
-                    type = parsedType;
             }
         }
         catch (System.Exception e)
@@ -94,7 +91,5 @@ public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
     {
         public string entityId;
         public string displayName;
-        public string type;
-        public int level;
     }
 }

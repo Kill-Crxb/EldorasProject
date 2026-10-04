@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class InteractionSystem : MonoBehaviour, IBrainModule
 {
+    public int InitOrder => 150;
+
     [Header("Module")]
     [SerializeField] private bool isEnabled = true;
 

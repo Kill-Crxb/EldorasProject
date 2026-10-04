@@ -16,6 +16,8 @@ using RPG.Factions;
 /// </summary>
 public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
 {
+    public int InitOrder => 20;
+
     #region Inspector
 
     [Header("Module Settings")]

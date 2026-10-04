@@ -19,6 +19,8 @@ using UnityEngine;
 /// </summary>
 public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 {
+    public int InitOrder => 170;
+
     [Header("Bars")]
     [Tooltip("Every bar this entity can have. Which of them are switched on is per-character " +
              "save data, not an authored flag — see ActionBarDefinition.defaultActive.")]

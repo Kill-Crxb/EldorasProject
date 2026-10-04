@@ -19,6 +19,8 @@ using System;
 public partial class StateMachineModule : MonoBehaviour, IBrainModule, IStateProvider
 
 {
+    public int InitOrder => 50;
+
     [Header("Starting States")]
     [Tooltip("Initial brain state on spawn")]
     [SerializeField] private BrainState startingBrainState = BrainState.Idle;

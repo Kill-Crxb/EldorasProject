@@ -15,6 +15,8 @@ using UnityEngine;
 /// </summary>
 public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable
 {
+    public int InitOrder => 140;
+
     #region Inspector
 
     [Header("Progression")]
@@ -34,7 +36,6 @@ public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable
     private const string LevelSourceKey = "rpg";
 
     private ControllerBrain brain;
-    private IIdentityLevel identityLevel;
     private IStatProvider stats;
     private int xpToNextLevel;
 
@@ -55,7 +56,6 @@ public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
-        identityLevel = brain.Identity as IIdentityLevel;
         stats = brain.Stats;
         xpToNextLevel = CalculateXPForLevel(currentLevel + 1);
         PublishLevel();
@@ -125,8 +125,6 @@ public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable
     /// </summary>
     private void PublishLevel()
     {
-        if (identityLevel != null) identityLevel.Level = currentLevel;
-
         // Entities without the Progression schema — NPCs today — simply do not scale by
         // level. Skipping quietly avoids a warning per NPC per spawn.
         if (stats == null || !stats.HasStat(LevelStatId)) return;

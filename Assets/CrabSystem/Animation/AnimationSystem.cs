@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
 {
+    public int InitOrder => 70;
+
     private ControllerBrain brain;
     private Animator animator => brain?.EntityAnimator;
 
