@@ -186,6 +186,11 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     {
         try
         {
+            // Config is the creation seed. Once the character has been saved, each module's own file
+            // is the truth, and re-applying the seed would reset level, XP, name and model (B21).
+            string identityJson = await provider.Load(characterId, "identity");
+            if (!string.IsNullOrEmpty(identityJson)) return;
+
             string configJson = await provider.Load(characterId, "config");
 
             if (string.IsNullOrEmpty(configJson))
