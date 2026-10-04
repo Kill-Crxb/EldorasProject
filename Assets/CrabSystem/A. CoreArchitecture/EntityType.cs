@@ -1,6 +1,4 @@
-/// <summary>
-/// Defines the type of entity for identification purposes
-/// </summary>
+// What controls an entity. The brain's entityType is the one source; IdentitySystem forwards it.
 public enum EntityType
 {
     Entity,     // Generic entity (default)

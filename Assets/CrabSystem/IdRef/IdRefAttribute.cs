@@ -16,7 +16,8 @@ public enum IdKind
     EquipmentSlot,
     Archetype,
     Model,
-    Scene
+    Scene,
+    AnimatorParam
 }
 
 public class IdRefAttribute : PropertyAttribute

@@ -50,13 +50,13 @@ public class ARPGLocomotionHandler : LocomotionHandler
     [SerializeField] private float wallJumpPush = 5f;
 
     [Header("Animation Parameters")]
-    [SerializeField] private string movementSpeedParam = "MovementSpeed";
-    [SerializeField] private string isGroundedParam = "IsGrounded";
-    [SerializeField] private string isLockedOnParam = "IsLockedOn";
-    [SerializeField] private string strafeXParam = "StrafeX";
-    [SerializeField] private string strafeYParam = "StrafeY";
-    [SerializeField] private string jumpTriggerParam = "JumpTrigger";
-    [SerializeField] private string movementStateParam = "MovementState";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string movementSpeedParam = "MovementSpeed";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string isGroundedParam = "IsGrounded";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string isLockedOnParam = "IsLockedOn";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string strafeXParam = "StrafeX";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string strafeYParam = "StrafeY";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string jumpTriggerParam = "JumpTrigger";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string movementStateParam = "MovementState";
 
     // References
     private IAnimationProvider animationProvider;

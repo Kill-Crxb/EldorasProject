@@ -50,7 +50,7 @@ namespace NinjaGame.Magic
                  "Separate from the cast ability's own trigger: entering an element and casting the " +
                  "sequence are different moments, and the whole readability of the system rests on " +
                  "an onlooker being able to see which signs you are making before the spell lands.")]
-        public string drawTrigger = "";
+        [IdRef(IdKind.AnimatorParam)] public string drawTrigger = "";
 
         [Header("Damage")]
         [Tooltip("The packet's damage type for spells of this school. Must match the damageType on " +

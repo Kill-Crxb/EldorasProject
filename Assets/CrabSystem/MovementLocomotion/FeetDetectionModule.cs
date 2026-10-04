@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+public enum FeetContactType { Ground, Wall, Ceiling, Unknown }
+
 public class FeetDetectionModule : MonoBehaviour, IBrainModule
 {
     [Header("Detection Settings")]

@@ -27,13 +27,13 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
     [SerializeField] private float minTimeBetweenReactions = 0.2f;
 
     [Header("Animator Parameters")]
-    [SerializeField] private string hitLightParam = "HitLight";
-    [SerializeField] private string hitHeavyParam = "HitHeavy";
-    [SerializeField] private string staggerParam = "Stagger";
-    [SerializeField] private string deathParam = "Death";
-    [SerializeField] private string isDeadParam = "IsDead";
-    [SerializeField] private string hitDirXParam = "HitDirX";
-    [SerializeField] private string hitDirZParam = "HitDirZ";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitLightParam = "HitLight";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitHeavyParam = "HitHeavy";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string staggerParam = "Stagger";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string deathParam = "Death";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string isDeadParam = "IsDead";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitDirXParam = "HitDirX";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitDirZParam = "HitDirZ";
 
     public bool IsEnabled
     {

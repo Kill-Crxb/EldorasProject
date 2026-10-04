@@ -76,7 +76,7 @@ namespace NinjaGame.Magic
         [Tooltip("Optional animator FLOAT parameter set to the same speed multiplier, so the hand " +
                  "sign visibly plays faster. Skipped silently when the animator has no such " +
                  "parameter, so it is safe to leave set.")]
-        [SerializeField] private string drawSpeedParameter = "DrawSpeed";
+        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string drawSpeedParameter = "DrawSpeed";
 
         [Tooltip("Named socket on the model's rig where the hand-sign burst plays — the casting " +
                  "hand. Authored on the model's ModelSocketProvider under Named Sockets.")]

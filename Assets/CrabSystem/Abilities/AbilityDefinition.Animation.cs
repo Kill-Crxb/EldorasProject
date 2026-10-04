@@ -36,7 +36,7 @@ public partial class AbilityDefinition
 
     [Header("Animation & VFX")]
     [Tooltip("Animation trigger parameter name")]
-    public string animationTrigger = "Ability";
+    [IdRef(IdKind.AnimatorParam)] public string animationTrigger = "Ability";
 
     [Tooltip("VFX spawned on cast start")]
     public GameObject castEffectPrefab;

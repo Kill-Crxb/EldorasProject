@@ -16,7 +16,7 @@ public class AnimatorFactBridge : MonoBehaviour, IBrainModule
     public struct Binding
     {
         [IdRef(IdKind.Fact)] public string fact;
-        public string parameter;
+        [IdRef(IdKind.AnimatorParam)] public string parameter;
         public ParameterKind kind;
     }
 

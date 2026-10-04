@@ -6,6 +6,7 @@ using System.Reflection;
 using NinjaGame.Stats;
 using RPG.Factions;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 
 // Where each kind of id comes from. The asset that defines an id is its only source, so this is
@@ -24,11 +25,13 @@ public static class IdSources
     {
         if (cache.TryGetValue(kind, out var ids)) return ids;
 
-        ids = Gather(kind).Where(id => !string.IsNullOrEmpty(id)).Distinct().OrderBy(id => id).ToArray();
+        ids = Gather(kind).Where(id => !string.IsNullOrEmpty(id)).Distinct().OrderBy(id => id, StringComparer.Ordinal).ToArray();
         cache[kind] = ids;
         return ids;
     }
 
+    // Sorted and searched with the same ordinal comparer; a culture sort here made BinarySearch
+    // miss ids that exist (StrafeX, Stagger reported missing).
     public static bool Exists(IdKind kind, string id) => Array.BinarySearch(Get(kind), id, StringComparer.Ordinal) >= 0;
 
     private static IEnumerable<string> Gather(IdKind kind)
@@ -46,6 +49,7 @@ public static class IdSources
             case IdKind.Archetype: return Assets<NPCArchetype>().Select(a => a.archetypeId);
             case IdKind.Model: return Assets<ModelDatabase>().SelectMany(d => d.AllModels ?? Array.Empty<ModelDatabase.ModelVariant>()).Select(m => m?.modelId);
             case IdKind.Scene: return EditorBuildSettings.scenes.Select(s => Path.GetFileNameWithoutExtension(s.path));
+            case IdKind.AnimatorParam: return AnimatorParameters();
         }
 
         Debug.LogError($"[IdSources] No source for id kind {kind}.");
@@ -62,6 +66,18 @@ public static class IdSources
         var constants = typeof(BlackboardKey).GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(f => f.FieldType == typeof(int)).Select(f => f.Name);
         return schema.Concat(conditions).Concat(constants);
+    }
+
+    // Our controllers live under Database/; the imported animation packs bring their own, which
+    // would bury the real parameters in the dropdown.
+    private static IEnumerable<string> AnimatorParameters()
+    {
+        foreach (string guid in AssetDatabase.FindAssets("t:AnimatorController", new[] { "Assets/Database" }))
+        {
+            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(AssetDatabase.GUIDToAssetPath(guid));
+            if (controller == null) continue;
+            foreach (var parameter in controller.parameters) yield return parameter.name;
+        }
     }
 
     private static IEnumerable<T> Assets<T>() where T : ScriptableObject

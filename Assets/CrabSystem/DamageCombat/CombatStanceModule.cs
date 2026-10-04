@@ -70,7 +70,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
 
     [Header("Wiring")]
     [Tooltip("Animator bool set to true while unarmed. Leave empty to skip.")]
-    [SerializeField] private string animatorBool = "IsUnarmed";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string animatorBool = "IsUnarmed";
 
     [Tooltip("Blackboard fact set to true while unarmed. Leave empty to skip.")]
     [IdRef(IdKind.Fact)] [SerializeField] private string blackboardFact = "IsUnarmed";

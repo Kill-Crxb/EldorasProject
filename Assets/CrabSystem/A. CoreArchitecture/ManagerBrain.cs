@@ -1,145 +1,53 @@
-﻿using RPG.Factions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-/// <summary>
-/// Manager Brain - Orchestrates all game managers
-/// 
-/// Architecture Pattern:
-/// ManagerBrain → IGameManager implementations
-/// 
-/// Mirrors:
-/// ControllerBrain → IBrainModule implementations
-/// 
-/// Responsibilities:
-/// - Discover all game managers on startup
-/// - Initialize managers in dependency order (by priority)
-/// - Provide manager lookup/registry
-/// - Handle persistence (DontDestroyOnLoad)
-/// - Coordinate shutdown
-/// - Provide cross-manager events
-/// 
-/// Benefits:
-/// - Guaranteed initialization order
-/// - Dependency management
-/// - Single DontDestroyOnLoad call
-/// - Easy to add new managers
-/// - Centralized lifecycle control
-/// - Clear logging of manager state
-/// 
-/// Usage:
-/// Place on root "Managers" GameObject
-/// All child components implementing IGameManager auto-discovered
-/// 
-/// Phase 1.7b: Universal Systems Consolidation
-/// Created: January 2026
-/// </summary>
+// Root of the game-wide managers. Like ControllerBrain for modules: a manager signs up by being a
+// child, is initialised in InitializationPriority order, and is reached through GetManager<T>
+// (stateful managers) or its own static Instance (read-only definition databases).
 public class ManagerBrain : MonoBehaviour
 {
-    #region Singleton
+    [Tooltip("Persist managers across scene loads")]
+    [SerializeField] private bool persistAcrossScenes = true;
+
+    [Tooltip("Initialize managers on Awake")]
+    [SerializeField] private bool autoInitialize = true;
 
     // Set in Awake. No scene search: anything that runs before the brain wakes gets null and
     // must cope, which is what it already got from an uninitialised registry.
     private static ManagerBrain instance;
     public static ManagerBrain Instance => instance;
 
-    #endregion
+    private readonly List<IGameManager> allManagers = new List<IGameManager>();
+    private readonly List<IUpdatableManager> updatableManagers = new List<IUpdatableManager>();
+    private readonly Dictionary<Type, IGameManager> managerRegistry = new Dictionary<Type, IGameManager>();
+    private bool isShuttingDown;
 
-    #region Inspector Fields
-
-    [Header("Settings")]
-    [Tooltip("Persist managers across scene loads")]
-    [SerializeField] private bool persistAcrossScenes = true;
-
-    [Tooltip("Automatically initialize managers on Awake")]
-    [SerializeField] private bool autoInitialize = true;
-
-    [Header("Debug")]
-    [SerializeField] private bool debugLogging = true;
-    [SerializeField] private bool verboseLogging = false;
-
-    #endregion
-
-    #region Private Fields
-
-    // All discovered managers
-    private List<IGameManager> allManagers = new List<IGameManager>();
-
-    // Managers that need per-frame updates
-    private List<IUpdatableManager> updatableManagers = new List<IUpdatableManager>();
-
-    // Manager registry for fast lookup by type
-    private Dictionary<Type, IGameManager> managerRegistry = new Dictionary<Type, IGameManager>();
-
-    // Initialization state
-    private bool isInitialized = false;
-    private bool isShuttingDown = false;
-
-    #endregion
-
-    #region Properties
-
-    public bool IsInitialized => isInitialized;
-    public int ManagerCount => allManagers.Count;
-
-    #endregion
-
-    #region Events
-
-    /// <summary>Fired when all managers initialized</summary>
-    public event Action OnAllManagersInitialized;
-
-    /// <summary>Fired when managers shutting down</summary>
-    public event Action OnManagersShutdown;
-
-    #endregion
-
-    #region Unity Lifecycle
+    public bool IsInitialized { get; private set; }
 
     void Awake()
     {
-        // Singleton pattern
         if (instance != null && instance != this)
         {
-            Debug.LogWarning($"[ManagerBrain] Duplicate ManagerBrain on {gameObject.name}. Destroying.");
+            Debug.LogWarning($"[ManagerBrain] Duplicate ManagerBrain on {gameObject.name}; destroying it.", this);
             Destroy(gameObject);
             return;
         }
 
         instance = this;
-
-        // Persist entire manager hierarchy
-        if (persistAcrossScenes)
-        {
-            DontDestroyOnLoad(gameObject);
-
-            if (debugLogging)
-                Debug.Log("[ManagerBrain] Managers will persist across scenes");
-        }
-
-        // Auto-initialize if enabled
-        if (autoInitialize)
-        {
-            InitializeManagers();
-        }
+        if (persistAcrossScenes) DontDestroyOnLoad(gameObject);
+        if (autoInitialize) InitializeManagers();
     }
 
     void Update()
     {
-        if (!isInitialized || isShuttingDown) return;
-
-        // Update managers that need per-frame updates
+        if (!IsInitialized || isShuttingDown) return;
         for (int i = 0; i < updatableManagers.Count; i++)
-        {
-            if (updatableManagers[i].IsEnabled)
-            {
-                updatableManagers[i].UpdateManager();
-            }
-        }
+            if (updatableManagers[i].IsEnabled) updatableManagers[i].UpdateManager();
     }
 
+    // Also fires when play mode stops, which is what lets SaveManager save on quit.
     void OnApplicationQuit()
     {
         ShutdownManagers();
@@ -147,15 +55,46 @@ public class ManagerBrain : MonoBehaviour
 
     void OnDestroy()
     {
-        if (instance == this)
-        {
-            ShutdownManagers();
-        }
+        if (instance == this) ShutdownManagers();
     }
 
-    #endregion
+    public void InitializeManagers()
+    {
+        if (IsInitialized) return;
 
-    #region Manager Discovery
+        DiscoverManagers();
+        ValidateManagerDependencies();
+
+        var ordered = allManagers.Where(m => m.IsEnabled).OrderBy(m => m.InitializationPriority).ToList();
+        foreach (var manager in ordered) Run(manager, manager.Initialize, "initialize");
+        foreach (var manager in ordered) Run(manager, manager.LateInitialize, "late-initialize");
+
+        ValidateManagers();
+        IsInitialized = true;
+    }
+
+    public void ShutdownManagers()
+    {
+        if (isShuttingDown) return;
+        isShuttingDown = true;
+
+        foreach (var manager in allManagers.OrderByDescending(m => m.InitializationPriority))
+            Run(manager, manager.Shutdown, "shut down");
+    }
+
+    // One manager failing must not stop the rest from starting or saving, so each call is caught,
+    // and logged in full.
+    private void Run(IGameManager manager, Action step, string what)
+    {
+        try
+        {
+            step();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[ManagerBrain] {manager.ManagerName} failed to {what}: {ex}", this);
+        }
+    }
 
     // Discovery is the one wiring path: a manager signs up by being a child of the brain (AU16).
     private void DiscoverManagers()
@@ -179,402 +118,83 @@ public class ManagerBrain : MonoBehaviour
         }
     }
 
-    #endregion
-
-    #region Initialization
-
-    /// <summary>
-    /// Initialize all managers in priority order
-    /// </summary>
-    public void InitializeManagers()
-    {
-        if (isInitialized)
-        {
-            Debug.LogWarning("[ManagerBrain] Already initialized!");
-            return;
-        }
-
-        if (debugLogging)
-            Debug.Log("=== ManagerBrain: Starting Initialization ===");
-
-        // Discover all managers
-        DiscoverManagers();
-
-        // Sort by initialization priority (lower = earlier)
-        var sortedManagers = allManagers.OrderBy(m => m.InitializationPriority).ToList();
-
-        // Validate dependencies
-        ValidateManagerDependencies();
-
-        // Phase 1: Initialize each manager
-        foreach (var manager in sortedManagers)
-        {
-            if (!manager.IsEnabled)
-            {
-                if (verboseLogging)
-                    Debug.Log($"[ManagerBrain] Skipping disabled: {manager.ManagerName}");
-                continue;
-            }
-
-            try
-            {
-                if (debugLogging)
-                    Debug.Log($"[ManagerBrain] Initializing: {manager.ManagerName} (Priority: {manager.InitializationPriority})");
-
-                manager.Initialize();
-
-                if (verboseLogging)
-                    Debug.Log($"[ManagerBrain] ✓ {manager.ManagerName} initialized");
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[ManagerBrain] Failed to initialize {manager.ManagerName}: {ex.Message}");
-            }
-        }
-
-        // Phase 2: Late initialization (after all managers initialized)
-        foreach (var manager in sortedManagers)
-        {
-            if (!manager.IsEnabled) continue;
-
-            try
-            {
-                if (verboseLogging)
-                    Debug.Log($"[ManagerBrain] Late-Initializing: {manager.ManagerName}");
-
-                manager.LateInitialize();
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[ManagerBrain] Failed late init for {manager.ManagerName}: {ex.Message}");
-            }
-        }
-
-        // Phase 3: Validation
-        bool allValid = ValidateManagers();
-
-        isInitialized = true;
-
-        if (debugLogging)
-        {
-            Debug.Log($"=== ManagerBrain: Initialization Complete ===");
-            Debug.Log($"  Total Managers: {allManagers.Count}");
-            Debug.Log($"  Updatable: {updatableManagers.Count}");
-            Debug.Log($"  Validation: {(allValid ? "PASSED" : "FAILED")}");
-        }
-
-        // Fire event
-        OnAllManagersInitialized?.Invoke();
-    }
-
-    #endregion
-
-    #region Shutdown
-
-    /// <summary>
-    /// Shutdown all managers (reverse priority order)
-    /// </summary>
-    public void ShutdownManagers()
-    {
-        if (isShuttingDown) return;
-
-        isShuttingDown = true;
-
-        if (debugLogging)
-            Debug.Log("=== ManagerBrain: Starting Shutdown ===");
-
-        // Shutdown in reverse order
-        var sortedManagers = allManagers.OrderByDescending(m => m.InitializationPriority).ToList();
-
-        foreach (var manager in sortedManagers)
-        {
-            try
-            {
-                if (debugLogging)
-                    Debug.Log($"[ManagerBrain] Shutting down: {manager.ManagerName}");
-
-                manager.Shutdown();
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[ManagerBrain] Failed to shutdown {manager.ManagerName}: {ex.Message}");
-            }
-        }
-
-        OnManagersShutdown?.Invoke();
-
-        if (debugLogging)
-            Debug.Log("=== ManagerBrain: Shutdown Complete ===");
-    }
-
-    #endregion
-
-    #region Manager Lookup
-
-    /// <summary>
-    /// Get manager by type
-    /// </summary>
     public T GetManager<T>() where T : class, IGameManager
     {
-        Type type = typeof(T);
-        if (managerRegistry.TryGetValue(type, out IGameManager manager))
-        {
+        if (managerRegistry.TryGetValue(typeof(T), out IGameManager manager))
             return manager as T;
-        }
 
-        Debug.LogWarning($"[ManagerBrain] Manager of type {type.Name} not found!");
+        Debug.LogWarning($"[ManagerBrain] No {typeof(T).Name} registered.", this);
         return null;
     }
 
-    #endregion
-
-    #region Validation
-
-    /// <summary>
-    /// Validate all managers
-    /// </summary>
-    /// <summary>
-    /// Validate manager dependencies against initialization priority
-    /// </summary>
     private void ValidateManagerDependencies()
     {
         foreach (var manager in allManagers)
         {
-            if (manager is IManagerDependency dependent)
-            {
-                foreach (var dependencyType in dependent.DependsOn)
-                {
-                    var dependency = allManagers.Find(m => m.GetType() == dependencyType);
+            if (!(manager is IManagerDependency dependent)) continue;
 
-                    if (dependency == null)
-                    {
-                        Debug.LogError($"[ManagerBrain] {manager.ManagerName} depends on {dependencyType.Name}, but it's not registered!");
-                        continue;
-                    }
-
-                    // Validate priority order
-                    if (dependency.InitializationPriority >= manager.InitializationPriority)
-                    {
-                        Debug.LogError($"[ManagerBrain] INVALID PRIORITY ORDER!\n" +
-                                     $"  {manager.ManagerName} (priority: {manager.InitializationPriority}) depends on\n" +
-                                     $"  {dependency.ManagerName} (priority: {dependency.InitializationPriority})\n" +
-                                     $"  → Dependency must have LOWER priority to initialize first!");
-                    }
-                    else
-                    {
-                        if (verboseLogging)
-                        {
-                            Debug.Log($"[ManagerBrain] Dependency validated: {manager.ManagerName} → {dependency.ManagerName}");
-                        }
-                    }
-                }
-            }
+            foreach (var dependencyType in dependent.DependsOn)
+                CheckDependency(manager, dependencyType);
         }
     }
 
-    public bool ValidateManagers()
+    private void CheckDependency(IGameManager manager, Type dependencyType)
     {
-        bool anyFatal = false;
-        var passed = new List<string>();
-        var infoLines = new List<string>();
-        var warnings = new List<string>();
-        var errors = new List<string>();
-
-        foreach (var manager in allManagers)
+        if (!managerRegistry.TryGetValue(dependencyType, out IGameManager dependency))
         {
-            if (!manager.IsEnabled) continue;
-
-            var result = manager.Validate();
-
-            if (result.IsValid && (result.Warnings == null || result.Warnings.Count == 0))
-            {
-                // Build a compact summary: "Stats Manager (5 schemas, 47 stats)"
-                string detail = result.Info != null && result.Info.Count > 0
-                    ? $"{manager.ManagerName} ({string.Join(", ", result.Info)})"
-                    : manager.ManagerName;
-                passed.Add(detail);
-            }
-
-            if (result.Info != null)
-                foreach (var info in result.Info)
-                    infoLines.Add($"  [{manager.ManagerName}] {info}");
-
-            if (result.Warnings != null)
-                foreach (var w in result.Warnings)
-                    warnings.Add($"  [{manager.ManagerName}] {w}");
-
-            if (result.Errors != null)
-                foreach (var e in result.Errors)
-                    errors.Add($"  [{manager.ManagerName}] {e}");
-
-            if (result.IsFatal)
-                anyFatal = true;
+            Debug.LogError($"[ManagerBrain] {manager.ManagerName} depends on {dependencyType.Name}, which isn't registered.", this);
+            return;
         }
 
-        // Single summary log for all passing managers
-        if (passed.Count > 0)
-            Debug.Log($"[ManagerBrain] ✓ Managers ready ({passed.Count}): {string.Join(" | ", passed)}");
+        if (dependency.InitializationPriority >= manager.InitializationPriority)
+            Debug.LogError($"[ManagerBrain] {manager.ManagerName} (priority {manager.InitializationPriority}) depends on {dependency.ManagerName} (priority {dependency.InitializationPriority}); the dependency needs the lower number.", this);
+    }
 
-        // Warnings as a single block if any
-        if (warnings.Count > 0)
-            Debug.LogWarning($"[ManagerBrain] Warnings:\n{string.Join("\n", warnings)}");
+    // The one boot line: which managers are ready, then any warnings and errors as single blocks.
+    // Kept as a Log (not a debugger) because it is the managers' health check on every start.
+    public bool ValidateManagers()
+    {
+        var passed = new List<string>();
+        var warnings = new List<string>();
+        var errors = new List<string>();
+        bool anyFatal = false;
 
-        // Errors as a single block if any  
-        if (errors.Count > 0)
-            Debug.LogError($"[ManagerBrain] Errors:\n{string.Join("\n", errors)}");
+        foreach (var manager in allManagers.Where(m => m.IsEnabled))
+        {
+            var result = manager.Validate();
+            anyFatal |= result.IsFatal;
 
-        if (anyFatal)
-            Debug.LogError("[ManagerBrain] Fatal validation errors — check above.");
+            if (result.IsValid && (result.Warnings == null || result.Warnings.Count == 0))
+                passed.Add(result.Info != null && result.Info.Count > 0 ? $"{manager.ManagerName} ({string.Join(", ", result.Info)})" : manager.ManagerName);
+
+            if (result.Warnings != null) warnings.AddRange(result.Warnings.Select(w => $"  [{manager.ManagerName}] {w}"));
+            if (result.Errors != null) errors.AddRange(result.Errors.Select(e => $"  [{manager.ManagerName}] {e}"));
+        }
+
+        if (passed.Count > 0) Debug.Log($"[ManagerBrain] ✓ Managers ready ({passed.Count}): {string.Join(" | ", passed)}", this);
+        if (warnings.Count > 0) Debug.LogWarning($"[ManagerBrain] Warnings:\n{string.Join("\n", warnings)}", this);
+        if (errors.Count > 0) Debug.LogError($"[ManagerBrain] Errors:\n{string.Join("\n", errors)}", this);
+        if (anyFatal) Debug.LogError("[ManagerBrain] Fatal validation errors, see above.", this);
 
         return !anyFatal;
     }
 
-    #endregion
-
-    #region Hot Reload
-
-    /// <summary>
-    /// Hot reload all managers that support it
-    /// </summary>
+    // Swaps in edited definitions without restarting; GM5 builds on this.
     public void HotReloadAll()
     {
-        if (debugLogging)
-            Debug.Log("[ManagerBrain] Hot reloading all managers...");
-
         foreach (var manager in allManagers)
-        {
-            if (manager is IHotReloadable reloadable && manager.IsEnabled)
-            {
-                try
-                {
-                    if (verboseLogging)
-                        Debug.Log($"[ManagerBrain] Hot reloading: {manager.ManagerName}");
-
-                    reloadable.HotReload();
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[ManagerBrain] Failed to hot reload {manager.ManagerName}: {ex.Message}");
-                }
-            }
-        }
-
-        if (debugLogging)
-            Debug.Log("[ManagerBrain] Hot reload complete");
-    }
-
-    /// <summary>
-    /// Hot reload a specific manager
-    /// </summary>
-    public void HotReload<T>() where T : class, IGameManager, IHotReloadable
-    {
-        var manager = GetManager<T>();
-        if (manager != null)
-        {
-            manager.HotReload();
-            if (debugLogging)
-                Debug.Log($"[ManagerBrain] Hot reloaded: {manager.ManagerName}");
-        }
-    }
-
-    #endregion
-
-    #region Context Menu Helpers
-
-    [ContextMenu("Initialize Managers")]
-    private void ContextInitializeManagers()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning("[ManagerBrain] Can only initialize in Play Mode");
-            return;
-        }
-
-        InitializeManagers();
-    }
-
-    [ContextMenu("Shutdown Managers")]
-    private void ContextShutdownManagers()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning("[ManagerBrain] Can only shutdown in Play Mode");
-            return;
-        }
-
-        ShutdownManagers();
+            if (manager.IsEnabled && manager is IHotReloadable reloadable) Run(manager, reloadable.HotReload, "hot reload");
     }
 
     [ContextMenu("Validate All Managers")]
     private void ContextValidateManagers()
     {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning("[ManagerBrain] Can only validate in Play Mode");
-            return;
-        }
-
-        bool valid = ValidateManagers();
-        Debug.Log($"[ManagerBrain] Validation: {(valid ? "PASSED" : "FAILED")}");
-    }
-
-    [ContextMenu("Print Manager Summary")]
-    private void PrintManagerSummary()
-    {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning("[ManagerBrain] Can only print summary in Play Mode");
-            return;
-        }
-
-        Debug.Log("=== Manager Brain Summary ===");
-        Debug.Log($"Initialized: {isInitialized}");
-        Debug.Log($"Total Managers: {allManagers.Count}");
-        Debug.Log($"Updatable Managers: {updatableManagers.Count}");
-        Debug.Log("");
-        Debug.Log("Managers (in initialization order):");
-
-        var sorted = allManagers.OrderBy(m => m.InitializationPriority).ToList();
-        foreach (var manager in sorted)
-        {
-            string status = manager.IsEnabled ? "✓" : "✗";
-            string initialized = manager.IsInitialized ? "INIT" : "NOT INIT";
-            Debug.Log($"  [{status}] {manager.ManagerName} (Priority: {manager.InitializationPriority}, {initialized})");
-        }
+        if (Application.isPlaying) ValidateManagers();
     }
 
     [ContextMenu("Hot Reload All")]
     private void ContextHotReloadAll()
     {
-        if (!Application.isPlaying)
-        {
-            Debug.LogWarning("[ManagerBrain] Can only hot reload in Play Mode");
-            return;
-        }
-
-        HotReloadAll();
+        if (Application.isPlaying) HotReloadAll();
     }
-
-    [ContextMenu("Discover Managers (Preview)")]
-    private void ContextDiscoverManagers()
-    {
-        // Works in Edit Mode - just for preview
-        var components = GetComponentsInChildren<MonoBehaviour>(includeInactive: true);
-        int count = 0;
-
-        Debug.Log("=== Discovering Managers ===");
-
-        foreach (var component in components)
-        {
-            if (component is IGameManager manager)
-            {
-                count++;
-                Debug.Log($"  Found: {component.GetType().Name} - {manager.ManagerName} (Priority: {manager.InitializationPriority})");
-            }
-        }
-
-        Debug.Log($"Total: {count} managers found");
-    }
-
-    #endregion
 }

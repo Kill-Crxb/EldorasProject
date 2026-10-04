@@ -5,12 +5,12 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using RPG.Factions;
 
-public enum FeetContactType { Ground, Wall, Ceiling, Unknown }
-
+// One per character. Discovers every IBrainModule beneath it, orders them by InitOrder, builds
+// the provider cache that GetModule / GetProvider read, and drives their Update. Modules sign up
+// by being children; the brain names none of them (the typed properties below are shortcuts into
+// the cache, kept so the call sites read naturally).
 public class ControllerBrain : MonoBehaviour
 {
-    #region Inspector
-
     [Header("Root References")]
     [SerializeField] private Transform e_Root;
     [SerializeField] private Transform m_Root;
@@ -19,19 +19,11 @@ public class ControllerBrain : MonoBehaviour
     [Header("Entity Identity")]
     [SerializeField] private EntityType entityType = EntityType.Entity;
 
-    #endregion
-
-    #region Private Fields
-
     private IBrainModule[] updateModules;
     private IInputHandler[] inputHandlers;
-    private Dictionary<Type, object> providerCache = new Dictionary<Type, object>();
+    private readonly Dictionary<Type, object> providerCache = new Dictionary<Type, object>();
     private PlayerInputControls playerInputControls;
     private FeetDetectionModule feetDetection;
-
-    #endregion
-
-    #region Properties — State
 
     public bool IsInitialized { get; private set; }
 
@@ -41,19 +33,11 @@ public class ControllerBrain : MonoBehaviour
     public event Action OnLoaded;
     public event Action<ControllerBrain> OnInitialized;
 
-    #endregion
-
-    #region Properties — Root Transforms
-
     public Transform EntityRoot => e_Root;
     public Transform ModelRoot => m_Root;
     public Animator EntityAnimator => animator;
 
-    #endregion
-
-    #region Properties — Systems (Ordered by Init Dependency)
-
-    // Shortcuts into the provider cache, which discovery fills; null when the entity lacks the module.
+    // Null when the entity lacks the module.
     public IdentitySystem Identity => GetProvider<IdentitySystem>();
     public FactionSystem Faction => GetProvider<FactionSystem>();
     public ModelModule Model => GetProvider<ModelModule>();
@@ -72,42 +56,23 @@ public class ControllerBrain : MonoBehaviour
     public DialogueSystem Dialogue => GetProvider<DialogueSystem>();
     public HotbarSystem Hotbar => GetProvider<HotbarSystem>();
     public SlotTransformationSystem SlotTransform => GetProvider<SlotTransformationSystem>();
-
-    #endregion
-
-    #region Properties — Entity Identity
+    public IHealthProvider Health => GetProvider<IHealthProvider>();
 
     public EntityType EntityType => entityType;
     public bool IsPlayer => entityType == EntityType.Player;
-
-    /// <summary>
-    /// The entity's name for logs — the root object ("TargetDummy_Heavy", "Porphi"), not the
-    /// module child this brain sits on, which is "Component_Brain" on every entity.
-    /// </summary>
-    public string EntityName => transform.root.name;
     public bool IsNPC => entityType == EntityType.NPC;
 
-    #endregion
+    // The root object's name ("TargetDummy_Heavy", "Porphi") for logs; the brain itself sits on
+    // "Component_Brain" in every entity.
+    public string EntityName => transform.root.name;
 
-    #region Properties — Feet Detection
-
-    public bool IsGrounded => feetDetection?.IsGrounded ?? false;
-
-    #endregion
-
-    #region Properties — Convenience Accessors
-
-    public IHealthProvider Health => GetProvider<IHealthProvider>();
-
-    #endregion
-
-    #region Initialization — Main Pipeline
+    public bool IsGrounded => feetDetection != null && feetDetection.IsGrounded;
 
     void Awake()
     {
         ResolveRootReferences();
         CacheModuleArrays();
-        InitializeInputSystem();
+        CreatePlayerInput();
         BuildProviderCache();
         InitializeModules();
         LateInitializeModules();
@@ -131,32 +96,17 @@ public class ControllerBrain : MonoBehaviour
         OnLoaded?.Invoke();
     }
 
-    #endregion
-
-    #region Initialization — Phase 1: Root References
-
     void ResolveRootReferences()
     {
         if (e_Root == null)
             e_Root = transform.parent ?? transform;
 
-        if (m_Root == null && e_Root != null)
-        {
-            m_Root = e_Root.Find("3D Model") ??
-                     e_Root.Find("Model") ??
-                     e_Root.Find("Visual") ??
-                     e_Root.Find("Armature");
-        }
+        if (m_Root == null)
+            m_Root = e_Root.Find("3D Model") ?? e_Root.Find("Model") ?? e_Root.Find("Visual") ?? e_Root.Find("Armature");
 
-        if (animator == null && m_Root != null)
-            animator = m_Root.GetComponentInChildren<Animator>();
-        if (animator == null && e_Root != null)
-            animator = e_Root.GetComponentInChildren<Animator>();
+        if (animator == null)
+            RefreshAnimatorReference();
     }
-
-    #endregion
-
-    #region Initialization — Phase 2: Module Discovery
 
     // OrderBy is stable, so modules sharing an InitOrder keep their hierarchy order.
     void CacheModuleArrays()
@@ -165,20 +115,12 @@ public class ControllerBrain : MonoBehaviour
         inputHandlers = updateModules.OfType<IInputHandler>().ToArray();
     }
 
-    #endregion
-
-    #region Initialization — Phase 3: Input System
-
-    void InitializeInputSystem()
+    void CreatePlayerInput()
     {
         if (!IsPlayer) return;
         playerInputControls = new PlayerInputControls();
         playerInputControls.Enable();
     }
-
-    #endregion
-
-    #region Initialization — Phase 4: Provider Cache
 
     void BuildProviderCache()
     {
@@ -212,10 +154,6 @@ public class ControllerBrain : MonoBehaviour
 
     bool IsDeclined(IBrainModule module) => module.PlayerOnly && !IsPlayer;
 
-    #endregion
-
-    #region Initialization — Phase 5: Module Initialization
-
     // A declined module is switched off, not merely skipped: CameraModule's Initialize locks the
     // cursor, so initializing it on an NPC would take the cursor from the player.
     void InitializeModules()
@@ -232,109 +170,66 @@ public class ControllerBrain : MonoBehaviour
         }
     }
 
-    #endregion
-
-    #region Initialization — Phase 6: Late Initialization
-
     void LateInitializeModules()
     {
         foreach (var module in updateModules)
-        {
-            if (!ShouldRun(module)) continue;
-            module.LateInitialize();
-        }
+            if (ShouldRun(module)) module.LateInitialize();
     }
-
-    #endregion
-
-    #region Input Lifecycle
 
     void OnEnable()
     {
         if (playerInputControls == null) return;
         playerInputControls.Enable();
-        SubscribeToInputs();
+        foreach (var handler in inputHandlers)
+            handler.SubscribeToInputs(playerInputControls);
     }
 
     void OnDisable()
     {
-        if (playerInputControls == null) return;
-        UnsubscribeFromInputs();
-        playerInputControls.Player.Disable();
-        playerInputControls.UI.Disable();
-        playerInputControls.Disable();
+        StopPlayerInput();
     }
 
     void OnDestroy()
     {
+        StopPlayerInput();
+        playerInputControls?.Dispose();
+    }
+
+    void StopPlayerInput()
+    {
         if (playerInputControls == null) return;
-        UnsubscribeFromInputs();
+        foreach (var handler in inputHandlers)
+            handler.UnsubscribeFromInputs(playerInputControls);
         playerInputControls.Player.Disable();
         playerInputControls.UI.Disable();
         playerInputControls.Disable();
-        playerInputControls.Dispose();
     }
 
-    void SubscribeToInputs()
-    {
-        if (playerInputControls == null) return;
-        for (int i = 0; i < inputHandlers.Length; i++)
-            inputHandlers[i].SubscribeToInputs(playerInputControls);
-    }
-
-    void UnsubscribeFromInputs()
-    {
-        if (playerInputControls == null) return;
-        for (int i = 0; i < inputHandlers.Length; i++)
-            inputHandlers[i].UnsubscribeFromInputs(playerInputControls);
-    }
-
-    #endregion
-
-    #region Update Loops
-
-    /// <summary>
-    /// Modules are discovered with includeInactive, and the loops below drive them directly rather
-    /// than through Unity's own Update — so without this neither IsEnabled nor the inspector's
-    /// enable checkbox did anything, and turning a module off was a silent no-op.
-    /// </summary>
+    // Modules are discovered with includeInactive and driven from here rather than by Unity's own
+    // Update, so both IsEnabled and the inspector's enable checkbox have to be checked by hand.
     static bool ShouldRun(IBrainModule module)
     {
-        if (module == null) return false;
-        if (!module.IsEnabled) return false;
-        if (module is Behaviour behaviour && !behaviour.enabled) return false;
-        return true;
+        if (module == null || !module.IsEnabled) return false;
+        return !(module is Behaviour behaviour) || behaviour.enabled;
     }
-
 
     void Update()
     {
-        if (!IsInitialized || updateModules == null) return;
+        if (!IsInitialized) return;
         for (int i = 0; i < updateModules.Length; i++)
             if (ShouldRun(updateModules[i])) updateModules[i].UpdateModule();
     }
 
-    #endregion
-
-    #region Provider Lookup
-
     public T GetProvider<T>() where T : class
     {
-        if (providerCache.TryGetValue(typeof(T), out object provider))
-            return provider as T;
-        return null;
+        return providerCache.TryGetValue(typeof(T), out object provider) ? provider as T : null;
     }
 
+    // Every module is in the cache; the search only serves non-module components (CharacterMotor).
     public T GetModule<T>() where T : class
     {
-        T cached = GetProvider<T>();
-        if (cached != null) return cached;
-        return GetComponentInChildren<T>();
+        return GetProvider<T>() ?? GetComponentInChildren<T>();
     }
-
-    #endregion
-
-    #region Utilities
 
     public PlayerInputControls GetInputControls() => playerInputControls;
 
@@ -348,6 +243,4 @@ public class ControllerBrain : MonoBehaviour
     {
         animator = newAnimator;
     }
-
-    #endregion
 }

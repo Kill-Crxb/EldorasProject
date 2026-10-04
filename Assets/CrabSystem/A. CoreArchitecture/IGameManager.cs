@@ -1,126 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-/// <summary>
-/// Enhanced validation result supporting fatal errors, warnings, and info messages
-/// Allows managers to report issues without blocking startup
-/// </summary>
+// What a manager reports from Validate. Fatal stops nothing on its own; ManagerBrain logs it as an
+// error so a broken setup is loud without blocking the other managers.
 public struct ValidationResult
 {
-    /// <summary>
-    /// Is this a fatal error that prevents startup?
-    /// </summary>
     public bool IsFatal { get; set; }
-
-    /// <summary>
-    /// Fatal errors (prevent startup)
-    /// </summary>
     public List<string> Errors { get; set; }
-
-    /// <summary>
-    /// Warnings (log but continue)
-    /// </summary>
     public List<string> Warnings { get; set; }
-
-    /// <summary>
-    /// Informational messages
-    /// </summary>
     public List<string> Info { get; set; }
 
-    /// <summary>
-    /// Is validation completely successful?
-    /// </summary>
     public bool IsValid => !IsFatal && (Errors == null || Errors.Count == 0);
 
-    /// <summary>
-    /// Create a successful validation result
-    /// </summary>
-    public static ValidationResult Success()
-    {
-        return new ValidationResult
-        {
-            IsFatal = false,
-            Errors = new List<string>(),
-            Warnings = new List<string>(),
-            Info = new List<string>()
-        };
-    }
+    public static ValidationResult Success() => Make(false, null, null);
+    public static ValidationResult Fatal(string error) => Make(true, error, null);
+    public static ValidationResult Warning(string warning) => Make(false, null, warning);
 
-    /// <summary>
-    /// Create a fatal error result
-    /// </summary>
-    public static ValidationResult Fatal(string error)
+    private static ValidationResult Make(bool fatal, string error, string warning)
     {
         return new ValidationResult
         {
-            IsFatal = true,
-            Errors = new List<string> { error },
-            Warnings = new List<string>(),
-            Info = new List<string>()
-        };
-    }
-
-    /// <summary>
-    /// Create a warning result
-    /// </summary>
-    public static ValidationResult Warning(string warning)
-    {
-        return new ValidationResult
-        {
-            IsFatal = false,
-            Errors = new List<string>(),
-            Warnings = new List<string> { warning },
+            IsFatal = fatal,
+            Errors = error != null ? new List<string> { error } : new List<string>(),
+            Warnings = warning != null ? new List<string> { warning } : new List<string>(),
             Info = new List<string>()
         };
     }
 }
 
-/// <summary>
-/// Core interface for all game managers
-/// ENHANCED VERSION with ValidationResult and explicit dependencies
-/// </summary>
+// A game-wide manager. Lives under ManagerBrain, which initialises managers in
+// InitializationPriority order (lower first) and shuts them down in reverse.
 public interface IGameManager
 {
-    // Identity
     string ManagerName { get; }
     int InitializationPriority { get; }
     bool IsEnabled { get; }
     bool IsInitialized { get; }
 
-    // Lifecycle
     void Initialize();
     void LateInitialize();
     void Shutdown();
-
-    // Enhanced Validation (supports warnings vs errors)
     ValidationResult Validate();
 }
 
-/// <summary>
-/// Optional: Declare explicit manager dependencies
-/// ManagerBrain validates these against initialization priority
-/// </summary>
+// Managers this one needs initialised first; ManagerBrain checks them against the priorities.
 public interface IManagerDependency
 {
-    /// <summary>
-    /// Types of managers this manager depends on
-    /// Must initialize BEFORE this manager
-    /// </summary>
     IEnumerable<Type> DependsOn { get; }
 }
 
-/// <summary>
-/// Optional: Manager supports per-frame updates
-/// </summary>
 public interface IUpdatableManager : IGameManager
 {
     void UpdateManager();
 }
 
-/// <summary>
-/// Optional: Manager supports runtime hot-reloading
-/// </summary>
+// Reloads definitions in place; called by ManagerBrain.HotReloadAll.
 public interface IHotReloadable : IGameManager
 {
     void HotReload();

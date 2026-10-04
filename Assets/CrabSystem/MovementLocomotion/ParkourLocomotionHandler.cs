@@ -30,17 +30,17 @@ public class ParkourLocomotionHandler : LocomotionHandler
     [SerializeField] private CharacterMotor motor;
 
     [Header("Animation Parameters")]
-    [SerializeField] private string movementSpeedParam = "MovementSpeed";
-    [SerializeField] private string isGroundedParam = "IsGrounded";
-    [SerializeField] private string movementStateParam = "MovementState";
-    [SerializeField] private string jumpTriggerParam = "JumpTrigger";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string movementSpeedParam = "MovementSpeed";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string isGroundedParam = "IsGrounded";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string movementStateParam = "MovementState";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string jumpTriggerParam = "JumpTrigger";
 
     [Tooltip("Animator trigger for the mantle. Left empty, the jump trigger is used instead, so " +
              "the move is never silent just because the clip has not been authored yet.")]
-    [SerializeField] private string mantleTriggerParam = "Mantle";
-    [SerializeField] private string isLockedOnParam = "IsLockedOn";
-    [SerializeField] private string strafeXParam = "StrafeX";
-    [SerializeField] private string strafeYParam = "StrafeY";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string mantleTriggerParam = "Mantle";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string isLockedOnParam = "IsLockedOn";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string strafeXParam = "StrafeX";
+    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string strafeYParam = "StrafeY";
 
     IAnimationProvider animationProvider;
     ICameraProvider cameraProvider;
