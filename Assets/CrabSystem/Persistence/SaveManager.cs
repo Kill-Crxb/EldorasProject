@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -406,7 +407,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         if (string.IsNullOrWhiteSpace(accountName)) return null;
 
         long timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        string characterId = $"{accountName}/{characterName}_{timestamp}";
+        string characterId = $"{accountName}/{FolderSafe(characterName)}_{timestamp}";
 
         var metadata = new CharacterMetadata
         {
@@ -426,6 +427,16 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         }
 
         return characterId;
+    }
+
+    // The character id doubles as a folder path, so the name part keeps only letters, digits,
+    // spaces, '-' and '_'. A name like "../x" would otherwise write outside the saves folder
+    // (Audit 2 L3). The display name keeps whatever the player typed.
+    private static string FolderSafe(string name)
+    {
+        var chars = name.Trim().Select(c => char.IsLetterOrDigit(c) || c == ' ' || c == '-' || c == '_' ? c : '_').ToArray();
+        string safe = new string(chars).Trim();
+        return safe.Length > 0 ? safe : "character";
     }
 
     public async Task<string> CreateCharacter(CharacterCreationData data)

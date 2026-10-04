@@ -152,7 +152,8 @@ public class LocalSaveProvider : ISaveProvider
         await sem.WaitAsync();
         try
         {
-            await File.WriteAllTextAsync(filePath, json);
+            await File.WriteAllTextAsync(filePath + ".tmp", json);
+            CommitTemp(filePath);
             return true;
         }
         catch (Exception e)
@@ -184,7 +185,8 @@ public class LocalSaveProvider : ISaveProvider
 
         try
         {
-            File.WriteAllText(filePath, json);
+            File.WriteAllText(filePath + ".tmp", json);
+            CommitTemp(filePath);
             return true;
         }
         catch (Exception e)
@@ -219,6 +221,16 @@ public class LocalSaveProvider : ISaveProvider
     }
 
     // ── Private Helpers ───────────────────────────────────────────────────
+
+    // Writes land in "<file>.tmp" first and are swapped in whole, so a crash or kill mid-write
+    // leaves the previous save intact instead of a truncated JSON (Audit 2 L1).
+    private static void CommitTemp(string filePath)
+    {
+        // File.Replace swaps in one step but needs an existing target; the overwriting File.Move
+        // overload isn't in .NET Standard 2.1.
+        if (File.Exists(filePath)) File.Replace(filePath + ".tmp", filePath, null);
+        else File.Move(filePath + ".tmp", filePath);
+    }
 
     /// <summary>
     /// Characters are stored under {savesRoot}/{accountName}/{characterId}.
@@ -269,7 +281,8 @@ public class LocalSaveProvider : ISaveProvider
         try
         {
             string json = JsonUtility.ToJson(registry, prettyPrint: true);
-            await File.WriteAllTextAsync(accountsFilePath, json);
+            await File.WriteAllTextAsync(accountsFilePath + ".tmp", json);
+            CommitTemp(accountsFilePath);
             return true;
         }
         catch (Exception e)

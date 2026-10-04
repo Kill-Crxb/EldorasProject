@@ -78,12 +78,9 @@ public class ControllerBrain : MonoBehaviour
         LateInitializeModules();
         IsInitialized = true;
         OnInitialized?.Invoke(this);
-
-        if (IsPlayer)
-            ManagerBrain.Instance?.GetManager<SaveManager>()?.SetPlayerBrain(this);
     }
 
-    // The player is marked loaded by SaveManager once its save is restored.
+    // The player is handed to SaveManager by PlayerSpawner, and marked loaded once its save is restored.
     void Start()
     {
         if (!IsPlayer) MarkLoaded();

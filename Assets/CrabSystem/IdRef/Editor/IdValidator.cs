@@ -40,7 +40,7 @@ public static class IdValidator
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (prefab == null) continue;
-            if (MissingScriptCount(prefab) > 0) missingScripts.Add(path);
+            if (HasMissingScript(path, prefab)) missingScripts.Add(path);
 
             foreach (var component in prefab.GetComponentsInChildren<MonoBehaviour>(true))
             {
@@ -53,11 +53,8 @@ public static class IdValidator
         foreach (string path in AssetPaths("t:ScriptableObject"))
         {
             var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (asset == null)
-            {
-                missingScripts.Add(path);
-                continue;
-            }
+            if (HasMissingScript(path, null)) missingScripts.Add(path);
+            if (asset == null) continue;
 
             checkedFields += Walk(asset, asset.GetType(), path, asset, findings, 0);
         }
@@ -70,13 +67,22 @@ public static class IdValidator
         Debug.Log($"[Validate Ids] {checkedFields} id fields checked, {findings.Count} missing; {missingScripts.Count} assets with missing scripts. Report: {ReportPath}");
     }
 
-    private static int MissingScriptCount(GameObject prefab)
+    // A missing script can sit on a child object or inside a sub-asset (a volume profile's
+    // override components, for one); the second only shows as a null in LoadAllAssetsAtPath.
+    private static bool HasMissingScript(string path, GameObject prefab)
     {
-        int count = 0;
-        foreach (var child in prefab.GetComponentsInChildren<Transform>(true))
-            count += GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject);
-        return count;
+        if (prefab != null && prefab.GetComponentsInChildren<Transform>(true)
+                .Any(child => GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject) > 0))
+            return true;
+
+        return AssetDatabase.LoadAllAssetsAtPath(path).Any(asset => asset == null);
     }
+
+    // Asset-store packs and their demo content; reported apart so our own list stays readable.
+    private static readonly string[] ThirdPartyRoots =
+        { "Assets/Feel/", "Assets/MagicaCloth2/", "Assets/Farland Skies/", "Assets/ImportedAssets/", "Assets/ProBuilder Data/", "Assets/Text and Fonts/" };
+
+    private static bool IsThirdParty(string path) => ThirdPartyRoots.Any(root => path.StartsWith(root));
 
     private static IEnumerable<string> AssetPaths(string filter)
     {
@@ -196,16 +202,21 @@ public static class IdValidator
             sb.AppendLine();
         }
 
-        if (missingScripts.Count > 0)
-        {
-            sb.AppendLine($"## Missing scripts ({missingScripts.Count})");
-            sb.AppendLine();
-            foreach (string path in missingScripts.OrderBy(p => p))
-                sb.AppendLine($"- {path}");
-            sb.AppendLine();
-        }
+        AppendPaths(sb, "Missing scripts, ours", missingScripts.Where(p => !IsThirdParty(p)));
+        AppendPaths(sb, "Missing scripts, third-party packs", missingScripts.Where(IsThirdParty));
 
         Directory.CreateDirectory(Path.GetDirectoryName(ReportPath));
         File.WriteAllText(ReportPath, sb.ToString());
+    }
+
+    private static void AppendPaths(StringBuilder sb, string heading, IEnumerable<string> paths)
+    {
+        var list = paths.OrderBy(p => p, StringComparer.Ordinal).ToList();
+        if (list.Count == 0) return;
+
+        sb.AppendLine($"## {heading} ({list.Count})");
+        sb.AppendLine();
+        foreach (string path in list) sb.AppendLine($"- {path}");
+        sb.AppendLine();
     }
 }

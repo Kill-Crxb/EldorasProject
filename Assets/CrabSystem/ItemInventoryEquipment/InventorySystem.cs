@@ -28,6 +28,11 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
     public event Action OnInventoryChanged;
     public event Action<ItemInstance> OnItemAdded;
+
+    // True while a save or a container's contents are being put back. OnItemAdded means "this
+    // character just got an item" (pickups, quest Find objectives), so restoring must not raise it;
+    // listeners get one OnInventoryChanged when the restore ends instead (B18).
+    private bool restoring;
     public event Action<ItemInstance> OnItemRemoved;
 
     #region IBrainModule
@@ -102,6 +107,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         if (saveData?.items == null) return;
 
         ClearInventory();
+        restoring = true;
 
         foreach (var entry in saveData.items)
         {
@@ -119,6 +125,14 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
             if (!AddItem(item))
                 Debug.LogWarning($"[InventorySystem] Failed to restore item {entry.definitionId} at ({entry.gridX},{entry.gridY})");
         }
+
+        EndRestore();
+    }
+
+    private void EndRestore()
+    {
+        restoring = false;
+        OnInventoryChanged?.Invoke();
     }
 
     // ── Save Data Structures ──────────────────────────────────────────────
@@ -159,6 +173,8 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         }
 
         inventoryItems.Add(item);
+        if (restoring) return true;
+
         OnItemAdded?.Invoke(item);
         OnInventoryChanged?.Invoke();
 
@@ -277,6 +293,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
         ClearInventory();
         currentContents = contents;
+        restoring = true;
 
         foreach (var containerItem in contents.items)
         {
@@ -288,6 +305,8 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
             if (!AddItem(itemInstance))
                 Debug.LogWarning($"[InventorySystem] Failed to load item {containerItem.itemId} at ({containerItem.gridX},{containerItem.gridY})");
         }
+
+        EndRestore();
     }
 
     private void CreateDefaultContents()
