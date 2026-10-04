@@ -119,7 +119,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
         if (equipment != null)
             equipment.OnEquipmentChanged += HandleEquipmentChanged;
 
-        GameEvents.OnLoadCompleted += HandleLoadCompleted;
+        brain.OnLoaded += HandleLoaded;
 
         SyncToEquippedWeapon();
     }
@@ -138,7 +138,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
         if (equipment != null)
             equipment.OnEquipmentChanged -= HandleEquipmentChanged;
 
-        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+        if (brain != null) brain.OnLoaded -= HandleLoaded;
     }
 
     #endregion
@@ -272,9 +272,9 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
 
     #region Equipment Sync
 
-    private void HandleLoadCompleted()
+    private void HandleLoaded()
     {
-        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+        brain.OnLoaded -= HandleLoaded;
         SyncToEquippedWeapon();
     }
 

@@ -58,6 +58,11 @@ public class ControllerBrain : MonoBehaviour
     #region Properties — State
 
     public bool IsInitialized { get; private set; }
+
+    // This character's data is in place: a save restored for the player, or simply spawned for
+    // everyone else. Per character, so one entity's load never re-runs another's handlers.
+    public bool IsLoaded { get; private set; }
+    public event Action OnLoaded;
     public event Action<ControllerBrain> OnInitialized;
 
     #endregion
@@ -134,6 +139,19 @@ public class ControllerBrain : MonoBehaviour
 
         if (IsPlayer)
             ManagerBrain.Instance?.GetManager<SaveManager>()?.SetPlayerBrain(this);
+    }
+
+    // The player is marked loaded by SaveManager once its save is restored.
+    void Start()
+    {
+        if (!IsPlayer) MarkLoaded();
+    }
+
+    public void MarkLoaded()
+    {
+        if (IsLoaded) return;
+        IsLoaded = true;
+        OnLoaded?.Invoke();
     }
 
     #endregion

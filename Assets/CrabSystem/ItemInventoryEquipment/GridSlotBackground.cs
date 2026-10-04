@@ -52,78 +52,7 @@ public class GridSlotBackground : MonoBehaviour, IDropHandler
     }
     public void OnDrop(PointerEventData eventData)
     {
-        // NOTE: Equipment-to-inventory drag removed (old system)
-        // New system uses right-click on equipped items to unequip
-        // the socket icon → EquipmentSystem.UnequipItemToInventory()
-
-        /* COMMENTED OUT - Old EquipmentSlotComponent system
-        EquipmentSlotComponent draggedEquip = EquipmentSlotComponent.GetCurrentDraggedEquipmentSlot();
-        if (draggedEquip != null && !draggedEquip.IsEmpty)
-        {
-            var itemSystem = FindFirstObjectByType<ControllerBrain>()?.GetModule<ItemSystem>();
-            if (itemSystem != null)
-            {
-                var item = draggedEquip.CurrentItemInstance;
-                if (item != null)
-                {
-                    // CRITICAL: Validate the item can fit at this position
-                    int gridWidth = 8;
-                    int gridHeight = 10;
-
-                    // Check if item would extend beyond grid bounds
-                    if (gridPosition.x + item.itemWidth > gridWidth ||
-                        gridPosition.y + item.itemHeight > gridHeight)
-                    {
-                        Debug.LogWarning($"Cannot place {item.itemWidth}x{item.itemHeight} item at ({gridPosition.x}, {gridPosition.y}) - would exceed grid bounds");
-
-                        // Show visual feedback
-                        StartCoroutine(ShowInvalidDropFeedback());
-                        return; // Don't unequip
-                    }
-
-                    // Check if position would overlap with existing items
-                    if (!CanPlaceItemAt(gridPosition.x, gridPosition.y, item, itemSystem))
-                    {
-                        Debug.LogWarning($"Cannot place item at ({gridPosition.x}, {gridPosition.y}) - overlaps existing item");
-                        StartCoroutine(ShowInvalidDropFeedback());
-                        return;
-                    }
-
-                    // Valid position - set it BEFORE unequipping
-                    item.PlaceAtPosition(gridPosition.x, gridPosition.y);
-                    itemSystem.UnequipItem(draggedEquip.SlotType);
-                }
-            }
-        }
-        */
-    }
-    private bool CanPlaceItemAt(int x, int y, ItemInstance itemToPlace, ItemSystem itemSystem)
-    {
-        var allItems = itemSystem.GetAllInventoryItems();
-
-        foreach (var existingItem in allItems)
-        {
-            if (existingItem == null || !existingItem.IsPlaced || existingItem.instanceId == itemToPlace.instanceId)
-                continue;
-
-            // Check if areas overlap
-            bool overlapsX = x < existingItem.gridX + existingItem.itemWidth &&
-                            x + itemToPlace.itemWidth > existingItem.gridX;
-            bool overlapsY = y < existingItem.gridY + existingItem.itemHeight &&
-                            y + itemToPlace.itemHeight > existingItem.gridY;
-
-            if (overlapsX && overlapsY)
-                return false;
-        }
-
-        return true;
-    }
-    private System.Collections.IEnumerator ShowInvalidDropFeedback()
-    {
-        Color originalColor = backgroundImage.color;
-        backgroundImage.color = new Color(1f, 0.2f, 0.2f, 0.8f); // Red flash
-        yield return new WaitForSeconds(0.3f);
-        backgroundImage.color = originalColor;
+        // The old equipment-to-inventory drop lived here. Unequip is now right-click on the socket.
     }
     public void SetNormal()
     {

@@ -187,6 +187,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
             SubscribeToSaveableEvents();
             await FirePlayerConfigAfterLoad(characterId);
             characterLoaded = true;
+            playerBrain.MarkLoaded();
             GameEvents.LoadCompleted();
         }
         catch (Exception ex)

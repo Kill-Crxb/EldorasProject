@@ -169,7 +169,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
             modelModule.OnModelChanged += HandleModelChanged;
 
         SetupAnimationEventForwarder();
-        GameEvents.OnLoadCompleted += HandleLoadCompleted;
+        brain.OnLoaded += HandleLoaded;
         BuildAbilityLookup();
 
         if (resources == null)
@@ -250,9 +250,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         UpdateDefensiveAbility();
     }
 
-    private void HandleLoadCompleted()
+    private void HandleLoaded()
     {
-        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+        brain.OnLoaded -= HandleLoaded;
 
         // The model (and its forwarder, which lives next to the Animator) may have
         // been spawned during the load — always re-resolve rather than keeping a
@@ -283,7 +283,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         if (found == null)
         {
             // Fallback: hierarchy search (model may not be spawned yet;
-            // HandleLoadCompleted / HandleModelChanged will re-resolve later).
+            // HandleLoaded / HandleModelChanged will re-resolve later).
             Transform playerRoot = brain.transform.parent;
             if (playerRoot != null)
                 found = playerRoot.GetComponentInChildren<AnimationEventForwarder>(true);
@@ -347,7 +347,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     private void OnDestroy()
     {
-        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+        if (brain != null) brain.OnLoaded -= HandleLoaded;
 
         if (blackboard != null)
             blackboard.OnBoolChanged -= HandleFactChanged;

@@ -57,28 +57,23 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         isInitialized = true;
     }
 
-    /// <summary>
-    /// Subscribe to OnLoadCompleted here rather than broadcasting immediately.
-    /// LateInitialize fires synchronously during ControllerBrain.Awake — before the
-    /// async save load runs — so the equipment dictionary is still empty at that point.
-    /// OnLoadCompleted fires after all ISaveable modules have finished loading their data,
-    /// which is the correct moment to rebuild visuals.
-    /// </summary>
+    // LateInitialize runs in the brain's Awake, before the async save load, so the equipment is
+    // still empty here. The brain's OnLoaded comes after this character's data is restored.
     public void LateInitialize()
     {
-        GameEvents.OnLoadCompleted += HandleLoadCompleted;
+        brain.OnLoaded += HandleLoaded;
     }
 
     public void UpdateModule() { }
 
     public void Shutdown()
     {
-        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+        if (brain != null) brain.OnLoaded -= HandleLoaded;
     }
 
-    private void HandleLoadCompleted()
+    private void HandleLoaded()
     {
-        GameEvents.OnLoadCompleted -= HandleLoadCompleted;
+        brain.OnLoaded -= HandleLoaded;
 
         try
         {

@@ -32,9 +32,6 @@ public class TargetLockModule : MonoBehaviour, IBrainModule, IInputHandler
     {
         this.brain = brain;
         playerRoot = brain.transform.parent;
-
-        // Subscribe to input
-        SubscribeToInputs(brain.GetInputControls());
     }
 
     public void UpdateModule()

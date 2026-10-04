@@ -40,6 +40,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
 
     private ControllerBrain brain;
     private IStatProvider stats;
+    private DamageSystem damage;
     private readonly Dictionary<string, ResourceState> resources = new();
     private ResourceState healthResource;
 
@@ -59,6 +60,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     {
         brain = controllerBrain;
         stats = brain.Stats;
+        damage = brain.GetModule<DamageSystem>();
 
         if (stats == null)
         {
@@ -89,8 +91,8 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     {
         if (!isEnabled) return;
 
-        // The dead don't regenerate. Health creeping back above zero brought corpses back to life.
-        if (healthResource != null && healthResource.current <= 0f) return;
+        // The dead don't regenerate. DamageSystem.IsDead is the one death flag (Audit 4 S4).
+        if (damage != null && damage.IsDead) return;
 
         float delta = Time.deltaTime;
 
@@ -136,6 +138,13 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     private float CalculateMaxValue(ResourceDefinition def)
     {
         if (string.IsNullOrEmpty(def.maxStatId)) return DEFAULT_MAX_VALUE;
+
+        // A stat missing on this entity used to fall back to 100 quietly, hiding a missing schema.
+        if (stats.GetValue(def.maxStatId, -1f) < 0f)
+        {
+            Debug.LogError($"[ResourceSystem] '{def.resourceId}' max stat '{def.maxStatId}' is not loaded on {brain.EntityName}", this);
+            return DEFAULT_MAX_VALUE;
+        }
 
         float statValue = stats.GetValue(def.maxStatId);
         return statValue > 0f ? statValue : DEFAULT_MAX_VALUE;

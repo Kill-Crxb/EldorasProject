@@ -241,6 +241,10 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
         if (item.Definition == null || item.Definition.equippedPrefab == null)
             return;
 
+        // A model with no socket map can't hold anything, and CacheSocketsFromProvider already said so.
+        if (socketProvider == null)
+            return;
+
         var socket = GetSocket(slot.slotId);
         if (socket == null)
         {
