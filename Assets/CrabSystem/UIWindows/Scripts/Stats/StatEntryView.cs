@@ -12,7 +12,7 @@ public class StatEntryView : MonoBehaviour
 
     [Header("Binding")]
     [Tooltip("Stat id this row displays, e.g. 'core.body'.")]
-    [SerializeField] private string statId;
+    [IdRef(IdKind.Stat)] [SerializeField] private string statId;
 
     [Header("Labels")]
     [SerializeField] private TMP_Text nameLabel;

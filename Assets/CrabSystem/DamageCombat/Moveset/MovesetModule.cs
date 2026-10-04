@@ -10,7 +10,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
     [SerializeField] private float bufferLifetime = 1f;
 
     [Tooltip("Equipment slot whose item supplies the armed moveset.")]
-    [SerializeField] private string weaponSlotId = "mainwep";
+    [IdRef(IdKind.EquipmentSlot)] [SerializeField] private string weaponSlotId = "mainwep";
 
     private ControllerBrain brain;
     private AbilitySystem abilities;

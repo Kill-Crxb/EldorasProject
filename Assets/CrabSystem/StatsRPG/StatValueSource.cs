@@ -9,7 +9,7 @@ public class StatValueSource : ValueSourceDefinition
 {
     [Header("Stat Query")]
     [Tooltip("Stat id to read, e.g. 'core.body'")]
-    [SerializeField] private string statId;
+    [IdRef(IdKind.Stat)] [SerializeField] private string statId;
 
     public override float GetValue(ControllerBrain brain)
     {

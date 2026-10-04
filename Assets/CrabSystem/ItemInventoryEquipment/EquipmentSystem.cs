@@ -15,7 +15,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
     [Header("NPC Configuration")]
     [SerializeField] private bool hasNaturalWeapon = false;
-    [SerializeField] private string naturalWeaponItemId;
+    [IdRef(IdKind.Item)] [SerializeField] private string naturalWeaponItemId;
     [SerializeField] private EquipmentSlotDefinition naturalWeaponSlot;
 
     private Dictionary<string, ItemInstance> equipment = new Dictionary<string, ItemInstance>();

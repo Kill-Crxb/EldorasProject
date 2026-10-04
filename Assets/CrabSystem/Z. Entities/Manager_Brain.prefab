@@ -133,6 +133,8 @@ Transform:
   - {fileID: 5656790781647396396}
   - {fileID: 2422287244115132414}
   - {fileID: 8878328393185654517}
+  - {fileID: 8121711244561305703}
+  - {fileID: 8121711244561305706}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5207411026133570942
@@ -147,16 +149,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bea103c48d463dd4dab03ee120729aa8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ManagerBrain
-  statsManager: {fileID: 3614559653302789507}
-  resourceManager: {fileID: 5428269884465055904}
-  itemManager: {fileID: 1121760036080989785}
-  damageManager: {fileID: 2473679527388084304}
-  factionManager: {fileID: 6274799031638095218}
-  accountManager: {fileID: 0}
-  saveManager: {fileID: 0}
   persistAcrossScenes: 1
   autoInitialize: 1
-  validateRequiredManagers: 1
   debugLogging: 0
   verboseLogging: 0
 --- !u!1 &6044129424986510651
@@ -316,6 +310,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2422287244115132414}
+  - component: {fileID: 8121711244561305701}
   m_Layer: 0
   m_Name: Save_Manager
   m_TagString: Untagged
@@ -494,3 +489,106 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AbilityManager
   abilityDefinitions: []
+--- !u!114 &8121711244561305701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8121711244561305628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8ca13eda8d960f4f84d618fddf139cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SaveManager
+  autoSaveEnabled: 1
+  autoSaveInterval: 300
+--- !u!1 &8121711244561305702
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8121711244561305703}
+  - component: {fileID: 8121711244561305704}
+  m_Layer: 0
+  m_Name: DamageNumberManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8121711244561305703
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8121711244561305702}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3634848498110562931}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8121711244561305704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8121711244561305702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01f5eff004ef34f48bf0ce667f9bdc7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageNumberManager
+  damageNumberPrefab: {fileID: 8614757071594616537, guid: 6da75fe61499eb34a90a0f8c44d40592, type: 3}
+--- !u!1 &8121711244561305705
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8121711244561305706}
+  - component: {fileID: 8121711244561305707}
+  m_Layer: 0
+  m_Name: DialogueUIListener
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8121711244561305706
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8121711244561305705}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3634848498110562931}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8121711244561305707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8121711244561305705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c929f6d20be622f43a2b327af895b321, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueUIListener

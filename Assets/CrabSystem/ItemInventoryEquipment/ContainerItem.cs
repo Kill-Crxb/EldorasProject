@@ -8,7 +8,7 @@ using UnityEngine;
 public class ContainerItem
 {
     [Tooltip("Item ID from ItemManager")]
-    public string itemId;
+    [IdRef(IdKind.Item)] public string itemId;
 
     [Tooltip("Item rarity/tier")]
     public ItemRarity rarity = ItemRarity.Common;

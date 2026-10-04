@@ -50,7 +50,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
 
     [Header("Slots & Sockets")]
     [Tooltip("Equipment slot this stance sheathes and draws from.")]
-    [SerializeField] private string weaponSlotId = "mainwep";
+    [IdRef(IdKind.EquipmentSlot)] [SerializeField] private string weaponSlotId = "mainwep";
 
     [Tooltip("Named socket in ModelSocketProvider the weapon reparents to while sheathed. " +
              "If the model has no such socket the weapon is hidden instead.")]
@@ -73,7 +73,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
     [SerializeField] private string animatorBool = "IsUnarmed";
 
     [Tooltip("Blackboard fact set to true while unarmed. Leave empty to skip.")]
-    [SerializeField] private string blackboardFact = "IsUnarmed";
+    [IdRef(IdKind.Fact)] [SerializeField] private string blackboardFact = "IsUnarmed";
 
     [Header("Debug")]
     [SerializeField] private bool debugLogging = false;

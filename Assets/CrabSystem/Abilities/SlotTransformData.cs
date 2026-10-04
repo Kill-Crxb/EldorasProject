@@ -44,7 +44,7 @@ public class HitProcEntry
 public class SequencePrerequisite
 {
     [Tooltip("AbilityDefinition.abilityId that must complete first")]
-    public string triggerAbilityId;
+    [IdRef(IdKind.Ability)] public string triggerAbilityId;
 
     [Tooltip("Override window duration after the trigger completes")]
     public float windowSeconds = 2f;
@@ -61,7 +61,7 @@ public class SequencePrerequisite
 public class ResourceThresholdTransform
 {
     [Tooltip("ResourceDefinition.resourceId to watch")]
-    public string resourceId;
+    [IdRef(IdKind.Resource)] public string resourceId;
 
     [Range(0f, 1f)]
     [Tooltip("Threshold as a fraction of max (0–1)")]
@@ -81,7 +81,7 @@ public class ResourceThresholdTransform
 public class BuffTransform
 {
     [Tooltip("Blackboard key name (hashed at runtime — must match a SemanticBridge OutputFactKey)")]
-    public string blackboardKey;
+    [IdRef(IdKind.Fact)] public string blackboardKey;
 
     [Tooltip("Ability shown while the key is true")]
     public AbilityDefinition transformAbility;
@@ -95,7 +95,7 @@ public class BuffTransform
 public class TargetConditionTransform
 {
     [Tooltip("Blackboard key name to check on the locked target's Blackboard")]
-    public string blackboardKey;
+    [IdRef(IdKind.Fact)] public string blackboardKey;
 
     [Tooltip("Ability shown while the condition is true")]
     public AbilityDefinition transformAbility;

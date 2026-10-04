@@ -145,7 +145,7 @@ public class NPCSpawner : MonoBehaviour
 
         if (brain.IsInitialized)
         {
-            GameEvents.CharacterConfigDataReady(configData);
+            CharacterConfigurationHandler.Apply(brain, configData);
 
             if (debugMode)
                 Debug.Log($"[NPCSpawner] Configured {spawnedNPC.name} with archetype '{config.archetype.archetypeName}' (immediate)");
@@ -154,7 +154,7 @@ public class NPCSpawner : MonoBehaviour
         {
             brain.OnInitialized += (b) =>
             {
-                GameEvents.CharacterConfigDataReady(configData);
+                CharacterConfigurationHandler.Apply(b, configData);
 
                 if (debugMode)
                     Debug.Log($"[NPCSpawner] Configured {spawnedNPC.name} with archetype '{config.archetype.archetypeName}' (deferred)");

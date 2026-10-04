@@ -16,12 +16,6 @@ public static class GameEvents
 
     #endregion
 
-    #region Character Configuration
-
-    public static event Action<CharacterConfigData> OnCharacterConfigDataReady;
-
-    #endregion
-
     #region Camera
 
     public static event Action<string> OnCameraModeChangeRequested;
@@ -49,9 +43,6 @@ public static class GameEvents
     public static void SaveRequested() =>
         OnSaveRequested?.Invoke();
 
-    public static void CharacterConfigDataReady(CharacterConfigData data) =>
-        OnCharacterConfigDataReady?.Invoke(data);
-
     public static void CameraModeChangeRequested(string modeName) =>
         OnCameraModeChangeRequested?.Invoke(modeName);
 
@@ -71,7 +62,6 @@ public static class GameEvents
         OnLoadCompleted = null;
         OnGameSceneReady = null;
         OnSaveRequested = null;
-        OnCharacterConfigDataReady = null;
         OnCameraModeChangeRequested = null;
         OnDialogueStarted = null;
         OnDialogueEnded = null;

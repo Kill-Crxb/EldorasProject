@@ -24,8 +24,8 @@ public class NPCArchetype : ScriptableObject
     public int baseLevel = 1;
 
     [Header("Equipment")]
-    public string mainHandWeaponId;
-    public string offHandWeaponId;
+    [IdRef(IdKind.Item)] public string mainHandWeaponId;
+    [IdRef(IdKind.Item)] public string offHandWeaponId;
 
     [Header("Abilities")]
     public List<AbilityDefinition> abilities = new List<AbilityDefinition>();
@@ -60,7 +60,7 @@ public class NPCArchetype : ScriptableObject
     public bool requireLineOfSight = true;
 
     [Header("Model")]
-    public List<string> modelPool;
+    [IdRef(IdKind.Model)] public List<string> modelPool;
     public bool randomizeModel = true;
 
     [Header("Names")]
@@ -99,7 +99,7 @@ public class NPCArchetype : ScriptableObject
 [Serializable]
 public class StatBaseOverride
 {
-    public string statId;
+    [IdRef(IdKind.Stat)] public string statId;
     public float baseValue;
 }
 

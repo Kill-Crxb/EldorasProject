@@ -31,7 +31,7 @@ public class HeadLookSystem : AnimatorIKModule
     [SerializeField] private float noiseSpeed = 0.35f;
 
     [Header("Suppression")]
-    [SerializeField] private string suppressFactKey = "";
+    [IdRef(IdKind.Fact)] [SerializeField] private string suppressFactKey = "";
 
     private ICameraProvider cameraProvider;
 

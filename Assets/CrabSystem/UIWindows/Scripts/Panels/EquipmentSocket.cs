@@ -12,7 +12,7 @@ public class EquipmentSocket : MonoBehaviour
 
     [Header("Slot")]
     [Tooltip("Slot id this socket represents, e.g. 'helmet', 'bodyarmor', 'mainwep'.")]
-    [SerializeField] private string slotId;
+    [IdRef(IdKind.EquipmentSlot)] [SerializeField] private string slotId;
 
     [Header("Visual")]
     [Tooltip("Icon that shows the equipped item. Found in children if left empty.")]

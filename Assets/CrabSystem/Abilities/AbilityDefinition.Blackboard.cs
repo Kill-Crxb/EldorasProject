@@ -14,22 +14,22 @@ public partial class AbilityDefinition
 
     [Header("Blackboard Requirements")]
     [Tooltip("Additional required facts (ANY logic - ability usable if ANY fact is true)")]
-    public List<string> requiredFactsAny = new List<string>();
+    [IdRef(IdKind.Fact)] public List<string> requiredFactsAny = new List<string>();
 
     [Tooltip("Additional required facts (ALL logic - ability requires ALL facts true)")]
-    public List<string> requiredFactsAll = new List<string>();
+    [IdRef(IdKind.Fact)] public List<string> requiredFactsAll = new List<string>();
 
     [Tooltip("Additional forbidden facts (blocked if ANY forbidden fact is true)")]
-    public List<string> forbiddenFactsAll = new List<string>();
+    [IdRef(IdKind.Fact)] public List<string> forbiddenFactsAll = new List<string>();
 
     [Tooltip("Override category defaults? (Use custom requirements instead)")]
     public bool overrideDefaults = false;
 
     [Tooltip("Custom required facts (when overriding defaults)")]
-    public List<string> customRequiredFacts = new List<string>();
+    [IdRef(IdKind.Fact)] public List<string> customRequiredFacts = new List<string>();
 
     [Tooltip("Custom forbidden facts (when overriding defaults)")]
-    public List<string> customForbiddenFacts = new List<string>();
+    [IdRef(IdKind.Fact)] public List<string> customForbiddenFacts = new List<string>();
 
     // ========================================
     // CATEGORY DEFAULT CACHE (Hot-path optimization)

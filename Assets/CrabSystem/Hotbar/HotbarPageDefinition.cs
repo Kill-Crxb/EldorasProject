@@ -44,7 +44,7 @@ public class HotbarPageDefinition : ScriptableObject
     [Tooltip("Blackboard fact that claims this page while true — e.g. 'IsUnarmed'. " +
              "Leave empty to mark this the default page, which supplies every bar no other " +
              "active page has claimed.")]
-    public string activationFact;
+    [IdRef(IdKind.Fact)] public string activationFact;
 
     [Tooltip("Higher wins when several pages' facts are true at once. Leave the default page at 0.")]
     public int priority = 0;

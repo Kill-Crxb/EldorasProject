@@ -27,7 +27,7 @@ namespace NinjaGame.Stats
     public class StatDerivation
     {
         [Tooltip("Core stat that drives these thresholds, e.g. 'core.spirit'.")]
-        public string sourceStatId;
+        [IdRef(IdKind.Stat)] public string sourceStatId;
 
         [Tooltip("Thresholds this stat passes. Order does not matter.")]
         public List<StatBreakpoint> breakpoints = new();

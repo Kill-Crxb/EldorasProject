@@ -11,7 +11,7 @@ namespace NinjaGame.Progression
     public class StatRateReward : Reward
     {
         [Tooltip("Stat ids this adds to, e.g. 'cmb.initiative'.")]
-        [SerializeField] private string[] targetStatIds;
+        [IdRef(IdKind.Stat)] [SerializeField] private string[] targetStatIds;
 
         [Tooltip("Added per point of the driving value.")]
         [SerializeField] private float perPoint = 0.5f;

@@ -34,8 +34,6 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 
         if (autoDisableForPlayers && IsPlayerEntity())
             isPlayerEntity = true;
-
-        GameEvents.OnCharacterConfigDataReady += ConfigureEntity;
     }
 
     public void UpdateModule()
@@ -44,14 +42,6 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 
     public void LateInitialize()
     {
-    }
-
-    // Subscribed in Initialize, so it must come off here. Without this every spawned entity leaks
-    // a delegate, and the next broadcast after a despawn or a scene round-trip reaches destroyed
-    // objects as a MissingReferenceException.
-    void OnDestroy()
-    {
-        GameEvents.OnCharacterConfigDataReady -= ConfigureEntity;
     }
 
     #endregion
@@ -76,6 +66,21 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 
     #region Public API
 
+    // Configs go straight to the brain they're for (Audit 2 C1). They used to be broadcast and
+    // filtered by EntityId, and every Zoo dummy shares one id, so each applied all four dummy
+    // archetypes in Start order (B27).
+    public static void Apply(ControllerBrain target, CharacterConfigData data)
+    {
+        var handler = target.GetModule<CharacterConfigurationHandler>();
+        if (handler == null)
+        {
+            Debug.LogError($"[CharacterConfigurationHandler] {target.name} has no handler; config not applied.", target);
+            return;
+        }
+
+        handler.ConfigureEntity(data);
+    }
+
     public void ConfigureEntity(CharacterConfigData data)
     {
         if (data == null)
@@ -89,11 +94,6 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
             Debug.LogWarning($"[CharacterConfigurationHandler] Handler is disabled");
             return;
         }
-
-        // The event is global: every entity hears every config. Only the one it names applies it.
-        // (The player used to accept any config, so NPC configs overwrote its faction and stats.)
-        if (brain.Identity == null || data.characterId != brain.Identity.EntityId)
-            return;
 
         if (brain.IsNPC)
             DisablePlayerOnlySystems();

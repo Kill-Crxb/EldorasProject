@@ -16,7 +16,7 @@ public class DamageEffect
     public float baseDamage = 10f;
 
     [Tooltip("Slot ID to read weapon from (default: mainwep). Override for off-hand abilities.")]
-    public string weaponSlotId = "mainwep";
+    [IdRef(IdKind.EquipmentSlot)] public string weaponSlotId = "mainwep";
 
     [Tooltip("TICK THIS FOR SPELLS. The dice must be supplied by the caller — there is no " +
              "equipped weapon to fall back on.\n\n" +
@@ -38,10 +38,10 @@ public class DamageEffect
 
     [Header("Conditional Requirements (Optional)")]
     [Tooltip("Required blackboard facts on CASTER (empty = no requirements)")]
-    public List<string> requiredCasterFacts = new List<string>();
+    [IdRef(IdKind.Fact)] public List<string> requiredCasterFacts = new List<string>();
 
     [Tooltip("Required blackboard facts on TARGET (empty = no requirements)")]
-    public List<string> requiredTargetFacts = new List<string>();
+    [IdRef(IdKind.Fact)] public List<string> requiredTargetFacts = new List<string>();
 
     public event Action OnCompleted;
 

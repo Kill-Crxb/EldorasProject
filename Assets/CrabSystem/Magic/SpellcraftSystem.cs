@@ -66,7 +66,7 @@ namespace NinjaGame.Magic
 
         [Tooltip("Stat that makes a caster quicker with their hands. Efficacy is the offensive " +
                  "stat drawn from Endurance — the one that means 'you can keep doing this'.")]
-        [SerializeField] private string drawSpeedStatId = "cmb.efficacy";
+        [IdRef(IdKind.Stat)] [SerializeField] private string drawSpeedStatId = "cmb.efficacy";
 
         [Tooltip("Speed gained per point of that stat. At 0.01, 50 Efficacy is a 1.5x faster " +
                  "draw and 99 is just under 2x. Deliberately gentle: this should feel like " +

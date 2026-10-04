@@ -186,14 +186,14 @@ namespace NinjaGame.Stats
 
         [Header("Attacker Bonuses")]
         [Tooltip("Stat IDs that increase damage (e.g., 'combat.attack_power')")]
-        public List<string> attackerStatIds = new List<string>();
+        [IdRef(IdKind.Stat)] public List<string> attackerStatIds = new List<string>();
 
         [Tooltip("Multipliers for each attacker stat (1.0 = 100%, 0.5 = 50%)")]
         public List<float> attackerStatMultipliers = new List<float>();
 
         [Header("Defender Mitigation")]
         [Tooltip("Stat IDs that reduce damage (e.g., 'combat.armor')")]
-        public List<string> defenderStatIds = new List<string>();
+        [IdRef(IdKind.Stat)] public List<string> defenderStatIds = new List<string>();
 
         [Tooltip("Multipliers for each defender stat (1.0 = 100%, 0.5 = 50%)")]
         public List<float> defenderStatMultipliers = new List<float>();

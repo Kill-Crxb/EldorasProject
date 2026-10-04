@@ -39,7 +39,7 @@ public class CameraModule : MonoBehaviour, IBrainModule, ICameraProvider
         [Tooltip("Blackboard fact to watch, e.g. 'IsSprinting' or 'IsInConversation'. Use this " +
                  "for facts something already publishes — it needs no asset at all.\n\n" +
                  "Takes precedence over Condition when both are set.")]
-        public string factKey;
+        [IdRef(IdKind.Fact)] public string factKey;
 
         [Tooltip("Evaluate a BlackboardCondition asset instead. Use this when the rule needs " +
                  "logic no fact expresses yet — a stat threshold, a composite.")]

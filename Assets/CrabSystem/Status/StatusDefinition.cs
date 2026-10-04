@@ -126,7 +126,7 @@ public enum StatusStacking
 [Serializable]
 public struct StatusFlag
 {
-    public string fact;
+    [IdRef(IdKind.Fact)] public string fact;
 
     [Tooltip("Held while the status has at least this many stacks. 1 = held whenever active. " +
              "A ladder like exhaustion raises CannotSprint at 2 and CannotAct at 5.")]
@@ -139,7 +139,7 @@ public struct StatContribution
 {
     [Tooltip("Stat id, e.g. 'cmb.bonus_dice'. Must be loaded on the bearer — AddContribution " +
              "warns and bails for a stat whose schema the entity does not carry.")]
-    public string statId;
+    [IdRef(IdKind.Stat)] public string statId;
 
     [Tooltip("Added per stack. Negative is fine — armour shred is a contribution too.")]
     public float amountPerStack;

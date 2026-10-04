@@ -24,8 +24,8 @@ public class SceneLoader : MonoBehaviour
     public static SceneLoader Instance { get; private set; }
 
     [Header("Scene Names")]
-    [SerializeField] private string gameSceneName = "Game";
-    [SerializeField] private string mainMenuSceneName = "MainMenu";
+    [IdRef(IdKind.Scene)] [SerializeField] private string gameSceneName = "Game";
+    [IdRef(IdKind.Scene)] [SerializeField] private string mainMenuSceneName = "MainMenu";
 
     [Header("Debug")]
     [SerializeField] private bool debugLogging = false;

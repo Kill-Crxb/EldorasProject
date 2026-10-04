@@ -7,7 +7,7 @@ namespace NinjaGame.Progression
     public class StatBonusReward : Reward
     {
         [Tooltip("Stat ids this adds to, e.g. 'scr.armor'.")]
-        [SerializeField] private string[] targetStatIds;
+        [IdRef(IdKind.Stat)] [SerializeField] private string[] targetStatIds;
 
         [SerializeField] private float amount = 1f;
 

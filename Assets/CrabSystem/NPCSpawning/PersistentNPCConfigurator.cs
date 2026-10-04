@@ -78,6 +78,6 @@ public class PersistentNPCConfigurator : MonoBehaviour
         configData.characterId = entityId;
         configData.isPersistent = true;
 
-        GameEvents.CharacterConfigDataReady(configData);
+        CharacterConfigurationHandler.Apply(brain, configData);
     }
 }
