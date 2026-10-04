@@ -11,7 +11,7 @@ public static class PlayerBrainAccess
         var saved = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
         if (saved != null) return saved;
 
-        foreach (var brain in Object.FindObjectsByType<ControllerBrain>(FindObjectsSortMode.None))
+        foreach (var brain in Object.FindObjectsByType<ControllerBrain>())
         {
             if (brain.IsPlayer) return brain;
         }

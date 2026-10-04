@@ -10,7 +10,7 @@ public class NameplateManager : MonoBehaviour
         get
         {
             if (instance == null)
-                instance = FindFirstObjectByType<NameplateManager>(FindObjectsInactive.Exclude);
+                instance = FindAnyObjectByType<NameplateManager>(FindObjectsInactive.Exclude);
             return instance;
         }
     }
@@ -62,7 +62,7 @@ public class NameplateManager : MonoBehaviour
 
     public void ResolvePlayerBrain()
     {
-        foreach (var brain in FindObjectsByType<ControllerBrain>(FindObjectsSortMode.None))
+        foreach (var brain in FindObjectsByType<ControllerBrain>())
         {
             if (brain.EntityType != EntityType.Player) continue;
             SetPlayerBrain(brain);

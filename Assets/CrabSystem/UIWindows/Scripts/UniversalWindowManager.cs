@@ -58,7 +58,7 @@ public class UniversalWindowManager : MonoBehaviour
         {
             if (instance == null)
             {
-                instance = FindFirstObjectByType<UniversalWindowManager>();
+                instance = FindAnyObjectByType<UniversalWindowManager>();
                 if (instance == null)
                     Debug.LogError("[UniversalWindowManager] No instance found in scene!");
             }

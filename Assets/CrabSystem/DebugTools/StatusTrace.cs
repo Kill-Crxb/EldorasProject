@@ -20,7 +20,7 @@ public class StatusTrace : MonoBehaviour
         if (Time.unscaledTime < nextScan) return;
         nextScan = Time.unscaledTime + rescanInterval;
 
-        foreach (StatusSystem system in FindObjectsByType<StatusSystem>(FindObjectsSortMode.None))
+        foreach (StatusSystem system in FindObjectsByType<StatusSystem>())
         {
             if (!tracked.Add(system)) continue;
 

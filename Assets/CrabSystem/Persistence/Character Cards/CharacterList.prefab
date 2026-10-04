@@ -1405,7 +1405,6 @@ GameObject:
   - component: {fileID: 3154085214616210503}
   - component: {fileID: 9173791780290157584}
   - component: {fileID: 8370967363678743617}
-  - component: {fileID: 5468436405302193088}
   m_Layer: 5
   m_Name: CharacterList
   m_TagString: Untagged
@@ -1513,25 +1512,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 1
   m_VerticalFit: 1
---- !u!114 &5468436405302193088
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7280426293238154405}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fa639a14700e18b4f9a42d12f35744b5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectScreen
-  characterListContainer: {fileID: 869373363751905958}
-  characterSlotPrefab: {fileID: 6523406831381990119, guid: 23b4e32c844c02244ab233c7d4b3a679, type: 3}
-  newCharacterButton: {fileID: 2740492424036038558}
-  deleteButton: {fileID: 1543794657205911126}
-  playButton: {fileID: 1566816597135831716}
-  feedbackText: {fileID: 0}
-  debugLogging: 1
 --- !u!1 &7514633588474170640
 GameObject:
   m_ObjectHideFlags: 0

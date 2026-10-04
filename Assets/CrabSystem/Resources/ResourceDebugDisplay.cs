@@ -139,7 +139,7 @@ public class ResourceDebugDisplay : MonoBehaviour
     {
         if (brain == null)
         {
-            var allBrains = FindObjectsOfType<ControllerBrain>();
+            var allBrains = FindObjectsByType<ControllerBrain>();
             foreach (var b in allBrains)
             {
                 if (b.IsPlayer)

@@ -9,7 +9,7 @@ public class GridTransferManager : MonoBehaviour
         get
         {
             if (instance != null) return instance;
-            instance = FindFirstObjectByType<GridTransferManager>();
+            instance = FindAnyObjectByType<GridTransferManager>();
             if (instance != null) return instance;
             var go = new GameObject("GridTransferManager");
             instance = go.AddComponent<GridTransferManager>();
@@ -20,8 +20,6 @@ public class GridTransferManager : MonoBehaviour
 
     [Header("Transfer Rules")]
     [SerializeField] private bool allowContainerToContainer = true;
-    [SerializeField] private bool allowAutoStacking = true;
-    [SerializeField] private bool allowItemSwapping = true;
 
     private readonly List<UniversalGrid> registeredGrids = new List<UniversalGrid>();
 

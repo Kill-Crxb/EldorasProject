@@ -18,9 +18,6 @@ public class WorldSpaceWindowAdapter : MonoBehaviour
     [Tooltip("Should the window always face the camera?")]
     [SerializeField] private bool faceCamera = true;
 
-    [Tooltip("Distance from container to auto-close (0 = use window's setting)")]
-    [SerializeField] private float maxDistance = 5f;
-
     private Canvas canvas;
     private UniversalInventoryWindow window;
     private Camera mainCamera;

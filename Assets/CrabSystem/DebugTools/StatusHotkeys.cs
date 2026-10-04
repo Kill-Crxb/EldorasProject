@@ -41,7 +41,7 @@ public class StatusHotkeys : MonoBehaviour
     private static StatusSystem NearestOtherStatuses()
     {
         ControllerBrain player = null;
-        ControllerBrain[] brains = FindObjectsByType<ControllerBrain>(FindObjectsSortMode.None);
+        ControllerBrain[] brains = FindObjectsByType<ControllerBrain>();
         foreach (ControllerBrain brain in brains)
         {
             if (brain.IsPlayer) player = brain;
@@ -76,7 +76,7 @@ public class StatusHotkeys : MonoBehaviour
 
     private static StatusSystem PlayerStatuses()
     {
-        foreach (ControllerBrain brain in FindObjectsByType<ControllerBrain>(FindObjectsSortMode.None))
+        foreach (ControllerBrain brain in FindObjectsByType<ControllerBrain>())
         {
             if (brain.IsPlayer) return brain.GetComponentInChildren<StatusSystem>();
         }

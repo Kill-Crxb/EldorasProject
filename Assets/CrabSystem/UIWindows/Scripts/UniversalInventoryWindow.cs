@@ -147,7 +147,7 @@ public class UniversalInventoryWindow : MonoBehaviour, IBeginDragHandler, IDragH
     private ControllerBrain FindPlayerBrain()
     {
         // Check all brains for player
-        var allBrains = FindObjectsByType<ControllerBrain>(FindObjectsSortMode.None);
+        var allBrains = FindObjectsByType<ControllerBrain>();
         foreach (var brain in allBrains)
         {
             if (brain.IsPlayer || brain.EntityType == EntityType.Player)

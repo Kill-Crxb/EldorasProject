@@ -21,7 +21,7 @@ public class HitTrace : MonoBehaviour
         if (Time.unscaledTime < nextScan) return;
         nextScan = Time.unscaledTime + rescanInterval;
 
-        foreach (DamageSystem damage in FindObjectsByType<DamageSystem>(FindObjectsSortMode.None))
+        foreach (DamageSystem damage in FindObjectsByType<DamageSystem>())
         {
             if (!tracked.Add(damage)) continue;
 

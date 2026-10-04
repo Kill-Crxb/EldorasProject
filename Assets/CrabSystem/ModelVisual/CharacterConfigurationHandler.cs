@@ -2,20 +2,9 @@ using UnityEngine;
 
 public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 {
-    #region Inspector
-
-    [Header("Configuration")]
-    [SerializeField] private bool autoDisableForPlayers = true;
-
-    [Header("Level Scaling")]
-    [SerializeField] private float statScalingPerLevel = 0.15f;
-
-    #endregion
-
     #region Private Fields
 
     private ControllerBrain brain;
-    private bool isPlayerEntity;
     private bool nameplateSpawned;
 
     #endregion
@@ -31,9 +20,6 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
-
-        if (autoDisableForPlayers && IsPlayerEntity())
-            isPlayerEntity = true;
     }
 
     public void UpdateModule()
@@ -42,24 +28,6 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 
     public void LateInitialize()
     {
-    }
-
-    #endregion
-
-    #region Entity Detection
-
-    private bool IsPlayerEntity()
-    {
-        if (brain.Identity != null && brain.Identity.Type == EntityType.Player)
-            return true;
-
-        if (gameObject.CompareTag("Player"))
-            return true;
-
-        if (brain.GetComponent<UnityEngine.InputSystem.PlayerInput>() != null)
-            return true;
-
-        return false;
     }
 
     #endregion
@@ -105,12 +73,6 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
 
         if (brain.IsNPC)
             TrySpawnNameplate();
-    }
-
-    public void ForceEnable()
-    {
-        isPlayerEntity = false;
-        IsEnabled = true;
     }
 
     #endregion

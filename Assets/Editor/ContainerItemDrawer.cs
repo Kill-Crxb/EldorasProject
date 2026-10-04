@@ -120,7 +120,7 @@ public class ContainerItemDrawer : PropertyDrawer
         else
         {
             // Edit mode: find in scene
-            itemManager = Object.FindFirstObjectByType<ItemManager>();
+            itemManager = Object.FindAnyObjectByType<ItemManager>();
         }
 
         if (itemManager == null)

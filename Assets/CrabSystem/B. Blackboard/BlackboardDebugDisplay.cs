@@ -73,7 +73,7 @@ public class BlackboardDebugDisplay : MonoBehaviour
         if (brain == null)
         {
             // Find player brain
-            var allBrains = FindObjectsOfType<ControllerBrain>();
+            var allBrains = FindObjectsByType<ControllerBrain>();
             foreach (var b in allBrains)
             {
                 if (b.IsPlayer)
@@ -301,7 +301,7 @@ public class BlackboardDebugDisplay : MonoBehaviour
         if (resources != null)
         {
             // Get resource manager to query definitions
-            var resourceManager = FindObjectOfType<ResourceManager>();
+            var resourceManager = FindAnyObjectByType<ResourceManager>();
             if (resourceManager != null)
             {
                 DrawResourcePercentage(x, ref y, resources, resourceManager, "Health");

@@ -62,7 +62,7 @@ public class GOAPDebugUIController : MonoBehaviour
         // Try to auto-find player targeting if not assigned
         if (playerTargeting == null)
         {
-            playerTargeting = Object.FindFirstObjectByType<TargetLockModule>();
+            playerTargeting = Object.FindAnyObjectByType<TargetLockModule>();
             if (playerTargeting == null)
             {
                 Debug.LogWarning("[GOAPDebugUI] No TargetLockModule found. Assign manually.");

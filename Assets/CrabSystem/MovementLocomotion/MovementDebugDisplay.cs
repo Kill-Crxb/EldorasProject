@@ -70,7 +70,7 @@ public class MovementDebugDisplay : MonoBehaviour
     {
         if (brain == null)
         {
-            ControllerBrain[] brains = FindObjectsOfType<ControllerBrain>();
+            ControllerBrain[] brains = FindObjectsByType<ControllerBrain>();
 
             for (int i = 0; i < brains.Length; i++)
             {

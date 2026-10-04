@@ -30,13 +30,6 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
     [Tooltip("Eye height offset from transform position")]
     [SerializeField] private float eyeHeight = 1.5f;
 
-    [Header("Sound Detection")]
-    [Tooltip("Enable sound-based detection")]
-    [SerializeField] private bool enableSoundDetection = false;
-
-    [Tooltip("Range for detecting sounds")]
-    [SerializeField] private float soundRange = 8f;
-
     [Header("Detection Layers")]
     [Tooltip("Layers to detect (typically Player, Enemy)")]
     [SerializeField] private LayerMask detectionLayers = -1;
