@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// TooltipManager - Lives on UIManager GameObject alongside UniversalWindowManager.
 /// 
-/// Canvas is injected by UniversalWindowManager.Awake() — never searches the scene.
+/// Canvas is injected by UniversalWindowManager.Awake() â€” never searches the scene.
 /// External callers use UniversalWindowManager.Instance.ShowTooltip / HideTooltip.
 /// Direct access via TooltipManager.Instance is still valid for legacy call sites.
 /// </summary>
@@ -22,7 +22,7 @@ public class TooltipManager : MonoBehaviour
     {
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
-        // Canvas injected by UniversalWindowManager — do not initialize here
+        // Canvas injected by UniversalWindowManager â€” do not initialize here
     }
 
     void OnDestroy()

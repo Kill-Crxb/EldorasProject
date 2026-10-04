@@ -1,33 +1,6 @@
 using UnityEngine;
 
 /// <summary>
-/// Faction identity for NPCs
-/// Determines appearance, behavior, and relationships
-/// </summary>
-public enum NPCFaction
-{
-    None = 0,
-
-    // Civilized Factions
-    Humans = 10,
-    Elves = 11,
-    Dwarves = 12,
-
-    // Hostile Factions
-    Undead = 20,
-    Warlocks = 21,
-    Demons = 22,
-
-    // Wildlife
-    Wildlife = 30,      // Wolves, bears, etc.
-    Beasts = 31,        // More dangerous creatures
-
-    // Special
-    Neutral = 100,
-    Player = 999        // For multiplayer - other players as NPCs
-}
-
-/// <summary>
 /// NPC combat/behavior archetype
 /// Determines combat style and abilities
 /// </summary>

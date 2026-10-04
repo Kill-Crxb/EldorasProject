@@ -514,32 +514,6 @@ public class ManagerBrain : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Check if a manager type exists
-    /// </summary>
-    public bool HasManager<T>() where T : class, IGameManager
-    {
-        return managerRegistry.ContainsKey(typeof(T));
-    }
-
-    /// <summary>
-    /// Get all managers
-    /// </summary>
-    public List<IGameManager> GetAllManagers()
-    {
-        return new List<IGameManager>(allManagers);
-    }
-
-    /// <summary>
-    /// Get managers by priority range
-    /// </summary>
-    public List<IGameManager> GetManagersByPriority(int minPriority, int maxPriority)
-    {
-        return allManagers
-            .Where(m => m.InitializationPriority >= minPriority && m.InitializationPriority <= maxPriority)
-            .ToList();
-    }
-
     #endregion
 
     #region Validation

@@ -37,9 +37,6 @@ public class GOAPDebugUIController : MonoBehaviour
     [Header("Perception Info")]
     [SerializeField] private TextMeshProUGUI perceptionText;
 
-    [Header("Pathfinding Info")]
-    [SerializeField] private TextMeshProUGUI pathfindingText;
-
     [Header("State Machine Info (Optional)")]
     [SerializeField] private TextMeshProUGUI stateMachineText;
 
@@ -52,7 +49,6 @@ public class GOAPDebugUIController : MonoBehaviour
     // Cached components from target
     private GOAPModule goapModule;
     private PerceptionModule perceptionModule;
-    private PathfindingModule pathfindingModule;
     private StateMachineModule stateMachineModule;
     private ControllerBrain targetBrain;
 
@@ -100,7 +96,6 @@ public class GOAPDebugUIController : MonoBehaviour
         // Clear cached components
         goapModule = null;
         perceptionModule = null;
-        pathfindingModule = null;
         stateMachineModule = null;
         targetBrain = null;
 
@@ -127,7 +122,6 @@ public class GOAPDebugUIController : MonoBehaviour
             // Get AI modules
             goapModule = targetBrain.GetComponentInChildren<GOAPModule>();
             perceptionModule = targetBrain.GetComponentInChildren<PerceptionModule>();
-            pathfindingModule = targetBrain.GetComponentInChildren<PathfindingModule>();
             stateMachineModule = targetBrain.GetComponentInChildren<StateMachineModule>();
         }
 
@@ -161,9 +155,6 @@ public class GOAPDebugUIController : MonoBehaviour
 
         // Update Perception info
         UpdatePerceptionInfo();
-
-        // Update Pathfinding info
-        UpdatePathfindingInfo();
 
         // Update State Machine info (if present)
         UpdateStateMachineInfo();
@@ -276,33 +267,6 @@ public class GOAPDebugUIController : MonoBehaviour
         }
     }
 
-    void UpdatePathfindingInfo()
-    {
-        if (pathfindingModule == null)
-        {
-            if (pathfindingText != null) pathfindingText.text = "No Pathfinding Module";
-            return;
-        }
-
-        if (pathfindingText != null)
-        {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            sb.AppendLine("<b>Pathfinding:</b>");
-
-            if (pathfindingModule.HasPath)
-            {
-                sb.AppendLine($"<color=green>Has Path</color>");
-                sb.AppendLine($"Distance: {pathfindingModule.RemainingDistance:F2}m");
-            }
-            else
-            {
-                sb.AppendLine("<color=yellow>No Path</color>");
-            }
-
-            pathfindingText.text = sb.ToString();
-        }
-    }
-
     void UpdateStateMachineInfo()
     {
         if (stateMachineModule == null)
@@ -328,7 +292,6 @@ public class GOAPDebugUIController : MonoBehaviour
         if (goalWeightsText != null) goalWeightsText.text = "";
         if (contextInfoText != null) contextInfoText.text = "";
         if (perceptionText != null) perceptionText.text = "";
-        if (pathfindingText != null) pathfindingText.text = "";
         if (stateMachineText != null) stateMachineText.text = "";
     }
 

@@ -11,7 +11,4 @@ public static class AnimationLayerNames
     public const string Actions = "Actions";
     public const string ActionsUpper = "Actions Upper";
     public const string Reactions = "Reactions";
-
-    // HumanoidAnimator (v1) only. Remove once every model runs v2 and AirborneLayerClaim is gone.
-    public const string FullBodyActions = "Full Body Actions";
 }

@@ -29,7 +29,6 @@ public class GOAPContext
     public MovementSystem movementSystem;
     public IHealthProvider healthModule;
     public IResourceProvider resourceModule;
-    public PathfindingModule pathfinding;
     public PerceptionModule perception;
     public AIControlSource aiControl;
 
@@ -55,9 +54,8 @@ public class GOAPContext
 
         abilityModule  = brain.Abilities;
         movementSystem = brain.Movement;
-        healthModule   = brain.GetModuleImplementing<IHealthProvider>();
-        resourceModule = brain.GetModuleImplementing<IResourceProvider>();
-        pathfinding    = brain.GetModule<PathfindingModule>();
+        healthModule   = brain.GetProvider<IHealthProvider>();
+        resourceModule = brain.GetProvider<IResourceProvider>();
         perception     = brain.GetModule<PerceptionModule>();
         aiControl      = brain.GetModule<AIControlSource>();
     }

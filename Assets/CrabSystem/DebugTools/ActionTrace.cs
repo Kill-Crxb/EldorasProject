@@ -66,7 +66,7 @@ public class ActionTrace : MonoBehaviour
 
     private static string Stamina(AbilitySystem abilities)
     {
-        ResourceSystem resources = abilities.Brain != null ? abilities.Brain.ResourceSys : null;
+        ResourceSystem resources = abilities.Brain != null ? abilities.Brain.Resources : null;
         ResourceDefinition stamina = resources != null ? resources.FindDefinition("stamina") : null;
         if (stamina == null) return "(no stamina)";
 

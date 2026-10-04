@@ -72,15 +72,6 @@ namespace NinjaGame.Stats
             return config.canCrit;
         }
 
-        /// <summary>
-        /// Get damage calculation mode
-        /// </summary>
-        public DamageCalculationMode GetCalculationMode(DamageType damageType)
-        {
-            var config = GetConfig(damageType);
-            return config.calculationMode;
-        }
-
         #region Editor Helpers
 
         [ContextMenu("Add Default Damage Types")]
@@ -95,7 +86,6 @@ namespace NinjaGame.Stats
                 displayName = "Physical",
                 description = "Standard physical damage affected by armor",
                 canCrit = true,
-                calculationMode = DamageCalculationMode.Standard,
                 attackerStatIds = new List<string> { "combat.attack_power", "combat.penetration" },
                 defenderStatIds = new List<string> { "combat.armor" },
                 attackerStatMultipliers = new List<float> { 1.0f, 0.5f },
@@ -109,7 +99,6 @@ namespace NinjaGame.Stats
                 displayName = "Fire",
                 description = "Magical fire damage that ignores armor",
                 canCrit = true,
-                calculationMode = DamageCalculationMode.Standard,
                 attackerStatIds = new List<string> { "magic.spell_power" },
                 defenderStatIds = new List<string> { "combat.resistance", "magic.fire_resistance" },
                 attackerStatMultipliers = new List<float> { 1.0f },
@@ -123,7 +112,6 @@ namespace NinjaGame.Stats
                 displayName = "Lightning",
                 description = "Magical lightning damage with high crit chance",
                 canCrit = true,
-                calculationMode = DamageCalculationMode.Standard,
                 attackerStatIds = new List<string> { "magic.spell_power" },
                 defenderStatIds = new List<string> { "combat.resistance", "magic.lightning_resistance" },
                 attackerStatMultipliers = new List<float> { 1.0f },
@@ -137,7 +125,6 @@ namespace NinjaGame.Stats
                 displayName = "True",
                 description = "Pure damage that ignores ALL defenses",
                 canCrit = false,
-                calculationMode = DamageCalculationMode.IgnoreAllDefenses,
                 attackerStatIds = new List<string> { "combat.attack_power" },
                 defenderStatIds = new List<string>(), // No defense stats apply
                 attackerStatMultipliers = new List<float> { 1.0f },
@@ -197,9 +184,6 @@ namespace NinjaGame.Stats
         [Tooltip("Can this damage type crit?")]
         public bool canCrit = true;
 
-        [Tooltip("How is this damage calculated?")]
-        public DamageCalculationMode calculationMode = DamageCalculationMode.Standard;
-
         [Header("Attacker Bonuses")]
         [Tooltip("Stat IDs that increase damage (e.g., 'combat.attack_power')")]
         public List<string> attackerStatIds = new List<string>();
@@ -218,31 +202,5 @@ namespace NinjaGame.Stats
         public Color damageColor = Color.white;
         public GameObject impactVFX;
         public AudioClip impactSound;
-    }
-
-    /// <summary>
-    /// How damage is calculated
-    /// </summary>
-    public enum DamageCalculationMode
-    {
-        /// <summary>
-        /// Normal calculation: base + attacker bonuses - defender mitigation
-        /// </summary>
-        Standard,
-
-        /// <summary>
-        /// Ignore armor (but not resistances)
-        /// </summary>
-        IgnoreArmor,
-
-        /// <summary>
-        /// Ignore all defenses (true damage)
-        /// </summary>
-        IgnoreAllDefenses,
-
-        /// <summary>
-        /// Percentage-based (e.g., 10% of max health)
-        /// </summary>
-        PercentageBased
     }
 }

@@ -298,7 +298,6 @@ public class DamageManager : MonoBehaviour, IGameManager, IManagerDependency
             Debug.Log($"    Attacker Stats: {string.Join(", ", damageType.attackerStatIds)}");
             Debug.Log($"    Defender Stats: {string.Join(", ", damageType.defenderStatIds)}");
             Debug.Log($"    Can Crit: {damageType.canCrit}");
-            Debug.Log($"    Mode: {damageType.calculationMode}");
         }
     }
 

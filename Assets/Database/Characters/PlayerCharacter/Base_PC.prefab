@@ -1637,7 +1637,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatusSystem
   isEnabled: 1
-  debugStatuses: 1
+  debugStatuses: 0
   activeDebug: []
 --- !u!114 &5422542059696098438
 MonoBehaviour:
@@ -2072,7 +2072,7 @@ MonoBehaviour:
   movesetBarId: mouse
   movesetSlotIndex: 0
   blockSlotIndex: 1
-  debugLogging: 1
+  debugLogging: 0
 --- !u!114 &3195358102234684433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2419,7 +2419,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4161431986582699676}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2fd1ebc00549b3f46b22cffaa294ebd8, type: 3}
   m_Name: 
@@ -2697,7 +2697,7 @@ MonoBehaviour:
   parryPostureMultiplier: 1.5
   defaultBlockstunFrames: 12
   minBlockstunFrames: 8
-  debugLogging: 1
+  debugLogging: 0
 --- !u!114 &4019244290200516456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3615,7 +3615,7 @@ MonoBehaviour:
   drawSpeedParameter: DrawSpeed
   drawSocketId: hand_r
   drawFallbackAnchor: 1
-  debugLogging: 1
+  debugLogging: 0
 --- !u!114 &7490256370504864037
 MonoBehaviour:
   m_ObjectHideFlags: 0

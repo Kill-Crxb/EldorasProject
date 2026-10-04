@@ -40,7 +40,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     private ControllerBrain playerBrain;
     private float autoSaveTimer;
     private bool pendingLoad = false;
-    private string savedModelId = string.Empty;
 
     private static readonly string[] LoadOrder = { "stats", "model", "inputProfile", "inventory", "equipment", "hotbar", "resources", "dialogue" };
 
@@ -69,7 +68,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         GameEvents.OnCharacterSelected += HandleCharacterSelected;
         GameEvents.OnGameSceneReady += HandleGameSceneReady;
         GameEvents.OnSaveRequested += HandleSaveRequested;
-        GameEvents.OnTargetedSaveRequested += HandleTargetedSaveRequested;
     }
 
     public void Shutdown()
@@ -77,7 +75,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         GameEvents.OnCharacterSelected -= HandleCharacterSelected;
         GameEvents.OnGameSceneReady -= HandleGameSceneReady;
         GameEvents.OnSaveRequested -= HandleSaveRequested;
-        GameEvents.OnTargetedSaveRequested -= HandleTargetedSaveRequested;
     }
 
     public ValidationResult Validate()
@@ -140,15 +137,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     }
 
     private void HandleSaveRequested() => _ = SaveAll();
-
-    private void HandleTargetedSaveRequested(string saveId)
-    {
-        if (string.IsNullOrEmpty(saveId) || playerBrain == null) return;
-
-        var saveables = BuildSaveableLookup();
-        if (saveables.TryGetValue(saveId, out var module))
-            _ = SaveModule(saveId, module);
-    }
 
     private void HandleInventoryChanged()
     {
@@ -247,20 +235,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         try
         {
             module.LoadSaveData(json);
-
-            if (saveId == "model" && json.Contains("modelId"))
-            {
-                try
-                {
-                    var modelData = JsonUtility.FromJson<ModelSaveData>(json);
-                    if (!string.IsNullOrEmpty(modelData.modelId))
-                        savedModelId = modelData.modelId;
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"[{ManagerName}] Couldn't read modelId from '{saveId}' — keeping the default model: {e.Message}");
-                }
-            }
         }
         catch (Exception e)
         {
@@ -516,12 +490,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     }
 
     #endregion
-
-    [System.Serializable]
-    private class ModelSaveData
-    {
-        public string modelId;
-    }
 }
 #endregion
 [System.Serializable]

@@ -233,7 +233,7 @@ namespace RPG.NPC.UI
         private void SubscribeHealthCallback(ControllerBrain brain)
         {
             UnsubscribeHealthCallback();
-            var resourceSystem = brain.ResourceSys;
+            var resourceSystem = brain.Resources;
             if (resourceSystem == null) return;
             healthChangedCallback = (_) => UpdateHealth(resourceSystem.GetHealthPercentage());
             resourceSystem.OnHealthChanged += healthChangedCallback;
@@ -243,7 +243,7 @@ namespace RPG.NPC.UI
         private void UnsubscribeHealthCallback()
         {
             if (npcBrain == null || healthChangedCallback == null) return;
-            var resourceSystem = npcBrain.ResourceSys;
+            var resourceSystem = npcBrain.Resources;
             if (resourceSystem != null) resourceSystem.OnHealthChanged -= healthChangedCallback;
             healthChangedCallback = null;
         }

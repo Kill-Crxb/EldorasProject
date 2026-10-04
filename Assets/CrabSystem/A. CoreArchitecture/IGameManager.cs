@@ -74,71 +74,6 @@ public struct ValidationResult
             Info = new List<string>()
         };
     }
-
-    /// <summary>
-    /// Combine multiple validation results
-    /// </summary>
-    public static ValidationResult Combine(params ValidationResult[] results)
-    {
-        var combined = Success();
-
-        foreach (var result in results)
-        {
-            if (result.IsFatal)
-                combined.IsFatal = true;
-
-            if (result.Errors != null)
-                combined.Errors.AddRange(result.Errors);
-
-            if (result.Warnings != null)
-                combined.Warnings.AddRange(result.Warnings);
-
-            if (result.Info != null)
-                combined.Info.AddRange(result.Info);
-        }
-
-        return combined;
-    }
-
-    /// <summary>
-    /// Print validation result to console
-    /// </summary>
-    public void LogResult(string context)
-    {
-        if (IsFatal)
-        {
-            Debug.LogError($"[{context}] FATAL VALIDATION FAILURE");
-        }
-
-        if (Errors != null && Errors.Count > 0)
-        {
-            foreach (var error in Errors)
-            {
-                Debug.LogError($"[{context}] ERROR: {error}");
-            }
-        }
-
-        if (Warnings != null && Warnings.Count > 0)
-        {
-            foreach (var warning in Warnings)
-            {
-                Debug.LogWarning($"[{context}] WARNING: {warning}");
-            }
-        }
-
-        if (Info != null && Info.Count > 0)
-        {
-            foreach (var info in Info)
-            {
-                Debug.Log($"[{context}] INFO: {info}");
-            }
-        }
-
-        if (IsValid && (Warnings == null || Warnings.Count == 0))
-        {
-            Debug.Log($"[{context}] Validation: PASSED");
-        }
-    }
 }
 
 /// <summary>
@@ -189,24 +124,4 @@ public interface IUpdatableManager : IGameManager
 public interface IHotReloadable : IGameManager
 {
     void HotReload();
-}
-
-/// <summary>
-/// Optional: Manager supports save/load snapshots (future use)
-/// </summary>
-public interface ISnapshotableManager : IGameManager
-{
-    ManagerSnapshot CaptureSnapshot();
-    void RestoreSnapshot(ManagerSnapshot snapshot);
-}
-
-/// <summary>
-/// Manager snapshot for save/load (future use)
-/// </summary>
-[Serializable]
-public class ManagerSnapshot
-{
-    public string ManagerName;
-    public int ConfigVersion;
-    public byte[] Data;
 }

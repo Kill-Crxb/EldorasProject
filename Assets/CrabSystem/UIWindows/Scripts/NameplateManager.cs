@@ -102,7 +102,7 @@ public class NameplateManager : MonoBehaviour
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"[NameplateManager] {registeredNameplates.Count} nameplate(s) | Player: {(playerBrain != null ? playerBrain.name : "NONE")}");
         foreach (var n in registeredNameplates)
-            sb.AppendLine(n != null ? $"  • {n.EntityName} (Lv.{n.EntityLevel})" : "  • [destroyed]");
+            sb.AppendLine(n != null ? $"  â€¢ {n.EntityName} (Lv.{n.EntityLevel})" : "  â€¢ [destroyed]");
         Debug.Log(sb.ToString());
     }
 }

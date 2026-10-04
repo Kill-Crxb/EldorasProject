@@ -136,9 +136,6 @@ public class InputSystem : MonoBehaviour,
     [Tooltip("Control source for NPCs without AI behavior (stub that returns zero input)")]
     [SerializeField] private StubAIControlSource stubAIControlSource;
 
-    [Tooltip("Pathfinding module for AI movement (auto-discovered)")]
-    [SerializeField] private PathfindingModule pathfinding;
-
     // References
 
     private ControllerBrain brain;
@@ -400,10 +397,7 @@ public class InputSystem : MonoBehaviour,
         if (cameraProviderComponent is ICameraProvider cp)
             cameraProvider = cp;
         else
-            cameraProvider = brain.GetModuleImplementing<ICameraProvider>();
-
-        if (pathfinding == null)
-            pathfinding = brain.GetModule<PathfindingModule>();
+            cameraProvider = brain.GetProvider<ICameraProvider>();
     }
 
     private HotbarSystem GetHotbarSystem()
@@ -854,29 +848,8 @@ public class InputSystem : MonoBehaviour,
 
     private MovementInput GetAIMovementInput()
     {
-        // Prefer stub AI control source if available (for NPCs without pathfinding)
-        if (stubAIControlSource != null)
-            return stubAIControlSource.GetMovementInput();
-
-        // Fall back to pathfinding if available
-        if (pathfinding == null || !pathfinding.HasPath) return MovementInput.Zero;
-
-        Vector3 next = pathfinding.GetNextPathPosition();
-        Vector3 dir = next - brain.transform.position;
-        dir.y = 0f;
-
-        if (dir.magnitude < 0.1f) return MovementInput.Zero;
-
-        dir.Normalize();
-        Vector2 moveDir = new Vector2(dir.x, dir.z);
-
-        return new MovementInput
-        {
-            MoveDirection = moveDir,
-            LookDirection = moveDir,
-            Jump = false,
-            Dash = false
-        };
+        if (stubAIControlSource == null) return MovementInput.Zero;
+        return stubAIControlSource.GetMovementInput();
     }
 
     private MovementInput GetAdminMovementInput()

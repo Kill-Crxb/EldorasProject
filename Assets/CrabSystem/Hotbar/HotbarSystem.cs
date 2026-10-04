@@ -355,7 +355,6 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 
         config.slots[index].abilitySlotId = abilitySlotId ?? "";
         OnSlotChanged?.Invoke(barId, index);
-        GameEvents.HotbarSlotChanged(barId, index);
     }
 
     public void AssignSlot(string barId, int index, AbilityDefinition ability)
@@ -372,7 +371,6 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
         config.slots[index].abilitySlotId = "";
         config.slots[index].itemInstanceId = itemInstanceId ?? "";
         OnSlotChanged?.Invoke(barId, index);
-        GameEvents.HotbarSlotChanged(barId, index);
     }
 
     public void AssignItemSlot(string barId, int index, ItemInstance item)
@@ -389,7 +387,6 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
         config.slots[index].abilitySlotId = "";
         config.slots[index].itemInstanceId = "";
         OnSlotChanged?.Invoke(barId, index);
-        GameEvents.HotbarSlotChanged(barId, index);
     }
 
     public ActionBarSlotData GetSlot(string barId, int index)

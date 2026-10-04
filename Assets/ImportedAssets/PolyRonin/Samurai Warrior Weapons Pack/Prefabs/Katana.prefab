@@ -133,5 +133,5 @@ MonoBehaviour:
     m_Bits: 6144
   allowFriendlyFire: 0
   stanceFilter: 0
-  debugHitbox: 1
+  debugHitbox: 0
   showGizmos: 1

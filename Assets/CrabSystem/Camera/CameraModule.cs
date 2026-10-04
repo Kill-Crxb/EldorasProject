@@ -271,7 +271,7 @@ public class CameraModule : MonoBehaviour, IBrainModule, ICameraProvider
     {
         brain = controllerBrain;
         target = brain.EntityRoot;
-        input = brain.GetModuleImplementing<IInputProvider>();
+        input = brain.GetProvider<IInputProvider>();
         stateProvider = brain.GetModule<IStateProvider>();
 
         if (cameraTransform == null)

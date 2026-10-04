@@ -39,20 +39,4 @@ namespace RPG.Factions
             };
         }
     }
-
-    /// <summary>
-    /// Reputation ranks for player-faction relationships.
-    /// Reserved for a future reputation modifier layer.
-    /// </summary>
-    public enum FactionRank
-    {
-        Hated,          // -100 to -75: Attacked on sight
-        Hostile,        // -75 to -25: Unfriendly, will attack if provoked
-        Unfriendly,     // -25 to 0: Cold, limited interaction
-        Neutral,        // 0 to 25: Standard interaction
-        Friendly,       // 25 to 50: Helpful, better prices
-        Honored,        // 50 to 75: Respected, access to special services
-        Revered,        // 75 to 90: Highly trusted, premium rewards
-        Exalted         // 90 to 100: Maximum reputation, all benefits
-    }
 }

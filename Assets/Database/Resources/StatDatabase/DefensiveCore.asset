@@ -35,17 +35,3 @@ MonoBehaviour:
     defaultValue: 0
     minValue: 0
     maxValue: 10
-  - id: atr.aeg
-    displayName: Aegis
-    shortName: aeg
-    description: Aegis
-    defaultValue: 0
-    minValue: 0
-    maxValue: 9999
-  - id: atr.eva
-    displayName: Evasion
-    shortName: eva
-    description: Evasion score
-    defaultValue: 0
-    minValue: -100
-    maxValue: 100

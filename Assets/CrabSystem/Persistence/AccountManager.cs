@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
-/// Account Manager — Phase 2 of the Persistence System
+/// Account Manager â€” Phase 2 of the Persistence System
 ///
 /// Responsibilities:
 /// - Session state: holds ActiveAccountName for the duration of the session
@@ -15,7 +15,7 @@ using UnityEngine;
 ///
 /// Architecture:
 /// - IGameManager child of ManagerBrain (auto-discovered via GetComponentsInChildren)
-/// - Priority 20 — initialises before SaveManager (priority 25)
+/// - Priority 20 â€” initialises before SaveManager (priority 25)
 /// - ISaveProvider created here and injected into SaveManager during LateInitialize
 ///
 /// Server migration: swap LocalSaveProvider for RemoteSaveProvider in the inspector.
@@ -70,13 +70,13 @@ public class AccountManager : MonoBehaviour, IGameManager
         IsInitialized = true;
 
         if (debugLogging)
-            Debug.Log($"[{ManagerName}] Initialized — provider: {SaveProvider.GetType().Name}");
+            Debug.Log($"[{ManagerName}] Initialized â€” provider: {SaveProvider.GetType().Name}");
     }
 
     public void LateInitialize()
     {
         // SaveManager picks up SaveProvider during its own LateInitialize.
-        // Nothing to do here — provider is already set.
+        // Nothing to do here â€” provider is already set.
     }
 
     public void Shutdown()
@@ -105,7 +105,7 @@ public class AccountManager : MonoBehaviour, IGameManager
     #region Public API
 
     /// <summary>
-    /// Register a new account. Password is SHA-256 hashed before storage — never plaintext.
+    /// Register a new account. Password is SHA-256 hashed before storage â€” never plaintext.
     /// Returns false if the username is already taken or if registration fails.
     /// </summary>
     public async Task<bool> Register(string username, string password)
@@ -117,14 +117,14 @@ public class AccountManager : MonoBehaviour, IGameManager
         bool success = await SaveProvider.RegisterAccount(username, hash);
 
         if (debugLogging)
-            Debug.Log($"[{ManagerName}] Register '{username}': {(success ? "SUCCESS" : "FAILED — username taken")}");
+            Debug.Log($"[{ManagerName}] Register '{username}': {(success ? "SUCCESS" : "FAILED â€” username taken")}");
 
         return success;
     }
 
     /// <summary>
     /// Validate credentials and start a session.
-    /// Password is SHA-256 hashed locally before the provider call — never sent plaintext.
+    /// Password is SHA-256 hashed locally before the provider call â€” never sent plaintext.
     /// Returns false if credentials are invalid.
     /// </summary>
     public async Task<bool> Login(string username, string password)
@@ -138,7 +138,7 @@ public class AccountManager : MonoBehaviour, IGameManager
         if (!valid)
         {
             if (debugLogging)
-                Debug.Log($"[{ManagerName}] Login '{username}': FAILED — invalid credentials");
+                Debug.Log($"[{ManagerName}] Login '{username}': FAILED â€” invalid credentials");
             return false;
         }
 
@@ -172,7 +172,7 @@ public class AccountManager : MonoBehaviour, IGameManager
         return providerType switch
         {
             SaveProviderType.Local => new LocalSaveProvider(),
-            // RemoteSaveProvider slot — uncomment when built:
+            // RemoteSaveProvider slot â€” uncomment when built:
             // SaveProviderType.Remote => new RemoteSaveProvider(),
             _ => new LocalSaveProvider()
         };
@@ -184,7 +184,7 @@ public class AccountManager : MonoBehaviour, IGameManager
 
     /// <summary>
     /// SHA-256 hash of the raw password. Produces a deterministic hex string.
-    /// Called before any provider interaction — passwords never leave this method unhashed.
+    /// Called before any provider interaction â€” passwords never leave this method unhashed.
     /// </summary>
     private static string HashPassword(string password)
     {

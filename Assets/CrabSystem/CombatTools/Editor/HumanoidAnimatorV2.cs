@@ -239,8 +239,7 @@ public static class HumanoidAnimatorV2
     // ── 2. Install ────────────────────────────────────────────────────────────────────────────
 
     // Model prefabs whose Animator uses v1 get v2. Entity prefabs (anything holding an
-    // AnimationLayerController) gain AnimatorFactBridge and ActionsLayerDriver beside it and lose
-    // AirborneLayerClaim, which v2's Movement Actions layer replaces. Components inherited from a
+    // AnimationLayerController) gain AnimatorFactBridge and ActionsLayerDriver beside it. Components inherited from a
     // base or nested prefab are left to that prefab, so variants don't get duplicates.
     [MenuItem("Tools/Combat/Animator v2/2. Install on Prefabs")]
     static void Install()
@@ -307,12 +306,6 @@ public static class HumanoidAnimatorV2
             if (host.GetComponent<AnimatorFactBridge>() == null) host.AddComponent<AnimatorFactBridge>();
             if (host.GetComponent<ActionsLayerDriver>() == null) host.AddComponent<ActionsLayerDriver>();
             count++;
-        }
-
-        foreach (AirborneLayerClaim old in root.GetComponentsInChildren<AirborneLayerClaim>(true))
-        {
-            if (PrefabUtility.IsPartOfPrefabInstance(old)) continue;
-            Object.DestroyImmediate(old, true);
         }
 
         return count;

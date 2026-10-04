@@ -48,11 +48,9 @@ public class ControllerBrain : MonoBehaviour
     #region Private Fields
 
     private IBrainModule[] updateModules;
-    private IPhysicsModule[] physicsModules;
     private IInputHandler[] inputHandlers;
     private Dictionary<Type, object> providerCache = new Dictionary<Type, object>();
     private PlayerInputControls playerInputControls;
-    private HashSet<Collider> groundContacts = new HashSet<Collider>();
     private FeetDetectionModule feetDetection;
 
     #endregion
@@ -84,11 +82,9 @@ public class ControllerBrain : MonoBehaviour
     public AbilitySystem Abilities => abilitySystem;
     public StatSystem Stats => statSystem;
     public ResourceSystem Resources => resourceSystem;
-    public ResourceSystem ResourceSys => resourceSystem;
     public RPGSystem RPG => rpgSystem;
     public DamageSystem Damage => damageSystem;
     public Blackboard Blackboard => blackboardSystem?.Blackboard;
-    public BlackboardSystem BlackboardModule => blackboardSystem;
     public InventorySystem Inventory => inventorySystem;
     public InteractionSystem Interaction => interactionSystem;
     public DialogueSystem Dialogue => dialogueSystem;
@@ -108,26 +104,18 @@ public class ControllerBrain : MonoBehaviour
     /// </summary>
     public string EntityName => transform.root.name;
     public bool IsNPC => entityType == EntityType.NPC;
-    public bool IsEntity => entityType == EntityType.Entity;
 
     #endregion
 
     #region Properties — Feet Detection
 
-    public event Action<Collider, FeetContactType> OnFeetEnter;
-    public event Action<Collider, FeetContactType> OnFeetExit;
-    public event Action<Collider, FeetContactType> OnFeetStay;
     public bool IsGrounded => feetDetection?.IsGrounded ?? false;
-    public FeetDetectionModule FeetDetection => feetDetection;
-    public int GetGroundContactCount() => groundContacts.Count;
 
     #endregion
 
     #region Properties — Convenience Accessors
 
     public IHealthProvider Health => GetProvider<IHealthProvider>();
-    public IResourceProvider Resources_Provider => GetProvider<IResourceProvider>();
-    public Blackboard Blackboard_Direct => blackboardSystem?.Blackboard;
 
     #endregion
 
@@ -179,22 +167,17 @@ public class ControllerBrain : MonoBehaviour
     {
         var allModules = GetComponentsInChildren<IBrainModule>(true);
         var updateList = new List<IBrainModule>();
-        var physicsList = new List<IPhysicsModule>();
         var inputList = new List<IInputHandler>();
 
         foreach (var module in allModules)
         {
             updateList.Add(module);
 
-            if (module is IPhysicsModule pm)
-                physicsList.Add(pm);
-
             if (module is IInputHandler ih)
                 inputList.Add(ih);
         }
 
         updateModules = updateList.ToArray();
-        physicsModules = physicsList.ToArray();
         inputHandlers = inputList.ToArray();
     }
 
@@ -332,12 +315,6 @@ public class ControllerBrain : MonoBehaviour
             if (!initialized.Contains(module) && !declined.Contains(module))
                 module.Initialize(this);
         }
-
-        foreach (var module in physicsModules)
-        {
-            if (module is IBrainModule brainModule && !initialized.Contains(brainModule))
-                brainModule.Initialize(this);
-        }
     }
 
     #endregion
@@ -346,25 +323,10 @@ public class ControllerBrain : MonoBehaviour
 
     void LateInitializeModules()
     {
-        var lateInitialized = new HashSet<IBrainModule>();
-
         foreach (var module in updateModules)
         {
             if (!ShouldRun(module)) continue;
-
             module.LateInitialize();
-            lateInitialized.Add(module);
-        }
-
-        // Dormant while nothing implements IPhysicsModule, but the first one written would be
-        // both an update module and a physics module, and would get LateInitialize twice.
-        foreach (var module in physicsModules)
-        {
-            if (!(module is IBrainModule brainModule)) continue;
-            if (!lateInitialized.Add(brainModule)) continue;
-            if (!ShouldRun(brainModule)) continue;
-
-            brainModule.LateInitialize();
         }
     }
 
@@ -437,44 +399,6 @@ public class ControllerBrain : MonoBehaviour
             if (ShouldRun(updateModules[i])) updateModules[i].UpdateModule();
     }
 
-    void FixedUpdate()
-    {
-        if (!IsInitialized || physicsModules == null) return;
-        for (int i = 0; i < physicsModules.Length; i++)
-        {
-            if (physicsModules[i] == null) continue;
-
-            // Only gate the ones that are also brain modules. A physics module that is not an
-            // IBrainModule has no IsEnabled to consult, and silently dropping it would be a
-            // behaviour change rather than a fix.
-            if (physicsModules[i] is IBrainModule brainModule && !ShouldRun(brainModule)) continue;
-
-            physicsModules[i].PhysicsUpdate();
-        }
-    }
-
-    #endregion
-
-    #region Feet Detection Events
-
-    public void NotifyFeetEnter(Collider col, FeetContactType type)
-    {
-        if (type == FeetContactType.Ground) groundContacts.Add(col);
-        OnFeetEnter?.Invoke(col, type);
-    }
-
-    public void NotifyFeetExit(Collider col, FeetContactType type)
-    {
-        if (type == FeetContactType.Ground) groundContacts.Remove(col);
-        OnFeetExit?.Invoke(col, type);
-    }
-
-    public void NotifyFeetStay(Collider col, FeetContactType type)
-    {
-        if (type == FeetContactType.Ground) groundContacts.Add(col);
-        OnFeetStay?.Invoke(col, type);
-    }
-
     #endregion
 
     #region Provider Lookup
@@ -485,8 +409,6 @@ public class ControllerBrain : MonoBehaviour
             return provider as T;
         return null;
     }
-
-    public T GetModuleImplementing<T>() where T : class => GetProvider<T>();
 
     public T GetModule<T>() where T : class
     {

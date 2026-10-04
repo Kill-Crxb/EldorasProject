@@ -58,7 +58,7 @@ public class EquipmentSlotDefinition : ScriptableObject
     public ItemSubType[] allowedSubTypes;
 
     [Header("Socket")]
-    [Tooltip("Name of the bone socket to attach equipped item to (must match ModelSocketConfig, e.g. 'weapon', 'shield', 'helmet')")]
+    [Tooltip("Name of the bone socket to attach equipped item to (must match a socket name on the model, e.g. 'weapon', 'shield', 'helmet')")]
     public string socketName;
 
     [Header("Slot Sharing")]

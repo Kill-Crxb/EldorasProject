@@ -1041,7 +1041,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     // Spends the cost, or as much as there is. False when it couldn't all be paid.
     private static bool DrainStamina(ControllerBrain who, int cost)
     {
-        ResourceSystem resources = who != null ? who.ResourceSys : null;
+        ResourceSystem resources = who != null ? who.Resources : null;
         ResourceDefinition stamina = resources != null ? resources.FindDefinition(StaminaId) : null;
         if (stamina == null) return true;
 

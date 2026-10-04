@@ -124,7 +124,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     {
         brain = controllerBrain;
         stats = brain.Stats;
-        health = brain.ResourceSys;
+        health = brain.Resources;
         blackboard = brain.GetModule<BlackboardSystem>()?.Blackboard;
 
         if (stats == null || health == null)

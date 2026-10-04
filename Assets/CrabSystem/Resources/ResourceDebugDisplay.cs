@@ -176,7 +176,7 @@ public class ResourceDebugDisplay : MonoBehaviour
         labelStyle.fontStyle = FontStyle.Normal;
         y += lineHeight;
 
-        var resourceSystem = brain.ResourceSys;
+        var resourceSystem = brain.Resources;
         var resourceProvider = brain.GetProvider<IResourceProvider>();
 
         // ResourceSystem

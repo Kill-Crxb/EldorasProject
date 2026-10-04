@@ -83,7 +83,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
     public override void Initialize(MovementSystem system)
     {
         base.Initialize(system);
-        animationProvider = system.Brain.GetModuleImplementing<IAnimationProvider>();
+        animationProvider = system.Brain.GetProvider<IAnimationProvider>();
         targetLock = system.Brain.GetModule<TargetLockModule>();
         parkour = system.Brain.GetModule<ParkourAssistant>();
 

@@ -203,7 +203,6 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         ApplyItemStats(item);
         OnEquipmentChanged?.Invoke(slot, item);
         OnEquipmentVisual?.Invoke(slot, item);
-        GameEvents.ItemEquipped(slot, item);
         UpdateSerializedData();
 
         return true;
@@ -260,7 +259,6 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         equipment[slot.slotId] = null;
         OnEquipmentChanged?.Invoke(slot, null);
         OnEquipmentVisual?.Invoke(slot, null);
-        GameEvents.ItemEquipped(slot, null);
         UpdateSerializedData();
 
         return true;
@@ -334,7 +332,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
     #region Visual Broadcast
 
     /// <summary>
-    /// Fires GameEvents.ItemEquipped for every occupied slot.
+    /// Fires OnEquipmentVisual for every occupied slot.
     /// Called from LateInitialize so all brain modules are subscribed first.
     /// Slots with no matching SO in slotLookup are skipped with a warning.
     /// </summary>
@@ -351,7 +349,6 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
             }
 
             OnEquipmentVisual?.Invoke(slotDef, kvp.Value);
-            GameEvents.ItemEquipped(slotDef, kvp.Value);
         }
     }
 

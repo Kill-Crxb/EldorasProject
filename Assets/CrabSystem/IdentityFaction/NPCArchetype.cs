@@ -39,7 +39,6 @@ public class NPCArchetype : ScriptableObject
 
     [Header("GOAP Configuration")]
     public List<GOAPGoal> goapGoals = new List<GOAPGoal>();
-    public List<GOAPAction> goapActions = new List<GOAPAction>();
     public GoalSelectionMode goalSelectionMode = GoalSelectionMode.WeightedRandom;
     public bool useGoalCommitment = true;
     public float minimumGoalDuration = 0.5f;
@@ -82,7 +81,6 @@ public class NPCArchetype : ScriptableObject
     public string FactionId => faction != null ? faction.FactionId : "";
 
     public bool HasGOAPGoals => goapGoals != null && goapGoals.Count > 0;
-    public bool HasGOAPActions => goapActions != null && goapActions.Count > 0;
     public bool UsesGOAP => aiSystemType == AISystemType.GOAP;
 
     #endregion

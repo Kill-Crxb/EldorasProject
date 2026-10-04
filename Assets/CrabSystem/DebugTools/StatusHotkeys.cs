@@ -3,14 +3,15 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 // Editor-only. Drop one in the scene and fill the list: F5 applies the first status to the player,
-// F6 the second, and so on. F12 clears every status on the player. For testing grants and denials
+// F6 the second, and so on (F5-F9, then F11 - F10 opens the editor's menu bar on Linux). F12 clears every
+// status on the player. For testing grants and denials
 // (Status_Hasted, Status_Rooted, Status_Silenced) without authoring an ability for each.
 // Hold Shift and the same keys act on the nearest non-player instead (the mirror NPC).
 public class StatusHotkeys : MonoBehaviour
 {
     [SerializeField] private StatusDefinition[] statuses;
 
-    private static readonly Key[] Keys = { Key.F5, Key.F6, Key.F7, Key.F8, Key.F9, Key.F10 };
+    private static readonly Key[] Keys = { Key.F5, Key.F6, Key.F7, Key.F8, Key.F9, Key.F11 };
 
     private void Update()
     {

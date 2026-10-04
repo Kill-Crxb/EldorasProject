@@ -47,52 +47,19 @@ public class FeetDetectionModule : MonoBehaviour, IBrainModule
     void OnTriggerEnter(Collider other)
     {
         if (brain == null) return;
-
-        FeetContactType contactType = GetContactTypeByLayer(other);
-
-        if (contactType != FeetContactType.Unknown)
-        {
-            if (contactType == FeetContactType.Ground)
-            {
-                groundContacts.Add(other);
-            }
-
-            brain.NotifyFeetEnter(other, contactType);
-        }
+        if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Add(other);
     }
 
     void OnTriggerStay(Collider other)
     {
         if (brain == null) return;
-
-        FeetContactType contactType = GetContactTypeByLayer(other);
-
-        if (contactType != FeetContactType.Unknown)
-        {
-            if (contactType == FeetContactType.Ground)
-            {
-                groundContacts.Add(other);
-            }
-
-            brain.NotifyFeetStay(other, contactType);
-        }
+        if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Add(other);
     }
 
     void OnTriggerExit(Collider other)
     {
         if (brain == null) return;
-
-        FeetContactType contactType = GetContactTypeByLayer(other);
-
-        if (contactType != FeetContactType.Unknown)
-        {
-            if (contactType == FeetContactType.Ground)
-            {
-                groundContacts.Remove(other);
-            }
-
-            brain.NotifyFeetExit(other, contactType);
-        }
+        if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Remove(other);
     }
 
     #endregion

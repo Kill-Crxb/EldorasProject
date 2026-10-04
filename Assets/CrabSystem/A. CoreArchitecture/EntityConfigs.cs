@@ -29,8 +29,6 @@ public class NPCConfig : IEntityConfig
     public int overrideLevel = -1;  // -1 = use archetype base level
 }
 
-// Note: NPCFaction enum already exists in NPCEnums.cs
-// No need to redefine it here
 
 // Note: Companion entity type not yet implemented
 // CompanionConfig class removed until EntityType.Companion is added

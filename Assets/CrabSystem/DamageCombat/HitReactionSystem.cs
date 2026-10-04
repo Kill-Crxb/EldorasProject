@@ -62,7 +62,7 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
     {
         anim = brain.Animation;
         damage = brain.Damage;
-        health = brain.ResourceSys;
+        health = brain.Resources;
         facing = brain.EntityRoot != null ? brain.EntityRoot : transform;
 
         if (damage == null)

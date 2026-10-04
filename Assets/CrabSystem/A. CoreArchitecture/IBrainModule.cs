@@ -22,7 +22,7 @@ public interface IBrainModule
     /// <summary>
     /// Called once after all modules have been initialized.
     /// Use this for cross-module wiring that requires other modules to be ready.
-    /// Optional — implement only when needed.
+    /// Optional â€” implement only when needed.
     /// </summary>
     void LateInitialize() { }
 }

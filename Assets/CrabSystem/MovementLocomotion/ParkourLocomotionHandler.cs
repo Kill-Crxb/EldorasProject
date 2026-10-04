@@ -136,8 +136,8 @@ public class ParkourLocomotionHandler : LocomotionHandler
     {
         movementSystem = system;
         rootTransform = system.Brain.EntityRoot != null ? system.Brain.EntityRoot : system.Brain.transform;
-        animationProvider = system.Brain.GetModuleImplementing<IAnimationProvider>();
-        cameraProvider = system.Brain.GetModuleImplementing<ICameraProvider>();
+        animationProvider = system.Brain.GetProvider<IAnimationProvider>();
+        cameraProvider = system.Brain.GetProvider<ICameraProvider>();
         modelModule = system.Brain.GetModule<ModelModule>();
 
         if (motor == null)
