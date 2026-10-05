@@ -29,3 +29,42 @@ MonoBehaviour:
       quantity: 1
     onceOnly: 1
     onceOnlyId: NS-StarterKit
+  - optionText: Got any light armour? Something I can still run walls in.
+    actionType: 1
+    itemsToGive:
+    - item: {fileID: 11400000, guid: 04347ad462e944528dcdadfd4a47c5d8, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: e5197495c7eb456997cc83d4857b6aca, type: 2}
+      quantity: 1
+    onceOnly: 1
+    onceOnlyId: NS-ArmourLight
+  - optionText: Got any medium armour?
+    actionType: 1
+    itemsToGive:
+    - item: {fileID: 11400000, guid: 76595028fb0c4330af0ba817e8795f06, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: acaf09dd18484cb283a449dcf32f857e, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: a89a38481b3e46d595363d9cf03906bb, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: 6e66e44ffec74c21b4e416a805042785, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: 7a14d0f6cf5044e1a29f9437c6479c0e, type: 2}
+      quantity: 1
+    onceOnly: 1
+    onceOnlyId: NS-ArmourMedium
+  - optionText: Got any heavy armour? The full plate.
+    actionType: 1
+    itemsToGive:
+    - item: {fileID: 11400000, guid: 86320f84bb2f44a99b844b2622bae9ed, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: 692793407860403584711166ee9dbfb2, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: 0d029f1daccd4453a937a9eb553e0953, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: 3560fef618f14c2299f3422aa757765d, type: 2}
+      quantity: 1
+    - item: {fileID: 11400000, guid: 37d7693ada06410cafa3d08d648a8d8e, type: 2}
+      quantity: 1
+    onceOnly: 1
+    onceOnlyId: NS-ArmourHeavy

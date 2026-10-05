@@ -4,7 +4,12 @@ using UnityEngine;
 // The guard (Combat_Framework §3, Parry_Build.md). A defensive ability raises it and it stays up while
 // the brain's ability control source holds the block key. While up it answers DamageSystem's
 // intercept: a hit inside an open parry window is parried, any other hit in the guard arc is blocked
-// (stamina, posture, blockstun), and a hit that fills the posture bar breaks the guard.
+// (stamina, the Guard bar, posture on both fighters, blockstun), and a hit that fills the posture bar
+// breaks the guard. A guarded hit never touches health (no chip, 2026-10-05).
+//
+// The Guard bar (§3.5) is soak dice — guardDice × d(guardDieFaces) plus the Deflection die. A blocked
+// hit drains it; once it's empty the rest of the hit becomes posture damage. It refills while the
+// fighter goes without blocking.
 //
 // AbilitySystem hands over: Raise for a defensive ability, MoveStarted for every other move (a parry
 // opens the window, an attack started soon after a parry is the riposte), and asks Allows before
@@ -32,12 +37,23 @@ public class GuardModule : MonoBehaviour, IBrainModule
     [Tooltip("A parried attacker takes the move's block stamina times this as posture.")]
     [SerializeField] private float parryPostureMultiplier = 1.5f;
 
+    [Tooltip("A blocked attacker takes this share of the block's posture cost; the defender takes all of it.")]
+    [SerializeField] private float attackerBlockPostureShare = 0.25f;
+
     [Tooltip("Blockstun frames when the attacking move has no frame data authored.")]
     [SerializeField] private int defaultBlockstunFrames = 12;
 
     [Tooltip("Blockstun never drops below this. Placeholder clips run longer than their authored frames, " +
              "so the hit often lands after the move's frame data says it has ended.")]
     [SerializeField] private int minBlockstunFrames = 8;
+
+    [Header("Guard Bar (placeholder numbers — CF3b tuning)")]
+    [Tooltip("Soak dice in the Guard bar, before the Deflection die.")]
+    [SerializeField] private int guardDice = 2;
+
+    [SerializeField] private int guardDieFaces = 4;
+
+    [SerializeField] private SoakBar guardBar = new SoakBar();
 
     [Header("Hit-Stop (frames at 60 fps)")]
     [Tooltip("Both fighters freeze this long when a hit is blocked.")]
@@ -77,13 +93,14 @@ public class GuardModule : MonoBehaviour, IBrainModule
     public bool IsGuarding => guard != null;
     public bool ParryWindowOpen => Now <= parryWindowEndsAt;
     public bool InBlockstun => Now < blockstunUntil;
+    public IBarSource GuardBar => guardBar;
 
     public event Action OnBlockStart;
     public event Action OnBlockEnd;
-    public event Action OnPerfectBlock;              // a hit landed inside an open parry window; Juice listens
-    public event Action<int> OnParryWindowOpened;    // window length in frames
-    public event Action<int, int, int> OnGuardedHit; // stamina cost, posture added, blockstun frames
-    public event Action<float> OnPostureDamaged;     // posture a parry put on this entity as the attacker
+    public event Action OnPerfectBlock;                // a hit landed inside an open parry window; Juice listens
+    public event Action<int> OnParryWindowOpened;      // window length in frames
+    public event Action<int, float, int> OnGuardedHit; // stamina cost, posture added, blockstun frames
+    public event Action<float> OnPostureDamaged;       // posture this entity took as the attacker: parried or blocked
     public event Action OnGuardBreak;                // the posture bar filled
     public event Action<float> OnGuardFlanked;       // a hit landed outside the guard arc; its angle off facing
 
@@ -136,6 +153,9 @@ public class GuardModule : MonoBehaviour, IBrainModule
 
     public void UpdateModule()
     {
+        guardBar.Configure(0f, guardDice, guardDieFaces, Mathf.FloorToInt(Stat(DeflectionStat)));
+        guardBar.Tick(Now);
+
         if (guard == null) return;
 
         if (!GuardHeld)
@@ -222,9 +242,10 @@ public class GuardModule : MonoBehaviour, IBrainModule
         }
     }
 
-    // Combat_Framework §3.1. A guarded hit costs stamina and fills posture. Running out of stamina
-    // only empties the bar; a full posture bar breaks the guard and the hit lands normally.
-    // DamageSystem resolves a blocked hit's damage through guard soak.
+    // Combat_Framework §3.1. A block costs the defender stamina, drains the Guard bar (the rest of the
+    // hit becomes posture once it's empty) and fills both fighters' posture, the defender's more.
+    // Running out of stamina only empties the pool; a full posture bar breaks the guard and the hit lands
+    // normally. DamageSystem puts nothing of a blocked hit on health.
     private void HandleDamageIntercept(DamageInterceptArgs args)
     {
         if (guard == null) return;
@@ -245,7 +266,12 @@ public class GuardModule : MonoBehaviour, IBrainModule
         int blockCost = Mathf.Max(1, cost - Mathf.FloorToInt(Stat(DeflectionStat)));
         DrainStamina(blockCost);
 
-        if (AddPosture(cost))
+        float overflow = guardBar.Absorb(args.damage, Now);
+        float postureCost = cost + overflow;
+        GuardModule attackerGuard = args.attacker != null ? args.attacker.GetModule<GuardModule>() : null;
+        if (attackerGuard != null) attackerGuard.TakePosture(cost * attackerBlockPostureShare);
+
+        if (AddPosture(postureCost))
         {
             args.outcome = GuardOutcome.Broken;
             BreakGuard();
@@ -258,7 +284,7 @@ public class GuardModule : MonoBehaviour, IBrainModule
         FreezeBoth(args.attacker, blockedStopFrames);
 
         if (brain.Animation != null) brain.Animation.TriggerCombatAnimation(BlockedHitTrigger);
-        OnGuardedHit?.Invoke(blockCost, cost, blockstun);
+        OnGuardedHit?.Invoke(blockCost, postureCost, blockstun);
     }
 
     private bool InGuardArc(Vector3 attackDirection)
@@ -290,8 +316,12 @@ public class GuardModule : MonoBehaviour, IBrainModule
     {
         DrainStamina(cost);
         TriggerIfPresent(ParriedTrigger);
+        TakePosture(cost * parryPostureMultiplier);
+    }
 
-        float amount = cost * parryPostureMultiplier;
+    // Posture this entity takes as the attacker — its swing was parried or blocked.
+    public void TakePosture(float amount)
+    {
         bool broken = AddPosture(amount);
         OnPostureDamaged?.Invoke(amount);
         if (broken) BreakGuard();

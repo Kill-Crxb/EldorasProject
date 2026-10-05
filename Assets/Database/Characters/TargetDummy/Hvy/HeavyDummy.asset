@@ -36,6 +36,8 @@ MonoBehaviour:
     baseValue: 2
   - statId: atr.arm_def
     baseValue: 3
+  - statId: character.max_health
+    baseValue: 100
   baseLevel: 30
   mainHandWeaponId: 
   offHandWeaponId: 

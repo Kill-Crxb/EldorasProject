@@ -44,8 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f4ce4d3d1c58984381cc701e128e5ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterConfigurationHandler
-  autoDisableForPlayers: 1
-  statScalingPerLevel: 0.15
 --- !u!1 &783313110572476356
 GameObject:
   m_ObjectHideFlags: 0
@@ -181,10 +179,6 @@ MonoBehaviour:
   isDeadParam: IsDead
   hitDirXParam: HitDirX
   hitDirZParam: HitDirZ
-  reactionLayerName: Reactions
-  layerFadeIn: 0.05
-  layerFadeOut: 0.15
-  reactionDuration: 0.4
 --- !u!1 &1957058923170656946
 GameObject:
   m_ObjectHideFlags: 0
@@ -238,6 +232,7 @@ Transform:
   - {fileID: 5658586967656843956}
   - {fileID: 5806681704780818859}
   - {fileID: 1429729824859710832}
+  - {fileID: 1888017827853395432}
   m_Father: {fileID: 505027778239189661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7834155014174466237
@@ -255,25 +250,6 @@ MonoBehaviour:
   e_Root: {fileID: 505027778239189661}
   m_Root: {fileID: 505027778239189661}
   animator: {fileID: 0}
-  identitySystem: {fileID: 702526664362883971}
-  factionSystem: {fileID: 1839808409624078952}
-  modelModule: {fileID: 3831370834002623183}
-  stateMachineModule: {fileID: 3679801274471401925}
-  movementSystem: {fileID: 7273611781203758470}
-  animationSystem: {fileID: 7333887822776645810}
-  abilitySystem: {fileID: 6425451477911453954}
-  statSystem: {fileID: 7609102919652473838}
-  resourceSystem: {fileID: 1330439747370357252}
-  inputSystem: {fileID: 1249264635936386812}
-  cameraModule: {fileID: 5069264787700417990}
-  rpgSystem: {fileID: 7410182712236900319}
-  damageSystem: {fileID: 3298957820611229660}
-  blackboardSystem: {fileID: 4115196387130392266}
-  inventorySystem: {fileID: 4136185658555715558}
-  interactionSystem: {fileID: 440392200595385103}
-  dialogueSystem: {fileID: 3625547732155434194}
-  hotbarSystem: {fileID: 8064901073675467688}
-  slotTransformationSystem: {fileID: 3195358102234684433}
   entityType: 2
 --- !u!114 &3679801274471401925
 MonoBehaviour:
@@ -436,8 +412,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IdentitySystem
   isEnabled: 1
   displayName: Entity
-  type: 0
-  level: 1
 --- !u!1 &2861197667363816764
 GameObject:
   m_ObjectHideFlags: 0
@@ -667,6 +641,55 @@ MonoBehaviour:
   hasNaturalWeapon: 0
   naturalWeaponItemId: 
   naturalWeaponSlot: {fileID: 0}
+--- !u!1 &3248267914650517018
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1888017827853395432}
+  - component: {fileID: 1911112588603454882}
+  m_Layer: 8
+  m_Name: ArmorShieldModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1888017827853395432
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3248267914650517018}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8373627434070198267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1911112588603454882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3248267914650517018}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78eadef21b60600efb87daa827303b73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArmourShieldModule
+  isEnabled: 1
+  dieFaces: 4
+  shield:
+    refillDelay: 3
+    secondsPerSegment: 0.75
 --- !u!1 &3638272781167918597
 GameObject:
   m_ObjectHideFlags: 0
@@ -746,6 +769,9 @@ MonoBehaviour:
   availableBars: []
   pageDefinitions: []
   pageCheckInterval: 0.1
+  movesetBarId: mouse
+  movesetSlotIndex: 0
+  blockSlotIndex: 1
   debugLogging: 0
 --- !u!114 &3195358102234684433
 MonoBehaviour:
@@ -1054,6 +1080,8 @@ MonoBehaviour:
   isEnabled: 1
   locomotionHandler: {fileID: 5270736256151308859}
   feetDetection: {fileID: 6975317991593524323}
+  moveEnterSpeed: 1
+  moveExitSpeed: 0.5
   runEnterSpeed: 4
   runExitSpeed: 3.2
   sprintEnterSpeed: 8
@@ -1084,9 +1112,7 @@ MonoBehaviour:
   rotationSpeed: 8
   acceleration: 2
   deceleration: 10
-  enableWalkRunToggle: 1
   startInWalkMode: 1
-  tapWindow: 0.3
   strafeWalkSpeed: 1.5
   strafeRunSpeed: 3
   strafeSprintSpeed: 4.5
@@ -1496,7 +1522,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
   - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
   debugLogging: 0
-  layerBlendOutTime: 0.25
 --- !u!114 &4019244290200516456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1854,7 +1879,6 @@ MonoBehaviour:
     keybinds: 0
   cameraProviderComponent: {fileID: 0}
   stubAIControlSource: {fileID: 9067905633385790202}
-  pathfinding: {fileID: 0}
 --- !u!114 &9067905633385790202
 MonoBehaviour:
   m_ObjectHideFlags: 0

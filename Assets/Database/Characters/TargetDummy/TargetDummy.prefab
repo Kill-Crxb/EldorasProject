@@ -325,8 +325,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f4ce4d3d1c58984381cc701e128e5ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterConfigurationHandler
-  autoDisableForPlayers: 1
-  statScalingPerLevel: 0.15
 --- !u!1 &1295708007131277724
 GameObject:
   m_ObjectHideFlags: 0
@@ -578,14 +576,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
   - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
   - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
-  parryDecayFrames: 3
-  minParryFrames: 2
-  parryResetSeconds: 0.5
-  riposteSeconds: 1
-  defaultGuardStamina: 5
-  parryPostureMultiplier: 1.5
-  defaultBlockstunFrames: 12
-  minBlockstunFrames: 8
   debugLogging: 0
 --- !u!114 &3862895316508153297
 MonoBehaviour:
@@ -851,6 +841,7 @@ Transform:
   - {fileID: 2385276567519043105}
   - {fileID: 1176937073261944149}
   - {fileID: 3417688587754115065}
+  - {fileID: 1614490461588361550}
   m_Father: {fileID: 3729958827492803298}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8873174866369129073
@@ -1410,6 +1401,55 @@ MonoBehaviour:
   aura: {fileID: 6774522247807216897}
   back: {fileID: 490114177285256770}
   debugVFX: 0
+--- !u!1 &3758088898502421067
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1614490461588361550}
+  - component: {fileID: 6331097188409768667}
+  m_Layer: 8
+  m_Name: ArmorShieldModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1614490461588361550
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3758088898502421067}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0.7453438, z: -0, w: -0.66668034}
+  m_LocalPosition: {x: -557.8822, y: -0.08000904, z: 478.51575}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4521560391780592432}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6331097188409768667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3758088898502421067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78eadef21b60600efb87daa827303b73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArmourShieldModule
+  isEnabled: 1
+  dieFaces: 4
+  shield:
+    refillDelay: 3
+    secondsPerSegment: 0.75
 --- !u!1 &4281017855028476193
 GameObject:
   m_ObjectHideFlags: 0

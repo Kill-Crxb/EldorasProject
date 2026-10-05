@@ -370,12 +370,27 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
     #region Stat Application
 
-    // Item stat modifiers are not applied in this pass. The stat store holds base
-    // values only; item.* stats also need lifting out of the entity schema before
-    // equipment can feed them. Kept as seams so the call sites stay correct.
-    private void ApplyItemStats(ItemInstance item) { }
+    // An item's stats go on as contributions keyed by its instance, so taking it off removes exactly
+    // what it gave (roadmap N5).
+    private void ApplyItemStats(ItemInstance item)
+    {
+        if (statSystem == null || item?.Definition?.stats == null) return;
 
-    private void RemoveItemStats(ItemInstance item) { }
+        string key = StatKey(item);
+        foreach (ItemStatBonus bonus in item.Definition.stats)
+        {
+            if (bonus == null || string.IsNullOrEmpty(bonus.statId)) continue;
+            statSystem.AddContribution(bonus.statId, key, bonus.amount);
+        }
+    }
+
+    private void RemoveItemStats(ItemInstance item)
+    {
+        if (statSystem == null || item == null) return;
+        statSystem.ClearContributions(StatKey(item));
+    }
+
+    private static string StatKey(ItemInstance item) => "item:" + item.instanceId;
 
     #endregion
 

@@ -49,6 +49,10 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("The weapon's default moveset — what LMB fires while it is drawn (null for non-weapons)")]
     public WeaponMoveset moveset;
 
+    [Header("Stats")]
+    [Tooltip("Flat stats this item gives while equipped. Armour: atr.arm_dice, atr.arm, atr.arm_def, equip.load.")]
+    public List<ItemStatBonus> stats = new List<ItemStatBonus>();
+
     [Header("Advanced")]
     [Tooltip("Item rarity level")]
     public ItemRarity rarity = ItemRarity.Common;

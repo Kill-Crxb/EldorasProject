@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e6c78387218e045b0c95d0596c57f3, type: 3}
+  m_Name: Item_Medium_Helm
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  itemId: medium_helm
+  displayName: Lacquered Helm
+  description: A light lacquered helm.
+  icon: {fileID: 21300000, guid: 5921712e82ea0cc41b5e72ab6db1e2f1, type: 3}
+  worldPrefab: {fileID: 0}
+  equippedPrefab: {fileID: 0}
+  category: {fileID: 11400000, guid: 199d3e92c68fb99498c953aec2079d49, type: 2}
+  subType: {fileID: 11400000, guid: cf83400ed7c8fac9167763278334eaaf, type: 2}
+  gridWidth: 2
+  gridHeight: 2
+  weaponData: {fileID: 0}
+  moveset: {fileID: 0}
+  stats:
+  - statId: atr.arm_dice
+    amount: 1
+  - statId: equip.load
+    amount: 1
+  rarity: 0
+  maxStackSize: 1
+  tags:
+  - helmet
+  - armour_medium
+  baseValue: 0
+  dropsOnDeath: 1
+  isTradeable: 1
+  isDestructible: 1

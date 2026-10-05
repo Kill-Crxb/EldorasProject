@@ -17,14 +17,14 @@ MonoBehaviour:
   - id: atr.arm
     displayName: Armor
     shortName: arm
-    description: Flat soak taken off every hit after the hit roll. Negative adds damage (Sunder).
+    description: Flat armour shield capacity, under the dice. Armour pieces and talents add it.
     defaultValue: 0
     minValue: -20
     maxValue: 20
   - id: atr.arm_dice
     displayName: Armor Dice
     shortName: armd
-    description: d4s rolled as soak on every hit. Body armour sets it; Stoneskin adds one.
+    description: Armour shield segments, one d4 each, rolled when they refill. Armour pieces and Stoneskin add them.
     defaultValue: 0
     minValue: 0
     maxValue: 10
@@ -35,3 +35,10 @@ MonoBehaviour:
     defaultValue: 0
     minValue: 0
     maxValue: 10
+  - id: equip.load
+    displayName: Equip Load
+    shortName: load
+    description: Sum of worn armour's load. Each point is a step down the freedom track (Combat_Framework 6.4); conditioning subtracts.
+    defaultValue: 0
+    minValue: 0
+    maxValue: 30

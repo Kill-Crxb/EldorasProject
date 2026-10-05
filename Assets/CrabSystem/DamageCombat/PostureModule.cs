@@ -1,9 +1,10 @@
 using UnityEngine;
 
-// Posture (Parry_Build.md): Sekiro's guard meter, separate from stamina. Guarded hits fill the
-// defender's bar, parried hits fill the attacker's. A full bar is a Guard Break: the bar stays full
-// while the fighter is open, then empties. Otherwise it drains back down after a short quiet spell.
-public class PostureModule : MonoBehaviour, IBrainModule
+// Posture (Parry_Build.md, Combat_Framework §3.5): Sekiro's guard meter, separate from stamina. A block
+// fills the defender's bar (more) and the attacker's (a little), an empty Guard bar adds the rest of the
+// hit, and a parry fills the attacker's. A full bar is a Guard Break: the bar stays full while the
+// fighter is open, then empties. Otherwise it drains back down after a short quiet spell.
+public class PostureModule : MonoBehaviour, IBrainModule, IBarSource
 {
     [SerializeField] private bool isEnabled = true;
 

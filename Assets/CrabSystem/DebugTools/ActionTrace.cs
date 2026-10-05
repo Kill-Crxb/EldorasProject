@@ -57,8 +57,8 @@ public class ActionTrace : MonoBehaviour
             g.OnBlockEnd += () => Log(g, "guard DOWN");
             g.OnPerfectBlock += () => Log(g, "PARRY");
             g.OnParryWindowOpened += frames => Log(g, $"parry window {frames}f");
-            g.OnGuardedHit += (cost, posture, stun) => Log(g, $"blocked  -{cost} stamina {Stamina(g)}  +{posture} posture {Posture(g)}  blockstun {stun}f");
-            g.OnPostureDamaged += posture => Log(g, $"parried  +{posture:0.#} posture {Posture(g)}");
+            g.OnGuardedHit += (cost, posture, stun) => Log(g, $"blocked  -{cost} stamina {Stamina(g)}  +{posture:0.#} posture {Posture(g)}  blockstun {stun}f");
+            g.OnPostureDamaged += posture => Log(g, $"guarded by target  +{posture:0.#} posture {Posture(g)}");
             g.OnGuardBreak += () => Log(g, "GUARD BROKEN");
             g.OnGuardFlanked += angle => Log(g, $"hit OUTSIDE guard arc ({angle:0}° off facing)");
         }

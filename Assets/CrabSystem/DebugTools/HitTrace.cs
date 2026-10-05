@@ -70,7 +70,7 @@ public class HitTrace : MonoBehaviour
         if (hit.grade == HitGrade.Glancing)
             carried += " halved";
 
-        return $"{carried} = {hit.rolled:0.#} − soak {hit.soak:0.#} → {hit.applied:0.#}";
+        return $"{carried} = {hit.rolled:0.#} − absorbed {hit.soak:0.#} → {hit.applied:0.#}";
     }
 
     private static string Health(DamageSystem target)

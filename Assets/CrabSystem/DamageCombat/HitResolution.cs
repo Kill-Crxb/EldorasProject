@@ -10,6 +10,6 @@ public struct HitResolution
     public float accuracy;   // attacker's Finesse
     public float defense;    // 5 + Avoidance + armour's to-hit bonus
     public float rolled;     // damage carried into soak: full includes explosions, glancing is half the base
-    public float soak;       // armour dice + flat, after the type factor
+    public float soak;       // absorbed: by the armour shield (physical only), or all of it on a guarded hit
     public float applied;    // what reached health, after faction and block
 }

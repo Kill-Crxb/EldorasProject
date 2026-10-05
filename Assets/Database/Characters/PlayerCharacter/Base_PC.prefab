@@ -712,6 +712,7 @@ Transform:
   - {fileID: 5478355541252067953}
   - {fileID: 8973753050716432251}
   - {fileID: 7695501895473013660}
+  - {fileID: 5017230064077729544}
   m_Father: {fileID: 505027778239189661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7834155014174466237
@@ -750,6 +751,55 @@ MonoBehaviour:
   debugStateMachine: 0
   debugTransitions: 0
   showDebugUI: 0
+--- !u!1 &1981481828185004338
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5017230064077729544}
+  - component: {fileID: 3717905145452524823}
+  m_Layer: 8
+  m_Name: ArmorShieldModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5017230064077729544
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1981481828185004338}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8373627434070198267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3717905145452524823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1981481828185004338}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78eadef21b60600efb87daa827303b73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArmourShieldModule
+  isEnabled: 1
+  dieFaces: 4
+  shield:
+    refillDelay: 3
+    secondsPerSegment: 0.75
 --- !u!1 &1982848967200995888
 GameObject:
   m_ObjectHideFlags: 0
@@ -3065,8 +3115,14 @@ MonoBehaviour:
   riposteSeconds: 1
   defaultGuardStamina: 5
   parryPostureMultiplier: 1.5
+  attackerBlockPostureShare: 0.25
   defaultBlockstunFrames: 12
   minBlockstunFrames: 8
+  guardDice: 2
+  guardDieFaces: 4
+  guardBar:
+    refillDelay: 3
+    secondsPerSegment: 0.75
   blockedStopFrames: 2
   parryStopFrames: 10
   guardBreakStopFrames: 12

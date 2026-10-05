@@ -15,10 +15,12 @@ public class DamageInterceptArgs
     public GuardOutcome outcome;
     public readonly Vector3 attackDirection;
     public readonly ControllerBrain attacker;
-    public DamageInterceptArgs(Vector3 dir, ControllerBrain attacker)
+    public readonly float damage;   // base damage — what a block drains from the Guard bar
+    public DamageInterceptArgs(Vector3 dir, ControllerBrain attacker, float damage)
     {
         attackDirection = dir;
         this.attacker = attacker;
+        this.damage = damage;
     }
 }
 
@@ -53,6 +55,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     private IHealthProvider health;
     private Blackboard blackboard;
     private GuardModule guard;
+    private ArmourShieldModule shield;
 
     private bool isDead;
     private ControllerBrain incomingAttacker;
@@ -63,11 +66,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     private const string CunningStat = "cmb.cunning";
     private const string AvoidanceStat = "def.avoidance";
     private const string ArmourDefenseStat = "atr.arm_def";
-    private const string ArmourDiceStat = "atr.arm_dice";
-    private const string ArmourStat = "atr.arm";
-    private const string DeflectionStat = "def.deflection";
-    private const int GuardSoakDice = 2;
-    private const int ParrySoakDice = 4;
 
     // Public accessors
     public ControllerBrain Brain => brain;
@@ -92,7 +90,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     public event Action<CombatDamagePacket, float> OnDamageApplied;
     // Same moment again, with the whole breakdown — roll, Defense, grade, soak. For logs and talents.
     public event Action<CombatDamagePacket, HitResolution> OnHitResolved;
-    // Fired before damage is applied when the target is blocking. Listeners may reduce args.damage.
+    // Fired before damage is applied when the target is blocking. The guard sets args.outcome.
     public event Action<DamageInterceptArgs> OnDamageIntercept;
 
     private void Awake()
@@ -133,6 +131,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         health = brain.Resources;
         blackboard = brain.GetModule<BlackboardSystem>()?.Blackboard;
         guard = brain.GetModule<GuardModule>();
+        shield = brain.GetModule<ArmourShieldModule>();
 
         if (stats == null || health == null)
         {
@@ -261,37 +260,25 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         if (packet.source == DamageSource.Tick) return GuardOutcome.None;
         if (!blackboard.GetBool(BlackboardKey.IsBlocking)) return GuardOutcome.None;
 
-        var args = new DamageInterceptArgs(packet.attackDirection, attackerBrain);
+        var args = new DamageInterceptArgs(packet.attackDirection, attackerBrain, packet.finalDamage);
         OnDamageIntercept.Invoke(args);
         return args.outcome;
     }
 
-    // Combat_Framework §3.1–3.2: no roll, no explosions. Base damage through armour soak plus guard
-    // soak (+2d4 + 1dDeflection on a block, +4d4 + 1dDeflection on a parry). A block never goes below
-    // 1; a parry may reach 0.
+    // Combat_Framework §3.1–3.2: no chip. A guarded hit never touches health — a block's damage went to
+    // the Guard bar and posture (GuardModule), a parry's to nobody. Recorded as fully absorbed.
     private HitResolution ResolveGuardedHit(CombatDamagePacket packet, GuardOutcome guard)
     {
-        bool parried = guard == GuardOutcome.Parried;
-        var hit = new HitResolution
+        return new HitResolution
         {
-            grade = parried ? HitGrade.Parried : HitGrade.Blocked,
-            rolled = packet.finalDamage
+            grade = guard == GuardOutcome.Parried ? HitGrade.Parried : HitGrade.Blocked,
+            rolled = packet.finalDamage,
+            soak = packet.finalDamage,
+            applied = 0f
         };
-
-        hit.soak = RollSoak(packet.damageType) + RollGuardSoak(parried ? ParrySoakDice : GuardSoakDice);
-        float floor = parried ? 0f : 1f;
-        hit.applied = hit.rolled > 0f ? Mathf.Max(floor, hit.rolled - hit.soak) : 0f;
-        return hit;
     }
 
-    private float RollGuardSoak(int dice)
-    {
-        float soak = DiceRoll.RollModifier(Stat(DeflectionStat));
-        for (int i = 0; i < dice; i++) soak += UnityEngine.Random.Range(1, 5);
-        return soak;
-    }
-
-    // Stat_Resolution.md §4, steps 2 and 4. Ticks skip both: no roll, no soak.
+    // Stat_Resolution.md §4.1. Ticks skip the roll and the shield.
     private HitResolution ResolveHit(CombatDamagePacket packet, ControllerBrain attackerBrain)
     {
         var hit = new HitResolution { grade = HitGrade.Unrolled, rolled = packet.finalDamage };
@@ -314,23 +301,18 @@ public class DamageSystem : MonoBehaviour, IBrainModule
             ? packet.finalDamage + packet.explosionDamage
             : Mathf.Floor(packet.finalDamage / 2f);
 
-        // Contact always costs something: the floor is 1. Negative soak (Sunder) adds damage.
-        hit.soak = RollSoak(packet.damageType);
-        hit.applied = hit.rolled > 0f ? Mathf.Max(1f, hit.rolled - hit.soak) : 0f;
+        // Contact always costs something: the hit is worth at least 1. The armour shield then takes what
+        // it can of a physical hit (Combat_Framework §6.1); everything else goes past it.
+        float worth = hit.rolled > 0f ? Mathf.Max(1f, hit.rolled) : 0f;
+        hit.applied = AbsorbByShield(worth, packet.damageType);
+        hit.soak = worth - hit.applied;
         return hit;
     }
 
-    // (arm_dice)d4 + arm flat. Physical takes all of it, True none, everything else half.
-    private float RollSoak(DamageType type)
+    private float AbsorbByShield(float amount, DamageType type)
     {
-        if (type == DamageType.True) return 0f;
-
-        float soak = Stat(ArmourStat);
-        int dice = Mathf.FloorToInt(Stat(ArmourDiceStat));
-        for (int i = 0; i < dice; i++) soak += UnityEngine.Random.Range(1, 5);
-
-        if (type == DamageType.Physical) return soak;
-        return Mathf.Floor(soak / 2f);
+        if (shield == null || type != DamageType.Physical) return amount;
+        return shield.Absorb(amount);
     }
 
     // Each config stat rolled as its own die, scaled by its paired multiplier first.

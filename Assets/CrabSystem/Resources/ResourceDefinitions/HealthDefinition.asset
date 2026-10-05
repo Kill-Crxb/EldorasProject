@@ -24,7 +24,7 @@ MonoBehaviour:
   secondsPerSourcePoint: 100
   regenPerSecond: 0
   regenDelay: 5
-  resourceColor: {r: 1, g: 0, b: 0, a: 1}
+  resourceColor: {r: 0.6320754, g: 0.16398184, b: 0.16398184, a: 1}
   icon: {fileID: 0}
   depletedSound: {fileID: 0}
   restoredSound: {fileID: 0}

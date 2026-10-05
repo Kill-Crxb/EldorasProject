@@ -83,8 +83,8 @@ MonoBehaviour:
   hitboxTags:
   - blade
   damageEffects:
-  - useWeaponDamage: 0
-    baseDamage: 10
+  - useWeaponDamage: 1
+    baseDamage: 0
     weaponSlotId: mainwep
     requiresSuppliedDice: 0
     damageType: 0
