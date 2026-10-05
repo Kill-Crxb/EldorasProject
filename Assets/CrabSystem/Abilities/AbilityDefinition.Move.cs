@@ -5,11 +5,30 @@ using UnityEngine;
 // Move block — Combat_Framework.md §2, Move_Block_Build.md.
 // Frames are 60 fps and counted from the ability's start. An ability with no startup frames
 // has no move data and behaves exactly as before.
+//
+// Animation events are the authority for move timing (CrabSystem_Standard §9). startup / active /
+// recovery are BAKED from the clip's HitboxStart, HitboxEnd and AnimUnlocked by Tools → Combat →
+// Bake Move Frames (and on every clip import), so they are never hand-synced. To change timing,
+// change the clip. The speed class is the animation TARGET, compared in Move Report.
 public partial class AbilityDefinition
 {
     [Header("Move — frames at 60 fps")]
+    [Tooltip("The animation target for this move (Move_Block_Build.md speed classes). Move Report shows the clip " +
+             "against it; it never sets the frames.")]
     public SpeedClass speedClass = SpeedClass.None;
+    [Tooltip("Baked from the clip's events. Edit the clip, not these numbers: the next bake overwrites them.")]
     public MoveFrames frames;
+    [Tooltip("The clip the frames were baked from. Set by the bake.")]
+    public AnimationClip bakedClip;
+    [Tooltip("The animator state the move plays (full path hash), started directly when the move starts. " +
+             "0 = not baked: the move falls back to setting its animationTrigger. Set by the bake.")]
+    public int bakedState;
+    [Tooltip("The layer bakedState is on. Set by the bake.")]
+    public int bakedLayer;
+    [Tooltip("Cross-fade into bakedState, in seconds, from the controller's transition. Set by the bake.")]
+    public float bakedFade;
+    [Tooltip("Where in the state the move starts, in seconds, from the transition's offset. Set by the bake.")]
+    public float bakedStartTime;
     public HitProperties hit;
     public List<CancelRoute> routes = new List<CancelRoute>();
 
@@ -33,13 +52,11 @@ public partial class AbilityDefinition
 
     static bool InRange(int frame, int from, int to) => to > from && frame >= from && frame < to;
 
-    [ContextMenu("Move/Fill from speed class")]
+    // Hit defaults only. Frames come from the clip (the bake); the class frames are the animator's target.
+    [ContextMenu("Move/Fill hit defaults from speed class")]
     void FillFromSpeedClass()
     {
         if (speedClass == SpeedClass.None) return;
-        frames.startup = ClassStartup(speedClass);
-        frames.active = ClassActive(speedClass);
-        frames.recovery = ClassRecovery(speedClass);
         hit.blockAdvantage = ClassOnBlock(speedClass);
         hit.hitStop = ClassHitStop(speedClass);
         hit.blockStamina = ClassBlockStamina(speedClass);

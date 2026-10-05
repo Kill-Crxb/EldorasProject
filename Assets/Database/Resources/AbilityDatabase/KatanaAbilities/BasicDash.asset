@@ -12,17 +12,66 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
   m_Name: BasicDash
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
+  effectTrigger: 19
+  waitForAnimUnlock: 0
+  maxDuration: 2
+  castWhileMoving: 1
+  animationTrigger: Dash
+  castEffectPrefab: {fileID: 0}
+  hitEffectPrefab: {fileID: 0}
+  projectileData: {fileID: 0}
+  requiredFactsAny: []
+  requiredFactsAll: []
+  forbiddenFactsAll: []
+  overrideDefaults: 0
+  customRequiredFacts: []
+  customForbiddenFacts: []
+  nextInChain: {fileID: 0}
+  chainWindow: 0.5
+  resourceCosts: []
+  cooldown: 5
+  castTime: 0.5
+  blockDamageReduction: 0.5
+  blockAngle: 120
+  parryWindowDuration: 0.2
+  parryDamageReduction: 1
+  parryEnablesCounter: 1
+  counterWindowDuration: 1
+  blockStartupTime: 0.1
+  parryFrames: 0
+  speedClass: 0
+  frames:
+    startup: 0
+    active: 0
+    recovery: 0
+    cancelFrom: 0
+    cancelTo: 0
+    iframeFrom: 0
+    iframeTo: 0
+    armorFrom: 0
+    armorTo: 0
+  bakedClip: {fileID: 0}
+  hit:
+    guard: 0
+    onHit: 0
+    onHitFrames: 0
+    blockStamina: 0
+    blockAdvantage: 0
+    tracking: 0
+    hitStop: 0
+    feel: 0
+    bypass: 0
+  routes: []
   abilityId: Basic_Dash
   abilityName: Dash
   description: 
   icon: {fileID: 0}
-  resourceType: 2
-  resourceCost: 10
-  cooldown: 5
-  castTime: 0.5
+  abilityType: 2
+  abilityCategory: 1
   targetType: 0
   range: 5
   requiresLineOfSight: 0
+  hitboxTags: []
   damageEffects: []
   damageOverTimeEffects: []
   healEffects: []
@@ -30,11 +79,18 @@ MonoBehaviour:
   knockbackEffects: []
   movementEffects:
   - movementType: 1
+    directionSource: 0
     direction: {x: 1, y: 0, z: 0}
     speed: 5
     duration: 1
+    speedCap: 0
+    frictionHoliday: 0
     teleportDistance: 0
-  animationTrigger: Dash
-  castEffectPrefab: {fileID: 0}
-  hitEffectPrefab: {fileID: 0}
-  projectilePrefab: {fileID: 0}
+  statusEffects: []
+  hitProcs: []
+  sequencePrerequisites: []
+  resourceThresholds: []
+  buffTransforms: []
+  targetConditions: []
+  chargeAbility: {fileID: 0}
+  chargeThreshold: 0.8

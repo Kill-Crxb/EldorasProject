@@ -15,22 +15,14 @@ using UnityEngine;
 // state speed that isn't 1, or a blend that shifts every event.
 //
 // Abilities with move data (AbilityDefinition.Move.cs) are also checked: the data itself (windows
-// inside the move, routes that can fire) and the clip's events against it — drift is listed per
-// event. The frame data is the source; the clip is what's wrong when they disagree.
-//
-// Move_Block_Build.md's validator. It never edits anything.
+// inside the move, routes that can fire), whether the baked frames still match the clip, and the clip
+// against the move's speed-class target. The clip is the authority (CrabSystem_Standard §9); the
+// target is what the animator aims for. "Bake" writes the clip's frames into the abilities
+// (MoveFrameBaker); everything else here is read-only.
 public class MoveReport : EditorWindow
 {
-    const float Fps = 60f;
-    const string DefaultController = "Assets/Database/3d/Humanoid/Animations/HumanoidAnimator.controller";
-
-    class Target
-    {
-        public string layer;
-        public AnimatorState state;
-        public float blend;
-        public bool fixedBlend;
-    }
+    const float Fps = MoveClipReader.Fps;
+    const string DefaultController = "Assets/Database/3d/Humanoid/HumanoidAnimator_v2.controller";
 
     class Row
     {
@@ -61,6 +53,7 @@ public class MoveReport : EditorWindow
         EditorGUILayout.BeginHorizontal();
         controller = (AnimatorController)EditorGUILayout.ObjectField("Controller", controller, typeof(AnimatorController), false);
         if (GUILayout.Button("Scan", GUILayout.Width(60))) Scan();
+        if (GUILayout.Button("Bake", GUILayout.Width(60))) BakeAndScan();
         if (GUILayout.Button("Copy Markdown", GUILayout.Width(110))) EditorGUIUtility.systemCopyBuffer = Markdown();
         EditorGUILayout.EndHorizontal();
 
@@ -95,12 +88,18 @@ public class MoveReport : EditorWindow
         EditorGUILayout.EndVertical();
     }
 
+    void BakeAndScan()
+    {
+        MoveFrameBaker.Bake(true);
+        Scan();
+    }
+
     void Scan()
     {
         rows.Clear();
         if (controller == null) return;
 
-        Dictionary<string, List<Target>> byTrigger = MapTriggers(controller);
+        Dictionary<string, List<MoveClipReader.Target>> byTrigger = MoveClipReader.MapTriggers(controller);
         HashSet<string> parameters = new HashSet<string>(controller.parameters.Select(p => p.name));
 
         foreach (string guid in AssetDatabase.FindAssets("t:AbilityDefinition"))
@@ -120,10 +119,10 @@ public class MoveReport : EditorWindow
         int moves = rows.Count(r => r.ability.HasMoveData);
         int drifting = rows.Count(r => r.drift.Count > 0);
         Debug.Log($"[MoveReport] {rows.Count} abilities scanned against {controller.name}, {broken} with problems, " +
-                  $"{moves} with move data, {drifting} drifting from their clip.");
+                  $"{moves} with move data, {drifting} off their speed-class target.");
     }
 
-    static Row Inspect(AbilityDefinition ability, string path, Dictionary<string, List<Target>> byTrigger, HashSet<string> parameters)
+    static Row Inspect(AbilityDefinition ability, string path, Dictionary<string, List<MoveClipReader.Target>> byTrigger, HashSet<string> parameters)
     {
         var row = new Row { ability = ability, path = path };
         string trigger = ability.animationTrigger;
@@ -142,17 +141,17 @@ public class MoveReport : EditorWindow
             return row;
         }
 
-        if (!byTrigger.TryGetValue(trigger, out List<Target> targets) || targets.Count == 0)
+        if (!byTrigger.TryGetValue(trigger, out List<MoveClipReader.Target> targets) || targets.Count == 0)
         {
             row.problems.Add($"Trigger '{trigger}' exists but no transition uses it.");
             return row;
         }
 
-        foreach (Target target in targets) InspectState(ability, target, row);
+        foreach (MoveClipReader.Target target in targets) InspectState(ability, target, row);
         return row;
     }
 
-    static void InspectState(AbilityDefinition ability, Target target, Row row)
+    static void InspectState(AbilityDefinition ability, MoveClipReader.Target target, Row row)
     {
         var clip = target.state.motion as AnimationClip;
         if (clip == null)
@@ -162,25 +161,25 @@ public class MoveReport : EditorWindow
         }
 
         if (!Mathf.Approximately(target.state.speed, 1f))
-            row.problems.Add($"[{target.layer}] {target.state.name}: state speed {target.state.speed} — clip frames are not real frames.");
+            row.problems.Add($"[{target.layer}] {target.state.name}: state speed {target.state.speed} — the frames below are scaled by it.");
         if (target.blend > 0f)
         {
             string amount = target.fixedBlend ? $"{target.blend * Fps:0}f" : $"{target.blend:P0} of the previous state";
             row.problems.Add($"[{target.layer}] {target.state.name}: a {amount} blend into the state shifts every event.");
         }
 
-        var events = AnimationUtility.GetAnimationEvents(clip);
+        List<MoveClipReader.ClipEvent> events = MoveClipReader.ReadEvents(clip, target);
         var frames = new Dictionary<string, int>();
         var order = new StringBuilder();
-        foreach (AnimationEvent e in events)
+        foreach (MoveClipReader.ClipEvent e in events)
         {
-            string name = e.functionName.StartsWith("On") ? e.functionName.Substring(2) : e.functionName;
-            int frame = Mathf.RoundToInt(e.time * Fps);
-            if (!frames.ContainsKey(name)) frames[name] = frame;
-            order.Append($"{name}@{frame}  ");
+            if (!frames.ContainsKey(e.name)) frames[e.name] = e.frame;
+            order.Append($"{e.name}@{e.frame}  ");
         }
+        int lastEnd = MoveClipReader.Last(events, "HitboxEnd");
+        if (lastEnd >= 0) frames["HitboxEnd"] = lastEnd;
 
-        int length = Mathf.RoundToInt(clip.length * Fps);
+        int length = MoveClipReader.LengthInFrames(clip, target);
         row.lines.Add($"[{target.layer}] {target.state.name} → {clip.name} ({length}f)");
         row.lines.Add("   " + order.ToString().TrimEnd());
 
@@ -194,7 +193,7 @@ public class MoveReport : EditorWindow
         if (ability.HasMoveData)
             CompareFrames(ability, clip.name, length, frames, row);
 
-        if (ability.abilityType == AbilityType.Offensive && ability.projectileData == null && (!hasStart || !hasEnd))
+        if (ability.abilityType == AbilityType.Offensive && !ability.IsParry && ability.projectileData == null && (!hasStart || !hasEnd))
             row.problems.Add($"{clip.name}: offensive melee ability without HitboxStart/HitboxEnd — its hitbox never opens.");
         if (ability.waitForAnimUnlock && !hasUnlock)
             row.problems.Add($"{clip.name}: waitForAnimUnlock is on but the clip has no AnimUnlocked — ends on its {ability.maxDuration}s timeout.");
@@ -255,68 +254,39 @@ public class MoveReport : EditorWindow
             row.lines.Add($"   route → {route.into.abilityName} ({route.when})");
     }
 
+    // The baked frames should equal the clip's (stale means the bake hasn't run since the clip changed).
+    // Drift is the clip against the speed-class target: the animator's to-do list, not an error.
     static void CompareFrames(AbilityDefinition ability, string clip, int length, Dictionary<string, int> frames, Row row)
     {
-        int before = row.drift.Count;
-        AddDrift(clip, "HitboxStart", ability.ActiveStart, frames, row);
-        AddDrift(clip, "HitboxEnd", ability.RecoveryStart, frames, row);
-        AddDrift(clip, "AnimUnlocked", ability.TotalFrames, frames, row);
+        bool stale = Differs("HitboxStart", ability.ActiveStart, frames) ||
+                     Differs("HitboxEnd", ability.RecoveryStart, frames) ||
+                     Differs("AnimUnlocked", ability.TotalFrames, frames);
+        if (stale)
+            row.problems.Add($"{clip}: the move's frames don't match its clip — press Bake.");
 
-        if (length < ability.TotalFrames)
-            row.problems.Add($"{clip}: clip is {length}f, shorter than the move's {ability.TotalFrames}f.");
+        if (ability.speedClass == SpeedClass.None) return;
+
+        int before = row.drift.Count;
+        int startup = AbilityDefinition.ClassStartup(ability.speedClass);
+        int active = AbilityDefinition.ClassActive(ability.speedClass);
+        int recovery = AbilityDefinition.ClassRecovery(ability.speedClass);
+        AddDrift(clip, "HitboxStart", startup, frames, row);
+        AddDrift(clip, "HitboxEnd", startup + active, frames, row);
+        AddDrift(clip, "AnimUnlocked", startup + active + recovery, frames, row);
+
         if (row.drift.Count == before)
-            row.lines.Add("   ✔ clip events match the move data");
+            row.lines.Add($"   ✔ clip hits its {ability.speedClass} target");
     }
 
-    static void AddDrift(string clip, string evt, int expected, Dictionary<string, int> frames, Row row)
+    static bool Differs(string evt, int expected, Dictionary<string, int> frames)
+        => frames.TryGetValue(evt, out int actual) && actual != expected;
+
+    static void AddDrift(string clip, string evt, int target, Dictionary<string, int> frames, Row row)
     {
         if (!frames.TryGetValue(evt, out int actual)) return;
-        int delta = actual - expected;
+        int delta = actual - target;
         if (delta == 0) return;
-        row.drift.Add($"{clip}: {evt} @{actual}f, move data says {expected}f ({delta:+0;-0}f)");
-    }
-
-    static Dictionary<string, List<Target>> MapTriggers(AnimatorController controller)
-    {
-        var map = new Dictionary<string, List<Target>>();
-        foreach (AnimatorControllerLayer layer in controller.layers)
-            CollectMachine(layer.name, layer.stateMachine, map);
-        return map;
-    }
-
-    static void CollectMachine(string layer, AnimatorStateMachine machine, Dictionary<string, List<Target>> map)
-    {
-        foreach (AnimatorStateTransition t in machine.anyStateTransitions) Record(layer, t, map);
-        foreach (ChildAnimatorState child in machine.states)
-            foreach (AnimatorStateTransition t in child.state.transitions) Record(layer, t, map);
-        foreach (ChildAnimatorStateMachine sub in machine.stateMachines)
-            CollectMachine(layer, sub.stateMachine, map);
-    }
-
-    static void Record(string layer, AnimatorStateTransition transition, Dictionary<string, List<Target>> map)
-    {
-        if (transition.destinationState == null) return;
-
-        foreach (AnimatorCondition condition in transition.conditions)
-        {
-            if (condition.mode != AnimatorConditionMode.If) continue;
-
-            if (!map.TryGetValue(condition.parameter, out List<Target> list))
-            {
-                list = new List<Target>();
-                map[condition.parameter] = list;
-            }
-
-            if (list.Any(x => x.state == transition.destinationState && x.layer == layer)) continue;
-
-            list.Add(new Target
-            {
-                layer = layer,
-                state = transition.destinationState,
-                blend = transition.duration,
-                fixedBlend = transition.hasFixedDuration,
-            });
-        }
+        row.drift.Add($"{clip}: {evt} @{actual}f, target {target}f ({delta:+0;-0}f)");
     }
 
     string Markdown()

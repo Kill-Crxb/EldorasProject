@@ -486,6 +486,7 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 
     public string GetSaveId() => "hotbar";
     public int GetSaveVersion() => HotbarSaveData.CurrentVersion;
+    public int LoadOrder => 60;
 
     public string GetSaveData()
     {

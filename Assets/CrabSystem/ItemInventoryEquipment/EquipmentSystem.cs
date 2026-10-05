@@ -30,6 +30,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
     private bool isInitialized = false;
 
     public event Action<EquipmentSlotDefinition, ItemInstance> OnEquipmentChanged;
+    public event Action<ISaveable> Dirty;
     public event Action<EquipmentSlotDefinition, ItemInstance> OnEquipmentVisual;
 
     #region IBrainModule
@@ -91,6 +92,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
     public string GetSaveId() => "equipment";
     public int GetSaveVersion() => 1;
+    public int LoadOrder => 50;
 
     public string GetSaveData()
     {
@@ -197,6 +199,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         equipment[slotId] = item;
         ApplyItemStats(item);
         OnEquipmentChanged?.Invoke(slot, item);
+        Dirty?.Invoke(this);
         OnEquipmentVisual?.Invoke(slot, item);
         UpdateSerializedData();
 
@@ -253,6 +256,7 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         RemoveItemStats(item);
         equipment[slot.slotId] = null;
         OnEquipmentChanged?.Invoke(slot, null);
+        Dirty?.Invoke(this);
         OnEquipmentVisual?.Invoke(slot, null);
         UpdateSerializedData();
 

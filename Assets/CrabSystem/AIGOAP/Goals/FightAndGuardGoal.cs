@@ -80,9 +80,8 @@ public class FightAndGuardGoal : FightTargetGoal
         AIControlSource control = ctx.aiControl;
         if (control.DeflectReadThisSwing) return;
 
-        ControllerBrain targetBrain = ctx.target.GetComponent<ControllerBrain>();
-        AbilitySystem targetAbilities = targetBrain != null ? targetBrain.Abilities : null;
-        if (targetAbilities == null || targetAbilities.HitboxesLiveFor < deflectDelay) return;
+        ICombatantState targetState = TargetState(ctx);
+        if (targetState == null || targetState.HitboxesLiveFor < deflectDelay) return;
 
         control.DeflectReadThisSwing = true;
         if (Random.value >= deflectChance) return;
@@ -96,12 +95,17 @@ public class FightAndGuardGoal : FightTargetGoal
     {
         if (ctx.distanceToTarget > threatRange) return false;
 
-        ControllerBrain targetBrain = ctx.target.GetComponent<ControllerBrain>();
-        AbilitySystem targetAbilities = targetBrain != null ? targetBrain.Abilities : null;
-        AbilityDefinition move = targetAbilities != null ? targetAbilities.CurrentAbility : null;
+        ICombatantState targetState = TargetState(ctx);
+        AbilityDefinition move = targetState != null ? targetState.CurrentAbility : null;
         if (move == null || move.IsParry) return false;
 
         return move.abilityType != AbilityType.Defensive;
+    }
+
+    static ICombatantState TargetState(GOAPContext ctx)
+    {
+        ControllerBrain targetBrain = ctx.target.GetComponent<ControllerBrain>();
+        return targetBrain != null ? targetBrain.GetProvider<ICombatantState>() : null;
     }
 
     static bool IsBlocking(GOAPContext ctx)

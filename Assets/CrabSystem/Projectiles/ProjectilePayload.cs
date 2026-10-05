@@ -116,10 +116,8 @@ public class ProjectilePayload : MonoBehaviour, IProjectileModule
         float multiplier = brain.Runtime.damageMultiplier;
 
         // Hit procs — the same call WeaponHitbox makes, so a thrown weapon can transform a
-        // hotbar slot exactly like a melee hit does. Guarded because NotifyHitLanded does a
-        // dictionary lookup and a null key throws.
-        if (!string.IsNullOrEmpty(ability?.abilityId))
-            source.GetModule<AbilitySystem>()?.NotifyHitLanded(ability.abilityId, hit.targetBrain);
+        // hotbar slot exactly like a melee hit does.
+        source.GetModule<AbilitySystem>()?.NotifyHitLanded(ability, hit.targetBrain);
 
         // THE ARRIVAL SEAM. Whatever on the firing brain claims the right to decide what this
         // hit means — a composed spell's Effect slot decides heal vs damage vs bind, and only

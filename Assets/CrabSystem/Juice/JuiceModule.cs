@@ -12,7 +12,8 @@ using UnityEngine;
 // and tells the attacker (Connect, Parried, Killed), so the attacker plays its own players.
 //
 // No player may change Time.timeScale. It stops the whole client and will fight the network
-// tick. Hit-stop is per-animator, and that is the only freeze.
+// tick. Hit-stop is gameplay timing, not juice: AbilitySystem.HitStop owns animator.speed, called
+// by the hit itself and by GuardModule. Nothing here freezes anything.
 public class JuiceModule : MonoBehaviour, IBrainModule
 {
     [Header("System State")]
@@ -55,14 +56,6 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     [SerializeField] private MMF_Player viewWallJump;
     [SerializeField] private MMF_Player viewDash;
 
-    [Header("Hit-Stop (frames at 60 fps)")]
-    [SerializeField] private int lightStopFrames = 4;
-    [SerializeField] private int heavyStopFrames = 8;
-    [SerializeField] private int blockedStopFrames = 2;
-    [SerializeField] private int parryStopFrames = 10;
-    [SerializeField] private int projectileStopFrames = 3;
-    [SerializeField] private int guardBreakStopFrames = 12;
-
     [Header("Guard Break")]
     [Tooltip("Height above the root where the guard-break burst plays.")]
     [SerializeField] private float guardBreakHeight = 1.2f;
@@ -93,12 +86,8 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     private ParkourLocomotionHandler locomotion;
     private bool wasSprinting;
 
-    private Animator frozenAnimator;
-    private float hitStopUntil;
     private bool parryPending;
     private bool deathPending;
-
-    public bool IsHitStopped => hitStopUntil > 0f;
 
     // The one place "is this my character" is decided. Single local player until netcode; with
     // FishNet this becomes the ownership check.
@@ -136,7 +125,6 @@ public class JuiceModule : MonoBehaviour, IBrainModule
 
     private void OnDestroy()
     {
-        EndHitStop();
         if (damage != null)
         {
             damage.OnDamageApplied -= HandleDamageApplied;
@@ -149,14 +137,8 @@ public class JuiceModule : MonoBehaviour, IBrainModule
         if (locomotion != null) locomotion.OnMoveAction -= HandleMoveAction;
     }
 
-    private void OnDisable()
-    {
-        EndHitStop();
-    }
-
     public void UpdateModule()
     {
-        TickHitStop();
         if (!isEnabled || movement == null) return;
 
         if (movement.Locomotion != locomotion) BindLocomotion();
@@ -164,14 +146,6 @@ public class JuiceModule : MonoBehaviour, IBrainModule
         bool sprinting = movement.IsSprinting;
         if (sprinting && !wasSprinting) Play(sprintStart, RootPosition(), 1f);
         wasSprinting = sprinting;
-    }
-
-    // Deliberately not gated on isEnabled: disabling mid-freeze must still thaw the animator.
-    private void TickHitStop()
-    {
-        if (hitStopUntil <= 0f) return;
-        if (Time.unscaledTime < hitStopUntil) return;
-        EndHitStop();
     }
 
     // The locomotion handler can be swapped by a control source after LateInitialize, so this is
@@ -249,7 +223,6 @@ public class JuiceModule : MonoBehaviour, IBrainModule
         if (!isEnabled) return;
 
         Vector3 position = RootPosition() + Vector3.up * guardBreakHeight;
-        HitStop(guardBreakStopFrames);
         if (flash != null) flash.Flash(guardBreakFlashTime);
         Play(guardBreak, position, 1f);
         PlayView(viewGuardBreak, position);
@@ -275,7 +248,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
 
         if (packet.source == DamageSource.Projectile)
         {
-            Hit(hitProjectile, projectileStopFrames, projectileFlashTime, packet.hitPoint);
+            Hit(hitProjectile, projectileFlashTime, packet.hitPoint);
             PlayView(viewHit, packet.hitPoint);
             return;
         }
@@ -284,34 +257,25 @@ public class JuiceModule : MonoBehaviour, IBrainModule
 
         if (parried)
         {
-            Hit(parry, parryStopFrames, 0f, packet.hitPoint);
+            Hit(parry, 0f, packet.hitPoint);
             PlayView(viewParry, packet.hitPoint);
-            if (attacker != null) attacker.Parried(parryStopFrames, packet.hitPoint);
+            if (attacker != null) attacker.Parried(packet.hitPoint);
             return;
         }
 
         if (IsBlocking())
         {
-            Hit(blocked, blockedStopFrames, 0f, packet.hitPoint);
+            Hit(blocked, 0f, packet.hitPoint);
             PlayView(viewBlocked, packet.hitPoint);
-            if (attacker != null) attacker.Blocked(blockedStopFrames, packet.hitPoint);
+            if (attacker != null) attacker.Blocked(packet.hitPoint);
             return;
         }
 
-        int frames = lightStopFrames;
-        if (packet.isHeavyAttack)
-        {
-            frames = heavyStopFrames;
-            Hit(hitHeavy, frames, heavyFlashTime, packet.hitPoint);
-            PlayView(viewHit, packet.hitPoint);
-        }
-        else
-        {
-            Hit(hitLight, frames, lightFlashTime, packet.hitPoint);
-            PlayView(viewHit, packet.hitPoint);
-        }
+        if (packet.isHeavyAttack) Hit(hitHeavy, heavyFlashTime, packet.hitPoint);
+        else Hit(hitLight, lightFlashTime, packet.hitPoint);
+        PlayView(viewHit, packet.hitPoint);
 
-        if (attacker != null) attacker.Connect(frames, packet.hitPoint);
+        if (attacker != null) attacker.Connect(packet.hitPoint);
     }
 
     private void ResolveDeath(JuiceModule killer)
@@ -321,26 +285,23 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     }
 
     // Called by the target on the attacker.
-    public void Connect(int frames, Vector3 hitPoint)
+    public void Connect(Vector3 hitPoint)
     {
         if (!isEnabled) return;
-        HitStop(frames);
         Play(connect, hitPoint, 1f);
         PlayView(viewConnect, hitPoint);
     }
 
     // No connect sparks: the blade met a guard, not a body.
-    public void Blocked(int frames, Vector3 hitPoint)
+    public void Blocked(Vector3 hitPoint)
     {
         if (!isEnabled) return;
-        HitStop(frames);
         PlayView(viewBlockedRebound, hitPoint);
     }
 
-    public void Parried(int frames, Vector3 hitPoint)
+    public void Parried(Vector3 hitPoint)
     {
         if (!isEnabled) return;
-        HitStop(frames);
         PlayView(viewParry, hitPoint);
     }
 
@@ -350,9 +311,8 @@ public class JuiceModule : MonoBehaviour, IBrainModule
         PlayView(viewKill, victimPosition);
     }
 
-    private void Hit(MMF_Player player, int frames, float flashTime, Vector3 hitPoint)
+    private void Hit(MMF_Player player, float flashTime, Vector3 hitPoint)
     {
-        HitStop(frames);
         if (flash != null && flashTime > 0f) flash.Flash(flashTime);
         Play(player, hitPoint, 1f);
     }
@@ -368,32 +328,6 @@ public class JuiceModule : MonoBehaviour, IBrainModule
 
         Play(landHard, position, strength);
         PlayView(viewLandHard, position, strength);
-    }
-
-    // One owner of animator.speed per entity. Max-merge: a second stop extends to whichever ends
-    // later, it never adds. Unscaled, so nothing that touches time can stretch it.
-    public void HitStop(int frames)
-    {
-        if (frames <= 0) return;
-
-        Animator animator = brain.EntityAnimator;
-        if (animator == null) return;
-
-        if (frozenAnimator != null && frozenAnimator != animator) frozenAnimator.speed = 1f;
-        frozenAnimator = animator;
-
-        float until = Time.unscaledTime + frames / 60f;
-        if (until > hitStopUntil) hitStopUntil = until;
-        animator.speed = 0f;
-    }
-
-    // Restores to 1: nothing else in the project writes animator.speed. When attack speed becomes
-    // a stat, this becomes that stat.
-    private void EndHitStop()
-    {
-        hitStopUntil = 0f;
-        if (frozenAnimator != null) frozenAnimator.speed = 1f;
-        frozenAnimator = null;
     }
 
     private bool IsBlocking()

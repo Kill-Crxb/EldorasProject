@@ -75,6 +75,9 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     public bool IsDead => isDead;
     // Whoever landed the killing hit. Null for deaths that came from no attacker, and for self-kills.
     public ControllerBrain Killer { get; private set; }
+    // Whether the hit being taken right now (or the last one) was blocked or parried. Read by the
+    // attacker's hit-state step in the same call chain; a guard that's up but flanked doesn't count (B29).
+    public bool LastHitGuarded { get; private set; }
 
     public event Action<float> OnHealthChanged;
     public event Action<float, float> OnHealthChangedDetailed;
@@ -225,6 +228,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
         GuardOutcome guard = AskGuard(packet, attackerBrain);
         bool guarded = guard == GuardOutcome.Blocked || guard == GuardOutcome.Parried;
+        LastHitGuarded = guarded;
 
         HitResolution hit = guarded ? ResolveGuardedHit(packet, guard) : ResolveHit(packet, attackerBrain);
         float dmg = hit.applied;

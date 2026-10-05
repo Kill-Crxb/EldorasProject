@@ -250,6 +250,7 @@ public class InputSystem : MonoBehaviour,
 
     public string GetSaveId() => "inputProfile";
     public int GetSaveVersion() => InputProfileSaveData.CurrentVersion;
+    public int LoadOrder => 30;
 
     public string GetSaveData()
     {

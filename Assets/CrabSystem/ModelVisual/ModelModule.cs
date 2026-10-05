@@ -335,6 +335,7 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
     }
 
     public int GetSaveVersion() => 1;
+    public int LoadOrder => 20;
 
     #endregion
 

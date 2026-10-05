@@ -15,7 +15,7 @@ MonoBehaviour:
   effectTrigger: 19
   waitForAnimUnlock: 1
   maxDuration: 2
-  animationLayer: 1
+  castWhileMoving: 1
   animationTrigger: Cleave
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
@@ -42,6 +42,34 @@ MonoBehaviour:
   parryEnablesCounter: 1
   counterWindowDuration: 1
   blockStartupTime: 0.1
+  parryFrames: 0
+  speedClass: 3
+  frames:
+    startup: 16
+    active: 24
+    recovery: 8
+    cancelFrom: 0
+    cancelTo: 0
+    iframeFrom: 0
+    iframeTo: 0
+    armorFrom: 0
+    armorTo: 0
+  bakedClip: {fileID: 7400000, guid: 3e4a0cfb0bece5d4b95686e07fee8b93, type: 2}
+  bakedState: 1873745296
+  bakedLayer: 3
+  bakedFade: 0
+  bakedStartTime: 0
+  hit:
+    guard: 0
+    onHit: 2
+    onHitFrames: 40
+    blockStamina: 7
+    blockAdvantage: -12
+    tracking: 0
+    hitStop: 10
+    feel: 3
+    bypass: 0
+  routes: []
   abilityId: Cleave_Shove
   abilityName: Cleave (Shove)
   description: TEST - knockback, force 8, slight lift.
@@ -79,25 +107,3 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
-  speedClass: 3
-  frames:
-    startup: 26
-    active: 5
-    recovery: 34
-    cancelFrom: 0
-    cancelTo: 0
-    iframeFrom: 0
-    iframeTo: 0
-    armorFrom: 0
-    armorTo: 0
-  hit:
-    guard: 0
-    onHit: 2
-    onHitFrames: 40
-    blockStamina: 7
-    blockAdvantage: -12
-    tracking: 0
-    hitStop: 10
-    feel: 3
-    bypass: 0
-  routes: []

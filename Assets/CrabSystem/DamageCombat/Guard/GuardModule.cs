@@ -39,6 +39,16 @@ public class GuardModule : MonoBehaviour, IBrainModule
              "so the hit often lands after the move's frame data says it has ended.")]
     [SerializeField] private int minBlockstunFrames = 8;
 
+    [Header("Hit-Stop (frames at 60 fps)")]
+    [Tooltip("Both fighters freeze this long when a hit is blocked.")]
+    [SerializeField] private int blockedStopFrames = 2;
+
+    [Tooltip("Both fighters freeze this long when a hit is parried.")]
+    [SerializeField] private int parryStopFrames = 10;
+
+    [Tooltip("The fighter whose guard breaks freezes this long.")]
+    [SerializeField] private int guardBreakStopFrames = 12;
+
     private const string StaminaId = "stamina";
     private const string DeflectionStat = "def.deflection";
     private const string DeflectSideParam = "DeflectSide";
@@ -245,6 +255,7 @@ public class GuardModule : MonoBehaviour, IBrainModule
         int blockstun = BlockstunFrames(args.attacker);
         blockstunUntil = Now + blockstun / 60f;
         args.outcome = GuardOutcome.Blocked;
+        FreezeBoth(args.attacker, blockedStopFrames);
 
         if (brain.Animation != null) brain.Animation.TriggerCombatAnimation(BlockedHitTrigger);
         OnGuardedHit?.Invoke(blockCost, cost, blockstun);
@@ -267,6 +278,7 @@ public class GuardModule : MonoBehaviour, IBrainModule
         riposteUntil = Now + riposteSeconds;
 
         FlipDeflectSide();
+        FreezeBoth(args.attacker, parryStopFrames);
         OnPerfectBlock?.Invoke();
 
         GuardModule attackerGuard = args.attacker != null ? args.attacker.GetModule<GuardModule>() : null;
@@ -295,7 +307,16 @@ public class GuardModule : MonoBehaviour, IBrainModule
         StatusDefinition status = AbilityDefinition.LoadHitState(HitState.GuardBreak);
         if (status != null && statuses != null) statuses.Apply(status, null, seconds);
 
+        abilities.HitStop(guardBreakStopFrames);
         OnGuardBreak?.Invoke();
+    }
+
+    // A guarded hit is frozen here rather than by the attacker's NotifyHitLanded, which skips it.
+    private void FreezeBoth(ControllerBrain attacker, int frames)
+    {
+        abilities.HitStop(frames);
+        AbilitySystem attackerAbilities = attacker != null ? attacker.Abilities : null;
+        if (attackerAbilities != null) attackerAbilities.HitStop(frames);
     }
 
     // True when this fills the posture bar. A fighter without a PostureModule never breaks.
@@ -331,10 +352,11 @@ public class GuardModule : MonoBehaviour, IBrainModule
         return true;
     }
 
-    // The attacker's move is read through its AbilitySystem until ICombatantState lands (Audit 5 A5).
+    // The attacker's move is read through ICombatantState (Audit 5 A5).
     private int GuardStamina(ControllerBrain attacker)
     {
-        AbilityDefinition move = attacker != null && attacker.Abilities != null ? attacker.Abilities.CurrentAbility : null;
+        ICombatantState state = attacker != null ? attacker.GetProvider<ICombatantState>() : null;
+        AbilityDefinition move = state != null ? state.CurrentAbility : null;
 
         int cost = move != null && move.HasMoveData ? move.hit.blockStamina : 0;
         return cost > 0 ? cost : defaultGuardStamina;
@@ -344,12 +366,12 @@ public class GuardModule : MonoBehaviour, IBrainModule
     // minus), so "-2 on block" means the attacker recovers 2 frames after the defender.
     private int BlockstunFrames(ControllerBrain attacker)
     {
-        AbilitySystem attackerAbilities = attacker != null ? attacker.Abilities : null;
-        AbilityDefinition move = attackerAbilities != null ? attackerAbilities.CurrentAbility : null;
+        ICombatantState state = attacker != null ? attacker.GetProvider<ICombatantState>() : null;
+        AbilityDefinition move = state != null ? state.CurrentAbility : null;
         if (move == null || !move.HasMoveData) return defaultBlockstunFrames;
 
         int total = move.frames.startup + move.frames.active + move.frames.recovery;
-        int remaining = Mathf.Max(0, total - attackerAbilities.CurrentMoveFrame);
+        int remaining = Mathf.Max(0, total - state.CurrentMoveFrame);
         return Mathf.Max(minBlockstunFrames, remaining + move.hit.blockAdvantage);
     }
 

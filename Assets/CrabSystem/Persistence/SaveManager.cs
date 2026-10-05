@@ -28,6 +28,10 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     [SerializeField] private bool autoSaveEnabled = true;
     [SerializeField] private float autoSaveInterval = 300f;
 
+    [Tooltip("Seconds between writes of saveables that marked themselves dirty (an item picked up, a slot " +
+             "equipped). A burst of changes inside one window is written once.")]
+    [SerializeField] private float dirtyFlushInterval = 5f;
+
     #endregion
 
     #region State
@@ -40,6 +44,11 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     private ISaveProvider provider;
     private ControllerBrain playerBrain;
     private float autoSaveTimer;
+    private float dirtyFlushTimer;
+
+    // The player's saveables, found once per brain and sorted by LoadOrder (B6, Audit 2 S2–S4).
+    private readonly List<ISaveable> saveables = new List<ISaveable>();
+    private readonly HashSet<ISaveable> dirty = new HashSet<ISaveable>();
     private bool pendingLoad = false;
 
     // Only a character that finished loading is saved on shutdown. Saving a half-loaded one would
@@ -49,7 +58,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     // Character select's index for the loaded character, refreshed from the owning modules on every save.
     private CharacterMetadata activeMetadata;
 
-    private static readonly string[] LoadOrder = { "stats", "model", "inputProfile", "inventory", "equipment", "hotbar", "resources", "dialogue" };
 
     #endregion
 
@@ -81,6 +89,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     public void Shutdown()
     {
         SaveAllNow();
+        UnsubscribeFromSaveables();
 
         GameEvents.OnCharacterSelected -= HandleCharacterSelected;
         GameEvents.OnGameSceneReady -= HandleGameSceneReady;
@@ -104,14 +113,36 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
     public void UpdateManager()
     {
-        if (!autoSaveEnabled || !HasActiveCharacter || playerBrain == null) return;
+        if (!HasActiveCharacter || playerBrain == null) return;
+
+        FlushDirty();
+
+        if (!autoSaveEnabled) return;
 
         autoSaveTimer -= Time.deltaTime;
-        if (autoSaveTimer <= 0)
-        {
-            autoSaveTimer = autoSaveInterval;
-            _ = SaveAll();
-        }
+        if (autoSaveTimer > 0) return;
+
+        autoSaveTimer = autoSaveInterval;
+        _ = SaveAll();
+    }
+
+    private void FlushDirty()
+    {
+        if (dirty.Count == 0) return;
+
+        dirtyFlushTimer -= Time.deltaTime;
+        if (dirtyFlushTimer > 0) return;
+
+        dirtyFlushTimer = dirtyFlushInterval;
+        foreach (var saveable in dirty)
+            _ = SaveModule(saveable);
+        dirty.Clear();
+    }
+
+    private void HandleDirty(ISaveable saveable)
+    {
+        if (dirty.Count == 0) dirtyFlushTimer = dirtyFlushInterval;
+        dirty.Add(saveable);
     }
 
     #endregion
@@ -120,10 +151,10 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
     public void SetPlayerBrain(ControllerBrain brain)
     {
-        if (playerBrain != null)
-            UnsubscribeFromSaveableEvents();
+        UnsubscribeFromSaveables();
 
         playerBrain = brain;
+        CacheSaveables();
 
         if (pendingLoad && HasActiveCharacter)
             _ = LoadCharacter(ActiveCharacterId);
@@ -148,18 +179,6 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
     private void HandleSaveRequested() => _ = SaveAll();
 
-    private void HandleInventoryChanged()
-    {
-        _ = SaveFile("inventory", playerBrain.Inventory.GetSaveData());
-    }
-
-    private void HandleEquipmentChanged(EquipmentSlotDefinition slot, ItemInstance item)
-    {
-        var equipment = playerBrain.GetModule<EquipmentSystem>();
-        if (equipment is ISaveable saveable)
-            _ = SaveFile(saveable.GetSaveId(), saveable.GetSaveData());
-    }
-
     #endregion
 
     #region Load
@@ -180,12 +199,13 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         }
 
         pendingLoad = false;
+        UnsubscribeFromSaveables();
 
         try
         {
             activeMetadata = await LoadMetadata(characterId);
             await LoadModulesInOrder(characterId);
-            SubscribeToSaveableEvents();
+            SubscribeToSaveables();
             await FirePlayerConfigAfterLoad(characterId);
             characterLoaded = true;
             playerBrain.MarkLoaded();
@@ -232,19 +252,8 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
     private async Task LoadModulesInOrder(string characterId)
     {
-        var saveables = BuildSaveableLookup();
-
-        foreach (string saveId in LoadOrder)
-        {
-            if (!saveables.TryGetValue(saveId, out ISaveable module)) continue;
-            await LoadModuleData(characterId, saveId, module);
-        }
-
-        foreach (var kvp in saveables)
-        {
-            if (System.Array.IndexOf(LoadOrder, kvp.Key) >= 0) continue;
-            await LoadModuleData(characterId, kvp.Key, kvp.Value);
-        }
+        foreach (var module in saveables)
+            await LoadModuleData(characterId, module.GetSaveId(), module);
     }
 
     private async Task LoadModuleData(string characterId, string saveId, ISaveable module)
@@ -268,18 +277,9 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     {
         if (string.IsNullOrEmpty(ActiveCharacterId) || playerBrain == null) return;
 
-        var saveables = BuildSaveableLookup();
-        foreach (var kvp in saveables)
-        {
-            try
-            {
-                await SaveModule(kvp.Key, kvp.Value);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[{ManagerName}] Failed to save '{kvp.Key}': {e.Message}");
-            }
-        }
+        dirty.Clear();
+        foreach (var module in saveables)
+            await SaveModule(module);
 
         await SaveFile("metadata", BuildMetadataJson());
     }
@@ -289,8 +289,9 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     {
         if (!characterLoaded || playerBrain == null || provider == null) return;
 
-        foreach (var kvp in BuildSaveableLookup())
-            provider.SaveNow(ActiveCharacterId, kvp.Key, kvp.Value.GetSaveData());
+        dirty.Clear();
+        foreach (var module in saveables)
+            provider.SaveNow(ActiveCharacterId, module.GetSaveId(), module.GetSaveData());
 
         provider.SaveNow(ActiveCharacterId, "metadata", BuildMetadataJson());
     }
@@ -331,63 +332,54 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         }
     }
 
-    private async Task SaveModule(string saveId, ISaveable module)
+    private async Task SaveModule(ISaveable module)
     {
-        if (module == null) return;
-        string json = module.GetSaveData();
-        await SaveFile(saveId, json);
+        string saveId = module.GetSaveId();
+        try
+        {
+            await SaveFile(saveId, module.GetSaveData());
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[{ManagerName}] Failed to save '{saveId}': {e}");
+        }
     }
 
     #endregion
 
     #region Helpers
 
-    private void SubscribeToSaveableEvents()
+    // Once per player brain, not per save. A second saveable with the same id is a prefab mistake;
+    // the first found keeps the file.
+    private void CacheSaveables()
     {
+        saveables.Clear();
+        dirty.Clear();
         if (playerBrain == null) return;
 
-        var inventory = playerBrain.GetModule<InventorySystem>();
-        if (inventory != null)
-            inventory.OnInventoryChanged += HandleInventoryChanged;
-
-        var equipment = playerBrain.GetModule<EquipmentSystem>();
-        if (equipment != null)
-            equipment.OnEquipmentChanged += HandleEquipmentChanged;
-    }
-
-    private void UnsubscribeFromSaveableEvents()
-    {
-        if (playerBrain == null) return;
-
-        var inventory = playerBrain.GetModule<InventorySystem>();
-        if (inventory != null)
-            inventory.OnInventoryChanged -= HandleInventoryChanged;
-
-        var equipment = playerBrain.GetModule<EquipmentSystem>();
-        if (equipment != null)
-            equipment.OnEquipmentChanged -= HandleEquipmentChanged;
-    }
-
-    private Dictionary<string, ISaveable> BuildSaveableLookup()
-    {
-        var lookup = new Dictionary<string, ISaveable>();
-
-        if (playerBrain == null)
-            return lookup;
-
-        var saveables = playerBrain.GetComponents<ISaveable>();
-        var children = playerBrain.GetComponentsInChildren<ISaveable>();
-
-        foreach (var saveable in saveables)
-            lookup[saveable.GetSaveId()] = saveable;
-
-        foreach (var saveable in children)
+        var seen = new HashSet<string>();
+        var found = new List<ISaveable>();
+        foreach (var saveable in playerBrain.GetComponentsInChildren<ISaveable>())
         {
-            if (!lookup.ContainsKey(saveable.GetSaveId()))
-                lookup[saveable.GetSaveId()] = saveable;
+            if (seen.Add(saveable.GetSaveId())) found.Add(saveable);
+            else Debug.LogError($"[{ManagerName}] Two saveables use the id '{saveable.GetSaveId()}' on {playerBrain.EntityName}; keeping the first.", playerBrain);
         }
 
-        return lookup;
+        // Stable, so saveables sharing an order keep their hierarchy order, as before.
+        saveables.AddRange(found.OrderBy(s => s.LoadOrder));
+    }
+
+    // After the load, so restoring a character doesn't mark everything dirty.
+    private void SubscribeToSaveables()
+    {
+        foreach (var saveable in saveables)
+            saveable.Dirty += HandleDirty;
+    }
+
+    private void UnsubscribeFromSaveables()
+    {
+        foreach (var saveable in saveables)
+            saveable.Dirty -= HandleDirty;
     }
 
     #endregion

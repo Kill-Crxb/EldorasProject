@@ -46,6 +46,7 @@ public class DialogueMemory : MonoBehaviour, IBrainModule, ISaveable
     public string GetSaveId() => "dialogue";
 
     public int GetSaveVersion() => 1;
+    public int LoadOrder => 80;
 
     public string GetSaveData()
     {

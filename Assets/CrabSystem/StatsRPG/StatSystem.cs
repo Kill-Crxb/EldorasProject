@@ -221,6 +221,7 @@ public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
     public string GetSaveId() => "stats";
 
     public int GetSaveVersion() => 2;
+    public int LoadOrder => 10;
 
     /// <summary>
     /// Writes base values, never effective ones — saving the total would bake a temporary

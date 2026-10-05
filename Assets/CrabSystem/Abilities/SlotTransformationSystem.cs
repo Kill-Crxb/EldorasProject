@@ -87,7 +87,10 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
         hotbarSystem = brain.GetModule<HotbarSystem>();
 
         if (abilitySystem != null)
+        {
             abilitySystem.OnAbilityUsed += HandleAbilityUsed;
+            abilitySystem.OnHitLanded += HandleHitLanded;
+        }
 
         // Cache ResourceDefinitions by resourceId for threshold checks
         if (ResourceManager.Instance != null)
@@ -111,8 +114,10 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
 
     private void OnDestroy()
     {
-        if (abilitySystem != null)
-            abilitySystem.OnAbilityUsed -= HandleAbilityUsed;
+        if (abilitySystem == null) return;
+
+        abilitySystem.OnAbilityUsed -= HandleAbilityUsed;
+        abilitySystem.OnHitLanded -= HandleHitLanded;
     }
 
     // ── Core API ──────────────────────────────────────────────────────────
@@ -363,6 +368,27 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
                     ClearOverride(barId, index);
                 }
             }
+        }
+    }
+
+    // ── Hit Procs (event-driven) ──────────────────────────────────────────
+
+    // Each proc on the ability that hit rolls a d20 against its DC (no percentages, Audit 5 O2);
+    // a success opens its override on the slot holding that ability.
+    private void HandleHitLanded(AbilityDefinition ability, ControllerBrain target)
+    {
+        if (hotbarSystem == null || ability.hitProcs == null || ability.hitProcs.Count == 0) return;
+
+        var (barId, slotIndex) = hotbarSystem.FindSlotForAbility(ability.abilityId);
+        if (barId == null) return;
+
+        foreach (var proc in ability.hitProcs)
+        {
+            if (proc?.targetAbility == null) continue;
+            if (DiceRoll.D20().Roll() < proc.dc) continue;
+
+            ApplyOverride(barId, slotIndex, proc.targetAbility,
+                          TransformationType.HitProc, proc.windowSeconds, 30);
         }
     }
 

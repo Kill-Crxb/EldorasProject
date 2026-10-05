@@ -15,7 +15,7 @@ MonoBehaviour:
   effectTrigger: 19
   waitForAnimUnlock: 1
   maxDuration: 2
-  animationLayer: 0
+  castWhileMoving: 1
   animationTrigger: BasicAttack1
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
@@ -38,6 +38,39 @@ MonoBehaviour:
   parryEnablesCounter: 1
   counterWindowDuration: 1
   blockStartupTime: 0.1
+  parryFrames: 0
+  speedClass: 1
+  frames:
+    startup: 16
+    active: 20
+    recovery: 30
+    cancelFrom: 14
+    cancelTo: 24
+    iframeFrom: 0
+    iframeTo: 0
+    armorFrom: 0
+    armorTo: 0
+  bakedClip: {fileID: 7400000, guid: 2e2511c4fa5b176498a34c04f8001c40, type: 2}
+  bakedState: 518653138
+  bakedLayer: 3
+  bakedFade: 0
+  bakedStartTime: 0
+  hit:
+    guard: 0
+    onHit: 1
+    onHitFrames: 18
+    blockStamina: 4
+    blockAdvantage: -2
+    tracking: 0
+    hitStop: 4
+    feel: 1
+    bypass: 0
+  routes:
+  - into: {fileID: 11400000, guid: 9ebeac94c51d0744e9c6909a78ae9f95, type: 2}
+    intoCategory: 1
+    when: 1
+    costStamina: 0
+    costMana: 0
   abilityId: BasicAttack1
   abilityName: BasicAttack1
   description: 
@@ -72,30 +105,3 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
-  speedClass: 1
-  frames:
-    startup: 10
-    active: 4
-    recovery: 16
-    cancelFrom: 14
-    cancelTo: 24
-    iframeFrom: 0
-    iframeTo: 0
-    armorFrom: 0
-    armorTo: 0
-  hit:
-    guard: 0
-    onHit: 1
-    onHitFrames: 18
-    blockStamina: 4
-    blockAdvantage: -2
-    tracking: 0
-    hitStop: 4
-    feel: 1
-    bypass: 0
-  routes:
-  - into: {fileID: 11400000, guid: 9ebeac94c51d0744e9c6909a78ae9f95, type: 2}
-    intoCategory: 1
-    when: 1
-    costStamina: 0
-    costMana: 0

@@ -3,6 +3,8 @@ using UnityEngine;
 // Hit states — Combat_Framework.md §5, roadmap CF2.
 // The move says which state its hit causes; the damage that landed says how long. A hit state is a
 // status raising CannotAct, so AbilitySystem's hard-control cancel does the interrupting.
+// Combat_Framework §3.1: a guarded hit puts the defender in blockstun, never a hit state. A hit
+// that gets round the guard (flanked), or a guard broken by the hit, does apply one (B29).
 public partial class AbilityDefinition
 {
     const float MinHitStateScale = 0.5f;
@@ -13,10 +15,10 @@ public partial class AbilityDefinition
         if (hit.onHit == HitState.None || hit.onHitFrames <= 0) return;
         if (target == null || applied <= 0f) return;
         if (target.Health != null && !target.Health.IsAlive()) return;
-        if (IsBlocking(target)) return;
+        if (target.Damage != null && target.Damage.LastHitGuarded) return;
 
-        AbilitySystem targetAbilities = target.GetModule<AbilitySystem>();
-        if (targetAbilities != null && targetAbilities.IsArmored) return;
+        ICombatantState targetState = target.GetProvider<ICombatantState>();
+        if (targetState != null && targetState.IsArmored) return;
 
         StatusDefinition status = LoadHitState(hit.onHit);
         if (status == null) return;
@@ -25,14 +27,6 @@ public partial class AbilityDefinition
         float scale = average > 0f ? Mathf.Clamp(applied / average, MinHitStateScale, MaxHitStateScale) : 1f;
 
         target.GetModule<StatusSystem>()?.Apply(status, caster, hit.onHitFrames * scale / 60f);
-    }
-
-    // Combat_Framework §3.1: a guarded hit puts the defender in blockstun, never a hit state. A guard
-    // broken by the hit is already down by now, so that hit does apply one.
-    static bool IsBlocking(ControllerBrain target)
-    {
-        Blackboard blackboard = target.Blackboard;
-        return blackboard != null && blackboard.GetBool(BlackboardKey.IsBlocking);
     }
 
     float AverageDamage(ControllerBrain caster)

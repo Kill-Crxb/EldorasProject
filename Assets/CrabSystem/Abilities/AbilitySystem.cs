@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
+public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICombatantState
 {
     public int InitOrder => 80;
 
@@ -49,7 +49,10 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     private DiceProfile cachedNaturalWeapon;
 
     private AbilityDefinition currentAbility = null;
-    private float abilityStartTime;
+    private float moveClock;
+    private MovePhase movePhase;
+    private Animator frozenAnimator;
+    private float hitStopUntil;
     private Coroutine safetyTimeoutCoroutine;
 
     private string currentlyCastingAbility = null;
@@ -57,7 +60,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     private bool isAnimationLocked = false;
     private bool isInvincible = false;
-    private HashSet<Collider> activeHitboxes = new HashSet<Collider>();
+    private readonly List<WeaponHitbox> hitboxes = new List<WeaponHitbox>();
 
     private AbilityDefinition lastCompletedAbility = null;
     private float lastAbilityCompleteTime = 0f;
@@ -75,19 +78,27 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
     public bool IsExecuting => currentAbility != null || currentlyCastingAbility != null || isAnimationLocked;
     public AbilityDefinition CurrentAbility => currentAbility;
     public string CurrentAbilityId => currentAbility?.abilityId;
-    // Frames since the current move started, at 60 fps. -1 when nothing is executing.
-    public int CurrentMoveFrame => currentAbility != null ? Mathf.FloorToInt((Time.time - abilityStartTime) * 60f) : -1;
+    public bool IsHitStopped => hitStopUntil > 0f;
+    // Frames since the current move started, at 60 fps, from the move clock. -1 when nothing is executing.
+    public int CurrentMoveFrame => currentAbility != null ? Mathf.FloorToInt(moveClock) : -1;
+    // From the clip's events: HitboxStart opens Active, HitboxEnd opens Recovery.
+    public MovePhase CurrentPhase => currentAbility != null ? movePhase : MovePhase.None;
     public bool IsArmored => currentAbility != null && currentAbility.HasArmorAt(CurrentMoveFrame);
     public bool IsInvincible => isInvincible;
     public bool HitboxesLive { get; private set; }
     public float HitboxesLiveFor => HitboxesLive ? Time.time - hitboxesLiveAt : 0f;
     private float hitboxesLiveAt;
+    public bool IsGuarding => guard != null && guard.IsGuarding;
+    public bool InBlockstun => guard != null && guard.InBlockstun;
 
     public event Action<string> OnAbilityUsed;
     public event Action<string, float> OnAbilityCooldownChanged;
     public event Action<string> OnAbilityCastStart;
     public event Action<string> OnAbilityCastComplete;
     public event Action<AnimationEventType> OnAbilityAnimationEvent;
+    // A hit from this entity's ability connected (melee or projectile). SlotTransformationSystem
+    // rolls the ability's procs off it.
+    public event Action<AbilityDefinition, ControllerBrain> OnHitLanded;
     private void SetFact(int key, bool value) => blackboard?.SetBool(key, value);
 
     private void UpdateExecutingFact()
@@ -192,11 +203,64 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
     public void UpdateModule()
     {
+        TickHitStop();
         if (!isEnabled) return;
 
         UpdateCooldownTimers();
         UpdateCasting();
         UpdateChainWindow();
+        TickMoveClock();
+    }
+
+    // Until the entity clock lands (CrabSystem_Standard §9).
+    private static float Delta => Time.deltaTime;
+
+    // Animation events drive every move (decided 5 Oct): hitboxes, phases and the end come from the
+    // clip, so timing is tuned by editing the clip. This counter only measures — frames at 60 fps since
+    // the move started — for blockstun maths, armour windows and MoveClockTrace, which compares the
+    // clip's events with the move's baked frames. It stops while the animator is hit-stopped, so the
+    // two always pause together.
+    private void TickMoveClock()
+    {
+        if (currentAbility == null || IsHitStopped) return;
+        moveClock += Delta * 60f;
+    }
+
+    // Hit-stop is gameplay timing (CrabSystem_Standard §9: animator speed 0, never a second clock), so
+    // this is the one owner of animator.speed on the entity. Called on the attacker and the defender
+    // when a hit connects (NotifyHitLanded) and by GuardModule for blocks, parries and guard breaks.
+    // Max-merge: a second stop extends to whichever ends later, it never adds. Unscaled, so nothing
+    // that touches time can stretch it.
+    public void HitStop(int frames)
+    {
+        if (frames <= 0) return;
+
+        Animator animator = brain != null ? brain.EntityAnimator : null;
+        if (animator == null) return;
+
+        if (frozenAnimator != null && frozenAnimator != animator) frozenAnimator.speed = 1f;
+        frozenAnimator = animator;
+
+        float until = Time.unscaledTime + frames / 60f;
+        if (until > hitStopUntil) hitStopUntil = until;
+        animator.speed = 0f;
+    }
+
+    // Not gated on isEnabled: disabling mid-freeze must still thaw the animator.
+    private void TickHitStop()
+    {
+        if (hitStopUntil <= 0f) return;
+        if (Time.unscaledTime < hitStopUntil) return;
+        EndHitStop();
+    }
+
+    // Restores to 1: nothing else writes animator.speed. When attack speed becomes a stat, this
+    // becomes that stat.
+    private void EndHitStop()
+    {
+        hitStopUntil = 0f;
+        if (frozenAnimator != null) frozenAnimator.speed = 1f;
+        frozenAnimator = null;
     }
 
     private void HandleLoaded()
@@ -294,8 +358,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         }
     }
 
+    private void OnDisable()
+    {
+        EndHitStop();
+    }
+
     private void OnDestroy()
     {
+        EndHitStop();
         if (brain != null) brain.OnLoaded -= HandleLoaded;
 
         if (blackboard != null)
@@ -549,7 +619,8 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         if (guard != null) guard.MoveStarted(ability);
 
         currentAbility = ability;
-        abilityStartTime = Time.time;
+        moveClock = 0f;
+        movePhase = MovePhase.Startup;
         UpdateExecutingFact();
 
         // Layers need nothing: the Actions layers show while their state plays (rest rule), and
@@ -557,8 +628,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         SetFact(BlackboardKey.MoveRooted, !ability.castWhileMoving);
         EnterUpperBodyState(StartStateFor(ability));
 
-        if (animationProvider != null && !string.IsNullOrEmpty(ability.animationTrigger))
-            animationProvider.TriggerCombatAnimation(ability.animationTrigger);
+        StartAnimation(ability);
 
         if (ability.castEffectPrefab != null)
             vfxSystem?.SpawnEffect(ability.castEffectPrefab, VFXAnchor.CastOrigin);
@@ -661,32 +731,39 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
 
         OnAbilityAnimationEvent?.Invoke(eventType);
 
-        switch (eventType)
-        {
-            case AnimationEventType.HitboxStart:
-                if (currentAbility == null) break;
-                EnableAbilityHitboxes();
-                EnterMeleePhase(UpperBodyState.MeleeSwing);
-                break;
-            case AnimationEventType.HitboxEnd:
-                DisableAbilityHitboxes();
-                EnterMeleePhase(UpperBodyState.MeleeRecovery);
-                break;
-        }
+        HandleTimingEvent(eventType);
 
         if (currentAbility == null) return;
 
         if (eventType == currentAbility.effectTrigger)
             ExecuteAbilityEffects(currentAbility);
 
-        if (eventType == AnimationEventType.AnimUnlocked)
-            HandleAnimationUnlocked();
-
         if (eventType == AnimationEventType.ComboWindowStart)
             OpenChainWindow();
 
         if (eventType == AnimationEventType.ComboWindowEnd)
             CloseChainWindow();
+    }
+
+    private void HandleTimingEvent(AnimationEventType eventType)
+    {
+        switch (eventType)
+        {
+            case AnimationEventType.HitboxStart:
+                if (currentAbility == null) return;
+                movePhase = MovePhase.Active;
+                EnableAbilityHitboxes();
+                EnterMeleePhase(UpperBodyState.MeleeSwing);
+                return;
+            case AnimationEventType.HitboxEnd:
+                if (currentAbility != null) movePhase = MovePhase.Recovery;
+                DisableAbilityHitboxes();
+                EnterMeleePhase(UpperBodyState.MeleeRecovery);
+                return;
+            case AnimationEventType.AnimUnlocked:
+                HandleAnimationUnlocked();
+                return;
+        }
     }
 
     private void HandleAnimationUnlocked()
@@ -813,21 +890,28 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         return state.definition.cooldown;
     }
 
-    /// <summary>
-    /// Enables only the hitboxes the executing ability names. An ability with no tags enables
-    /// every hitbox, which is how weapon abilities behaved before tagging existed.
-    /// Enable() can still refuse on its own stance filter, so a match is not a guarantee.
-    /// </summary>
+    // Hitboxes sign up with their owner once they find their brain (weapons are parented to a
+    // socket after they spawn), and leave when destroyed, so a swing never searches the hierarchy.
+    public void RegisterHitbox(WeaponHitbox hitbox)
+    {
+        if (hitbox == null || hitboxes.Contains(hitbox)) return;
+        hitboxes.Add(hitbox);
+    }
+
+    public void UnregisterHitbox(WeaponHitbox hitbox) => hitboxes.Remove(hitbox);
+
+    // Enables only the hitboxes the executing ability names. An ability with no tags enables
+    // every hitbox, which is how weapon abilities behaved before tagging existed. Enable() can
+    // still refuse on its own stance filter, so a match is not a guarantee.
     private void EnableAbilityHitboxes()
     {
-        var hitboxes = brain.GetComponentsInChildren<WeaponHitbox>(true);
         var tags = currentAbility != null ? currentAbility.hitboxTags : null;
 
         int matched = 0;
 
         foreach (var hitbox in hitboxes)
         {
-            if (!hitbox.MatchesTags(tags)) continue;
+            if (hitbox == null || !hitbox.MatchesTags(tags)) continue;
 
             hitbox.Enable();
             matched++;
@@ -840,19 +924,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
             Debug.LogWarning($"[AbilitySystem] '{currentAbility.abilityName}' names hitbox tag(s) " +
                              $"[{string.Join(", ", tags)}] but nothing under {brain.EntityName} carries them — " +
                              $"this attack cannot connect. Check the tags on the model's hitboxes.");
-
-        if (debugLogging)
-            Debug.Log($"[AbilitySystem] EnableAbilityHitboxes — {matched}/{hitboxes.Length} matched for " +
-                      $"'{currentAbility?.abilityName ?? "(none)"}'");
     }
 
     private void DisableAbilityHitboxes()
     {
-        var hitboxes = brain.GetComponentsInChildren<WeaponHitbox>(true);
-        if (debugLogging)
-            Debug.Log($"[AbilitySystem] DisableAbilityHitboxes — found {hitboxes.Length} WeaponHitbox component(s) under {brain.EntityName}");
         foreach (var hitbox in hitboxes)
-            hitbox.Disable();
+        {
+            if (hitbox != null) hitbox.Disable();
+        }
 
         HitboxesLive = false;
     }
@@ -907,28 +986,41 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider
         return instance.IsTemporary();
     }
 
-    public void NotifyHitLanded(string sourceAbilityId, ControllerBrain target)
+    // Called by WeaponHitbox (after the hit has resolved) and ProjectilePayload when a hit from this
+    // entity connects. A clean hit freezes both fighters for the move's hit-stop; several targets in
+    // one swing max-merge, they don't add. A guarded hit is GuardModule's to freeze (block / parry).
+    public void NotifyHitLanded(AbilityDefinition ability, ControllerBrain target)
     {
-        if (!abilityStates.TryGetValue(sourceAbilityId, out var state)) return;
-        var ability = state.definition;
-        if (ability.hitProcs == null || ability.hitProcs.Count == 0) return;
+        if (ability == null) return;
 
-        var hotbar = brain.GetModule<HotbarSystem>();
-        var transforms = brain.GetModule<SlotTransformationSystem>();
-        if (hotbar == null || transforms == null) return;
-
-        var (barId, slotIndex) = hotbar.FindSlotForAbility(sourceAbilityId);
-        if (barId == null) return;
-
-        foreach (var proc in ability.hitProcs)
+        if (ability == currentAbility && ability.HasMoveData && !Guarded(target))
         {
-            if (proc?.targetAbility == null) continue;
-            if (UnityEngine.Random.value < proc.probability)
-            {
-                transforms.ApplyOverride(barId, slotIndex, proc.targetAbility,
-                                         TransformationType.HitProc,
-                                         proc.windowSeconds, 30);
-            }
+            HitStop(ability.hit.hitStop);
+            AbilitySystem defender = target != null ? target.Abilities : null;
+            if (defender != null) defender.HitStop(ability.hit.hitStop);
         }
+
+        OnHitLanded?.Invoke(ability, target);
+    }
+
+    private static bool Guarded(ControllerBrain target)
+        => target != null && target.Damage != null && target.Damage.LastHitGuarded;
+
+    // A baked move starts its own state, so the clip begins on the frame the move does — not after
+    // a transition, or after the previous swing's tail when the same move is pressed again (the
+    // trigger had to wait for the state to exit first). The explicit start time restarts a state
+    // that is already playing. Unbaked abilities still set their trigger.
+    private void StartAnimation(AbilityDefinition ability)
+    {
+        if (string.IsNullOrEmpty(ability.animationTrigger)) return;
+
+        Animator animator = brain.EntityAnimator;
+        if (ability.bakedState != 0 && animator != null && ability.bakedLayer < animator.layerCount)
+        {
+            animator.CrossFadeInFixedTime(ability.bakedState, ability.bakedFade, ability.bakedLayer, ability.bakedStartTime);
+            return;
+        }
+
+        if (animationProvider != null) animationProvider.TriggerCombatAnimation(ability.animationTrigger);
     }
 }

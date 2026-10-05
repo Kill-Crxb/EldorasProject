@@ -12,7 +12,8 @@ using System.Collections.Generic;
 ///   - A knuckle bone child for unarmed / fist attacks
 ///   - Any other strike surface on any entity
 ///
-/// Driven by AbilitySystem via HitboxStart / HitboxEnd animation events.
+/// Registers with its owner's AbilitySystem once it finds its brain; AbilitySystem switches it
+/// on and off for each swing.
 /// On hit, reads the currently executing ability from the attacker's AbilitySystem
 /// and delivers its damage effects to the target — no ability re-execution.
 ///
@@ -20,7 +21,7 @@ using System.Collections.Generic;
 ///   1. Add any trigger Collider to the GameObject (Box, Capsule, Sphere — any type works).
 ///   2. Add this component and drag that Collider into the Hitbox Collider field.
 ///   3. Set hitLayers to the layers you want to register hits on.
-///   4. AbilitySystem calls Enable() / Disable() when HitboxStart / HitboxEnd fire.
+///   4. AbilitySystem calls Enable() / Disable() for each swing.
 /// </summary>
 /// <summary>Which combat stance a hitbox is allowed to fire in.</summary>
 public enum HitboxStanceFilter
@@ -131,6 +132,7 @@ public class WeaponHitbox : MonoBehaviour
         abilitySystem = brain?.GetModule<AbilitySystem>();
         damageSystem = brain?.GetModule<DamageSystem>();
         stanceModule = brain?.GetModule<CombatStanceModule>();
+        if (abilitySystem != null) abilitySystem.RegisterHitbox(this);
 
         if (debugHitbox)
         {
@@ -139,6 +141,20 @@ public class WeaponHitbox : MonoBehaviour
             else
                 Debug.LogWarning($"[WeaponHitbox] '{weaponName}' could not resolve ControllerBrain — will retry on Enable()");
         }
+    }
+
+    void OnDestroy()
+    {
+        if (abilitySystem != null) abilitySystem.UnregisterHitbox(this);
+    }
+
+    // A weapon handed to another character (or dropped) signs up with its new owner.
+    void OnTransformParentChanged()
+    {
+        if (abilitySystem != null) abilitySystem.UnregisterHitbox(this);
+        brain = null;
+        abilitySystem = null;
+        TryResolveBrain();
     }
 
     // =====================================================================
@@ -240,9 +256,6 @@ public class WeaponHitbox : MonoBehaviour
 
         AbilityDefinition ability = abilitySystem?.CurrentAbility;
 
-        // Notify hit procs — rolls HitProcEntry probability per entry on the source ability
-        abilitySystem?.NotifyHitLanded(ability?.abilityId, targetBrain);
-
         float applied = 0f;
 
         if (ability?.damageEffects != null && ability.damageEffects.Count > 0)
@@ -295,8 +308,12 @@ public class WeaponHitbox : MonoBehaviour
         ability?.ApplyStatuses(targetBrain, brain);
         ability?.ApplyKnockback(targetBrain, brain.transform);
 
-        // A blocked or parried hit applies nothing and causes no hit state.
+        // A blocked or parried hit causes no hit state; ApplyHitState asks the target's DamageSystem.
         ability?.ApplyHitState(targetBrain, brain, applied);
+
+        // After the hit resolved, so hit-stop knows whether it was guarded. Procs roll off this too
+        // (SlotTransformationSystem listens).
+        if (abilitySystem != null) abilitySystem.NotifyHitLanded(ability, targetBrain);
     }
 
     private void TryHitLegacy(Collider other)

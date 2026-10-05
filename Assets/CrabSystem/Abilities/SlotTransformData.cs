@@ -17,19 +17,17 @@ public enum TransformationType
 
 // ComparisonOp (GTE/LTE) is defined in BlackboardCondition.cs — reused here.
 
-/// <summary>
-/// One hit-proc entry on an AbilityDefinition.
-/// When a hit lands with the source ability, each entry is rolled independently.
-/// </summary>
+// One hit-proc entry on an AbilityDefinition. When a hit lands with the source ability, each
+// entry rolls its own d20 against its DC (Audit 5 O2: dice, not percentages).
 [Serializable]
 public class HitProcEntry
 {
     [Tooltip("Ability that becomes available on the slot when this proc fires")]
     public AbilityDefinition targetAbility;
 
-    [Range(0f, 1f)]
-    [Tooltip("0 = never, 1 = always")]
-    public float probability = 0.25f;
+    [Range(1, 21)]
+    [Tooltip("Fires on a d20 roll of this or higher. 1 = always, 11 = half the time, 21 = never.")]
+    public int dc = 16;
 
     [Tooltip("How long the override window stays open (seconds)")]
     public float windowSeconds = 8f;

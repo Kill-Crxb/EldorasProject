@@ -27,6 +27,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
     private bool isInitialized = false;
 
     public event Action OnInventoryChanged;
+    public event Action<ISaveable> Dirty;
     public event Action<ItemInstance> OnItemAdded;
 
     // True while a save or a container's contents are being put back. OnItemAdded means "this
@@ -71,6 +72,13 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
     public string GetSaveId() => "inventory";
     public int GetSaveVersion() => 1;
+    public int LoadOrder => 40;
+
+    private void RaiseChanged()
+    {
+        OnInventoryChanged?.Invoke();
+        Dirty?.Invoke(this);
+    }
 
     public string GetSaveData()
     {
@@ -132,7 +140,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
     private void EndRestore()
     {
         restoring = false;
-        OnInventoryChanged?.Invoke();
+        RaiseChanged();
     }
 
     // ── Save Data Structures ──────────────────────────────────────────────
@@ -176,7 +184,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         if (restoring) return true;
 
         OnItemAdded?.Invoke(item);
-        OnInventoryChanged?.Invoke();
+        RaiseChanged();
 
         return true;
     }
@@ -191,7 +199,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         item.RemoveFromGrid();
         inventoryItems.Remove(item);
         OnItemRemoved?.Invoke(item);
-        OnInventoryChanged?.Invoke();
+        RaiseChanged();
 
         return true;
     }
@@ -218,7 +226,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
             item?.RemoveFromGrid();
 
         inventoryItems.Clear();
-        OnInventoryChanged?.Invoke();
+        RaiseChanged();
     }
 
     #endregion

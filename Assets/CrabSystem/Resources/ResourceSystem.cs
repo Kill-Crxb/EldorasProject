@@ -273,6 +273,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
 
     public string GetSaveId() => "resources";
     public int GetSaveVersion() => 1;
+    public int LoadOrder => 70;
 
     public string GetSaveData()
     {

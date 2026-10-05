@@ -16,7 +16,7 @@ MonoBehaviour:
   waitForAnimUnlock: 1
   maxDuration: 0.35
   castWhileMoving: 1
-  animationTrigger: Parry
+  animationTrigger: 
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   projectileData: {fileID: 0}
@@ -50,6 +50,7 @@ MonoBehaviour:
     iframeTo: 0
     armorFrom: 0
     armorTo: 0
+  bakedClip: {fileID: 0}
   hit:
     guard: 0
     onHit: 0

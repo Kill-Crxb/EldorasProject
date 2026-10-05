@@ -2919,7 +2919,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PostureModule
   isEnabled: 1
-  maxPosture: 30
+  maxPosture: 15
   recoveryPerSecond: 6
   recoveryDelay: 1.5
   breakSeconds: 1
@@ -3067,6 +3067,9 @@ MonoBehaviour:
   parryPostureMultiplier: 1.5
   defaultBlockstunFrames: 12
   minBlockstunFrames: 8
+  blockedStopFrames: 2
+  parryStopFrames: 10
+  guardBreakStopFrames: 12
 --- !u!1 &6587917222620765854
 GameObject:
   m_ObjectHideFlags: 0
