@@ -43,6 +43,8 @@ public class CombatDamagePacket
     public readonly float explosionDamage;
     public readonly int explosions;
     public readonly float accuracy;
+    // Set by the attacker (a riposte, GuardModule.TakeRiposte); the defender rolls the d20 twice.
+    public readonly bool advantage;
 
     /// <summary>
     /// Constructor - creates an immutable damage packet
@@ -64,7 +66,8 @@ public class CombatDamagePacket
         DamageSource source = DamageSource.Other,
         float explosionDamage = 0f,
         int explosions = 0,
-        float accuracy = 0f)
+        float accuracy = 0f,
+        bool advantage = false)
     {
         this.baseDamage = baseDamage;
         this.finalDamage = finalDamage;
@@ -83,6 +86,7 @@ public class CombatDamagePacket
         this.explosionDamage = explosionDamage;
         this.explosions = explosions;
         this.accuracy = accuracy;
+        this.advantage = advantage;
     }
 
     /// <summary>Create a simple damage packet for testing</summary>

@@ -16,6 +16,7 @@ public class ActionTrace : MonoBehaviour
     [SerializeField] private float rescanInterval = 1f;
 
     private readonly HashSet<AbilitySystem> tracked = new();
+    private readonly HashSet<GuardModule> trackedGuards = new();
     private float nextScan;
 
     // A copy placed in a scene loaded after the self-spawned one stands down, so lines aren't doubled.
@@ -45,38 +46,47 @@ public class ActionTrace : MonoBehaviour
 
             AbilitySystem a = abilities;
             a.OnAbilityUsed += id => Log(a, $"used {id}");
-            a.OnBlockStart += () => Log(a, "guard UP");
-            a.OnBlockEnd += () => Log(a, "guard DOWN");
-            a.OnPerfectBlock += () => Log(a, "PARRY");
-            a.OnParryWindowOpened += frames => Log(a, $"parry window {frames}f");
-            a.OnGuardedHit += (cost, posture, stun) => Log(a, $"blocked  -{cost} stamina {Stamina(a)}  +{posture} posture {Posture(a)}  blockstun {stun}f");
-            a.OnPostureDamaged += posture => Log(a, $"parried  +{posture:0.#} posture {Posture(a)}");
-            a.OnGuardBreak += () => Log(a, "GUARD BROKEN");
-            a.OnGuardFlanked += angle => Log(a, $"hit OUTSIDE guard arc ({angle:0}° off facing)");
+        }
+
+        foreach (GuardModule guard in FindObjectsByType<GuardModule>())
+        {
+            if (!trackedGuards.Add(guard)) continue;
+
+            GuardModule g = guard;
+            g.OnBlockStart += () => Log(g, "guard UP");
+            g.OnBlockEnd += () => Log(g, "guard DOWN");
+            g.OnPerfectBlock += () => Log(g, "PARRY");
+            g.OnParryWindowOpened += frames => Log(g, $"parry window {frames}f");
+            g.OnGuardedHit += (cost, posture, stun) => Log(g, $"blocked  -{cost} stamina {Stamina(g)}  +{posture} posture {Posture(g)}  blockstun {stun}f");
+            g.OnPostureDamaged += posture => Log(g, $"parried  +{posture:0.#} posture {Posture(g)}");
+            g.OnGuardBreak += () => Log(g, "GUARD BROKEN");
+            g.OnGuardFlanked += angle => Log(g, $"hit OUTSIDE guard arc ({angle:0}° off facing)");
         }
     }
 
-    private static string Posture(AbilitySystem abilities)
+    private static string Posture(Component who)
     {
-        PostureModule posture = abilities.Brain != null ? abilities.Brain.GetModule<PostureModule>() : null;
+        ControllerBrain brain = who.GetComponentInParent<ControllerBrain>();
+        PostureModule posture = brain != null ? brain.GetModule<PostureModule>() : null;
         if (posture == null) return "(no PostureModule)";
 
         return $"({posture.Current:0}/{posture.Max:0})";
     }
 
-    private static string Stamina(AbilitySystem abilities)
+    private static string Stamina(Component who)
     {
-        ResourceSystem resources = abilities.Brain != null ? abilities.Brain.Resources : null;
+        ControllerBrain brain = who.GetComponentInParent<ControllerBrain>();
+        ResourceSystem resources = brain != null ? brain.Resources : null;
         ResourceDefinition stamina = resources != null ? resources.FindDefinition("stamina") : null;
         if (stamina == null) return "(no stamina)";
 
         return $"({resources.GetResource(stamina):0}/{resources.GetMaxResource(stamina):0})";
     }
 
-    private void Log(AbilitySystem abilities, string what)
+    private void Log(Component who, string what)
     {
-        if (this == null || abilities == null) return;
-        Debug.Log($"[ActionTrace] {Time.time:0.00}  {abilities.transform.root.name}  {what}");
+        if (this == null || who == null) return;
+        Debug.Log($"[ActionTrace] {Time.time:0.00}  {who.transform.root.name}  {what}");
     }
 }
 #endif

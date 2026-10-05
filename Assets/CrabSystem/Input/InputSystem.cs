@@ -438,6 +438,10 @@ public class InputSystem : MonoBehaviour,
 
     // IAbilityControlSource
 
+    // Read straight off the action, so the press frame counts as held whatever order the modules
+    // update in. Only Player mode holds a guard; an AI-driven entity guards through AIControlSource.
+    public bool GuardHeld => currentMode == InputMode.Player && inputActions != null && inputActions.Player.Block.IsPressed();
+
     public string GetAbilitySlotToTrigger()
     {
         switch (currentMode)

@@ -1,16 +1,16 @@
 using UnityEngine;
 
-/// <summary>
-/// The AI's hands on the controls. Goals write intent here (steer, face, stop); MovementSystem
-/// reads it every frame exactly as it reads the player's InputSystem.
-///
-/// Also holds the few pieces of per-entity AI memory a goal needs between frames. Goals are
-/// ScriptableObjects shared by every NPC that uses them, so nothing per-entity can live on a goal.
-///
-/// Setup: put it on a child of the brain. At LateInitialize it makes itself the active movement
-/// control source, replacing InputSystem's AI mode (and its StubAIControlSource).
-/// </summary>
-public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSource
+// The AI's hands on the controls. Goals write intent here (steer, face, stop, hold guard);
+// MovementSystem and GuardModule read it exactly as they read the player's InputSystem.
+//
+// Also holds the few pieces of per-entity AI memory a goal needs between frames. Goals are
+// ScriptableObjects shared by every NPC that uses them, so nothing per-entity can live on a goal.
+//
+// Setup: put it on a child of the brain. At LateInitialize it makes itself the active movement
+// control source, replacing InputSystem's AI mode (and its StubAIControlSource). As the ability
+// control source it answers brain.GetProvider<IAbilityControlSource>() because InputSystem is
+// player-only and switched off on an NPC.
+public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSource, IAbilityControlSource
 {
     [SerializeField] private bool isEnabled = true;
 
@@ -25,7 +25,7 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     public bool DeflectReadThisSwing { get; set; }
     public int StringPressesLeft { get; set; }
 
-    // The AI's block key. AbilitySystem keeps a guard up only while this is held.
+    // The AI's block key. GuardModule keeps a guard up only while this is held.
     public bool GuardHeld { get; set; }
 
     public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
@@ -86,6 +86,12 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
         input.LookDirection = lookDirection;
         return input;
     }
+
+    // IAbilityControlSource. Goals fire the moveset directly for now (roadmap A5, ability half).
+
+    public string GetAbilitySlotToTrigger() => null;
+
+    // Shared by both control-source interfaces.
 
     public void OnActivated() { }
     public void OnDeactivated() => Release();

@@ -2,7 +2,7 @@ using UnityEngine;
 
 // Fight Target plus a guard. When the target starts an attack in range, roll once for that swing;
 // on a success, hold block for a moment instead of attacking. The hold goes through
-// AIControlSource.GuardHeld, which AbilitySystem reads as the AI's block key.
+// AIControlSource.GuardHeld, which GuardModule reads as the AI's block key.
 [CreateAssetMenu(fileName = "Goal_FightAndGuard", menuName = "AI/GOAP/Goals/Fight And Guard")]
 public class FightAndGuardGoal : FightTargetGoal
 {

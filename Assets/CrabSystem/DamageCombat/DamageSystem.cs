@@ -7,7 +7,7 @@ using UnityEngine;
 public enum GuardOutcome { None, Blocked, Parried, Broken }
 
 /// <summary>
-/// Passed to OnDamageIntercept listeners while the defender is blocking. The guard (AbilitySystem)
+/// Passed to OnDamageIntercept listeners while the defender is blocking. The guard (GuardModule)
 /// says what it made of the hit; DamageSystem then resolves the damage for that outcome.
 /// </summary>
 public class DamageInterceptArgs
@@ -52,6 +52,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     private IStatProvider stats;
     private IHealthProvider health;
     private Blackboard blackboard;
+    private GuardModule guard;
 
     private bool isDead;
     private ControllerBrain incomingAttacker;
@@ -128,6 +129,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         stats = brain.Stats;
         health = brain.Resources;
         blackboard = brain.GetModule<BlackboardSystem>()?.Blackboard;
+        guard = brain.GetModule<GuardModule>();
 
         if (stats == null || health == null)
         {
@@ -175,6 +177,11 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         float critMult = 1f;
         float accuracy = stats != null ? stats.GetValue(AccuracyStat) : 0f;
 
+        // Combat_Framework §3.2: a parry's riposte makes this entity's next attack a read. The attacker
+        // owns it, so the packet carries it; the defender rolls twice keeping the higher. Ticks never
+        // roll, so they don't spend it.
+        bool advantage = attackData.source != DamageSource.Tick && guard != null && guard.TakeRiposte();
+
         // NOTE: no mitigation here — the ATTACKER builds this packet, so it has
         // no business reading defender stats. Mitigation is applied by the
         // defender in TakeDamage(), using the defender's own StatSystem.
@@ -195,7 +202,8 @@ public class DamageSystem : MonoBehaviour, IBrainModule
             attackData.source,
             explosion,
             attackData.explosions,
-            accuracy
+            accuracy,
+            advantage
         );
 
         OnDamageDealt?.Invoke(packet);
@@ -292,7 +300,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
         hit.accuracy = packet.accuracy;
         hit.defense = BaseDefense + Stat(AvoidanceStat) + Stat(ArmourDefenseStat);
-        hit.advantage = HasAdvantage(attackerBrain);
+        hit.advantage = packet.advantage;
         hit.roll = UnityEngine.Random.Range(1, 21);
         if (hit.advantage) hit.roll = Mathf.Max(hit.roll, UnityEngine.Random.Range(1, 21));
 
@@ -344,14 +352,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     }
 
     private float Stat(string statId) => stats != null ? stats.GetValue(statId) : 0f;
-
-    // Combat_Framework §3.2: a parry's riposte makes the defender's next attack a read, rolled twice
-    // keeping the higher.
-    private bool HasAdvantage(ControllerBrain attackerBrain)
-    {
-        AbilitySystem attackerAbilities = attackerBrain != null ? attackerBrain.GetModule<AbilitySystem>() : null;
-        return attackerAbilities != null && attackerAbilities.TakeRiposte();
-    }
 
     private void Die()
     {

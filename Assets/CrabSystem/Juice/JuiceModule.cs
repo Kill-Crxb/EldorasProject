@@ -87,6 +87,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     private ControllerBrain brain;
     private DamageSystem damage;
     private AbilitySystem abilities;
+    private GuardModule guard;
     private LandingImpactSystem landing;
     private MovementSystem movement;
     private ParkourLocomotionHandler locomotion;
@@ -112,6 +113,7 @@ public class JuiceModule : MonoBehaviour, IBrainModule
     {
         damage = brain.Damage;
         abilities = brain.Abilities;
+        guard = brain.GetModule<GuardModule>();
         landing = brain.GetModule<LandingImpactSystem>();
 
         if (damage == null)
@@ -123,8 +125,8 @@ public class JuiceModule : MonoBehaviour, IBrainModule
 
         damage.OnDamageApplied += HandleDamageApplied;
         damage.OnDeath += HandleDeath;
-        if (abilities != null) abilities.OnPerfectBlock += HandleParry;
-        if (abilities != null) abilities.OnGuardBreak += HandleGuardBreak;
+        if (guard != null) guard.OnPerfectBlock += HandleParry;
+        if (guard != null) guard.OnGuardBreak += HandleGuardBreak;
         if (abilities != null) abilities.OnAbilityUsed += HandleAbilityUsed;
         if (landing != null) landing.OnLanded += HandleLanded;
 
@@ -140,8 +142,8 @@ public class JuiceModule : MonoBehaviour, IBrainModule
             damage.OnDamageApplied -= HandleDamageApplied;
             damage.OnDeath -= HandleDeath;
         }
-        if (abilities != null) abilities.OnPerfectBlock -= HandleParry;
-        if (abilities != null) abilities.OnGuardBreak -= HandleGuardBreak;
+        if (guard != null) guard.OnPerfectBlock -= HandleParry;
+        if (guard != null) guard.OnGuardBreak -= HandleGuardBreak;
         if (abilities != null) abilities.OnAbilityUsed -= HandleAbilityUsed;
         if (landing != null) landing.OnLanded -= HandleLanded;
         if (locomotion != null) locomotion.OnMoveAction -= HandleMoveAction;

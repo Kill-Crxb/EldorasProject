@@ -16,6 +16,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
     private AbilitySystem abilities;
     private CombatStanceModule stance;
     private EquipmentSystem equipment;
+    private GuardModule guard;
 
     private MovesetChain chain;
     private int nextStep;
@@ -45,6 +46,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         abilities = brain.GetModule<AbilitySystem>();
         stance = brain.GetModule<CombatStanceModule>();
         equipment = brain.GetModule<EquipmentSystem>();
+        guard = brain.GetModule<GuardModule>();
 
         if (abilities == null)
             Debug.LogError($"[MovesetModule] No AbilitySystem on {brain.EntityName}");
@@ -89,7 +91,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
 
         // Held while a step plays or the guard is in blockstun, so a punish comes out on the first free
         // frame. A parry is never held: it can be pressed in blockstun.
-        bool stunned = abilities.InBlockstun && requested != MovesetChain.Parry;
+        bool stunned = guard != null && guard.InBlockstun && requested != MovesetChain.Parry;
         if (stepInFlight != null || stunned)
         {
             Buffer(requested, step);
