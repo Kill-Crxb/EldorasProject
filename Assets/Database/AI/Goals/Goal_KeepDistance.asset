@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19c24aea7547f899283d36b870eaca47, type: 3}
+  m_Name: Goal_KeepDistance
+  m_EditorClassIdentifier: Assembly-CSharp::KeepDistanceGoal
+  goalName: Keep Distance
+  baseWeight: 1
+  requiresTarget: 1
+  minDistance: 0
+  maxDistance: 100
+  minimumActiveDuration: 0
+  minRange: 5
+  maxRange: 9
+  strength: 0.8
+  strafeStrength: 0.45
+  strafeSwap: 2.5
+  fireInterval: 2.5
+  facingTolerance: 15

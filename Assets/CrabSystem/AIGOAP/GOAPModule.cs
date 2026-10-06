@@ -253,18 +253,18 @@ public class GOAPModule : MonoBehaviour, IBrainModule
         // Update world state
         context.UpdateContext();
 
-        // If we have no target, skip GOAP (let FSM handle Idle/Patrol states)
+        // No target: only goals that need none (wander, patrol) may run.
         if (context.target == null)
         {
-            if (currentGoal != null || interruptGoal != null)
+            if (CurrentGoal != null && CurrentGoal.requiresTarget)
             {
-                // Had a goal but lost target - clean up
                 if (debugMode)
                     Debug.Log($"[GOAPModule] Lost target, clearing current goal");
 
                 ClearCurrentGoal();
             }
-            return;
+
+            if (!HasTargetlessGoal()) return;
         }
 
         // Skip if action-locked (ability executing, movement locked, staggered, etc.)
@@ -277,7 +277,7 @@ public class GOAPModule : MonoBehaviour, IBrainModule
 
 
         // Check for interrupts first
-        if (checkInterrupts && ShouldCheckForInterrupt())
+        if (checkInterrupts && context.target != null && ShouldCheckForInterrupt())
         {
             CheckForInterrupt();
         }
@@ -299,6 +299,13 @@ public class GOAPModule : MonoBehaviour, IBrainModule
 
     #region Goal Selection
 
+    private bool HasTargetlessGoal()
+    {
+        foreach (var goal in goalPool)
+            if (goal != null && !goal.requiresTarget) return true;
+        return false;
+    }
+
     /// <summary>
     /// Evaluate all goals and select the best one
     /// </summary>
@@ -311,6 +318,7 @@ public class GOAPModule : MonoBehaviour, IBrainModule
         foreach (var goal in goalPool)
         {
             if (goal == null) continue;
+            if (goal.requiresTarget && context.target == null) continue;
 
             // Permission check first (hard constraints)
             if (!goal.CanExecute(context))

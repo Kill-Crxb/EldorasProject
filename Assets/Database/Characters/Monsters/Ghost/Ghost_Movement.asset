@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 127180e868c11384e889ef675e54fd13, type: 3}
+  m_Name: Ghost_Movement
+  m_EditorClassIdentifier: Assembly-CSharp::MovementProfile
+  walkSpeed: 1.6
+  runSpeed: 3.2
+  sprintSpeed: 4.16
+  startInWalkMode: 0
+  groundAccel: 6
+  airAccel: 8
+  airSpeedCap: 2.5
+  maxHorizontalSpeed: 22
+  maxRiseSpeed: 18
+  groundFriction: 5
+  momentumFriction: 1.2
+  stopSpeed: 1.5
+  landingFrictionGrace: 0.08
+  gravity: 16
+  fallGravityMultiplier: 1.6
+  groundedGravity: -2
+  jumpSpeed: 8
+  jumpCutMultiplier: 0.6
+  coyoteTime: 0.12
+  jumpBufferTime: 0.12
+  snapSuppressAfterJump: 0.1
+  airJumps: 0
+  airJumpSpeed: 7
+  airJumpRefillOnWallJump: 0
+  airJumpRefillOnMantle: 0
+  wallJumps: 3
+  wallJumpRefillOnAirJump: 0
+  wallJumpRefillOnMantle: 0
+  wallJumpUpSpeed: 7
+  wallJumpAwaySpeed: 2
+  wallJumpForwardSpeed: 1
+  wallJumpClimbAngle: 35
+  wallJumpClimbUpSpeed: 9
+  wallJumpClimbAwaySpeed: 1
+  mantleEnabled: 1
+  mantles: 1
+  mantleRefillOnWallJump: 0
+  mantleRefillOnAirJump: 0
+  mantleMinHeight: 0.9
+  mantleMaxHeight: 2
+  mantleClearance: 0.35
+  mantleForwardSpeed: 4
+  mantleMaxUpSpeed: 12
+  mantleCooldown: 0.3
+  crouchSpeed: 1.8
+  crouchHeight: 1
+  crouchResizeSpeed: 6
+  cameraTurnDegreesPerSecond: 1440
+  holdFacingWhileStationary: 1
+  stepSmoothSpeed: 16
+  stepSmoothMaxOffset: 0.4
+  modelLeanMaxAngle: 25
+  modelLeanDegreesPerSecond: 360
+  strafeBias: 0.25
+  strafeRampSpeed: 8
+  airTurnDegreesPerSecond: 90
+  airStrafeSpeed: 3
+  airStrafeAccel: 12
+  airStrafeReturn: 6

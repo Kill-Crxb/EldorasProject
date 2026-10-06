@@ -14,4 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp-Editor::MoveBakeSettings
   controllers:
   - {fileID: 9100000, guid: d6f59a4c72086ce558e2183c86ca29ba, type: 2}
+  - {fileID: 9100000, guid: 1e336813866235ea4a40aa9300a2fc07, type: 2}
+  - {fileID: 9100000, guid: 63c2a92a25bf268218ae5d18ec7ea076, type: 2}
+  - {fileID: 9100000, guid: 5b5a61e0503857e6bac08eb26277ecf3, type: 2}
+  - {fileID: 9100000, guid: 3dc360e84aed70ead9681358a9bd954d, type: 2}
   bakeOnImport: 1

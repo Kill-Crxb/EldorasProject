@@ -15,7 +15,7 @@ public class ArmourShieldModule : MonoBehaviour, IBrainModule
     [SerializeField] private int dieFaces = 4;
 
     [Tooltip("Seconds per segment the shield regains even while being hit. 0 turns the trickle off.")]
-    [SerializeField] private float trickleSeconds = 2f;
+    [SerializeField] private float trickleSeconds = 5f;
 
     [SerializeField] private SoakBar shield = new SoakBar();
 

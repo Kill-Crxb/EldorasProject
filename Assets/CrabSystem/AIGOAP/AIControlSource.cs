@@ -1,4 +1,16 @@
+using System.Collections.Generic;
 using UnityEngine;
+
+// What a goal wants an ability for. Goals ask for a role, not a named ability, so one goal asset
+// serves every creature that has a move in that role.
+public enum AIRole { Melee, Lunge, Ranged, Escape }
+
+[System.Serializable]
+public struct AIRoleAbility
+{
+    public AIRole role;
+    public AbilityDefinition ability;
+}
 
 // The AI's hands on the controls. Goals write intent here (steer, face, stop, hold guard);
 // MovementSystem and GuardModule read it exactly as they read the player's InputSystem.
@@ -14,7 +26,15 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
 {
     [SerializeField] private bool isEnabled = true;
 
+    [Tooltip("The abilities goals use, by role. Each must also be in the entity's AbilitySystem list.")]
+    [SerializeField] private List<AIRoleAbility> roleAbilities = new List<AIRoleAbility>();
+
+    // Every live AI, so a goal can see the others hunting the same target (Surround).
+    private static readonly List<AIControlSource> active = new List<AIControlSource>();
+    public static IReadOnlyList<AIControlSource> Active => active;
+
     private ControllerBrain brain;
+    private PerceptionModule perception;
     private Vector2 moveDirection;
     private Vector2 lookDirection;
 
@@ -25,12 +45,38 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     public bool DeflectReadThisSwing { get; set; }
     public int StringPressesLeft { get; set; }
 
+    // Scratch memory for whichever goal is running. Each goal sets what it uses in OnStart.
+    public Vector3 Home { get; private set; }
+    public Vector3 GoalPoint { get; set; }
+    public float GoalUntil { get; set; }
+    public int GoalPhase { get; set; }
+    public float GoalSign { get; set; } = 1f;
+    public float FleeReadyAt { get; set; }
+
     // The AI's block key. GuardModule keeps a guard up only while this is held.
     public bool GuardHeld { get; set; }
 
     public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
     public bool IsActive => isEnabled && isActiveAndEnabled;
     public string SourceName => "AIControlSource";
+
+    public ControllerBrain Brain => brain;
+    public Transform Target => perception != null ? perception.CurrentTarget : null;
+    public bool IsAlive => brain != null && (brain.Health == null || brain.Health.IsAlive());
+
+    public AbilityDefinition AbilityFor(AIRole role)
+    {
+        foreach (AIRoleAbility entry in roleAbilities)
+            if (entry.role == role && entry.ability != null) return entry.ability;
+        return null;
+    }
+
+    private void OnEnable()
+    {
+        if (!active.Contains(this)) active.Add(this);
+    }
+
+    private void OnDisable() => active.Remove(this);
 
     public void Initialize(ControllerBrain controllerBrain)
     {
@@ -39,6 +85,9 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
 
     public void LateInitialize()
     {
+        perception = brain.GetModule<PerceptionModule>();
+        Home = brain.transform.position;
+
         if (brain.Movement == null)
         {
             Debug.LogWarning($"[AIControlSource] {brain.EntityName} has no MovementSystem");

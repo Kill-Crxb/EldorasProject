@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d848dbbfad4a98effb23772f1c163c8f, type: 3}
+  m_Name: Goal_ChaseMelee
+  m_EditorClassIdentifier: Assembly-CSharp::ChaseMeleeGoal
+  goalName: Chase And Melee
+  baseWeight: 1
+  requiresTarget: 1
+  minDistance: 0
+  maxDistance: 100
+  minimumActiveDuration: 0
+  strength: 1
+  attackInterval: 1.6
+  facingTolerance: 35
+  stopFraction: 0.75
+  backOffFraction: 0.35

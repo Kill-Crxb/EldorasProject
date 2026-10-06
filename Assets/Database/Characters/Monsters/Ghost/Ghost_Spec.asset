@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87bbe0f8b80a16a7099ae1f8b125dfb8, type: 3}
+  m_Name: Ghost_Spec
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::MonsterSpec
+  monsterId: ghost
+  displayName: Ghost
+  modelId: ghost_lv1
+  sourceModel: {fileID: 100000, guid: fd4b310424927a840906404a14eeb5e4, type: 3}
+  sourcePrefab: {fileID: 1000011659465104, guid: e3e8e33af43da834294d5f9a02da77e7, type: 3}
+  clipPrefix: ghost_
+  height: 1.2
+  lift: 0.2
+  yaw: 0
+  attackTrigger: GhostAttack
+  attackSpeed: 1
+  effect1: 0.55
+  hitboxStart: -1
+  hitboxEnd: -1
+  unlock: 0.95
+  hitboxBone: 
+  hitboxTag: 
+  hitboxRadius: 0.35
+  hitboxForward: 0.2
+  health: 30
+  runSpeed: 3.2
+  aggroRange: 18
+  diceCount: 0
+  diceFaces: 4
+  diceFlat: 0
+  abilities:
+  - role: 2
+    ability: {fileID: 11400000, guid: fa997889fbc6333a293288a8cc0c5aa4, type: 2}
+  - role: 3
+    ability: {fileID: 11400000, guid: 324bea334712485a4832203ccc36a991, type: 2}
+  goals:
+  - {fileID: 11400000, guid: 6ccb7a18576b06d9a96a7266d6eb15b4, type: 2}
+  - {fileID: 11400000, guid: f2894e7531a6f3d1a90ab2f7fadea872, type: 2}
+  - {fileID: 11400000, guid: afae21f34df2a4c4db81bc4261d00adc, type: 2}

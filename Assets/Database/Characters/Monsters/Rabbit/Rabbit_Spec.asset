@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87bbe0f8b80a16a7099ae1f8b125dfb8, type: 3}
+  m_Name: Rabbit_Spec
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::MonsterSpec
+  monsterId: rabbit
+  displayName: Rabbit
+  modelId: rabbit_lv1
+  sourceModel: {fileID: 100024, guid: 05b0336cad2ece64b99ce054ed619f4c, type: 3}
+  sourcePrefab: {fileID: 1000014069041812, guid: f3e92f0e6c7c8724b98eded63b438981, type: 3}
+  clipPrefix: rabbit_
+  height: 1.0
+  lift: 0
+  yaw: 0
+  attackTrigger: RabbitAttack
+  attackSpeed: 1
+  effect1: 0.2
+  hitboxStart: 0.25
+  hitboxEnd: 0.55
+  unlock: 0.9
+  hitboxBone: HeadJoint
+  hitboxTag: RabbitKick
+  hitboxRadius: 0.5
+  hitboxForward: 0.25
+  health: 20
+  runSpeed: 6.5
+  aggroRange: 14
+  diceCount: 1
+  diceFaces: 4
+  diceFlat: 1
+  abilities:
+  - role: 1
+    ability: {fileID: 11400000, guid: 91de67539539cebf5a7918527e0a124f, type: 2}
+  goals:
+  - {fileID: 11400000, guid: 6ccb7a18576b06d9a96a7266d6eb15b4, type: 2}
+  - {fileID: 11400000, guid: fb195fb1a364b93e292a5d55c83b5ba7, type: 2}
+  - {fileID: 11400000, guid: f30a53a1f51ceb572ac2066a2d28d56c, type: 2}

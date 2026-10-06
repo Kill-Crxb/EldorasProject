@@ -17,7 +17,7 @@ MonoBehaviour:
     displayName: Max Health
     shortName: HP
     description: 
-    defaultValue: 60
+    defaultValue: 40
     minValue: 1
     maxValue: 999
   - id: character.max_stamina

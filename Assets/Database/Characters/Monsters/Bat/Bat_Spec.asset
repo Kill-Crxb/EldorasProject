@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87bbe0f8b80a16a7099ae1f8b125dfb8, type: 3}
+  m_Name: Bat_Spec
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::MonsterSpec
+  monsterId: bat
+  displayName: Bat
+  modelId: bat_lv1
+  sourceModel: {fileID: 100002, guid: 59afa1f2c595d6343b15e945602e1f8f, type: 3}
+  sourcePrefab: {fileID: 1000012081666484, guid: a300b93764f24c94b9ddb3445d906548, type: 3}
+  clipPrefix: bat_
+  height: 0.9
+  lift: 0.7
+  yaw: 0
+  attackTrigger: BatAttack
+  attackSpeed: 1
+  effect1: 0.15
+  hitboxStart: 0.2
+  hitboxEnd: 0.6
+  unlock: 0.9
+  hitboxBone: HeadJoint
+  hitboxTag: BatBite
+  hitboxRadius: 0.5
+  hitboxForward: 0.3
+  health: 25
+  runSpeed: 5.5
+  aggroRange: 16
+  diceCount: 1
+  diceFaces: 4
+  diceFlat: 0
+  abilities:
+  - role: 0
+    ability: {fileID: 11400000, guid: 01b22d736e953776984c84d6701cc2a0, type: 2}
+  goals:
+  - {fileID: 11400000, guid: 6ccb7a18576b06d9a96a7266d6eb15b4, type: 2}
+  - {fileID: 11400000, guid: f8b424195add738f28a17238f69e4ccf, type: 2}

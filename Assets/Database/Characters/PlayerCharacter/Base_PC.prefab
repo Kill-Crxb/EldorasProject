@@ -797,9 +797,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ArmourShieldModule
   isEnabled: 1
   dieFaces: 4
+  trickleSeconds: 5
   shield:
-    refillDelay: 3
-    secondsPerSegment: 0.75
+    refillDelay: 6
+    secondsPerSegment: 1.5
 --- !u!1 &1982848967200995888
 GameObject:
   m_ObjectHideFlags: 0

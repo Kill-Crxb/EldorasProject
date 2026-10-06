@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b75d678534946558eaa392b55f4f7904, type: 3}
+  m_Name: Goal_HitAndRun
+  m_EditorClassIdentifier: Assembly-CSharp::HitAndRunGoal
+  goalName: Hit And Run
+  baseWeight: 1
+  requiresTarget: 1
+  minDistance: 0
+  maxDistance: 100
+  minimumActiveDuration: 0
+  strength: 1
+  carryTime: 0.4
+  retreatDistance: 7
+  retreatTime: 2.5
+  retreatCurve: 0.6
+  facingTolerance: 25

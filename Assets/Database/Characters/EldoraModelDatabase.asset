@@ -31,4 +31,28 @@ MonoBehaviour:
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 1
     defaultColors: []
+  - modelId: slime_lv1
+    displayName: Slime
+    prefab: {fileID: 8105608029867685368, guid: 3793089bb4ded3abd85b24176ee56086, type: 3}
+    thumbnailSprite: {fileID: 0}
+    allowColorCustomization: 0
+    defaultColors: []
+  - modelId: rabbit_lv1
+    displayName: Rabbit
+    prefab: {fileID: 3271988073903255040, guid: cf88b892f54ca795eaac967bc421900b, type: 3}
+    thumbnailSprite: {fileID: 0}
+    allowColorCustomization: 0
+    defaultColors: []
+  - modelId: bat_lv1
+    displayName: Bat
+    prefab: {fileID: 6384673996124885355, guid: 43e81019f829957e68e955aeb8a578d4, type: 3}
+    thumbnailSprite: {fileID: 0}
+    allowColorCustomization: 0
+    defaultColors: []
+  - modelId: ghost_lv1
+    displayName: Ghost
+    prefab: {fileID: 8634052093233245924, guid: bd6c4a1d0dfe90d6f900a38c45b8bb2c, type: 3}
+    thumbnailSprite: {fileID: 0}
+    allowColorCustomization: 0
+    defaultColors: []
   validateOnLoad: 1
