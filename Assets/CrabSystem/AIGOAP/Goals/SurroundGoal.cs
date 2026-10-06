@@ -1,13 +1,27 @@
 using UnityEngine;
 
-// Pack behaviour: when another creature on the same target is closer to it, take a place on a ring
-// around the target and wait. The closest one fights (Chase And Melee); the rest spread out, so the
-// target faces one attacker at a time and gets flanked. Give it a higher base weight than the melee goal.
+// Pack behaviour: when another creature on the same target is closer to it, hang back as an encircler
+// instead of joining in. Like DS1's crowd roles (DS1_AI_Study.md §5) it doesn't hold a fixed slot: it
+// keeps roughly Ring Radius away, strafes a random arc for a few seconds, sometimes pauses, then picks
+// again — so a group drifts around the target while the closest one fights (Chase And Melee).
+// Give it a higher base weight than the melee goal. Phase 0 is strafing, phase 1 pausing.
 [CreateAssetMenu(fileName = "Goal_Surround", menuName = "AI/GOAP/Goals/Surround")]
 public class SurroundGoal : GOAPGoal
 {
-    public float ringRadius = 3f;
-    public float strength = 0.6f;
+    [Tooltip("Hang about this far from the target.")]
+    public float ringRadius = 4.5f;
+
+    [Tooltip("Back off when closer than this.")]
+    public float tooClose = 3f;
+
+    public float strength = 0.5f;
+
+    [Tooltip("Seconds per strafe before picking again.")]
+    public float minStrafe = 1.5f;
+    public float maxStrafe = 3f;
+
+    [Tooltip("Chance, each time it picks, to stand and watch for a moment instead.")]
+    [Range(0, 100)] public int pauseOdds = 25;
 
     [Tooltip("Another creature must be at least this much closer to count, so two at the same " +
              "distance don't swap roles every frame.")]
@@ -19,28 +33,39 @@ public class SurroundGoal : GOAPGoal
 
     public override bool IsComplete(GOAPContext ctx) => ctx.target == null || !CloserAlly(ctx);
 
+    public override void OnStart(GOAPContext ctx)
+    {
+        Pick(ctx.aiControl);
+    }
+
     public override void Execute(GOAPContext ctx)
     {
-        ctx.aiControl.Face(ctx.toTarget);
+        AIControlSource control = ctx.aiControl;
+        control.Face(ctx.toTarget);
 
-        // Slots follow the order the AIs came alive in, which holds still while they live.
-        int count = 0;
-        int slot = 0;
-        for (int i = 0; i < AIControlSource.Active.Count; i++)
-        {
-            AIControlSource other = AIControlSource.Active[i];
-            if (other == ctx.aiControl) slot = count;
-            if (Hunting(other, ctx.target)) count++;
-        }
+        if (Time.time >= control.GoalUntil) Pick(control);
 
-        float angle = 360f * slot / Mathf.Max(1, count);
-        Vector3 point = ctx.target.position + Quaternion.Euler(0f, angle, 0f) * Vector3.forward * ringRadius;
-        GoalSteer.ToPoint(ctx, point, 0.5f, strength);
+        if (ctx.distanceToTarget > ringRadius + 1.5f)
+            GoalSteer.Approach(ctx, ringRadius, 1f, GoalSteer.Gait(ctx, ringRadius, 4f, strength));
+        else if (ctx.distanceToTarget < tooClose)
+            GoalSteer.Away(ctx, strength);
+        else if (control.GoalPhase == 1)
+            control.Stop();
+        else
+            GoalSteer.Orbit(ctx, control.GoalSign, strength);
     }
 
     public override void OnEnd(GOAPContext ctx)
     {
         ctx.aiControl?.Release();
+    }
+
+    void Pick(AIControlSource control)
+    {
+        bool pause = GoalSteer.Roll(pauseOdds);
+        control.GoalPhase = pause ? 1 : 0;
+        control.GoalSign = GoalSteer.RandomSign();
+        control.GoalUntil = Time.time + (pause ? Random.Range(0.5f, 1.5f) : Random.Range(minStrafe, maxStrafe));
     }
 
     bool CloserAlly(GOAPContext ctx)

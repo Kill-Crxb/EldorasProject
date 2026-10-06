@@ -2556,7 +2556,7 @@ MonoBehaviour:
   capsule: {fileID: 1543769829861995336}
   collisionLayers:
     serializedVersion: 2
-    m_Bits: 200
+    m_Bits: 968
   skinWidth: 0.02
   maxSlideIterations: 5
   maxSlopeAngle: 40

@@ -59,4 +59,7 @@ public class MonsterSpec : ScriptableObject
     [Header("Behaviour")]
     public List<AIRoleAbility> abilities = new List<AIRoleAbility>();
     public List<GOAPGoal> goals = new List<GOAPGoal>();
+
+    [Tooltip("Wire Goal_React (made by Build Goal Test Variants) into the GOAP interrupt slot: step away when hit, punish whiffs.")]
+    public bool reactions = true;
 }

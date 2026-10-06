@@ -388,6 +388,17 @@ public class PerceptionModule : MonoBehaviour, IBrainModule
 
     #region Public Methods
 
+    // A target this AI didn't see itself (an ally's call for help). Memory holds it for Memory Duration,
+    // long enough to close in and see it for real.
+    public void SetTarget(Transform target)
+    {
+        if (target == null) return;
+        currentTarget = target;
+        lastKnownPosition = target.position;
+        lastSeenTime = Time.time;
+        hasMemory = enableMemory;
+    }
+
     public void ClearTarget()
     {
         currentTarget = null;

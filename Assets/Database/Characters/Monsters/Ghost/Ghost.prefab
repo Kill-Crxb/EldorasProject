@@ -52,6 +52,8 @@ MonoBehaviour:
     ability: {fileID: 11400000, guid: fa997889fbc6333a293288a8cc0c5aa4, type: 2}
   - role: 3
     ability: {fileID: 11400000, guid: 324bea334712485a4832203ccc36a991, type: 2}
+  isPackLeader: 0
+  patrolOffsets: []
 --- !u!114 &6528540188169355124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,7 +108,7 @@ MonoBehaviour:
   checkInterrupts: 1
   allowNestedInterrupts: 0
   maxInterruptStackDepth: 1
-  evadeGoal: {fileID: 0}
+  evadeGoal: {fileID: 11400000, guid: d1b6b1742466040c4bd4575aaad0589e, type: 2}
   rushDownGoal: {fileID: 0}
   resumeAfterInterrupt: 1
   interruptContextTimeout: 2

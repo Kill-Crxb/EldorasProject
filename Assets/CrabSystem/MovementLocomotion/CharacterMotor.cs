@@ -25,8 +25,8 @@ public class CharacterMotor : MonoBehaviour
     [SerializeField] private CapsuleCollider capsule;
 
     [Header("Collision")]
-    [Tooltip("Everything the capsule sweeps against. MUST exclude the character's own layer or " +
-             "every cast hits the capsule it started inside.")]
+    [Tooltip("Everything the capsule sweeps against — ground, props, and other characters. The " +
+             "character's own colliders are skipped, so its own layer may be in the mask.")]
     [SerializeField] private LayerMask collisionLayers = ~0;
 
     [Tooltip("Gap held between capsule and surface. Too small and the capsule tunnels into " +
@@ -75,6 +75,7 @@ public class CharacterMotor : MonoBehaviour
 
     Rigidbody body;
     readonly Collider[] overlaps = new Collider[8];
+    readonly RaycastHit[] castHits = new RaycastHit[16];
 
     float lastGroundedTime = Mathf.NegativeInfinity;
 
@@ -171,19 +172,6 @@ public class CharacterMotor : MonoBehaviour
         // Speculative is the only continuous mode a kinematic body supports; the others are
         // rejected with a warning, so normalise rather than trusting whatever the prefab says.
         body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-
-        // Every sweep starts inside this character's own capsule. If its layer is in the mask,
-        // the first cast in any direction hits itself at distance zero, the move is clipped to
-        // nothing, and grounding reads whatever normal the degenerate hit invents — the character
-        // stands still playing a run animation. Strip it rather than trusting the inspector.
-        int ownLayer = 1 << gameObject.layer;
-
-        if ((collisionLayers.value & ownLayer) != 0)
-        {
-            collisionLayers.value &= ~ownLayer;
-            Debug.LogWarning($"[CharacterMotor] Removed layer {LayerMask.LayerToName(gameObject.layer)} " +
-                             "from Collision Layers — a character cannot sweep against itself.");
-        }
 
         // An enabled CharacterController owns this transform. It re-asserts its own position after
         // every Rigidbody.MovePosition, so the motor computes a correct move, writes it, and has
@@ -443,7 +431,7 @@ public class CharacterMotor : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             Collider other = overlaps[i];
-            if (other == capsule) continue;
+            if (IsOwn(other)) continue;
 
             bool overlapping = Physics.ComputePenetration(
                 capsule, position, rotation,
@@ -461,12 +449,29 @@ public class CharacterMotor : MonoBehaviour
         return position;
     }
 
+    // The nearest hit that isn't this character. Characters share a layer, so the sweep skips our own
+    // colliders rather than the layer. Hits the capsule already started inside (distance 0) are skipped
+    // too — Depenetrate pushes out of those; counting them would pin the character in place.
     bool Cast(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit hit)
     {
         CapsulePoints(position, rotation, out Vector3 top, out Vector3 bottom);
-        return Physics.CapsuleCast(top, bottom, capsule.radius, direction, out hit, distance,
-                                   collisionLayers, QueryTriggerInteraction.Ignore);
+        int count = Physics.CapsuleCastNonAlloc(top, bottom, capsule.radius, direction, castHits, distance,
+                                                collisionLayers, QueryTriggerInteraction.Ignore);
+
+        hit = default;
+        bool found = false;
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit candidate = castHits[i];
+            if (IsOwn(candidate.collider) || candidate.distance <= 0f) continue;
+            if (found && candidate.distance >= hit.distance) continue;
+            hit = candidate;
+            found = true;
+        }
+        return found;
     }
+
+    bool IsOwn(Collider other) => other == capsule || other.transform.IsChildOf(transform);
 
     /// <summary>
     /// The capsule's two sphere centres in world space, for a given position and roll.

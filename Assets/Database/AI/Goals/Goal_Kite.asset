@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8792ad48ec5c7cff1bac12990273683f, type: 3}
+  m_Name: Goal_Kite
+  m_EditorClassIdentifier: Assembly-CSharp::KiteGoal
+  goalName: Kite
+  baseWeight: 1
+  requiresTarget: 1
+  minDistance: 0
+  maxDistance: 100
+  minimumActiveDuration: 0
+  kiteRange: 7
+  maxRange: 10
+  backStrength: 0.8
+  approachStrength: 0.7
+  fireInterval: 1.8
+  facingTolerance: 20

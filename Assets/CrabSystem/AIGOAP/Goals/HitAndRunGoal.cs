@@ -2,7 +2,8 @@ using UnityEngine;
 
 // Swoop in, strike once, peel away, come round again. Uses the Melee ability; give that ability a
 // forward movement effect and the strike carries the body straight through the target.
-// Phase 0 is the run in, phase 1 the retreat.
+// After a retreat it sometimes hangs back a moment before coming round (DS1-style hesitation), so
+// the rhythm isn't a metronome. Phase 0 is the run in, 1 the retreat, 2 hanging back.
 [CreateAssetMenu(fileName = "Goal_HitAndRun", menuName = "AI/GOAP/Goals/Hit And Run")]
 public class HitAndRunGoal : GOAPGoal
 {
@@ -21,6 +22,11 @@ public class HitAndRunGoal : GOAPGoal
 
     public float facingTolerance = 25f;
 
+    [Tooltip("Chance after each retreat to hang back for a moment before coming round.")]
+    [Range(0, 100)] public int hangBackOdds = 40;
+    public float minHangBack = 0.4f;
+    public float maxHangBack = 1.2f;
+
     public override bool CanExecute(GOAPContext ctx) => ctx.target != null && GoalSteer.HasRole(ctx, AIRole.Melee);
 
     public override float CalculateWeight(GOAPContext ctx) => 1f;
@@ -36,8 +42,10 @@ public class HitAndRunGoal : GOAPGoal
     {
         if (ctx.aiControl.GoalPhase == 0)
             RunIn(ctx);
-        else
+        else if (ctx.aiControl.GoalPhase == 1)
             Retreat(ctx);
+        else
+            HangBack(ctx);
     }
 
     void RunIn(GOAPContext ctx)
@@ -52,7 +60,7 @@ public class HitAndRunGoal : GOAPGoal
         if (!GoalSteer.TryUse(ctx, strike)) return;
 
         ctx.aiControl.GoalPhase = 1;
-        ctx.aiControl.GoalUntil = Time.time + retreatTime;
+        ctx.aiControl.GoalUntil = Time.time + Random.Range(retreatTime * 0.8f, retreatTime * 1.2f);
         ctx.aiControl.GoalSign = GoalSteer.RandomSign();
     }
 
@@ -71,8 +79,22 @@ public class HitAndRunGoal : GOAPGoal
         control.Face(away);
         control.Steer(away, strength);
 
-        if (ctx.distanceToTarget >= retreatDistance || Time.time >= control.GoalUntil)
-            control.GoalPhase = 0;
+        if (ctx.distanceToTarget < retreatDistance && Time.time < control.GoalUntil) return;
+
+        if (GoalSteer.Roll(hangBackOdds))
+        {
+            control.GoalPhase = 2;
+            control.GoalUntil = Time.time + Random.Range(minHangBack, maxHangBack);
+            return;
+        }
+        control.GoalPhase = 0;
+    }
+
+    void HangBack(GOAPContext ctx)
+    {
+        ctx.aiControl.Face(ctx.toTarget);
+        ctx.aiControl.Stop();
+        if (Time.time >= ctx.aiControl.GoalUntil) ctx.aiControl.GoalPhase = 0;
     }
 
     public override void OnEnd(GOAPContext ctx)

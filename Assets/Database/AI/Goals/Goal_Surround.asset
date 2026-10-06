@@ -18,6 +18,6 @@ MonoBehaviour:
   minDistance: 0
   maxDistance: 100
   minimumActiveDuration: 0
-  ringRadius: 3
-  strength: 0.6
+  ringRadius: 4.5
+  strength: 0.5
   margin: 0.4

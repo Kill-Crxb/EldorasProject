@@ -121,22 +121,25 @@ public static class MonsterBuilder
         return spec;
     }
 
-    // Slow, tough, hits hard and shoves. In a group the closest one fights and the rest ring the target.
+    // Slow, tough, hits hard and shoves. The slam throws its body forward into the target. In a group the
+    // closest one fights and the rest ring the target. Not rooted: a rooted move zeroes movement input and
+    // smothered the push (6 Oct).
     static void Slime(MonsterSpec s, Goals g)
     {
         s.sourceModel = Load<GameObject>(PackModels + "Slime_Level_1.fbx");
         s.sourcePrefab = Load<GameObject>(PackPrefabs + "Slime/Slime_Green.prefab");
-        s.height = 0.7f;
+        s.height = 1.5f;
         s.attackSpeed = 0.8f;
-        SetEvents(s, -1f, 0.45f, 0.7f, 0.95f);
-        SetHitbox(s, "SlimeRootJoint", "SlimeBody", 0.45f, 0.3f);
+        SetEvents(s, 0.38f, 0.45f, 0.7f, 0.95f);
+        SetHitbox(s, "SlimeRootJoint", "SlimeBody", 0.75f, 0.5f);
         SetBody(s, 45f, 2.4f, 10f);
         SetDice(s, 1, 6, 0);
 
         AbilityDefinition slam = NewAbility("Slime_Slam", out SerializedObject so);
         if (so != null)
         {
-            Melee(so, s, 1.4f, false);
+            Melee(so, s, 2f, true);
+            Push(so, MovementEffect.MovementType.Impulse, Vector3.forward, 6f, 0.3f, 0f);
             Knockback(so, 6f);
             so.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -150,9 +153,9 @@ public static class MonsterBuilder
     {
         s.sourceModel = Load<GameObject>(PackModels + "Rabbit_Level_1.fbx");
         s.sourcePrefab = Load<GameObject>(PackPrefabs + "Rabbit/Rabbit_Cyan.prefab");
-        s.height = 0.6f;
+        s.height = 1f;
         SetEvents(s, 0.2f, 0.25f, 0.55f, 0.9f);
-        SetHitbox(s, "HeadJoint", "RabbitKick", 0.35f, 0.15f);
+        SetHitbox(s, "HeadJoint", "RabbitKick", 0.5f, 0.25f);
         SetBody(s, 20f, 6.5f, 14f);
         SetDice(s, 1, 4, 1);
 
@@ -174,10 +177,10 @@ public static class MonsterBuilder
     {
         s.sourceModel = Load<GameObject>(PackModels + "Bat_Level_1.fbx");
         s.sourcePrefab = Load<GameObject>(PackPrefabs + "Bat/Bat_Violet.prefab");
-        s.height = 0.5f;
-        s.lift = 1f;
+        s.height = 0.9f;
+        s.lift = 0.7f;
         SetEvents(s, 0.15f, 0.2f, 0.6f, 0.9f);
-        SetHitbox(s, "HeadJoint", "BatBite", 0.35f, 0.2f);
+        SetHitbox(s, "HeadJoint", "BatBite", 0.5f, 0.3f);
         SetBody(s, 25f, 5.5f, 16f);
         SetDice(s, 1, 4, 0);
 
@@ -874,7 +877,14 @@ public static class MonsterBuilder
         var goap = ai.AddComponent<GOAPModule>();
         goap.goalPool.AddRange(s.goals);
         goap.SelectionMode = GoalSelectionMode.HighestWeight;
+
+        if (!s.reactions) return;
+        var react = AssetDatabase.LoadAssetAtPath<GOAPGoal>(ReactGoalPath);
+        if (react == null) Debug.LogWarning($"[MonsterBuilder] {s.displayName}: no {ReactGoalPath} — run Tools → AI → Build Goal Test Variants, then rebuild for reactions.");
+        Write(goap, "evadeGoal", p => p.objectReferenceValue = react);
     }
+
+    const string ReactGoalPath = "Assets/Database/AI/Goals/Goal_React.asset";
 
     // Body capsule from the ground to the top of the model; the hurtbox only around the model, so a
     // flyer is hit where it is, not underneath.

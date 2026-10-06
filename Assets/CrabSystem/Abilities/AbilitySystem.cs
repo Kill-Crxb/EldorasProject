@@ -76,6 +76,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     public ControllerBrain Brain => brain;
     public AbilityLoadoutModule Loadout => loadoutModule;
     public bool IsExecuting => currentAbility != null || currentlyCastingAbility != null || isAnimationLocked;
+    public bool IsCasting => currentlyCastingAbility != null;
     public AbilityDefinition CurrentAbility => currentAbility;
     public string CurrentAbilityId => currentAbility?.abilityId;
     public bool IsHitStopped => hitStopUntil > 0f;
@@ -325,7 +326,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         if (eventForwarder == null)
         {
-            Debug.LogWarning($"[AbilitySystem] No AnimationEventForwarder found on {gameObject.name}");
+            // No model yet (an NPC's arrives with its config) is normal: HandleModelChanged binds it.
+            if (brain.EntityAnimator != null)
+                Debug.LogWarning($"[AbilitySystem] No AnimationEventForwarder found on {gameObject.name}");
             return;
         }
 

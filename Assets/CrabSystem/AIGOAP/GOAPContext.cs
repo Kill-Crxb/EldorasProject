@@ -23,6 +23,7 @@ public class GOAPContext
     // Tactical state — kept until PerceptionModule writes HasAlliesNearby to Blackboard
     public bool hasAlliesNearby;
     public int allyCount;
+    public const float AllyRadius = 10f;
 
     // Module references — action handles, not facts
     public IAbilityProvider abilityModule;
@@ -78,9 +79,15 @@ public class GOAPContext
             angleToTarget    = 0f;
         }
 
-        // Ally detection — to be replaced once PerceptionModule writes HasAlliesNearby to Blackboard
-        Collider[] nearby = Physics.OverlapSphere(self.position, 10f, LayerMask.GetMask("Enemy"));
-        allyCount      = Mathf.Max(0, nearby.Length - 1);
+        // Allies: other live AIs within AllyRadius. Was an OverlapSphere on an "Enemy" layer the
+        // project doesn't have, so it always counted 0. To move once PerceptionModule writes
+        // HasAlliesNearby to the Blackboard.
+        allyCount = 0;
+        foreach (AIControlSource other in AIControlSource.Active)
+        {
+            if (other == aiControl || !other.IsAlive) continue;
+            if ((other.transform.position - self.position).sqrMagnitude <= AllyRadius * AllyRadius) allyCount++;
+        }
         hasAlliesNearby = allyCount > 0;
     }
 }

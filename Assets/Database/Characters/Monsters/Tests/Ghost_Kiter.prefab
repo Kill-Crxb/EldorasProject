@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &6489365930169121039
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 397051732630032329, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: roleAbilities.Array.data[0].ability
+      value: 
+      objectReference: {fileID: 11400000, guid: 8551c0940f7fa70ef90b32de0df69c28, type: 2}
+    - target: {fileID: 1038623431111341641, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_Name
+      value: Ghost_Kiter
+      objectReference: {fileID: 0}
+    - target: {fileID: 3477436678626829434, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: 'goalPool.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 607994ba25bed106bb957560d6f94fcb, type: 2}
+    - target: {fileID: 3477436678626829434, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: 'goalPool.Array.data[2]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 132bc3e8533939c2fbaf476f0245ef11, type: 2}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3507097673345440328, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6449371993217341307, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: entityId
+      value: ghost_kiter_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 7963002705412590039, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: abilities.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7963002705412590039, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}
+      propertyPath: 'abilities.Array.data[2]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 8551c0940f7fa70ef90b32de0df69c28, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 87924f4509ec1c661826ad72c157ea4d, type: 3}

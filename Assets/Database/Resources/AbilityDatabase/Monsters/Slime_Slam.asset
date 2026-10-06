@@ -15,7 +15,7 @@ MonoBehaviour:
   effectTrigger: 19
   waitForAnimUnlock: 1
   maxDuration: 2.5
-  castWhileMoving: 0
+  castWhileMoving: 1
   animationTrigger: SlimeAttack
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
@@ -73,7 +73,7 @@ MonoBehaviour:
   abilityType: 0
   abilityCategory: 4
   targetType: 1
-  range: 1.4
+  range: 2
   requiresLineOfSight: 0
   hitboxTags:
   - SlimeBody
@@ -94,7 +94,15 @@ MonoBehaviour:
   - force: 6
     direction: {x: 0, y: 0, z: 1}
     useRelativeDirection: 1
-  movementEffects: []
+  movementEffects:
+  - movementType: 0
+    directionSource: 0
+    direction: {x: 0, y: 0, z: 1}
+    speed: 6
+    duration: 0.2
+    speedCap: 6
+    frictionHoliday: 0.3
+    teleportDistance: 0
   statusEffects: []
   hitProcs: []
   sequencePrerequisites: []

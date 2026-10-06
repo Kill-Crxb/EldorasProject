@@ -22,6 +22,10 @@ public class KeepDistanceGoal : GOAPGoal
 
     public float facingTolerance = 15f;
 
+    [Tooltip("Chance, rolled every Hesitate Interval while in its band, to stop strafing for a moment.")]
+    [Range(0, 100)] public int hesitateOdds = 20;
+    public float hesitateInterval = 2f;
+
     public override bool CanExecute(GOAPContext ctx) => ctx.target != null && GoalSteer.HasRole(ctx, AIRole.Ranged);
 
     public override float CalculateWeight(GOAPContext ctx) => 1f;
@@ -30,6 +34,7 @@ public class KeepDistanceGoal : GOAPGoal
 
     public override void OnStart(GOAPContext ctx)
     {
+        ctx.aiControl.GoalPhase = 0;
         ctx.aiControl.GoalSign = GoalSteer.RandomSign();
         ctx.aiControl.GoalUntil = Time.time + strafeSwap;
     }
@@ -37,8 +42,15 @@ public class KeepDistanceGoal : GOAPGoal
     public override void Execute(GOAPContext ctx)
     {
         AbilityDefinition shot = ctx.aiControl.AbilityFor(AIRole.Ranged);
-
         ctx.aiControl.Face(ctx.toTarget);
+
+        bool inBand = ctx.distanceToTarget >= minRange && ctx.distanceToTarget <= maxRange;
+        if (GoalSteer.RunSpacing(ctx) || (inBand && GoalSteer.Hesitate(ctx, hesitateOdds, hesitateInterval)))
+        {
+            Fire(ctx, shot);
+            return;
+        }
+
         GoalSteer.SwapSign(ctx, strafeSwap);
 
         if (ctx.distanceToTarget < minRange)
@@ -48,6 +60,11 @@ public class KeepDistanceGoal : GOAPGoal
         else
             GoalSteer.Orbit(ctx, ctx.aiControl.GoalSign, strafeStrength);
 
+        Fire(ctx, shot);
+    }
+
+    void Fire(GOAPContext ctx, AbilityDefinition shot)
+    {
         if (ctx.distanceToTarget > shot.range) return;
         if (!GoalSteer.Facing(ctx, facingTolerance)) return;
         if (!GoalSteer.Rested(ctx, fireInterval)) return;

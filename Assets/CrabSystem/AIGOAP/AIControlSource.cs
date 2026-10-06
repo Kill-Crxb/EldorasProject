@@ -3,7 +3,7 @@ using UnityEngine;
 
 // What a goal wants an ability for. Goals ask for a role, not a named ability, so one goal asset
 // serves every creature that has a move in that role.
-public enum AIRole { Melee, Lunge, Ranged, Escape }
+public enum AIRole { Melee, Lunge, Ranged, Escape, Guard, Call, Charge }
 
 [System.Serializable]
 public struct AIRoleAbility
@@ -29,6 +29,13 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     [Tooltip("The abilities goals use, by role. Each must also be in the entity's AbilitySystem list.")]
     [SerializeField] private List<AIRoleAbility> roleAbilities = new List<AIRoleAbility>();
 
+    [Tooltip("Follow Leader: others of the pack gather on the nearest leader.")]
+    [SerializeField] private bool isPackLeader;
+
+    [Tooltip("Patrol: points walked in order and looped, in metres from where the creature started. " +
+             "Offsets rather than scene objects, so a prefab can carry its route.")]
+    [SerializeField] private List<Vector3> patrolOffsets = new List<Vector3>();
+
     // Every live AI, so a goal can see the others hunting the same target (Surround).
     private static readonly List<AIControlSource> active = new List<AIControlSource>();
     public static IReadOnlyList<AIControlSource> Active => active;
@@ -52,6 +59,29 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     public int GoalPhase { get; set; }
     public float GoalSign { get; set; } = 1f;
     public float FleeReadyAt { get; set; }
+    public int PatrolIndex { get; set; }
+
+    // Set when an ambusher springs; cleared when it loses its target, so it can lie in wait again.
+    public bool Engaged { get; set; }
+
+    // Set while the Leash goal walks the creature home; it ignores its target until it gets there.
+    public bool Returning { get; set; }
+
+    // When the next optional decision (milling about) may be rolled.
+    public float NextDecisionAt { get; set; }
+
+    // What just happened, for reactions (DS1-style interrupts). Times, -999 when never.
+    public float DamagedAt { get; private set; } = -999f;
+    public float GuardedAt { get; private set; } = -999f;
+    public float TargetWhiffedAt { get; private set; } = -999f;
+    public float ReactedTo { get; set; } = -999f;
+    // Which reaction the React goal rolled: 0 step away, 1 punish.
+    public int Reaction { get; set; }
+
+    private Transform trackedTarget;
+    private ICombatantState trackedState;
+    private AbilityDefinition trackedMove;
+    private float trackedMoveStart;
 
     // The AI's block key. GuardModule keeps a guard up only while this is held.
     public bool GuardHeld { get; set; }
@@ -63,6 +93,14 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     public ControllerBrain Brain => brain;
     public Transform Target => perception != null ? perception.CurrentTarget : null;
     public bool IsAlive => brain != null && (brain.Health == null || brain.Health.IsAlive());
+    public bool IsPackLeader => isPackLeader;
+    public IReadOnlyList<Vector3> PatrolOffsets => patrolOffsets;
+
+    // A call for help: hand this AI a target it hasn't seen. Its own eyes take over once it gets close.
+    public void Alert(Transform target)
+    {
+        if (perception != null && Target == null) perception.SetTarget(target);
+    }
 
     public AbilityDefinition AbilityFor(AIRole role)
     {
@@ -88,6 +126,12 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
         perception = brain.GetModule<PerceptionModule>();
         Home = brain.transform.position;
 
+        DamageSystem damage = brain.GetModule<DamageSystem>();
+        if (damage != null) damage.OnDamageApplied += (packet, applied) => DamagedAt = Time.time;
+
+        AbilitySystem abilities = brain.GetModule<AbilitySystem>();
+        if (abilities != null) abilities.OnHitLanded += HandleHitLanded;
+
         if (brain.Movement == null)
         {
             Debug.LogWarning($"[AIControlSource] {brain.EntityName} has no MovementSystem");
@@ -96,7 +140,44 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
         brain.Movement.SetControlSource(this);
     }
 
-    public void UpdateModule() { }
+    public void UpdateModule()
+    {
+        if (Engaged && Target == null) Engaged = false;
+        WatchTargetSwing();
+    }
+
+    // Our hit landed on a guard.
+    private void HandleHitLanded(AbilityDefinition ability, ControllerBrain target)
+    {
+        if (target != null && target.Damage != null && target.Damage.LastHitGuarded) GuardedAt = Time.time;
+    }
+
+    // The target's attack ended without hitting us while we were close: a whiff we can punish.
+    private void WatchTargetSwing()
+    {
+        Transform target = Target;
+        if (target != trackedTarget)
+        {
+            trackedTarget = target;
+            ControllerBrain targetBrain = target != null ? target.GetComponent<ControllerBrain>() : null;
+            trackedState = targetBrain != null ? targetBrain.GetProvider<ICombatantState>() : null;
+            trackedMove = null;
+        }
+        if (trackedState == null) return;
+
+        AbilityDefinition move = trackedState.CurrentAbility;
+        if (move != null && trackedMove == null && IsAttack(move))
+        {
+            trackedMove = move;
+            trackedMoveStart = Time.time;
+        }
+        if (move != null || trackedMove == null) return;
+
+        if (DamagedAt < trackedMoveStart) TargetWhiffedAt = Time.time;
+        trackedMove = null;
+    }
+
+    private static bool IsAttack(AbilityDefinition move) => move.abilityType != AbilityType.Defensive && !move.IsParry;
 
     // Intent — called by goals
 

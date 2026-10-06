@@ -23,7 +23,7 @@ MonoBehaviour:
   yaw: 0
   attackTrigger: SlimeAttack
   attackSpeed: 0.8
-  effect1: -1
+  effect1: 0.38
   hitboxStart: 0.45
   hitboxEnd: 0.7
   unlock: 0.95
