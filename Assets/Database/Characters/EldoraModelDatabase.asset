@@ -15,43 +15,64 @@ MonoBehaviour:
   models:
   - modelId: female_base_v1
     displayName: Female Base
+    playable: 0
     prefab: {fileID: 4914216904076781778, guid: 1c2fb1e89bad3d2479cf88916b4744fd, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 1
     defaultColors: []
   - modelId: nature_spirit_v1
     displayName: The Nature Spirit
+    playable: 0
     prefab: {fileID: 6128484758509354859, guid: 93e82fece53ea104a8e52174d80b473b, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 1
     defaultColors: []
   - modelId: target_dummy
     displayName: Target Dummy
+    playable: 0
     prefab: {fileID: 7720640763941392580, guid: fecffd9473ea6064d949c609a91fbe83, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 1
     defaultColors: []
   - modelId: slime_lv1
     displayName: Slime
+    playable: 0
     prefab: {fileID: 8105608029867685368, guid: 3793089bb4ded3abd85b24176ee56086, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 0
     defaultColors: []
   - modelId: rabbit_lv1
     displayName: Rabbit
+    playable: 0
     prefab: {fileID: 3271988073903255040, guid: cf88b892f54ca795eaac967bc421900b, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 0
     defaultColors: []
   - modelId: bat_lv1
     displayName: Bat
+    playable: 0
     prefab: {fileID: 6384673996124885355, guid: 43e81019f829957e68e955aeb8a578d4, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 0
     defaultColors: []
   - modelId: ghost_lv1
     displayName: Ghost
+    playable: 0
     prefab: {fileID: 8634052093233245924, guid: bd6c4a1d0dfe90d6f900a38c45b8bb2c, type: 3}
+    thumbnailSprite: {fileID: 0}
+    allowColorCustomization: 0
+    defaultColors: []
+  - modelId: katana_girl_v1
+    displayName: Katana Girl
+    playable: 1
+    prefab: {fileID: 4006998765510790250, guid: b6803f15aeb7d5763b66302cba00a232, type: 3}
+    thumbnailSprite: {fileID: 0}
+    allowColorCustomization: 0
+    defaultColors: []
+  - modelId: shield_girl_v1
+    displayName: Shield Girl
+    playable: 1
+    prefab: {fileID: 8541777861642692679, guid: 7557f6d9c36bd95b19a4ff7ccfbb6b7b, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 0
     defaultColors: []

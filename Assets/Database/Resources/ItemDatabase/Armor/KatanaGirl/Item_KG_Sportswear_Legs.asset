@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e6c78387218e045b0c95d0596c57f3, type: 3}
+  m_Name: Item_KG_Sportswear_Legs
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  itemId: kg_sportswear_legs
+  displayName: Sportswear Legs
+  description: Light training clothes.
+  icon: {fileID: 21300000, guid: 71c87f9636ea4ff4a86b32c4ace808fd, type: 3}
+  worldPrefab: {fileID: 0}
+  equippedPrefab: {fileID: 0}
+  appearanceGroup: legs
+  appearanceOption: sportswear
+  category: {fileID: 11400000, guid: 7c199c6a44b1415b8d9ff7fc7be7f96b, type: 2}
+  subType: {fileID: 11400000, guid: 9a0b436ca3fddb12410794a71362fc5a, type: 2}
+  gridWidth: 2
+  gridHeight: 3
+  weaponData: {fileID: 0}
+  moveset: {fileID: 0}
+  reach: 1.5
+  stats:
+  - statId: atr.arm_dice
+    amount: 1
+  - statId: equip.load
+    amount: 1
+  rarity: 0
+  maxStackSize: 1
+  tags:
+  - legs
+  - armour_light
+  - combatgirls_outfit
+  baseValue: 0
+  dropsOnDeath: 1
+  isTradeable: 1
+  isDestructible: 1

@@ -12,6 +12,9 @@ public class ModelDatabase : ScriptableObject
         public string modelId;
         public string displayName;
 
+        [Tooltip("Offered in character creation.")]
+        public bool playable;
+
         [Header("Model")]
         public GameObject prefab;
         public Sprite thumbnailSprite;

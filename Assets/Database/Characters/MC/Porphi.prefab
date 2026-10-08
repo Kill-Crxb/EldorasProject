@@ -713,7 +713,7 @@ MonoBehaviour:
         skinBoneCount: 4
         transformCount: 5
         useTransformCount: 5
-        useTransformIndexArray: 0000000001000000020000000300000004000000
+        useTransformIndexArray: 0000000001000000020000000300000004000000i
         transformArray:
         - {fileID: 0}
         - {fileID: 0}
@@ -1492,7 +1492,7 @@ MonoBehaviour:
         skinBoneCount: 2
         transformCount: 3
         useTransformCount: 3
-        useTransformIndexArray: 000000000100000002000000
+        useTransformIndexArray: 000000000100000002000000i
         transformArray:
         - {fileID: 8488600993011702781}
         - {fileID: 2308156248021590622}
@@ -1750,6 +1750,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: d6f59a4c72086ce558e2183c86ca29ba, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 3e4c784d7f0d4cd458ebbd40e5f23ccd, type: 3}
+      propertyPath: m_WarningMessage
+      value: "\nBinding warning: Some generic clip(s) animate transforms that are already bound by a Humanoid avatar. These transforms can only be changed by Humanoid clips.\n\tTransform 'Hips'\n\tTransform 'LowerArm_L'\n\tTransform 'Hand_L'\n\tTransform 'Foot_R'\n\tTransform 'Little_Proximal_R'\n\tTransform 'Hips'\n\tTransform 'Foot_L'\n\tTransform 'UpperLeg_L'\n\tTransform 'Thumb_Intermediate_R'\n\tTransform 'Middle_Proximal_R'\n\tand more ...\n\tFrom animation clip 'UnarmedHeavy'\n\tFrom animation clip 'UnarmedHeavy'"
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -1793,6 +1797,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3e4c784d7f0d4cd458ebbd40e5f23ccd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7995014716804531944}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3e4c784d7f0d4cd458ebbd40e5f23ccd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 56842515197442607}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3e4c784d7f0d4cd458ebbd40e5f23ccd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 394298292357840180}
   m_SourcePrefab: {fileID: 100100000, guid: 3e4c784d7f0d4cd458ebbd40e5f23ccd, type: 3}
 --- !u!4 &676697864217983169 stripped
 Transform:
@@ -1875,6 +1885,39 @@ MonoBehaviour:
     socket: {fileID: 9122829821600759086}
   - socketId: foot_r
     socket: {fileID: 6548361458576413042}
+--- !u!114 &56842515197442607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4914216904076781778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 662a9aa015362159b82355eeb28ac371, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SocketEventRelay
+  weaponSlotId: mainwep
+  sheath: {fileID: 0}
+  armedBladeSocket: Katana_Close
+  armedSheathSocket: Hand_L_Socket
+  unarmedBladeSocket: Katana_Close
+  unarmedSheathSocket: Put_Socket_Katana
+  commandPrefix: To_
+  bladePart: Blade
+  sheathPart: Sheath
+--- !u!114 &394298292357840180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4914216904076781778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867b138f3abf3facda0aee475cb6e373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RootMotionRelay
 --- !u!4 &4947659455404178140 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8333284514913734817, guid: 3e4c784d7f0d4cd458ebbd40e5f23ccd, type: 3}

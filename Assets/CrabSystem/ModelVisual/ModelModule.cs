@@ -48,6 +48,16 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
     private ModelSocketProvider socketProvider;
     private Dictionary<string, Transform> socketCache = new Dictionary<string, Transform>();
 
+    // The visual each slot spawned, so it can be found and cleared after something has moved it to
+    // another socket (a sheath, or a clip's socket events). Clearing the socket would miss it.
+    private readonly Dictionary<string, GameObject> equippedVisuals = new Dictionary<string, GameObject>();
+
+    // Which option each creation group shows. Owned here and saved in model.json.
+    private List<AppearanceChoice> appearance = new List<AppearanceChoice>();
+
+    // Slot → the appearance group its item drives (clothes in the model's mesh). Equipment owns these.
+    private readonly Dictionary<string, string> equippedLooks = new Dictionary<string, string>();
+
     #endregion
 
     #region Events
@@ -62,6 +72,10 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
     public GameObject CurrentModel => currentModel;
     public string CurrentModelId => currentModelId;
     public Animator ModelAnimator => modelAnimator;
+    public const string SaveId = "model";
+
+    // 2: appearance choices. A version 1 file has none and loads every group at its first option.
+    public const int SaveVersion = 2;
 
     #endregion
 
@@ -92,6 +106,33 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
         equipment = brain?.GetModule<EquipmentSystem>();
         if (equipment != null)
             equipment.OnEquipmentVisual += HandleItemEquipped;
+
+        brain.OnLoaded += HandleLoaded;
+
+        BindParts();
+    }
+
+    // A model loaded from the save (model.json loads before equipment.json) puts back whatever was
+    // equipped at that moment: the prefab's inspector loadout, not the save's. The equipment load is
+    // quiet and its broadcast only covers occupied slots, so once the character has loaded, drop any
+    // visual whose slot ended up empty.
+    private void HandleLoaded()
+    {
+        brain.OnLoaded -= HandleLoaded;
+        if (equipment == null)
+            return;
+
+        var emptySlots = new List<string>();
+        foreach (var pair in equippedVisuals)
+            if (equipment.GetEquippedItem(pair.Key) == null)
+                emptySlots.Add(pair.Key);
+
+        foreach (var pair in equippedLooks)
+            if (equipment.GetEquippedItem(pair.Key) == null && !emptySlots.Contains(pair.Key))
+                emptySlots.Add(pair.Key);
+
+        foreach (string slotId in emptySlots)
+            ClearSocket(slotId);
     }
 
     #endregion
@@ -130,9 +171,32 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
         CacheSocketsFromProvider();
         if (preserveEquipment)
             ReattachEquipment();
+        ApplyAppearance();
+        BindParts();
         OnModelChanged?.Invoke(modelId);
 
         return true;
+    }
+
+    // Parts on the model that need this character's modules (the socket relay) get them here, on
+    // every new model. A model with no brain (the creation preview) is never bound.
+    private void BindParts()
+    {
+        if (currentModel == null || brain == null)
+            return;
+
+        foreach (var part in currentModel.GetComponentsInChildren<IModelPart>(true))
+            part.Bind(brain, this);
+    }
+
+    private void ApplyAppearance()
+    {
+        if (currentModel == null)
+            return;
+
+        var parts = currentModel.GetComponent<ModelAppearance>();
+        if (parts != null)
+            parts.Apply(appearance);
     }
 
     #endregion
@@ -192,6 +256,17 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
         return socketProvider.GetNamedSocket(socketId);
     }
 
+    public Transform GetEquippedVisual(string slotId)
+    {
+        if (string.IsNullOrEmpty(slotId))
+            return null;
+
+        if (!equippedVisuals.TryGetValue(slotId, out var visual) || visual == null)
+            return null;
+
+        return visual.transform;
+    }
+
     /// <summary>
     /// Reparents everything under one socket to another, zeroing the local transform so the
     /// item sits on the new bone rather than keeping its old offset. Used by the stance
@@ -207,17 +282,21 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
         if (from == null || to == null) return;
 
         for (int i = from.childCount - 1; i >= 0; i--)
-        {
-            Transform child = from.GetChild(i);
+            PlaceInSocket(from.GetChild(i), to);
+    }
 
-            Vector3 worldScale = child.lossyScale;
+    // One item onto one socket, by the same rules: local zero, world scale kept.
+    public static void PlaceInSocket(Transform item, Transform socket)
+    {
+        if (item == null || socket == null) return;
 
-            child.SetParent(to, false);
-            child.localPosition = Vector3.zero;
-            child.localRotation = Quaternion.identity;
+        Vector3 worldScale = item.lossyScale;
 
-            SocketScale.Normalise(child, worldScale);
-        }
+        item.SetParent(socket, false);
+        item.localPosition = Vector3.zero;
+        item.localRotation = Quaternion.identity;
+
+        SocketScale.Normalise(item, worldScale);
     }
 
     #endregion
@@ -240,7 +319,13 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
             return;
         }
 
-        if (item.Definition == null || item.Definition.equippedPrefab == null)
+        if (item.Definition == null)
+            return;
+
+        ClearSocket(slot.slotId);
+        ShowLook(slot.slotId, item.Definition);
+
+        if (item.Definition.equippedPrefab == null)
             return;
 
         // A model with no socket map can't hold anything, and CacheSocketsFromProvider already said so.
@@ -257,9 +342,9 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
             return;
         }
 
-        ClearSocket(slot.slotId);
         var visual = Instantiate(item.Definition.equippedPrefab, socket);
         visual.name = item.Definition.displayName;
+        equippedVisuals[slot.slotId] = visual;
 
         // Instantiate-with-parent keeps the prefab's LOCAL scale, so the final size is
         // socket.lossyScale x prefab.localScale. On a rig that imported at 100 that is a
@@ -268,9 +353,6 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
             SocketScale.Normalise(visual.transform, item.Definition.equippedPrefab.transform.localScale);
     }
 
-    /// <summary>
-    /// Clears all children from a socket (unequip visual).
-    /// </summary>
     /// <summary>
     /// A new model has empty sockets. Put back whatever is equipped — an NPC's natural weapon is
     /// equipped at Initialize, before its config has loaded any model to hang it on.
@@ -284,14 +366,40 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
             HandleItemEquipped(equipment.GetSlotDefinition(pair.Key), pair.Value);
     }
 
-    private void ClearSocket(string slotId)
+    // An item can be part of the model's own mesh (an outfit): it names an appearance group and option
+    // instead of, or as well as, a prefab. A model without that group ignores it.
+    private void ShowLook(string slotId, ItemDefinition definition)
     {
-        var socket = GetSocket(slotId);
-        if (socket == null)
+        if (string.IsNullOrEmpty(definition.appearanceGroup))
             return;
 
-        foreach (Transform child in socket)
-            Destroy(child.gameObject);
+        var parts = currentModel.GetComponent<ModelAppearance>();
+        if (parts != null && parts.Show(definition.appearanceGroup, definition.appearanceOption))
+            equippedLooks[slotId] = definition.appearanceGroup;
+    }
+
+    private void ClearLook(string slotId)
+    {
+        if (!equippedLooks.TryGetValue(slotId, out var groupId))
+            return;
+
+        equippedLooks.Remove(slotId);
+
+        var parts = currentModel != null ? currentModel.GetComponent<ModelAppearance>() : null;
+        if (parts != null)
+            parts.ShowDefault(groupId);
+    }
+
+    private void ClearSocket(string slotId)
+    {
+        ClearLook(slotId);
+
+        if (!equippedVisuals.TryGetValue(slotId, out var visual))
+            return;
+
+        equippedVisuals.Remove(slotId);
+        if (visual != null)
+            Destroy(visual);
     }
 
     #endregion
@@ -312,13 +420,15 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
 
     #region ISaveable Implementation
 
-    public string GetSaveId() => "model";
+    public string GetSaveId() => SaveId;
 
     public string GetSaveData()
     {
         var data = new ModelSaveData
         {
-            currentModelId = currentModelId
+            version = GetSaveVersion(),
+            currentModelId = currentModelId,
+            appearance = appearance
         };
 
         return JsonUtility.ToJson(data);
@@ -330,11 +440,16 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
             return;
 
         var data = JsonUtility.FromJson<ModelSaveData>(json);
+        appearance = data.appearance ?? new List<AppearanceChoice>();
+
         if (!string.IsNullOrEmpty(data.currentModelId))
             SwapModel(data.currentModelId);
+
+        // SwapModel returns early when the model is already on; the look still has to land.
+        ApplyAppearance();
     }
 
-    public int GetSaveVersion() => 1;
+    public int GetSaveVersion() => SaveVersion;
     public int LoadOrder => 20;
 
     #endregion
@@ -345,6 +460,9 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
     {
         if (equipment != null)
             equipment.OnEquipmentVisual -= HandleItemEquipped;
+
+        if (brain != null)
+            brain.OnLoaded -= HandleLoaded;
     }
 
     #endregion
@@ -353,5 +471,7 @@ public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
 [System.Serializable]
 public class ModelSaveData
 {
+    public int version;
     public string currentModelId;
+    public List<AppearanceChoice> appearance = new List<AppearanceChoice>();
 }

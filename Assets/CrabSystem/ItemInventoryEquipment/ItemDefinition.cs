@@ -28,6 +28,14 @@ public class ItemDefinition : ScriptableObject
     [Tooltip("Prefab instantiated in character hand/socket when equipped (3D model)")]
     public GameObject equippedPrefab;
 
+    [Header("Model Look")]
+    [Tooltip("An appearance group on the model this item drives while equipped, e.g. 'outfit' for clothes " +
+             "that are part of the model's mesh. Models without the group ignore it. Empty = none.")]
+    public string appearanceGroup;
+
+    [Tooltip("The option of that group shown while equipped, e.g. 'uniform_3'.")]
+    public string appearanceOption;
+
     [Header("Classification")]
     [Tooltip("Item category (Weapon, Armor, Consumable, etc.)")]
     public ItemCategory category;
@@ -48,6 +56,10 @@ public class ItemDefinition : ScriptableObject
 
     [Tooltip("The weapon's default moveset — what LMB fires while it is drawn (null for non-weapons)")]
     public WeaponMoveset moveset;
+
+    [Tooltip("How far the weapon reaches, in metres, edge to edge from the wielder's body (D&D style: 1.5 m is " +
+             "about 5 ft, a reach weapon about 3 m). Each strike adds its own bonus (Combat_Framework §2.5).")]
+    [Min(0f)] public float reach = 1.5f;
 
     [Header("Stats")]
     [Tooltip("Flat stats this item gives while equipped. Armour: atr.arm_dice, atr.arm, atr.arm_def, equip.load.")]

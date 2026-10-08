@@ -44,7 +44,6 @@ MonoBehaviour:
   combatBehaviorClassName: 
   aiSystemType: 2
   goapGoals: []
-  goapActions: []
   goalSelectionMode: 1
   useGoalCommitment: 1
   minimumGoalDuration: 0.5
@@ -63,7 +62,7 @@ MonoBehaviour:
   visionAngle: 90
   requireLineOfSight: 1
   modelPool:
-  - female_base_v1
+  - katana_girl_v1
   randomizeModel: 0
   useGenericName: 1
   genericName: target_dummy

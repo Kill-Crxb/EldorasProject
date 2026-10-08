@@ -479,6 +479,15 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
             // inspector-visible "equippedItems" debug list (e.g. a sword equipped once
             // in the editor) as the character's equipment, instead of an empty loadout.
             await provider.Save(characterId, "equipment", "{\"version\":1,\"slots\":[]}");
+
+            // The look belongs to the model (model.json), so creation seeds it there, the way stats are.
+            var modelData = new ModelSaveData
+            {
+                version = ModelModule.SaveVersion,
+                currentModelId = data.modelId,
+                appearance = data.appearance ?? new List<AppearanceChoice>()
+            };
+            await provider.Save(characterId, ModelModule.SaveId, JsonUtility.ToJson(modelData));
         }
         catch (Exception ex)
         {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -38,7 +39,13 @@ using UnityEngine.UI;
 ///   minPerStat            — Every stat is guaranteed at least this (default 3)
 ///   statPointPool         — Total points across all six stats (default 30)
 ///   minNameLength / maxNameLength
-///   defaultModelId        — Placeholder until the appearance system is built
+///   defaultModelId        — The model the panel opens on (and the only one if no database is set)
+///
+///   [Appearance]
+///   modelDatabase         — Offers every model marked Playable
+///   rowPrefab             — AppearanceRowView: label, value, previous / next buttons
+///   rowParent             — Holds the rows; give it a Vertical Layout Group
+///   preview               — CreationPreview (optional); Tools → Characters → Build Creation Preview sets it up
 /// </summary>
 public class CharacterCreationPanel : MonoBehaviour
 {
@@ -81,8 +88,23 @@ public class CharacterCreationPanel : MonoBehaviour
     [Tooltip("Maximum character name length.")]
     [SerializeField] private int maxNameLength = 20;
 
-    [Tooltip("Model ID written to metadata. Placeholder until appearance system is built.")]
+    [Tooltip("The model the panel opens on. Without a model database it is the only choice.")]
     [IdRef(IdKind.Model)] [SerializeField] private string defaultModelId = "female_base_v1";
+
+    [Header("Appearance")]
+    [Tooltip("Every model marked Playable is offered.")]
+    [SerializeField] private ModelDatabase modelDatabase;
+
+    [Tooltip("One row per choice: a label, a value and previous / next buttons.")]
+    [SerializeField] private AppearanceRowView rowPrefab;
+
+    [Tooltip("Where the rows go. Give it a Vertical Layout Group.")]
+    [SerializeField] private RectTransform rowParent;
+
+    [SerializeField] private string modelRowLabel = "Model";
+
+    [Tooltip("Optional. The chosen model in 3D, updated as the rows change.")]
+    [SerializeField] private CreationPreview preview;
 
     // ── Stats ─────────────────────────────────────────────────────────────
 
@@ -96,6 +118,17 @@ public class CharacterCreationPanel : MonoBehaviour
 
     private readonly int[] stats = new int[StatCount];
     private TextMeshProUGUI[] statTexts;
+
+    // ── Appearance ────────────────────────────────────────────────────────
+
+    // The model row's index; group rows use their index in creationGroups.
+    private const int ModelRow = -1;
+
+    private readonly List<ModelDatabase.ModelVariant> models = new List<ModelDatabase.ModelVariant>();
+    private readonly List<AppearanceRowView> rows = new List<AppearanceRowView>();
+    private readonly List<ModelAppearance.Group> creationGroups = new List<ModelAppearance.Group>();
+    private int modelIndex;
+    private int[] optionIndices = new int[0];
 
     // ── State ─────────────────────────────────────────────────────────────
 
@@ -132,6 +165,7 @@ public class CharacterCreationPanel : MonoBehaviour
     private void OnDisable()
     {
         UnwireButtons();
+        ClearRows();
     }
 
     // ── Public API ────────────────────────────────────────────────────────
@@ -186,6 +220,8 @@ public class CharacterCreationPanel : MonoBehaviour
             nameInputField.text = "";
 
         ClearFeedback();
+        LoadModels();
+        BuildRows();
         SetInteractable(true);
         Randomize();
     }
@@ -240,6 +276,121 @@ public class CharacterCreationPanel : MonoBehaviour
         return overrides;
     }
 
+    // ── Appearance ────────────────────────────────────────────────────────
+
+    private void LoadModels()
+    {
+        models.Clear();
+        modelIndex = 0;
+
+        if (modelDatabase == null) return;
+
+        foreach (var variant in modelDatabase.AllModels)
+        {
+            if (variant == null || !variant.playable || !variant.IsValid()) continue;
+
+            if (variant.modelId == defaultModelId) modelIndex = models.Count;
+            models.Add(variant);
+        }
+    }
+
+    // Only groups chosen at creation get a row (clothes come from equipment), and the model row only
+    // shows when there is more than one model. A new model starts every group on its first option.
+    private void BuildRows()
+    {
+        ClearRows();
+        creationGroups.Clear();
+
+        if (models.Count == 0 || rowPrefab == null || rowParent == null)
+        {
+            optionIndices = new int[0];
+            return;
+        }
+
+        var model = models[modelIndex];
+        if (models.Count > 1)
+            AddRow(ModelRow, modelRowLabel, model.displayName);
+
+        var parts = model.prefab.GetComponent<ModelAppearance>();
+        if (parts != null)
+            foreach (var group in parts.Groups)
+                if (group.chosenAtCreation && group.options.Length > 0) creationGroups.Add(group);
+
+        optionIndices = new int[creationGroups.Count];
+        for (int i = 0; i < creationGroups.Count; i++)
+            AddRow(i, creationGroups[i].displayName, OptionName(creationGroups[i], 0));
+
+        if (preview != null) preview.Show(model.prefab, BuildAppearance());
+    }
+
+    private void AddRow(int groupIndex, string label, string value)
+    {
+        var row = Instantiate(rowPrefab, rowParent);
+        row.Show(groupIndex, label, value);
+        row.Stepped += HandleRowStepped;
+        rows.Add(row);
+    }
+
+    private void ClearRows()
+    {
+        foreach (var row in rows)
+        {
+            if (row == null) continue;
+            row.Stepped -= HandleRowStepped;
+            Destroy(row.gameObject);
+        }
+
+        rows.Clear();
+    }
+
+    private void HandleRowStepped(AppearanceRowView row, int step)
+    {
+        if (isBusy) return;
+
+        if (row.GroupIndex == ModelRow)
+        {
+            modelIndex = Wrap(modelIndex + step, models.Count);
+            BuildRows();
+            return;
+        }
+
+        var group = creationGroups[row.GroupIndex];
+        int option = Wrap(optionIndices[row.GroupIndex] + step, group.options.Length);
+        optionIndices[row.GroupIndex] = option;
+        row.SetValue(OptionName(group, option));
+
+        if (preview != null) preview.Apply(BuildAppearance());
+    }
+
+    private string ChosenModelId()
+    {
+        return models.Count > 0 ? models[modelIndex].modelId : defaultModelId;
+    }
+
+    private List<AppearanceChoice> BuildAppearance()
+    {
+        var choices = new List<AppearanceChoice>();
+
+        for (int i = 0; i < creationGroups.Count; i++)
+        {
+            var group = creationGroups[i];
+            choices.Add(new AppearanceChoice { groupId = group.groupId, optionId = group.options[optionIndices[i]].optionId });
+        }
+
+        return choices;
+    }
+
+    private static string OptionName(ModelAppearance.Group group, int index)
+    {
+        return group.options.Length > 0 ? group.options[index].displayName : "—";
+    }
+
+    private static int Wrap(int value, int count)
+    {
+        if (count <= 0) return 0;
+        return ((value % count) + count) % count;
+    }
+
     // ── Finalise ──────────────────────────────────────────────────────────
 
     private void OnFinaliseClicked()
@@ -262,7 +413,8 @@ public class CharacterCreationPanel : MonoBehaviour
         {
             characterName = characterName,
             accountName = accountManager.ActiveAccountName,
-            modelId = defaultModelId,
+            modelId = ChosenModelId(),
+            appearance = BuildAppearance(),
             baseStats = BuildStatOverrides()
         };
 
@@ -341,6 +493,9 @@ public class CharacterCreationPanel : MonoBehaviour
         if (randomizeButton != null) randomizeButton.interactable = value;
         if (finaliseButton != null) finaliseButton.interactable = value;
         if (cancelButton != null) cancelButton.interactable = value;
+
+        foreach (var row in rows)
+            row.SetInteractable(value);
     }
 
     private void SetFeedback(string message, bool isError = false)

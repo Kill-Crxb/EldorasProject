@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e6c78387218e045b0c95d0596c57f3, type: 3}
+  m_Name: Item_Weapon_SS_Shiled
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  itemId: ss_shield
+  displayName: Knight's Shield
+  description: A kite shield for the off hand.
+  icon: {fileID: 21300000, guid: b906fea0feef57a4ab4ae21578cc1c5a, type: 3}
+  worldPrefab: {fileID: 0}
+  equippedPrefab: {fileID: 6003464077285927092, guid: a0921bb10a6c8cf738d04abf81f1ae25, type: 3}
+  appearanceGroup: 
+  appearanceOption: 
+  category: {fileID: 11400000, guid: 3bb641c0f1429924c9a766d72d4ee159, type: 2}
+  subType: {fileID: 11400000, guid: 520d401852334502b423473dee337d1d, type: 2}
+  gridWidth: 1
+  gridHeight: 2
+  weaponData: {fileID: 0}
+  moveset: {fileID: 0}
+  stats: []
+  rarity: 0
+  maxStackSize: 1
+  tags:
+  - T1
+  - Katana
+  - Common
+  - Sword
+  - Blade
+  - Weapon
+  baseValue: 150
+  dropsOnDeath: 1
+  isTradeable: 1
+  isDestructible: 1

@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e6c78387218e045b0c95d0596c57f3, type: 3}
+  m_Name: Item_KG_Sportswear_Top
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  itemId: kg_sportswear_body
+  displayName: Sportswear Top
+  description: Light training clothes.
+  icon: {fileID: 21300000, guid: 71c87f9636ea4ff4a86b32c4ace808fd, type: 3}
+  worldPrefab: {fileID: 0}
+  equippedPrefab: {fileID: 0}
+  appearanceGroup: body
+  appearanceOption: sportswear
+  category: {fileID: 11400000, guid: cd298ac34ac15424e8f3adaa0d7c6134, type: 2}
+  subType: {fileID: 11400000, guid: 62f6429fa04f9368d1d10fd1d83c471e, type: 2}
+  gridWidth: 2
+  gridHeight: 3
+  weaponData: {fileID: 0}
+  moveset: {fileID: 0}
+  reach: 1.5
+  stats:
+  - statId: atr.arm_dice
+    amount: 1
+  - statId: atr.arm
+    amount: 1
+  - statId: atr.arm_def
+    amount: 1
+  - statId: equip.load
+    amount: 2
+  rarity: 0
+  maxStackSize: 1
+  tags:
+  - bodyarmor
+  - armour_light
+  - combatgirls_outfit
+  baseValue: 0
+  dropsOnDeath: 1
+  isTradeable: 1
+  isDestructible: 1
