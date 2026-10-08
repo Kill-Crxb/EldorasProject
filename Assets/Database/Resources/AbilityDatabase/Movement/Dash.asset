@@ -12,10 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
   m_Name: Dash
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
-  effectTrigger: 19
+  effectCue: 1
   waitForAnimUnlock: 0
   maxDuration: 2
-  animationLayer: 1
+  castWhileMoving: 1
+  useRootMotion: 0
+  rootMotionScale: 1
   animationTrigger: Dash
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
@@ -26,10 +28,16 @@ MonoBehaviour:
   overrideDefaults: 0
   customRequiredFacts: []
   customForbiddenFacts: []
-  nextInChain: {fileID: 0}
-  chainWindow: 0.5
-  resourceCosts: []
-  cooldown: 1
+  resourceCosts:
+  - resource: {fileID: 11400000, guid: 4cc10ff0880b2ba42a52ff48a27f66ce, type: 2}
+    cost: 4
+    drain: 0
+    refund: 0
+  - resource: {fileID: 11400000, guid: becee4767d3a4ce38e7662c4cf7d13d5, type: 2}
+    cost: 1
+    drain: 0
+    refund: 0
+  cooldown: 0
   castTime: 0
   blockDamageReduction: 0.5
   blockAngle: 120
@@ -38,16 +46,44 @@ MonoBehaviour:
   parryEnablesCounter: 1
   counterWindowDuration: 1
   blockStartupTime: 0.1
+  parryFrames: 0
+  speedClass: 0
+  frames:
+    startup: 0
+    active: 0
+    recovery: 0
+    cancelFrom: 0
+    cancelTo: 0
+    iframeFrom: 0
+    iframeTo: 0
+    armorFrom: 0
+    armorTo: 0
+    tell: 0
+  bakedClip: {fileID: 0}
+  bakedState: 0
+  bakedLayer: 0
+  bakedFade: 0
+  bakedStartTime: 0
+  hit:
+    guard: 0
+    onHit: 0
+    onHitFrames: 0
+    blockStamina: 0
+    blockAdvantage: 0
+    tracking: 0
+    hitStop: 0
+    feel: 0
+    bypass: 0
+  routes: []
   abilityId: dash1
   abilityName: Dash
   description: its just a dash WIP
-  icon: {fileID: 21300000, guid: a4922756e8141e64398159b9f48fc42f, type: 3}
+  icon: {fileID: 21300000, guid: 6dacbaf720087474e976e2c25a7e0c0e, type: 3}
   abilityType: 2
   abilityCategory: 2
   targetType: 4
   range: 0
   requiresLineOfSight: 0
-  hitboxTags: []
   damageEffects: []
   damageOverTimeEffects: []
   healEffects: []
@@ -58,8 +94,8 @@ MonoBehaviour:
     directionSource: 1
     direction: {x: 0, y: 1, z: 1}
     speed: 8
-    speedCap: 9.2
     duration: 2
+    speedCap: 9.2
     frictionHoliday: 0.25
     teleportDistance: 0
   statusEffects: []
@@ -70,3 +106,4 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
+  strikes: []

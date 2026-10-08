@@ -34,6 +34,13 @@ MonoBehaviour:
     defaultValue: 30
     minValue: 0
     maxValue: 999
+  - id: character.max_movement_charges
+    displayName: Max Movement Charges
+    shortName: MOV
+    description: Dashes before you must wait for one to return.
+    defaultValue: 3
+    minValue: 0
+    maxValue: 9
   - id: character.max_recovery
     displayName: Max Recovery
     shortName: REC

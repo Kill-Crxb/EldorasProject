@@ -253,6 +253,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 78a21610ae3d2e649b7544bd58e48754, type: 2}
   - {fileID: 11400000, guid: cda075c741676924f88c917236012ce0, type: 2}
   - {fileID: 11400000, guid: d49e50f215566a84c8579c48c3cba912, type: 2}
+  - {fileID: 11400000, guid: becee4767d3a4ce38e7662c4cf7d13d5, type: 2}
   enableHotReload: 1
   debugLogging: 0
 --- !u!1 &7632962920286833092

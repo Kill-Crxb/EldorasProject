@@ -31,6 +31,8 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
         public float max;
 
         [NonSerialized] public float regenReadyAt;
+        // The part-built unit of a refillWholeUnits pool.
+        [NonSerialized] public float unitProgress;
     }
 
     [SerializeField] private bool isEnabled = true;
@@ -221,11 +223,25 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     private void TickFlatRegen(ResourceState state, ResourceDefinition def, float delta)
     {
         if (def.regenPerSecond <= 0f) return;
+        if (def.refillWholeUnits)
+        {
+            TickWholeUnit(state, def, delta);
+            return;
+        }
 
         float headroom = state.max - state.current;
         float granted = Mathf.Min(def.regenPerSecond * delta, headroom);
 
         SetResourceValue(state, state.current + granted);
+    }
+
+    private void TickWholeUnit(ResourceState state, ResourceDefinition def, float delta)
+    {
+        state.unitProgress += def.regenPerSecond * delta;
+        if (state.unitProgress < 1f) return;
+
+        state.unitProgress -= 1f;
+        SetResourceValue(state, Mathf.Min(state.current + 1f, state.max));
     }
 
     /// <summary>
@@ -365,6 +381,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
 
         ModifyResourceDirect(state, -amount);
         BlockRegen(state);
+        state.unitProgress = 0f;
         return true;
     }
 

@@ -50,6 +50,11 @@ public class ResourceDefinition : ScriptableObject
              "refilling again. Draining a source pool to pay for regen does not count.")]
     public float regenDelay = 0f;
 
+    [Tooltip("Refill one whole unit at a time, for charge pools (movement charges). regenPerSecond builds a hidden " +
+             "unit out of sight and pays it out on reaching 1, so 0.5 is one charge every 2 s. Spending restarts " +
+             "the unit: charges come back only after that long without using one. Flat regen only.")]
+    public bool refillWholeUnits;
+
     [Header("Visual / Audio")]
 
     public Color resourceColor = Color.red;
