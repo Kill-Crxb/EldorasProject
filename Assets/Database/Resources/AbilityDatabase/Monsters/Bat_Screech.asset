@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
   m_Name: Bat_Screech
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
-  effectTrigger: 10
+  effectCue: 0
   waitForAnimUnlock: 0
   maxDuration: 0.5
   castWhileMoving: 0
@@ -75,7 +75,6 @@ MonoBehaviour:
   targetType: 1
   range: 25
   requiresLineOfSight: 0
-  hitboxTags: []
   damageEffects: []
   damageOverTimeEffects: []
   healEffects: []

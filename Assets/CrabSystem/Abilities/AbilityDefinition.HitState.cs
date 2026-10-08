@@ -1,7 +1,8 @@
 using UnityEngine;
 
 // Hit states — Combat_Framework.md §5, roadmap CF2.
-// The move says which state its hit causes; the damage that landed says how long. A hit state is a
+// The move says which state its hit causes; the damage that landed says how long. A hit the armour
+// shield swallows whole causes none: armour trades blows (Crxb, 8 Oct). A hit state is a
 // status raising CannotAct, so AbilitySystem's hard-control cancel does the interrupting.
 // Combat_Framework §3.1: a guarded hit puts the defender in blockstun, never a hit state. A hit
 // that gets round the guard (flanked), or a guard broken by the hit, does apply one (B29).

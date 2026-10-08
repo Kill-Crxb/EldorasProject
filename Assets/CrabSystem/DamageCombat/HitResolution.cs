@@ -9,7 +9,7 @@ public struct HitResolution
     public bool advantage;   // riposte, or the target was guard-broken
     public float accuracy;   // attacker's Finesse
     public float defense;    // 5 + Avoidance + armour's to-hit bonus
-    public float rolled;     // damage carried into soak: full includes explosions, glancing is half the base
+    public float rolled;     // damage carried into soak: the full hit, or half of it when glancing
     public float soak;       // absorbed: by the armour shield (physical only), or all of it on a guarded hit
     public float applied;    // what reached health, after faction and block
 }

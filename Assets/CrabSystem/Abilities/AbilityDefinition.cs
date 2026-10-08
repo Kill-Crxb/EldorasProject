@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using NinjaGame.Animation;
 
 // ========================================
 // ENUMS
@@ -159,11 +158,6 @@ public partial class AbilityDefinition : ScriptableObject
     // COMBAT EFFECTS (Legacy - Transitioning to Polymorphic)
     // ========================================
 
-    [Header("Hitboxes")]
-    [Tooltip("Which WeaponHitbox tags this attack activates — e.g. 'FistR', 'FootL', 'Blade'.\n" +
-             "Leave empty to activate every hitbox on the entity. That is the original behaviour, " +
-             "and what every weapon ability still does, so existing assets need no change.")]
-    public List<string> hitboxTags = new List<string>();
 
     [Header("Combat Effects")]
     public List<DamageEffect> damageEffects = new List<DamageEffect>();
@@ -191,7 +185,7 @@ public partial class AbilityDefinition : ScriptableObject
     /// Push this ability's statuses onto whoever it reached.
     ///
     /// Called from all three places an ability actually lands — Execute (self-targeted),
-    /// WeaponHitbox (melee contact) and ProjectilePayload (arrival) — for the same reason all
+    /// StrikeHandler (melee contact) and ProjectilePayload (arrival) — for the same reason all
     /// three already read damageEffects: an ability is authored once, and how it was delivered
     /// is not supposed to change what it does.
     ///

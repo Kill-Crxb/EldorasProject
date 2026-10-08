@@ -34,9 +34,6 @@ public class DiceProfile : ScriptableObject
     /// </summary>
     public float RollDamage() => damageDice.Roll() + flatBonus;
 
-    // Base roll plus flat bonus; explosion rolls come back separately in 'extra'.
-    public float RollExploding(out int extra, out int explosions) => damageDice.RollExploding(out extra, out explosions) + flatBonus;
-
     /// <summary>Human-readable label for tooltips — e.g. "1d8 + 2".</summary>
     public string DamageLabel() => flatBonus == 0f
         ? damageDice.Label()

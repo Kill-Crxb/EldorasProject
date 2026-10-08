@@ -65,11 +65,24 @@ public class GuardModule : MonoBehaviour, IBrainModule
     [Tooltip("The fighter whose guard breaks freezes this long.")]
     [SerializeField] private int guardBreakStopFrames = 12;
 
+    [Header("Parried")]
+    // Counts through the parry hit-stop. Short of a guaranteed riposte: the riposte's strike lands after
+    // it ends, so the attacker can still guard if they read it.
+    [Tooltip("A parried attacker is flinched this long (frames at 60 fps): their string ends and the parryer moves first.")]
+    [SerializeField] private int parriedStunFrames = 36;
+
     private const string StaminaId = "stamina";
     private const string DeflectionStat = "def.deflection";
     private const string DeflectSideParam = "DeflectSide";
     private const string BlockedHitTrigger = "BlockedHit";
     private const string ParriedTrigger = "Parried";
+    // The deflect pose (Guard → Block → Parry). Fired here, not as the parry ability's animationTrigger, so the move
+    // bake never treats a parry as a move (cleared from LSParry 5 Oct, which left the pose unplayed until 8 Oct).
+    private const string ParryTrigger = "Parry";
+    // The guard is only entered from Rest, so a guard raised during an attack's tail cuts straight to it.
+    private static readonly int GuardPoseState = Animator.StringToHash("Actions.Guard.Block");
+    private static readonly int RestState = Animator.StringToHash("Actions.Rest");
+    private const float GuardCutSeconds = 0.1f;
 
     private ControllerBrain brain;
     private AbilitySystem abilities;
@@ -185,6 +198,7 @@ public class GuardModule : MonoBehaviour, IBrainModule
         blackboard?.SetBool(BlackboardKey.IsBlocking, true);
         if (stateMachine != null) stateMachine.TryTransitionUpperBody(UpperBodyState.Blocking);
         damage.OnDamageIntercept += HandleDamageIntercept;
+        CutToGuardPose();
 
         OnBlockStart?.Invoke();
     }
@@ -293,9 +307,8 @@ public class GuardModule : MonoBehaviour, IBrainModule
         return guard.CanBlock(transform.forward, attackDirection);
     }
 
-    // Combat_Framework §3.2: free for the defender; the attacker pays the move's block stamina and takes
-    // posture, and the defender's next attack is a riposte. The attacker's string carries on unless
-    // their posture breaks.
+    // Combat_Framework §3.2: free for the defender; the attacker pays the move's block stamina, takes
+    // posture and a short flinch that ends their string, and the defender's next attack is a riposte.
     private void Parry(DamageInterceptArgs args, int cost)
     {
         args.outcome = GuardOutcome.Parried;
@@ -311,12 +324,22 @@ public class GuardModule : MonoBehaviour, IBrainModule
         if (attackerGuard != null) attackerGuard.TakeParried(cost);
     }
 
-    // This entity's swing was parried: the blade rebounds (the animator's Parried trigger, if authored).
+    // This entity's swing was parried: the blade rebounds (the animator's Parried trigger, if authored)
+    // and the fighter is flinched for parriedStunFrames. A posture break on top replaces it with Guard Break.
     public void TakeParried(int cost)
     {
         DrainStamina(cost);
         TriggerIfPresent(ParriedTrigger);
+        FlinchParried();
         TakePosture(cost * parryPostureMultiplier);
+    }
+
+    private void FlinchParried()
+    {
+        if (parriedStunFrames <= 0 || statuses == null) return;
+
+        StatusDefinition status = AbilityDefinition.LoadHitState(HitState.Flinch);
+        if (status != null) statuses.Apply(status, null, parriedStunFrames / 60f);
     }
 
     // Posture this entity takes as the attacker — its swing was parried or blocked.
@@ -361,6 +384,9 @@ public class GuardModule : MonoBehaviour, IBrainModule
 
         int frames = Mathf.Max(minParryFrames, ability.parryFrames - parryPresses * parryDecayFrames);
         parryWindowEndsAt = Now + frames / 60f;
+        // Only from a raised guard: the Parry state is entered from Block, and a trigger set without one would
+        // stay armed and fire the next time the guard went up.
+        if (guard != null) TriggerIfPresent(ParryTrigger);
         OnParryWindowOpened?.Invoke(frames);
     }
 
@@ -416,6 +442,18 @@ public class GuardModule : MonoBehaviour, IBrainModule
         if (pools.ConsumeResource(stamina, cost)) return;
 
         pools.ConsumeResource(stamina, pools.GetResource(stamina));
+    }
+
+    // An attack's flourish plays on past Unlocked until its clip ends, and the guard state is only reached
+    // from Rest, so raising the guard in that tail left her sheathing the blade while blocking.
+    private void CutToGuardPose()
+    {
+        Animator animator = brain.EntityAnimator;
+        int layer = animator != null ? animator.GetLayerIndex(AnimationLayerNames.Actions) : -1;
+        if (layer < 0 || !animator.HasState(layer, GuardPoseState)) return;
+        if (animator.GetCurrentAnimatorStateInfo(layer).fullPathHash == RestState) return;
+
+        animator.CrossFadeInFixedTime(GuardPoseState, GuardCutSeconds, layer);
     }
 
     private void TriggerIfPresent(string trigger)

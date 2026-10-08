@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // One monster as Tools → AI → Build Monsters reads it. The builder makes this asset with defaults the
 // first time; after that the asset is the source, and a rebuild keeps your edits. Abilities and goals
@@ -33,18 +34,17 @@ public class MonsterSpec : ScriptableObject
     public float attackSpeed = 1f;
 
     [Header("Attack clip events — 0 to 1 through the clip, below 0 for none")]
-    public float effect1 = -1f;
-    public float hitboxStart = 0.4f;
-    public float hitboxEnd = 0.65f;
+    [Tooltip("Tell: the read, in the wind-up. None tells as the attack starts.")]
+    public float tell = -1f;
+    [Tooltip("Cue(1): the ability's effects — a lunge's push, a bolt's release.")]
+    [FormerlySerializedAs("effect1")] public float cue = -1f;
+    [Tooltip("Strike(0): the hit check.")]
+    [FormerlySerializedAs("hitboxStart")] public float strike = 0.4f;
     public float unlock = 0.95f;
 
-    [Header("Hitbox — leave the bone empty for no melee hitbox")]
-    public string hitboxBone;
-    public string hitboxTag;
-    [Tooltip("Metres.")]
-    public float hitboxRadius = 0.35f;
-    [Tooltip("Metres in front of the bone.")]
-    public float hitboxForward = 0.2f;
+    [Header("Natural weapon reach")]
+    [Tooltip("Metres, edge to edge from the monster's body. Strikes are a range, facing and height check, no hitbox.")]
+    public float reach = 1f;
 
     [Header("Body")]
     public float health = 30f;

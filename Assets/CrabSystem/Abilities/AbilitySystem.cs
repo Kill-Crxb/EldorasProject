@@ -1,5 +1,4 @@
-﻿using NinjaGame.Animation;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,8 +12,12 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     [SerializeField] private AbilityLoadoutModule loadoutModule;
     [SerializeField] private List<AbilityDefinition> abilities = new List<AbilityDefinition>();
 
+    [Header("Strikes")]
+    [Tooltip("Equipment slot whose weapon supplies a strike's reach (ItemDefinition.reach).")]
+    [IdRef(IdKind.EquipmentSlot)] [SerializeField] private string weaponSlotId = "mainwep";
+
     [Header("Debug")]
-    [Tooltip("Log animation events, forwarder binding, and hitbox toggling.")]
+    [Tooltip("Log move events and forwarder binding.")]
     [SerializeField] private bool debugLogging = false;
 
     private class AbilityState
@@ -60,12 +63,12 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     private bool isAnimationLocked = false;
     private bool isInvincible = false;
-    private readonly List<WeaponHitbox> hitboxes = new List<WeaponHitbox>();
 
-    private AbilityDefinition lastCompletedAbility = null;
-    private float lastAbilityCompleteTime = 0f;
-    private bool chainWindowOpen = false;
-    private float chainWindowOpenTime = 0f;
+    private StrikeHandler strikes;
+    private int nextStrike;
+    private bool told;
+    private float toldAt;
+    private bool chainOpen;
 
     public bool IsEnabled
     {
@@ -82,13 +85,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     public bool IsHitStopped => hitStopUntil > 0f;
     // Frames since the current move started, at 60 fps, from the move clock. -1 when nothing is executing.
     public int CurrentMoveFrame => currentAbility != null ? Mathf.FloorToInt(moveClock) : -1;
-    // From the clip's events: HitboxStart opens Active, HitboxEnd opens Recovery.
+    // From the clip's events: the first Strike opens Active, the last strike opens Recovery.
     public MovePhase CurrentPhase => currentAbility != null ? movePhase : MovePhase.None;
     public bool IsArmored => currentAbility != null && currentAbility.HasArmorAt(CurrentMoveFrame);
     public bool IsInvincible => isInvincible;
-    public bool HitboxesLive { get; private set; }
-    public float HitboxesLiveFor => HitboxesLive ? Time.time - hitboxesLiveAt : 0f;
-    private float hitboxesLiveAt;
+    public float TellFor => currentAbility != null && told ? Time.time - toldAt : -1f;
+    // From the clip's ChainOpen to the move's end: MovesetModule may start the string's next step.
+    public bool ChainOpen => currentAbility != null && chainOpen;
+    public StrikeHandler Strikes => strikes;
     public bool IsGuarding => guard != null && guard.IsGuarding;
     public bool InBlockstun => guard != null && guard.InBlockstun;
 
@@ -96,7 +100,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     public event Action<string, float> OnAbilityCooldownChanged;
     public event Action<string> OnAbilityCastStart;
     public event Action<string> OnAbilityCastComplete;
-    public event Action<AnimationEventType> OnAbilityAnimationEvent;
+    public event Action<MoveEvent, int> OnMoveEvent;
+    // The move in flight told (its Tell event, or its start when its clip has none). Feel shows the cue here.
+    public event Action<AbilityDefinition> OnTell;
     // A hit from this entity's ability connected (melee or projectile). SlotTransformationSystem
     // rolls the ability's procs off it.
     public event Action<AbilityDefinition, ControllerBrain> OnHitLanded;
@@ -144,6 +150,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     public void LateInitialize()
     {
+        // Here, not in Initialize: the strike reads equipment and stance, which may initialise after this.
+        strikes = new StrikeHandler(brain, this, weaponSlotId);
+
         // Here, not in Initialize: ControllerBrain initializes this module before BlackboardSystem,
         // which only creates its Blackboard in its own Initialize. Read earlier, this was always
         // null — every forbidden fact passed and IsBlocking / IsInvincible were never written.
@@ -209,14 +218,13 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         UpdateCooldownTimers();
         UpdateCasting();
-        UpdateChainWindow();
         TickMoveClock();
     }
 
     // Until the entity clock lands (CrabSystem_Standard §9).
     private static float Delta => Time.deltaTime;
 
-    // Animation events drive every move (decided 5 Oct): hitboxes, phases and the end come from the
+    // Animation events drive every move (decided 5 Oct): strikes, phases and the end come from the
     // clip, so timing is tuned by editing the clip. This counter only measures — frames at 60 fps since
     // the move started — for blockstun maths, armour windows and MoveClockTrace, which compares the
     // clip's events with the move's baked frames. It stops while the animator is hit-stopped, so the
@@ -317,10 +325,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
             return; // already bound to the right one
 
         if (eventForwarder != null)
-        {
-            eventForwarder.OnAnimationEvent -= HandleAnimationEvent;
-            eventForwarder.OnStateTransitionEvent -= HandleStateTransition;
-        }
+            eventForwarder.OnMoveEvent -= HandleMoveEvent;
 
         eventForwarder = forwarder;
 
@@ -332,9 +337,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
             return;
         }
 
-        eventForwarder.Initialize(brain);
-        eventForwarder.OnAnimationEvent += HandleAnimationEvent;
-        eventForwarder.OnStateTransitionEvent += HandleStateTransition;
+        eventForwarder.OnMoveEvent += HandleMoveEvent;
         if (debugLogging)
             Debug.Log($"[AbilitySystem] Subscribed to AnimationEventForwarder on {eventForwarder.name}");
     }
@@ -381,10 +384,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
             modelModule.OnModelChanged -= HandleModelChanged;
 
         if (eventForwarder != null)
-        {
-            eventForwarder.OnAnimationEvent -= HandleAnimationEvent;
-            eventForwarder.OnStateTransitionEvent -= HandleStateTransition;
-        }
+            eventForwarder.OnMoveEvent -= HandleMoveEvent;
     }
 
     public void AddAbility(AbilityDefinition ability)
@@ -463,9 +463,26 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     public bool CanUseAbility(string abilityId)
     {
+        if (currentAbility != null) return false;
+        return CanStart(abilityId);
+    }
+
+    // The string's next step may start from the step's ChainOpen: the step in flight ends here instead of
+    // at Unlocked. False, with the step still playing, when the next can't start.
+    public bool ChainInto(string abilityId)
+    {
+        if (!ChainOpen || !CanStart(abilityId)) return false;
+
+        CompleteAbility(currentAbility);
+        UseAbility(abilityId);
+        return currentAbility != null && currentAbility.abilityId == abilityId;
+    }
+
+    // Everything CanUseAbility asks except whether a move is already in flight.
+    private bool CanStart(string abilityId)
+    {
         if (!isEnabled) return false;
         if (damageSystem != null && damageSystem.IsDead) return false;
-        if (currentAbility != null) return false;
         if (currentlyCastingAbility != null) return false;
         if (isAnimationLocked) return false;
 
@@ -527,20 +544,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         SetFact(BlackboardKey.MoveRooted, false);
 
-        // Interrupted in its active frames, a swing never reaches HitboxEnd — the blade would stay
-        // live with no current ability and land fallback hits.
         if (currentAbility != null)
-        {
-            DisableAbilityHitboxes();
             CompleteAbility(currentAbility);
-        }
 
         if (stateMachine != null)
             stateMachine.TryTransitionUpperBody(UpperBodyState.Idle);
 
         isAnimationLocked = false;
-        isInvincible = false;
-        SetFact(BlackboardKey.IsInvincible, false);
+        SetInvincible(false);
         UpdateExecutingFact();
     }
 
@@ -624,11 +635,16 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         currentAbility = ability;
         moveClock = 0f;
         movePhase = MovePhase.Startup;
+        nextStrike = 0;
+        chainOpen = false;
+        told = false;
         UpdateExecutingFact();
 
         // Layers need nothing: the Actions layers show while their state plays (rest rule), and
         // ActionsLayerDriver picks arms-only or full body from speed. Rooting is the fact.
         SetFact(BlackboardKey.MoveRooted, !ability.castWhileMoving);
+        SetFact(BlackboardKey.RootMotionDriven, ability.useRootMotion);
+        blackboard?.SetFloat(BlackboardKey.RootMotionScale, ability.rootMotionScale);
         EnterUpperBodyState(StartStateFor(ability));
 
         StartAnimation(ability);
@@ -636,11 +652,10 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         if (ability.castEffectPrefab != null)
             vfxSystem?.SpawnEffect(ability.castEffectPrefab, VFXAnchor.CastOrigin);
 
-        bool hasEffectTrigger = ability.effectTrigger == AnimationEventType.Effect1 ||
-                               ability.effectTrigger == AnimationEventType.Effect2 ||
-                               ability.effectTrigger == AnimationEventType.Effect3;
+        // A clip with no Tell tells as the move starts (its baked tell frame is 0).
+        if (ability.frames.tell <= 0) Tell();
 
-        if (!hasEffectTrigger)
+        if (ability.effectCue <= 0)
         {
             ExecuteAbilityEffects(ability);
 
@@ -674,9 +689,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         if (currentAbility == ability)
         {
-            // A parry ends on its maxDuration by design: its clip carries no events.
+            // A parry may end on its maxDuration: the deflect pose only plays from a raised guard, so its Unlocked can miss.
             if (!ability.IsParry)
-                Debug.LogWarning($"[AbilitySystem] {ability.abilityName} timed out - AnimUnlocked never fired!");
+                Debug.LogWarning($"[AbilitySystem] {ability.abilityName} timed out - its clip never raised Unlocked!");
             CompleteAbility(ability);
         }
 
@@ -708,14 +723,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
             stateMachine.TryTransitionUpperBody(UpperBodyState.Idle);
 
         SetFact(BlackboardKey.MoveRooted, false);
-
-        lastCompletedAbility = ability;
-        lastAbilityCompleteTime = Time.time;
+        SetFact(BlackboardKey.RootMotionDriven, false);
+        if (isInvincible) SetInvincible(false);
 
         if (currentAbility == ability)
         {
             currentAbility = null;
             isAnimationLocked = false;
+            chainOpen = false;
         }
 
         UpdateExecutingFact();
@@ -727,75 +742,81 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         }
     }
 
-    private void HandleAnimationEvent(AnimationEventType eventType)
+    // The clip's six events (Combat_Framework §2.1) are the move's timing. An event arriving with no move in
+    // flight is the tail of a clip still fading out, and is ignored.
+    private void HandleMoveEvent(MoveEvent evt, int value)
     {
         if (debugLogging)
-            Debug.Log($"[AbilitySystem] HandleAnimationEvent received: {eventType} (currentAbility: {currentAbility?.abilityId ?? "null"})");
+            Debug.Log($"[AbilitySystem] {evt}({value}) (currentAbility: {currentAbility?.abilityId ?? "null"})");
 
-        OnAbilityAnimationEvent?.Invoke(eventType);
-
-        HandleTimingEvent(eventType);
-
+        OnMoveEvent?.Invoke(evt, value);
         if (currentAbility == null) return;
 
-        if (eventType == currentAbility.effectTrigger)
-            ExecuteAbilityEffects(currentAbility);
-
-        if (eventType == AnimationEventType.ComboWindowStart)
-            OpenChainWindow();
-
-        if (eventType == AnimationEventType.ComboWindowEnd)
-            CloseChainWindow();
-    }
-
-    private void HandleTimingEvent(AnimationEventType eventType)
-    {
-        switch (eventType)
+        switch (evt)
         {
-            case AnimationEventType.HitboxStart:
-                if (currentAbility == null) return;
-                movePhase = MovePhase.Active;
-                EnableAbilityHitboxes();
-                EnterMeleePhase(UpperBodyState.MeleeSwing);
-                return;
-            case AnimationEventType.HitboxEnd:
-                if (currentAbility != null) movePhase = MovePhase.Recovery;
-                DisableAbilityHitboxes();
-                EnterMeleePhase(UpperBodyState.MeleeRecovery);
-                return;
-            case AnimationEventType.AnimUnlocked:
-                HandleAnimationUnlocked();
-                return;
+            case MoveEvent.Tell: Tell(); return;
+            case MoveEvent.Strike: Strike(value); return;
+            case MoveEvent.Cue: Cue(value); return;
+            case MoveEvent.ChainOpen: chainOpen = true; return;
+            case MoveEvent.Unlocked: Unlock(); return;
+            case MoveEvent.Invuln: SetInvincible(value != 0); return;
         }
     }
 
-    private void HandleAnimationUnlocked()
+    private void Tell()
     {
-        if (currentAbility == null) return;
+        told = true;
+        toldAt = Time.time;
+        OnTell?.Invoke(currentAbility);
+    }
 
-        if (!currentAbility.waitForAnimUnlock)
-            return;
+    // The last of the move's strikes ends its active phase; a multi-hit move stays Active between strikes.
+    private void Strike(int index)
+    {
+        AbilityDefinition move = currentAbility;
+        nextStrike = index + 1;
+        strikes?.Strike(move, index);
+        if (currentAbility != move) return;
 
+        bool last = nextStrike >= move.StrikeCount;
+        movePhase = last ? MovePhase.Recovery : MovePhase.Active;
+        EnterMeleePhase(last ? UpperBodyState.MeleeRecovery : UpperBodyState.MeleeSwing);
+    }
+
+    // A move that doesn't wait for Unlocked ends as its effects fire, here as on a cue-0 start (a dash: the
+    // impulse is the move). Without this it held currentAbility until the safety timeout, refusing everything.
+    private void Cue(int cue)
+    {
+        if (cue != currentAbility.effectCue) return;
+
+        AbilityDefinition move = currentAbility;
+        ExecuteAbilityEffects(move);
+        if (!move.waitForAnimUnlock && currentAbility == move) CompleteAbility(move);
+    }
+
+    private void Unlock()
+    {
+        if (!currentAbility.waitForAnimUnlock) return;
         CompleteAbility(currentAbility);
     }
 
-    private void OpenChainWindow()
+    // AbilitySystem is the one writer of IsInvincible; DamageSystem refuses damage while it is up.
+    private void SetInvincible(bool on)
     {
-        chainWindowOpen = true;
-        chainWindowOpenTime = Time.time;
+        isInvincible = on;
+        SetFact(BlackboardKey.IsInvincible, on);
     }
 
-    private void CloseChainWindow()
+    // Would the move in flight's next strike land on target from where both stand now? No damage.
+    public bool StrikeWouldReach(ControllerBrain target)
     {
-        chainWindowOpen = false;
+        if (currentAbility == null || strikes == null) return false;
+        return strikes.Reaches(currentAbility, nextStrike, target);
     }
-
-    // An animation event naming a state (OnStateTransition("…")) still wins over the defaults below.
-    private void HandleStateTransition(UpperBodyState newState) => EnterUpperBodyState(newState);
 
     // ── Upper-body state ──────────────────────────────────────────────────
     // The state machine is the one answer to "what are the arms doing". AI, camera and the movement
-    // permission matrix read it. Phases come from the hitbox events until the CF1 move clock lands.
+    // permission matrix read it. Wind-up at the start, swing between strikes, recovery after the last.
 
     private void EnterUpperBodyState(UpperBodyState state)
     {
@@ -819,33 +840,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         return UpperBodyState.Idle;
     }
 
-    private void UpdateChainWindow()
-    {
-        if (chainWindowOpen && lastCompletedAbility != null)
-        {
-            float elapsed = Time.time - chainWindowOpenTime;
-
-            if (!lastCompletedAbility.CanChain(elapsed))
-                CloseChainWindow();
-        }
-    }
-
-    public bool CanChainToNext()
-    {
-        if (lastCompletedAbility == null) return false;
-        if (!lastCompletedAbility.HasNextInChain) return false;
-        if (!chainWindowOpen) return false;
-
-        float timeSinceOpen = Time.time - chainWindowOpenTime;
-        return lastCompletedAbility.CanChain(timeSinceOpen);
-    }
-
-    public void TryChainNext()
-    {
-        if (!CanChainToNext()) return;
-
-        UseAbility(lastCompletedAbility.nextInChain.abilityId);
-    }
 
     private void UpdateCooldownTimers()
     {
@@ -893,51 +887,6 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         return state.definition.cooldown;
     }
 
-    // Hitboxes sign up with their owner once they find their brain (weapons are parented to a
-    // socket after they spawn), and leave when destroyed, so a swing never searches the hierarchy.
-    public void RegisterHitbox(WeaponHitbox hitbox)
-    {
-        if (hitbox == null || hitboxes.Contains(hitbox)) return;
-        hitboxes.Add(hitbox);
-    }
-
-    public void UnregisterHitbox(WeaponHitbox hitbox) => hitboxes.Remove(hitbox);
-
-    // Enables only the hitboxes the executing ability names. An ability with no tags enables
-    // every hitbox, which is how weapon abilities behaved before tagging existed. Enable() can
-    // still refuse on its own stance filter, so a match is not a guarantee.
-    private void EnableAbilityHitboxes()
-    {
-        var tags = currentAbility != null ? currentAbility.hitboxTags : null;
-
-        int matched = 0;
-
-        foreach (var hitbox in hitboxes)
-        {
-            if (hitbox == null || !hitbox.MatchesTags(tags)) continue;
-
-            hitbox.Enable();
-            matched++;
-        }
-
-        if (matched > 0 && !HitboxesLive) hitboxesLiveAt = Time.time;
-        HitboxesLive = matched > 0;
-
-        if (matched == 0 && tags != null && tags.Count > 0)
-            Debug.LogWarning($"[AbilitySystem] '{currentAbility.abilityName}' names hitbox tag(s) " +
-                             $"[{string.Join(", ", tags)}] but nothing under {brain.EntityName} carries them — " +
-                             $"this attack cannot connect. Check the tags on the model's hitboxes.");
-    }
-
-    private void DisableAbilityHitboxes()
-    {
-        foreach (var hitbox in hitboxes)
-        {
-            if (hitbox != null) hitbox.Disable();
-        }
-
-        HitboxesLive = false;
-    }
 
     public int GetAbilityRemainingUses(string abilityId)
     {
@@ -989,7 +938,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         return instance.IsTemporary();
     }
 
-    // Called by WeaponHitbox (after the hit has resolved) and ProjectilePayload when a hit from this
+    // Called by StrikeHandler (after the hit has resolved) and ProjectilePayload when a hit from this
     // entity connects. A clean hit freezes both fighters for the move's hit-stop; several targets in
     // one swing max-merge, they don't add. A guarded hit is GuardModule's to freeze (block / parry).
     public void NotifyHitLanded(AbilityDefinition ability, ControllerBrain target)

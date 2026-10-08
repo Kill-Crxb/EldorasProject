@@ -47,6 +47,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AIControlSource
   isEnabled: 1
+  roleAbilities: []
+  isPackLeader: 0
+  patrolOffsets: []
 --- !u!114 &1333861051759593389
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64,8 +67,6 @@ MonoBehaviour:
   visionAngle: 360
   requireLineOfSight: 0
   eyeHeight: 1.5
-  enableSoundDetection: 0
-  soundRange: 8
   detectionLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -165,6 +166,10 @@ PrefabInstance:
     - target: {fileID: 4161431986582699676, guid: b6266f3c50a0a404e83cdf5b599a7683, type: 3}
       propertyPath: m_Name
       value: Mirror_NPC
+      objectReference: {fileID: 0}
+    - target: {fileID: 6577186629266332623, guid: b6266f3c50a0a404e83cdf5b599a7683, type: 3}
+      propertyPath: equippedItems.Array.data[0].item.definitionId
+      value: katana_girl_blade_a
       objectReference: {fileID: 0}
     - target: {fileID: 7834155014174466237, guid: b6266f3c50a0a404e83cdf5b599a7683, type: 3}
       propertyPath: entityType

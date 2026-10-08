@@ -1,13 +1,13 @@
-using NinjaGame.Animation;
+
 using UnityEngine;
 
 /// <summary>
 /// ProjectileLauncher — the bridge between an ability and a projectile. Lives on the
 /// CHARACTER brain, not on the projectile.
 ///
-/// Listens to AbilitySystem.OnAbilityAnimationEvent and fires when the event matches the
-/// executing ability's effectTrigger. That is the same moment WeaponHitbox would open for a
-/// melee swing, so a throw releases exactly on the animation frame you place the event on.
+/// Listens to AbilitySystem.OnMoveEvent and fires on the clip's Cue(n) that matches the
+/// executing ability's effectCue, so a throw releases exactly on the animation frame you place
+/// the event on.
 ///
 /// Auto-discovered: ControllerBrain.CacheModuleArrays walks GetComponentsInChildren
 /// &lt;IBrainModule&gt;, so this needs NO serialized field on ControllerBrain and no edit to it.
@@ -26,9 +26,9 @@ using UnityEngine;
 /// The ability points at a ProjectileData, which points at its archetype prefab — so one
 /// Base_Projectile serves every projectile, and its collider is resized from the data.
 ///
-/// GOTCHA: the ability's effectTrigger MUST be Effect1/2/3. With anything else,
-/// AbilitySystem.ExecuteAbility applies effects directly, OnAbilityAnimationEvent never
-/// fires, and nothing spawns — silently.
+/// GOTCHA: the ability's effectCue MUST be 1 or more, and its clip must raise that Cue. With 0,
+/// AbilitySystem.ExecuteAbility applies effects directly, no Cue arrives, and nothing spawns —
+/// silently.
 /// </summary>
 public class ProjectileLauncher : MonoBehaviour, IBrainModule
 {
@@ -82,7 +82,7 @@ public class ProjectileLauncher : MonoBehaviour, IBrainModule
             return;
         }
 
-        abilitySystem.OnAbilityAnimationEvent += HandleAnimationEvent;
+        abilitySystem.OnMoveEvent += HandleMoveEvent;
         subscribed = true;
     }
 
@@ -93,20 +93,21 @@ public class ProjectileLauncher : MonoBehaviour, IBrainModule
         if (!subscribed) return;
         if (abilitySystem == null) return;
 
-        abilitySystem.OnAbilityAnimationEvent -= HandleAnimationEvent;
+        abilitySystem.OnMoveEvent -= HandleMoveEvent;
         subscribed = false;
     }
 
     // ── Trigger ───────────────────────────────────────────────────────────
 
-    private void HandleAnimationEvent(AnimationEventType eventType)
+    private void HandleMoveEvent(MoveEvent evt, int value)
     {
         if (!isEnabled) return;
+        if (evt != MoveEvent.Cue) return;
 
         AbilityDefinition ability = abilitySystem.CurrentAbility;
         if (ability == null) return;
         if (ability.projectileData == null) return;
-        if (eventType != ability.effectTrigger) return;
+        if (value != ability.effectCue) return;
 
         Fire(ability);
     }

@@ -16,8 +16,6 @@ public class CombatDamagePacket
     [Header("Damage Values")]
     public readonly float baseDamage;
     public readonly float finalDamage;
-    public readonly bool isCriticalHit;
-    public readonly float criticalMultiplier;
 
     [Header("Damage Type")]
     public readonly DamageType damageType;
@@ -38,10 +36,8 @@ public class CombatDamagePacket
     public readonly DamageSource source;
 
     [Header("Resolution")]
-    // finalDamage is the base part. The exploded part rides separately because the DEFENDER decides
-    // full or glancing, and glancing drops it. accuracy is the attacker's Finesse, added to the d20.
-    public readonly float explosionDamage;
-    public readonly int explosions;
+    // The DEFENDER decides full or glancing (glancing halves finalDamage). accuracy is the attacker's
+    // Finesse, added to the d20.
     public readonly float accuracy;
     // Set by the attacker (a riposte, GuardModule.TakeRiposte); the defender rolls the d20 twice.
     public readonly bool advantage;
@@ -52,8 +48,6 @@ public class CombatDamagePacket
     public CombatDamagePacket(
         float baseDamage,
         float finalDamage,
-        bool isCriticalHit,
-        float criticalMultiplier,
         DamageType damageType,
         Transform attacker,
         string attackerId,
@@ -64,15 +58,11 @@ public class CombatDamagePacket
         bool isHeavyAttack = false,
         string weaponId = "",
         DamageSource source = DamageSource.Other,
-        float explosionDamage = 0f,
-        int explosions = 0,
         float accuracy = 0f,
         bool advantage = false)
     {
         this.baseDamage = baseDamage;
         this.finalDamage = finalDamage;
-        this.isCriticalHit = isCriticalHit;
-        this.criticalMultiplier = criticalMultiplier;
         this.damageType = damageType;
         this.attacker = attacker;
         this.attackerId = attackerId;
@@ -83,8 +73,6 @@ public class CombatDamagePacket
         this.isHeavyAttack = isHeavyAttack;
         this.weaponId = weaponId;
         this.source = source;
-        this.explosionDamage = explosionDamage;
-        this.explosions = explosions;
         this.accuracy = accuracy;
         this.advantage = advantage;
     }
@@ -101,8 +89,6 @@ public class CombatDamagePacket
         return new CombatDamagePacket(
             baseDamage: damage,
             finalDamage: damage,
-            isCriticalHit: false,
-            criticalMultiplier: 1f,
             damageType: DamageType.Physical,
             attacker: attacker,
             attackerId: attacker?.name ?? "Unknown",

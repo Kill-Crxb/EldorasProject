@@ -278,7 +278,7 @@ BlendTree:
   m_Name: Free Movement
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: fc44a2d583f3c5744bcc2da13172e83d, type: 2}
+    m_Motion: {fileID: 7400000, guid: 79e2e25a655c05c8ea9017de3866f69d, type: 2}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
@@ -3029,7 +3029,7 @@ BlendTree:
   m_Name: Locomotion Speed
   m_Childs:
   - serializedVersion: 2
-    m_Motion: {fileID: 7400000, guid: 04c2467c470e02c4dae02597fa24a633, type: 2}
+    m_Motion: {fileID: 7400000, guid: 79e2e25a655c05c8ea9017de3866f69d, type: 2}
     m_Threshold: 0
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1

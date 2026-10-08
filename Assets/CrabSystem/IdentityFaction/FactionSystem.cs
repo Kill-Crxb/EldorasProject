@@ -52,7 +52,7 @@ namespace RPG.Factions
         /// the null straight through, so one stale or misspelled id anywhere upstream did not
         /// merely fail to set a faction — it WIPED the one configured on the prefab, silently
         /// turning that entity factionless. Everything downstream then reads as non-friendly,
-        /// because ProjectileAim.IsFriendly and WeaponHitbox both treat "no faction" as "not an
+        /// because ProjectileAim.IsFriendly and StrikeHandler both treat "no faction" as "not an
         /// ally", so heals and buffs quietly stop finding anyone.
         ///
         /// LoadSaveData below already guarded against exactly this for save data. The setter is

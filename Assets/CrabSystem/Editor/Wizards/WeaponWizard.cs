@@ -11,7 +11,7 @@ using UnityEngine;
 // that looks authored, loads fine, and simply never equips.
 //
 // There is no weapon type, two-handed flag or block/parry here because the code does not read any
-// such thing — a weapon is currently dice plus a mesh. See the dev insight note on that cleanup.
+// such thing — a weapon is dice, a reach and a mesh. See the dev insight note on that cleanup.
 public class WeaponWizard : EditorWindow
 {
     // The real database root. The bulk generator in CrabSystem/Editor still points at
@@ -35,6 +35,7 @@ public class WeaponWizard : EditorWindow
     int diceCount = 1;
     int diceFaces = 8;
     float flatBonus;
+    float reach = 1.5f;
 
     ItemRarity rarity = ItemRarity.Common;
     int baseValue = 100;
@@ -96,16 +97,7 @@ public class WeaponWizard : EditorWindow
         description = EditorGUILayout.TextField("Description", description);
         icon = (Sprite)EditorGUILayout.ObjectField("Icon", icon, typeof(Sprite), false);
         equippedPrefab = (GameObject)EditorGUILayout.ObjectField("Equipped prefab", equippedPrefab, typeof(GameObject), false);
-
-        if (equippedPrefab == null) return;
-
-        List<string> hitboxTags = WeaponHitboxCheck.Tags(equippedPrefab);
-
-        string summary = hitboxTags.Count == 0
-            ? "no WeaponHitbox — this weapon cannot connect"
-            : "hitbox tags: " + string.Join(", ", hitboxTags);
-
-        EditorGUILayout.LabelField(" ", summary, EditorStyles.miniLabel);
+        reach = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Reach (m)", "Edge to edge from the wielder's body. 1.5 m ≈ 5 ft, a reach weapon ≈ 3 m."), reach));
     }
 
     void DrawClassification()
@@ -237,9 +229,6 @@ public class WeaponWizard : EditorWindow
 
         if (equippedPrefab == null)
             issues.Warn("No equipped prefab. Nothing appears in the hand when this is equipped.");
-        else
-            foreach (string problem in WeaponHitboxCheck.Problems(equippedPrefab))
-                issues.Warn(problem);
 
         return issues;
     }
@@ -283,6 +272,7 @@ public class WeaponWizard : EditorWindow
         item.gridWidth = gridWidth;
         item.gridHeight = gridHeight;
         item.weaponData = dice;
+        item.reach = reach;
         item.rarity = rarity;
         item.maxStackSize = 1;
         item.baseValue = baseValue;

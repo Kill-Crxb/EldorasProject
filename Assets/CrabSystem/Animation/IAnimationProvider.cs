@@ -17,5 +17,5 @@ public interface IAnimationProvider
     bool IsInTransition(int layerIndex = 0);
 
     void Play(string stateName, int layerIndex = 0);
-    void CrossFade(string stateName, float transitionDuration, int layerIndex = 0);
+    void CrossFade(string stateName, float seconds, int layerIndex = 0);
 }

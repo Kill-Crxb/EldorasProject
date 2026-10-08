@@ -10,9 +10,9 @@ using UnityEngine;
 /// as a pass-through rather than an impact — which is what stops an ally standing in a
 /// doorway from eating a shuriken meant for the guard behind them.
 ///
-/// DAMAGE COMES FROM THE ABILITY. This applies the same DamageEffect list WeaponHitbox
+/// DAMAGE COMES FROM THE ABILITY. This applies the same DamageEffect list StrikeHandler
 /// applies for melee, so an attack is authored once whether it arrives by blade or through
-/// the air. Weapon dice, crit, mitigation, damage numbers, hit reactions and hit procs all
+/// the air. Weapon dice, mitigation, damage numbers, hit reactions and hit procs all
 /// come with it. The projectile's own DiceProfile supplies the dice, because a thrown weapon
 /// is the weapon — a shuriken must not roll the katana still in the main-hand slot.
 /// </summary>
@@ -115,7 +115,7 @@ public class ProjectilePayload : MonoBehaviour, IProjectileModule
         AbilityDefinition ability = brain.SourceAbility;
         float multiplier = brain.Runtime.damageMultiplier;
 
-        // Hit procs — the same call WeaponHitbox makes, so a thrown weapon can transform a
+        // Hit procs — the same call StrikeHandler makes, so a thrown weapon can transform a
         // hotbar slot exactly like a melee hit does.
         source.GetModule<AbilitySystem>()?.NotifyHitLanded(ability, hit.targetBrain);
 
@@ -187,16 +187,11 @@ public class ProjectilePayload : MonoBehaviour, IProjectileModule
         ProjectileData data = brain.Data;
         DiceProfile dice = brain.Dice;
 
-        float baseDamage = data.fallbackDamage;
-        int extra = 0;
-        int explosions = 0;
-        if (dice != null) baseDamage = dice.RollExploding(out extra, out explosions);
+        float baseDamage = dice != null ? dice.RollDamage() : data.fallbackDamage;
 
         return new CombatAttackData
         {
             baseDamage = baseDamage,
-            explosionDamage = extra,
-            explosions = explosions,
             damageType = data.fallbackDamageType,
             attackerTransform = sourceDamage.transform,
             hitPoint = hit.point,
@@ -221,7 +216,7 @@ public class ProjectilePayload : MonoBehaviour, IProjectileModule
     }
 
     /// <summary>
-    /// Spawns through the ATTACKER'S VFXSystem, matching WeaponHitbox — the effect belongs to
+    /// Spawns through the ATTACKER'S VFXSystem, matching StrikeHandler — the effect belongs to
     /// the attack, not to the thing being hit.
     /// </summary>
     private void SpawnAbilityHitVfx(ControllerBrain source, Vector3 point)

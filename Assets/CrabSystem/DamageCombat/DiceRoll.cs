@@ -20,33 +20,6 @@ public struct DiceRoll
         return total;
     }
 
-    public const int MaxExplosions = 5;
-
-    // Exploding roll. A die that lands on its top face rolls again and adds, chaining, up to
-    // MaxExplosions per roll. The extra rolls come back separately in 'extra' — a glancing hit
-    // drops them, so the caller has to be able to tell them apart from the base roll.
-    public int RollExploding(out int extra, out int explosions)
-    {
-        int total = 0;
-        extra = 0;
-        explosions = 0;
-
-        for (int i = 0; i < diceCount; i++)
-        {
-            int face = UnityEngine.Random.Range(1, diceFaces + 1);
-            total += face;
-
-            while (face == diceFaces && explosions < MaxExplosions)
-            {
-                explosions++;
-                face = UnityEngine.Random.Range(1, diceFaces + 1);
-                extra += face;
-            }
-        }
-
-        return total;
-    }
-
     // A stat modifier rolled as a die: Might 6 rolls 1d6. A modifier of 1 is a flat 1, and 0 or
     // below adds nothing. Any size is legal — Might 7 rolls a d7.
     public static int RollModifier(float modifier)

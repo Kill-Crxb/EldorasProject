@@ -10,13 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
-  m_Name: BasicDash
+  m_Name: BasicAttack3
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
-  effectTrigger: 19
-  waitForAnimUnlock: 0
+  effectCue: 1
+  waitForAnimUnlock: 1
   maxDuration: 2
-  castWhileMoving: 1
-  animationTrigger: Dash
+  castWhileMoving: 0
+  useRootMotion: 1
+  rootMotionScale: 1
+  animationTrigger: BasicAttack3
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   projectileData: {fileID: 0}
@@ -26,11 +28,13 @@ MonoBehaviour:
   overrideDefaults: 0
   customRequiredFacts: []
   customForbiddenFacts: []
-  nextInChain: {fileID: 0}
-  chainWindow: 0.5
-  resourceCosts: []
-  cooldown: 5
-  castTime: 0.5
+  resourceCosts:
+  - resource: {fileID: 11400000, guid: 4cc10ff0880b2ba42a52ff48a27f66ce, type: 2}
+    cost: 5
+    drain: 0
+    refund: 0
+  cooldown: 0
+  castTime: 0
   blockDamageReduction: 0.5
   blockAngle: 120
   parryWindowDuration: 0.2
@@ -39,53 +43,61 @@ MonoBehaviour:
   counterWindowDuration: 1
   blockStartupTime: 0.1
   parryFrames: 0
-  speedClass: 0
+  speedClass: 3
   frames:
-    startup: 0
-    active: 0
-    recovery: 0
+    startup: 16
+    active: 1
+    recovery: 29
     cancelFrom: 0
     cancelTo: 0
     iframeFrom: 0
     iframeTo: 0
     armorFrom: 0
     armorTo: 0
-  bakedClip: {fileID: 0}
+    tell: 9
+  bakedClip: {fileID: 7400000, guid: 99cf1fa9176fa15ee8c9a5000ff2c9cc, type: 2}
+  bakedState: -253467138
+  bakedLayer: 3
+  bakedFade: 0
+  bakedStartTime: 0
   hit:
     guard: 0
-    onHit: 0
-    onHitFrames: 0
-    blockStamina: 0
-    blockAdvantage: 0
+    onHit: 2
+    onHitFrames: 36
+    blockStamina: 7
+    blockAdvantage: -12
     tracking: 0
-    hitStop: 0
-    feel: 0
+    hitStop: 8
+    feel: 3
     bypass: 0
   routes: []
-  abilityId: Basic_Dash
-  abilityName: Dash
+  abilityId: BasicAttack3
+  abilityName: BasicAttack3
   description: 
-  icon: {fileID: 0}
-  abilityType: 2
+  icon: {fileID: 21300000, guid: ec43947907fb8664ebb77fd084710de8, type: 3}
+  abilityType: 0
   abilityCategory: 1
-  targetType: 0
+  targetType: 1
   range: 5
   requiresLineOfSight: 0
-  hitboxTags: []
-  damageEffects: []
+  damageEffects:
+  - useWeaponDamage: 1
+    baseDamage: 0
+    weaponSlotId: mainwep
+    requiresSuppliedDice: 0
+    damageType: 0
+    baseDamageMultiplier: 1
+    finalDamageMultiplier: 1
+    requiredCasterFacts: []
+    requiredTargetFacts: []
   damageOverTimeEffects: []
   healEffects: []
   healOverTimeEffects: []
-  knockbackEffects: []
-  movementEffects:
-  - movementType: 1
-    directionSource: 0
-    direction: {x: 1, y: 0, z: 0}
-    speed: 5
-    duration: 1
-    speedCap: 0
-    frictionHoliday: 0
-    teleportDistance: 0
+  knockbackEffects:
+  - force: 9
+    direction: {x: 0, y: 0, z: 1}
+    useRelativeDirection: 1
+  movementEffects: []
   statusEffects: []
   hitProcs: []
   sequencePrerequisites: []
@@ -94,3 +106,4 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
+  strikes: []

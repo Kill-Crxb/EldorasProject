@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
   m_Name: Bat_Swoop
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
-  effectTrigger: 19
+  effectCue: 1
   waitForAnimUnlock: 1
   maxDuration: 2.5
   castWhileMoving: 1
+  useRootMotion: 0
   animationTrigger: BatAttack
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
@@ -26,8 +27,6 @@ MonoBehaviour:
   overrideDefaults: 0
   customRequiredFacts: []
   customForbiddenFacts: []
-  nextInChain: {fileID: 0}
-  chainWindow: 0.5
   resourceCosts: []
   cooldown: 0
   castTime: 0
@@ -42,14 +41,15 @@ MonoBehaviour:
   speedClass: 1
   frames:
     startup: 12
-    active: 24
-    recovery: 18
+    active: 1
+    recovery: 41
     cancelFrom: 0
     cancelTo: 0
     iframeFrom: 0
     iframeTo: 0
     armorFrom: 0
     armorTo: 0
+    tell: 0
   bakedClip: {fileID: 7400004, guid: 59afa1f2c595d6343b15e945602e1f8f, type: 3}
   bakedState: 506274167
   bakedLayer: 0
@@ -75,8 +75,6 @@ MonoBehaviour:
   targetType: 1
   range: 2.6
   requiresLineOfSight: 0
-  hitboxTags:
-  - BatBite
   damageEffects:
   - useWeaponDamage: 1
     baseDamage: 0
@@ -108,3 +106,4 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
+  strikes: []

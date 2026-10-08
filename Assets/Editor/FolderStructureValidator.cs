@@ -276,7 +276,7 @@ public class FolderStructureValidator : AssetPostprocessor
             // -------------------------------------------------------------------------
             { "AnimationSystem.cs",             "Animation" },
             { "AnimationEventForwarder.cs",     "Animation" },
-            { "AnimationEventType.cs",          "Animation" },
+            { "MoveEvent.cs",                   "Animation" },
             { "IAnimationProvider.cs",          "Animation" },
             { "StateMachineModule.cs",          "Animation" },
             { "StateMachineModule_IStateProvider.cs", "Animation" },

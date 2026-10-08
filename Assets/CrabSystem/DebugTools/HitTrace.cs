@@ -7,7 +7,7 @@ using UnityEngine;
 // reached health — plus every kill with its killer. Roadmap P9 / tracker CX5.
 //
 //   [HitTrace] Porphi → Hvy_Dummy  Melee Physical  d20 14 +4 = 18 vs 17 FULL
-//              9 +3 expl(1) = 12 − soak 7 → 5   hp 55/60
+//              12 − soak 7 → 5   hp 55/60
 public class HitTrace : MonoBehaviour
 {
     [SerializeField] private float rescanInterval = 1f;
@@ -65,8 +65,6 @@ public class HitTrace : MonoBehaviour
     private static string Damage(CombatDamagePacket packet, HitResolution hit)
     {
         string carried = $"{packet.finalDamage:0.#}";
-        if (hit.grade == HitGrade.Full && packet.explosions > 0)
-            carried += $" +{packet.explosionDamage:0.#} expl({packet.explosions})";
         if (hit.grade == HitGrade.Glancing)
             carried += " halved";
 

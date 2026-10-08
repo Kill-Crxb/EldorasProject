@@ -2,11 +2,14 @@ using System;
 using UnityEngine;
 
 // The LMB moveset (Moveset_Build.md). A press reads the context, picks a chain from the active
-// weapon's moveset and fires that chain's next step. A press made while a step plays is held and
-// fires the moment the entity can act again; an interrupt (hit state, death) drops it.
+// weapon's moveset and fires that chain's next step. A press made while a step plays is held (one
+// press; the latest wins) and fires the moment the step ends, or from the step's ChainOpen event when
+// its clip has one; an interrupt (hit state, death) drops it. Like Dark Souls, a running or air attack
+// carries on into the light string's next step.
 public class MovesetModule : MonoBehaviour, IBrainModule
 {
-    [Tooltip("Seconds a held press survives while the current step plays.")]
+    [Tooltip("Seconds a held press survives once the entity is free to act and the step still can't fire " +
+             "(blockstun, a refused ability). While a step plays the press waits however long it takes.")]
     [SerializeField] private float bufferLifetime = 1f;
 
     [Tooltip("Equipment slot whose item supplies the armed moveset.")]
@@ -83,7 +86,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
     {
         if (!IsEnabled || abilities == null) return false;
 
-        int step = Continues(requested) ? nextStep : 0;
+        int step = StepFor(ref requested);
         AbilityDefinition ability = StepAt(requested, step);
         if (ability == null) return false;
 
@@ -106,7 +109,8 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         if (abilities == null) return null;
 
         MovesetChain resolved = ResolveChain();
-        AbilityDefinition ability = StepAt(resolved, Continues(resolved) ? nextStep : 0);
+        int step = StepFor(ref resolved);
+        AbilityDefinition ability = StepAt(resolved, step);
         if (ability != null) Grant(ability);
         return ability;
     }
@@ -138,22 +142,47 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         Blackboard blackboard = brain.Blackboard;
 
         if (blackboard != null && blackboard.GetBool(BlackboardKey.IsBlocking)) return MovesetChain.Parry;
+
+        // The context picks a string when it starts; once going it stays that string. A root-motion
+        // lunge moves the attacker at running speed, so re-reading the context made the next press
+        // the Running chain's first step. A parry is not a string: with the guard down, the next press is a fresh attack.
+        if (InString() && chain != MovesetChain.Parry) return chain;
+
         if (brain.Movement != null && !brain.Movement.IsGrounded) return MovesetChain.Air;
         if (blackboard != null && blackboard.GetBool(BlackboardKey.IsRunning)) return MovesetChain.Running;
         if (blackboard != null && blackboard.GetBool(BlackboardKey.IsSprinting)) return MovesetChain.Running;
         return MovesetChain.Light;
     }
 
-    private bool Continues(MovesetChain requested)
+    // Where a press lands: the string's next step; once a running or air attack is spent, the light
+    // string's step after it (Dark Souls: a running attack chains into the second light); otherwise a
+    // new string from step 0.
+    private int StepFor(ref MovesetChain requested)
     {
-        if (requested != chain) return false;
-        if (nextStep <= 0) return false;
+        if (requested != chain || !InString()) return 0;
+        if (nextStep < StepCount(chain)) return nextStep;
 
+        bool carriesIntoLight = chain == MovesetChain.Running || chain == MovesetChain.Air;
+        if (!carriesIntoLight || nextStep >= StepCount(MovesetChain.Light)) return 0;
+
+        requested = MovesetChain.Light;
+        return nextStep;
+    }
+
+    private int StepCount(MovesetChain requested)
+    {
         WeaponMoveset moveset = ActiveMoveset;
-        if (moveset == null || nextStep >= moveset.Chain(requested).Count) return false;
+        return moveset != null ? moveset.Chain(requested).Count : 0;
+    }
+
+    // A step is playing, or ended within the moveset's chainGrace.
+    private bool InString()
+    {
+        if (nextStep <= 0) return false;
         if (stepInFlight != null) return true;
 
-        return Time.time - stepEndedAt <= moveset.chainGrace;
+        WeaponMoveset moveset = ActiveMoveset;
+        return moveset != null && Time.time - stepEndedAt <= moveset.chainGrace;
     }
 
     private AbilityDefinition StepAt(MovesetChain requested, int step)
@@ -174,15 +203,22 @@ public class MovesetModule : MonoBehaviour, IBrainModule
 
     private bool Fire(MovesetChain requested, int step, AbilityDefinition ability)
     {
-        if (!abilities.CanUseAbility(ability.abilityId)) return false;
-
-        abilities.UseAbility(ability.abilityId);
-        if (abilities.CurrentAbility != ability) return false;
+        if (!StartStep(ability)) return false;
 
         chain = requested;
         nextStep = step + 1;
         stepInFlight = ability;
         return true;
+    }
+
+    // From the step's ChainOpen the step in flight hands straight over; otherwise the next waits for a free entity.
+    private bool StartStep(AbilityDefinition ability)
+    {
+        if (stepInFlight != null) return abilities.ChainInto(ability.abilityId);
+        if (!abilities.CanUseAbility(ability.abilityId)) return false;
+
+        abilities.UseAbility(ability.abilityId);
+        return abilities.CurrentAbility == ability;
     }
 
     private void Buffer(MovesetChain requested, int step)
@@ -209,7 +245,8 @@ public class MovesetModule : MonoBehaviour, IBrainModule
 
     private void FireBuffered()
     {
-        if (!buffered || stepInFlight != null) return;
+        if (!buffered) return;
+        if (stepInFlight != null && !abilities.ChainOpen) return;
 
         // Raising the guard cancels a held attack; only a held parry survives it.
         if (IsBlocking() && bufferedChain != MovesetChain.Parry)
@@ -218,7 +255,9 @@ public class MovesetModule : MonoBehaviour, IBrainModule
             return;
         }
 
-        if (Time.time - bufferedAt > bufferLifetime)
+        // Counted from whichever came later, the press or the step ending, so a long step can't age it out.
+        bool expired = stepInFlight == null && Time.time - Mathf.Max(bufferedAt, stepEndedAt) > bufferLifetime;
+        if (expired)
         {
             buffered = false;
             return;
@@ -231,10 +270,8 @@ public class MovesetModule : MonoBehaviour, IBrainModule
             return;
         }
 
-        if (!abilities.CanUseAbility(ability.abilityId)) return;
-
+        if (!Fire(bufferedChain, bufferedStep, ability)) return;
         buffered = false;
-        Fire(bufferedChain, bufferedStep, ability);
     }
 
     private void TrackPreview()

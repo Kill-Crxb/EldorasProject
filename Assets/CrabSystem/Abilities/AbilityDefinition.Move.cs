@@ -7,7 +7,7 @@ using UnityEngine;
 // has no move data and behaves exactly as before.
 //
 // Animation events are the authority for move timing (CrabSystem_Standard §9). startup / active /
-// recovery are BAKED from the clip's HitboxStart, HitboxEnd and AnimUnlocked by Tools → Combat →
+// recovery and the tell are BAKED from the clip's Strike, Unlocked and Tell events by Tools → Combat →
 // Bake Move Frames (and on every clip import), so they are never hand-synced. To change timing,
 // change the clip. The speed class is the animation TARGET, compared in Move Report.
 public partial class AbilityDefinition
@@ -138,10 +138,14 @@ public struct MoveFrames
     [Tooltip("Frames from ability start. 0/0 = none.")]
     public int cancelFrom;
     public int cancelTo;
+    [Tooltip("Baked from the clip's Invuln(1) → Invuln(0) when it has them; authored otherwise.")]
     public int iframeFrom;
     public int iframeTo;
     public int armorFrom;
     public int armorTo;
+
+    [Tooltip("The clip's first Tell, baked. 0 = the move tells as it starts.")]
+    public int tell;
 }
 
 [Serializable]

@@ -57,6 +57,10 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     public event Action<StatusInstance> OnStatusRemoved;
     public event Action<StatusInstance> OnStacksChanged;
 
+    // A status already present was applied again (its timer restarted). A second flinch during a
+    // flinch is one, so the hit reaction replays.
+    public event Action<StatusInstance> OnStatusReapplied;
+
     #endregion
 
     #region IBrainModule
@@ -157,6 +161,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     {
         instance.Source = source;
         instance.Remaining = seconds > 0f ? seconds : instance.Definition.Seconds;
+        OnStatusReapplied?.Invoke(instance);
 
         if (instance.Definition.stacking != StatusStacking.Stack) return;
 
@@ -322,6 +327,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         OnStatusApplied = null;
         OnStatusRemoved = null;
         OnStacksChanged = null;
+        OnStatusReapplied = null;
     }
 
     #endregion

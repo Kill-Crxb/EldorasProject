@@ -13,8 +13,8 @@ using UnityEngine;
 /// It also makes hitscan nearly free — one very long sweep resolved on the first frame.
 ///
 /// The root Collider is never a detector — this class has no OnTriggerEnter. It is RESIZED
-/// FROM THE DATA at launch and left enabled purely so a weapon hitbox can find the projectile,
-/// which is the Projectile ↔ Hitbox parry interaction LayerConfigFactory already reserves.
+/// FROM THE DATA at launch and left enabled for a future projectile parry (the Projectile ↔ Hitbox
+/// rule LayerConfigFactory reserves). Melee strikes don't look for projectiles (Combat_Framework §2.5).
 /// Sweep size comes from ProjectileData.collisionRadius, not from the collider.
 /// </summary>
 [RequireComponent(typeof(ProjectileBrain))]
@@ -41,12 +41,12 @@ public class ProjectileMovementHandler : MonoBehaviour, IProjectileModule
         shape = GetComponent<Collider>();
 
         // Trigger, not a solid — the sweep does our detection, so this must never push
-        // anything. Left enabled so a weapon hitbox can still find us.
+        // anything. Left enabled for a future projectile parry.
         if (shape != null)
             shape.isTrigger = true;
         else
-            Debug.LogWarning($"[ProjectileMovementHandler] '{name}' has no Collider — a weapon " +
-                             "hitbox will not be able to find this projectile to parry it.", this);
+            Debug.LogWarning($"[ProjectileMovementHandler] '{name}' has no Collider — a future " +
+                             "projectile parry will have nothing to find.", this);
     }
 
     public void OnLaunch()

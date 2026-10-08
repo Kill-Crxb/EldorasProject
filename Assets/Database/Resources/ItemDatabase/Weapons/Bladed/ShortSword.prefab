@@ -9,8 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6497512154760718070}
-  - component: {fileID: 8469023119848892863}
-  - component: {fileID: 3789813461793779366}
   m_Layer: 0
   m_Name: ShortSword
   m_TagString: Untagged
@@ -34,51 +32,6 @@ Transform:
   - {fileID: 1354458023623242313}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &8469023119848892863
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3235592165183183011}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.05
-  m_Height: 0.35
-  m_Direction: 0
-  m_Center: {x: -0.225, y: 0, z: 0}
---- !u!114 &3789813461793779366
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3235592165183183011}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2e27ff75d53d3004f9afe37ff8d68e0f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
-  weaponName: ForestShortsword
-  hitboxTag: blade
-  hitboxCollider: {fileID: 8469023119848892863}
-  hitLayers:
-    serializedVersion: 2
-    m_Bits: 6144
-  allowFriendlyFire: 0
-  stanceFilter: 1
-  debugHitbox: 0
-  showGizmos: 1
 --- !u!1001 &1354458023623084605
 PrefabInstance:
   m_ObjectHideFlags: 0

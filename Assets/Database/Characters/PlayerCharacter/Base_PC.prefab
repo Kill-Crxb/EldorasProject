@@ -149,9 +149,9 @@ MonoBehaviour:
   targetCamera: {fileID: 5242127425537521219}
   modes:
   - modeName: Default
-    distance: 2
+    distance: 3
     pivotHeight: 1.5
-    shoulderOffset: 0.4
+    shoulderOffset: 0.25
     sensitivity: 0.15
     minPitch: -35
     maxPitch: 60
@@ -165,9 +165,9 @@ MonoBehaviour:
     maxPitch: 30
     fovOffset: 10
   - modeName: Running
-    distance: 2.2
+    distance: 3
     pivotHeight: 1.5
-    shoulderOffset: 0.4
+    shoulderOffset: 0.25
     sensitivity: 0.15
     minPitch: -35
     maxPitch: 60
@@ -285,7 +285,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 251548406554361858}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d01154bce0123949a8800d85a063092, type: 3}
   m_Name: 
@@ -346,7 +346,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 251548406554361858}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbf0ffd851dbe2d4fb5d79335529e131, type: 3}
   m_Name: 
@@ -1392,6 +1392,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatStanceModule
   unarmedWeapon: {fileID: 11400000, guid: 844c3d65c9a790546867bc71a7e1ad5b, type: 2}
+  unarmedReach: 1
   unarmedMoveset: {fileID: 11400000, guid: acba96f629c918a079fec7e0f171809a, type: 2}
   weaponSlotId: mainwep
   sheathSocketId: mainwep_sheathed
@@ -2003,11 +2004,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitReactionSystem
   isEnabled: 1
-  heavyHitFraction: 0.15
-  staggerFraction: 0.3
   minTimeBetweenReactions: 0.2
+  restFadeSeconds: 0.1
   hitLightParam: HitLight
-  hitHeavyParam: HitHeavy
   staggerParam: Stagger
   deathParam: Death
   isDeadParam: IsDead
@@ -2716,8 +2715,9 @@ MonoBehaviour:
   abilities:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
   - {fileID: 11400000, guid: d2a2c77dd656fa26a90cec8c9b87b943, type: 2}
-  - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
+  - {fileID: 0}
   - {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
+  weaponSlotId: mainwep
   debugLogging: 0
 --- !u!114 &4019244290200516456
 MonoBehaviour:
@@ -2733,10 +2733,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeAbilityManager
   starterAbilities:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
-  - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
+  - {fileID: 0}
   - {fileID: 11400000, guid: d2a2c77dd656fa26a90cec8c9b87b943, type: 2}
   - {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
   - {fileID: 11400000, guid: 6fa7aba0d21542bfb62a69d93ce97400, type: 2}
+  - {fileID: 11400000, guid: 8044a4d633481d1b68767884d8cbd2ef, type: 2}
 --- !u!1 &4473629046579420901
 GameObject:
   m_ObjectHideFlags: 0
@@ -3127,6 +3128,7 @@ MonoBehaviour:
   blockedStopFrames: 2
   parryStopFrames: 10
   guardBreakStopFrames: 12
+  parriedStunFrames: 36
 --- !u!1 &6587917222620765854
 GameObject:
   m_ObjectHideFlags: 0
@@ -4289,6 +4291,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1410482394642495807, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1488537526286591865, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1528215106669758958, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -4329,6 +4339,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3503561819802968468, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3667137656707495453, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
       propertyPath: m_Name
       value: JuiceSystem
@@ -4338,6 +4352,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4162492844444926275, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4410870632526638223, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
@@ -4373,11 +4391,35 @@ PrefabInstance:
       propertyPath: managedReferences[7286697264582492310].InstantiateParticlesPosition
       value: 
       objectReference: {fileID: 2325140639726148127}
+    - target: {fileID: 6290302160022649370, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6978446513936827385, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7022214694286596939, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7765581607374739373, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7940813567487814172, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8200163989506025234, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8430627273364943579, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8928383858908423224, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}

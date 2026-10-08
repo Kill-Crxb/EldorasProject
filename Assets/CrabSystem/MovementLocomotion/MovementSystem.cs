@@ -249,6 +249,15 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     // below never reach it. The handler asks this instead. Hard control (stun, flinch) holds it too.
     public bool FacingLocked => IsDead || (blackboard != null && blackboard.GetBool(BlackboardKey.CannotAct));
 
+    // A castWhileMoving-off move is playing: input is stripped and the clip owns the whole body.
+    public bool IsRooted => blackboard != null && blackboard.GetBool(BlackboardKey.MoveRooted);
+
+    // A useRootMotion move is playing: the handler moves by the clip's travel instead of its own speed.
+    public bool RootMotionDriven => blackboard != null && blackboard.GetBool(BlackboardKey.RootMotionDriven);
+
+    // How much of the clip's travel the move in flight keeps (AbilityDefinition.rootMotionScale).
+    public float RootMotionScale => blackboard != null ? blackboard.GetFloat(BlackboardKey.RootMotionScale) : 1f;
+
     private bool IsDead => brain != null && brain.Damage != null && brain.Damage.IsDead;
 
     // Denial facts, each with its own writer (BlackboardKey). The Cannot* facts come from statuses;
@@ -294,14 +303,18 @@ public class MovementSystem : MonoBehaviour, IBrainModule
         float speed = Speed;
         Gait gait = locomotionHandler != null ? locomotionHandler.CurrentGait : Gait.None;
 
+        // A root-motion move is the clip travelling, not the character running: the gait facts read it
+        // as standing. Otherwise a lunge raised IsRunning and the next press became a running attack.
+        float gaitSpeed = RootMotionDriven ? 0f : speed;
+
         if (gait == Gait.None)
         {
-            isRunning = Hysteresis(isRunning, speed, runEnterSpeed, runExitSpeed);
-            isSprinting = Hysteresis(isSprinting, speed, sprintEnterSpeed, sprintExitSpeed);
+            isRunning = Hysteresis(isRunning, gaitSpeed, runEnterSpeed, runExitSpeed);
+            isSprinting = Hysteresis(isSprinting, gaitSpeed, sprintEnterSpeed, sprintExitSpeed);
         }
         else
         {
-            isInMotion = Hysteresis(isInMotion, speed, moveEnterSpeed, moveExitSpeed);
+            isInMotion = Hysteresis(isInMotion, gaitSpeed, moveEnterSpeed, moveExitSpeed);
             isRunning = isInMotion && (gait == Gait.Run || gait == Gait.Sprint);
             isSprinting = isInMotion && gait == Gait.Sprint;
         }

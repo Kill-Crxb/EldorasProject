@@ -26,9 +26,9 @@ namespace NinjaGame.Magic
     ///   - damageEffects[0].baseDamage           = 0     (flat empowerment goes here later)
     ///   - abilityCategory                       = Spell (so silence blocks it)
     ///   - resourceCosts                         = EMPTY (SpellcraftSystem owns the variable cost)
-    ///   - effectTrigger                         = Effect1/2/3, or the launcher never fires
+    ///   - effectCue                             = 1 or more (a Cue the clip raises), or the launcher never fires
     ///   - projectileData                   = ANY non-null ProjectileData
-    ///       ProjectileLauncher.HandleAnimationEvent bails when projectileData is null, before
+    ///       ProjectileLauncher.HandleMoveEvent bails when projectileData is null, before
     ///       any modifier gets a chance to run. Assign the Projectile form's data as a default;
     ///       SpellcraftSystem swaps it for the Form the sequence actually chose.
     /// </summary>

@@ -54,6 +54,12 @@ public class MovementProfile : ScriptableObject
              "wall climb 9, and a solved mantle up to mantleMaxUpSpeed.")]
     public float maxRiseSpeed = 18f;
 
+    [Header("Root Motion")]
+    [Tooltip("Metres left between two bodies when a root-motion move (a lunge, a combo step) travels into " +
+             "another fighter. The move's travel toward them stops here; travel across or away from them is " +
+             "kept. Measured hurtbox to hurtbox.")]
+    [Min(0f)] public float rootMotionContactGap = 0.3f;
+
     [Header("Friction")]
     [Tooltip("Ground friction coefficient. Higher stops faster and also turns faster.")]
     public float groundFriction = 6f;

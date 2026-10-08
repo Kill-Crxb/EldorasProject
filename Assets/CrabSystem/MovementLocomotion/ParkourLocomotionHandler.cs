@@ -157,6 +157,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
         // Optional on purpose: without it the wall jump is simply unavailable and everything else
         // behaves normally. An NPC with no sensor is not a broken character.
         assistant = system.Brain.GetModule<ParkourAssistant>();
+        rootMotionContact = new RootMotionContact(system.Brain);
 
         stateMachine = system.Brain.GetModule<StateMachineModule>();
 
@@ -265,6 +266,8 @@ public class ParkourLocomotionHandler : LocomotionHandler
         //    ahead of it would let a jump on the same step erase an impulse's whole vertical
         //    component — an uppercut launch of +12 plus a buffered jump would leave you at exactly
         //    jumpSpeed, i.e. the launch made you jump LOWER. Impulses add; they add last.
+
+        ApplyRootMotion();
 
         TryJump(grounded);
 
@@ -1179,6 +1182,35 @@ public class ParkourLocomotionHandler : LocomotionHandler
     /// taken at speed should carry the speed. An ability wanting a fixed distance regardless of
     /// approach has to zero the velocity itself, deliberately.
     /// </summary>
+    // Last root-motion velocity, kept for steps that see no new animator frame (frames and physics
+    // steps don't line up).
+    Vector3 rootMotionVelocity;
+
+    // Stops a root-motion move at the body it travels into, so a combo string can't carry through the target.
+    RootMotionContact rootMotionContact;
+
+    /// <summary>
+    /// A useRootMotion move: this step's horizontal velocity is the clip's, averaged over the animator
+    /// frames since the last step. An override, so it runs first in the post-pass, before TryJump and
+    /// the impulses; gravity keeps the vertical. The motor still sweeps it, so a wall stops a lunge.
+    /// </summary>
+    void ApplyRootMotion()
+    {
+        Vector3 delta = TakeRootMotion(out float overTime);
+
+        if (!movementSystem.RootMotionDriven)
+        {
+            rootMotionVelocity = Vector3.zero;
+            return;
+        }
+
+        if (overTime > 0f) rootMotionVelocity = delta / overTime * movementSystem.RootMotionScale;
+
+        Vector3 limited = rootMotionContact.Limit(rootMotionVelocity, Time.fixedDeltaTime, profile.rootMotionContactGap);
+        currentVelocity.x = limited.x;
+        currentVelocity.z = limited.z;
+    }
+
     void DrainImpulses()
     {
         if (pendingImpulse.sqrMagnitude < 0.000001f) return;
@@ -1221,6 +1253,9 @@ public class ParkourLocomotionHandler : LocomotionHandler
     void ClampHorizontal()
     {
         if (profile.maxHorizontalSpeed <= 0f) return;
+
+        // A root-motion move's speed is the clip's, authored and bounded (K_Attack_3 peaks at 23 m/s).
+        if (movementSystem.RootMotionDriven) return;
 
         Vector3 flat = new Vector3(currentVelocity.x, 0f, currentVelocity.z);
         float speed = flat.magnitude;

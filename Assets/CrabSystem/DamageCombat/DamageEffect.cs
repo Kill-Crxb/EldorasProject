@@ -67,7 +67,7 @@ public class DamageEffect
     /// its own 1d4, not the katana still sitting in the main-hand slot, and not the fist dice
     /// when the thrower happens to be unarmed.
     ///
-    /// Both default to their no-op, so existing callers (WeaponHitbox,
+    /// Both default to their no-op, so existing callers (StrikeHandler,
     /// AbilityDefinition.ExecuteOnSelf) are unaffected.
     ///
     /// <paramref name="source"/> and <paramref name="contactPoint"/> tell presentation where the
@@ -99,7 +99,7 @@ public class DamageEffect
             return 0f;
         }
 
-        float finalDamage = CalculateDamage(attackerDamageSystem, weaponOverride, out float explosionDamage, out int explosions) * externalMultiplier;
+        float finalDamage = CalculateDamage(attackerDamageSystem, weaponOverride) * externalMultiplier;
 
         Vector3 numberPoint = target.Brain?.GetModule<VFXSystem>()?.GetAnchorPosition(VFXAnchor.Overhead) ?? target.transform.root.position + Vector3.up * 1.5f;
 
@@ -110,9 +110,7 @@ public class DamageEffect
             attackerTransform = attackerDamageSystem.transform,
             hitPoint = contactPoint ?? numberPoint,
             hitNormal = Vector3.up,
-            source = source,
-            explosionDamage = explosionDamage * externalMultiplier,
-            explosions = explosions
+            source = source
         };
 
         CombatDamagePacket packet = attackerDamageSystem.CalculateDamage(attackData);
@@ -135,25 +133,19 @@ public class DamageEffect
         return damage * baseDamageMultiplier * finalDamageMultiplier;
     }
 
-    // Returns the base part of the hit. The exploded part comes back separately, because the
-    // defender's hit roll decides whether it lands.
-    private float CalculateDamage(DamageSystem attacker, DiceProfile weaponOverride, out float explosionDamage, out int explosions)
+    // The hit before the defender's roll: base, weapon dice and flat bonus, and any bonus damage or dice.
+    private float CalculateDamage(DamageSystem attacker, DiceProfile weaponOverride)
     {
         // Resolved ONCE and shared, so a bonus die is the same type as the hit it rides on
         // rather than a second lookup that can disagree with the first.
         DiceProfile weapon = ResolveWeapon(attacker, weaponOverride);
 
-        int extra = 0;
-        explosions = 0;
-
         float damage = baseDamage;
-        if (weapon != null) damage += weapon.RollExploding(out extra, out explosions);
+        if (weapon != null) damage += weapon.RollDamage();
 
         damage *= baseDamageMultiplier;
-        damage += GetExternalFlatDamage(attacker, weapon, ref extra, ref explosions);
+        damage += GetExternalFlatDamage(attacker, weapon);
         damage *= finalDamageMultiplier;
-
-        explosionDamage = extra * baseDamageMultiplier * finalDamageMultiplier;
         return damage;
     }
 
@@ -204,10 +196,9 @@ public class DamageEffect
     ///
     /// cmb.bonus_dice rolls the weapon's dice expression directly rather than RollDamage(),
     /// so the weapon's own flat bonus is paid once per hit rather than once per die.
-    /// Extra dice need a weapon to copy; flat bonus applies either way. They are weapon dice, so
-    /// they explode like the weapon does.
+    /// Extra dice need a weapon to copy; flat bonus applies either way.
     /// </summary>
-    private float GetExternalFlatDamage(DamageSystem attacker, DiceProfile weapon, ref int extra, ref int explosions)
+    private float GetExternalFlatDamage(DamageSystem attacker, DiceProfile weapon)
     {
         var stats = attacker?.Brain?.Stats;
         if (stats == null) return 0f;
@@ -217,11 +208,7 @@ public class DamageEffect
 
         int extraDice = Mathf.RoundToInt(stats.GetValue("cmb.bonus_dice"));
         for (int i = 0; i < extraDice; i++)
-        {
-            bonus += weapon.damageDice.RollExploding(out int bonusExtra, out int bonusExplosions);
-            extra += bonusExtra;
-            explosions += bonusExplosions;
-        }
+            bonus += weapon.damageDice.Roll();
 
         return bonus;
     }

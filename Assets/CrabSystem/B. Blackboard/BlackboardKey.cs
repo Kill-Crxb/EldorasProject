@@ -130,6 +130,13 @@ public struct BlackboardKey
     // CannotMove so the ability and the statuses never share a key — MovementSystem ORs them.
     public static readonly int MoveRooted         = "MoveRooted".GetHashCode();
 
+    // AbilitySystem only, while an ability with useRootMotion on plays. The movement handler takes the
+    // clip's travel (RootMotionRelay) only while it is up; the rest of the time root motion is dropped.
+    public static readonly int RootMotionDriven   = "RootMotionDriven".GetHashCode();
+
+    // AbilitySystem only, as a root-motion move starts: the share of the clip's travel it keeps (a float).
+    public static readonly int RootMotionScale    = "RootMotionScale".GetHashCode();
+
     /// <summary>
     /// SpellcraftSystem only: a sequence is being entered, so the hands hold the sign pose between
     /// signs. Mirrored to the animator's IsDrawing bool by AnimatorFactBridge.

@@ -18,10 +18,13 @@ public interface ICombatantState
     MovePhase CurrentPhase { get; }
 
     bool IsArmored { get; }
-    bool HitboxesLive { get; }
 
-    // Seconds the hitboxes have been live this swing; 0 when they aren't.
-    float HitboxesLiveFor { get; }
+    // Seconds since the move in flight told — its Tell event, or its start when the clip has none; -1 before
+    // the tell or with no move. Defenders react to it (Combat_Framework §2.5).
+    float TellFor { get; }
+
+    // Would the move in flight's next strike land on target from where both stand now? Geometry only.
+    bool StrikeWouldReach(ControllerBrain target);
 
     bool IsGuarding { get; }
     bool InBlockstun { get; }

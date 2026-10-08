@@ -4,9 +4,9 @@ using UnityEngine;
 
 /// <summary>
 /// Which set of hands the entity is fighting with.
-/// Armed   — the weapon in weaponSlotId is drawn and drives damage, moveset and hitboxes.
+/// Armed   — the weapon in weaponSlotId is drawn and drives damage, moveset and reach.
 /// Unarmed — the weapon is sheathed (still equipped, still in the slot) and the unarmed
-///           profile drives damage, moveset and hitboxes.
+///           profile drives damage, moveset and reach.
 /// </summary>
 public enum CombatStance
 {
@@ -26,7 +26,7 @@ public enum CombatStance
 ///                    ability's buffTransforms list rather than swapped in code.
 ///   2. Damage      — DamageEffect reads RollUnarmedDamage() instead of the weapon dice.
 ///   3. Visual      — the weapon model reparents from the hand socket to the sheath socket.
-///   4. Hitboxes    — WeaponHitbox components filtered to the wrong stance refuse to enable.
+///   4. Reach       — strikes reach unarmedReach instead of the weapon's reach (StrikeHandler).
 ///   5. Animator    — the "IsUnarmed" bool, for fist idle/locomotion.
 ///
 /// Equipping into the weapon slot draws the weapon; emptying the slot forces unarmed.
@@ -45,6 +45,9 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
     [Tooltip("DiceProfile rolled on every unarmed hit. Author it as 1d4 with a flat bonus of 2.")]
     [SerializeField] private DiceProfile unarmedWeapon;
 
+    [Tooltip("How far fists and feet reach, in metres, edge to edge from the body. Strikes add their own bonus.")]
+    [Min(0f)] [SerializeField] private float unarmedReach = 1f;
+
     [Tooltip("Moveset LMB fires while unarmed.")]
     [SerializeField] private WeaponMoveset unarmedMoveset;
 
@@ -58,7 +61,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
 
     [Header("Transition")]
     [Tooltip("Optional ability played when sheathing. Put it on the Full Body Actions layer " +
-             "so it blocks attacks until AnimUnlocked fires. Leave empty for an instant swap.")]
+             "so it blocks attacks until its clip raises Unlocked. Leave empty for an instant swap.")]
     [SerializeField] private AbilityDefinition sheatheAbility;
 
     [Tooltip("Optional ability played when drawing. Same rules as the sheathe ability.")]
@@ -91,6 +94,7 @@ public class CombatStanceModule : MonoBehaviour, IBrainModule
     public CombatStance Stance => stance;
     public bool IsUnarmed => stance == CombatStance.Unarmed;
     public DiceProfile UnarmedWeapon => unarmedWeapon;
+    public float UnarmedReach => unarmedReach;
     public WeaponMoveset UnarmedMoveset => unarmedMoveset;
 
     public event Action<CombatStance> OnStanceChanged;

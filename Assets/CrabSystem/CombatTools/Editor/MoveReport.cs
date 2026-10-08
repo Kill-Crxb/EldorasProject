@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using NinjaGame.Animation;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
@@ -10,9 +9,9 @@ using UnityEngine;
 //
 // For each AbilityDefinition: its animationTrigger → the animator state(s) that trigger enters → the
 // clip → the clip's animation events, converted to frames at 60 fps. Startup / active / recovery are
-// read off HitboxStart, HitboxEnd and AnimUnlocked. It also flags wiring that silently breaks an
-// ability: a trigger the controller doesn't have, an effectTrigger event the clip never raises, a
-// state speed that isn't 1, or a blend that shifts every event.
+// read off the first and last Strike and Unlocked. It also flags wiring that silently breaks an
+// ability: a trigger the controller doesn't have, an effectCue the clip never raises, a missing Tell,
+// a state speed that isn't 1, or a blend that shifts every event.
 //
 // Abilities with move data (AbilityDefinition.Move.cs) are also checked: the data itself (windows
 // inside the move, routes that can fire), whether the baked frames still match the clip, and the clip
@@ -174,37 +173,36 @@ public class MoveReport : EditorWindow
         foreach (MoveClipReader.ClipEvent e in events)
         {
             if (!frames.ContainsKey(e.name)) frames[e.name] = e.frame;
-            order.Append($"{e.name}@{e.frame}  ");
+            order.Append(e.value != 0 ? $"{e.name}({e.value})@{e.frame}  " : $"{e.name}@{e.frame}  ");
         }
-        int lastEnd = MoveClipReader.Last(events, "HitboxEnd");
-        if (lastEnd >= 0) frames["HitboxEnd"] = lastEnd;
+        int lastStrike = MoveClipReader.Last(events, "Strike");
+        if (lastStrike >= 0) frames[LastStrike] = lastStrike;
 
         int length = MoveClipReader.LengthInFrames(clip, target);
         row.lines.Add($"[{target.layer}] {target.state.name} → {clip.name} ({length}f)");
         row.lines.Add("   " + order.ToString().TrimEnd());
 
-        bool hasStart = frames.TryGetValue("HitboxStart", out int start);
-        bool hasEnd = frames.TryGetValue("HitboxEnd", out int end);
-        bool hasUnlock = frames.TryGetValue("AnimUnlocked", out int unlock);
+        bool hasStrike = frames.TryGetValue("Strike", out int start);
+        bool hasUnlock = frames.TryGetValue("Unlocked", out int unlock);
 
-        if (hasStart && hasEnd && hasUnlock)
-            row.lines.Add($"   startup {start}f · active {end - start}f · recovery {unlock - end}f · tail after unlock {length - unlock}f");
+        if (hasStrike && hasUnlock)
+            row.lines.Add($"   startup {start}f · active {lastStrike - start + 1}f · recovery {unlock - lastStrike - 1}f · tail after unlock {length - unlock}f");
 
         if (ability.HasMoveData)
             CompareFrames(ability, clip.name, length, frames, row);
 
-        if (ability.abilityType == AbilityType.Offensive && !ability.IsParry && ability.projectileData == null && (!hasStart || !hasEnd))
-            row.problems.Add($"{clip.name}: offensive melee ability without HitboxStart/HitboxEnd — its hitbox never opens.");
+        bool melee = ability.abilityType == AbilityType.Offensive && !ability.IsParry && ability.projectileData == null;
+        if (melee && !hasStrike)
+            row.problems.Add($"{clip.name}: offensive melee ability without a Strike — it can never hit.");
+        if (melee && hasStrike && !frames.ContainsKey("Tell"))
+            row.problems.Add($"{clip.name}: no Tell — the move tells as it starts, so defenders read it early.");
         if (ability.waitForAnimUnlock && !hasUnlock)
-            row.problems.Add($"{clip.name}: waitForAnimUnlock is on but the clip has no AnimUnlocked — ends on its {ability.maxDuration}s timeout.");
-
-        string effect = ability.effectTrigger.ToString();
-        bool effectIsEvent = ability.effectTrigger == AnimationEventType.Effect1 ||
-                             ability.effectTrigger == AnimationEventType.Effect2 ||
-                             ability.effectTrigger == AnimationEventType.Effect3;
-        if (effectIsEvent && !frames.ContainsKey(effect))
-            row.problems.Add($"{clip.name}: effectTrigger is {effect} but the clip never raises it — the ability's effects never run.");
+            row.problems.Add($"{clip.name}: waitForAnimUnlock is on but the clip has no Unlocked — ends on its {ability.maxDuration}s timeout.");
+        if (ability.effectCue > 0 && MoveClipReader.First(events, "Cue", ability.effectCue) < 0)
+            row.problems.Add($"{clip.name}: effectCue is {ability.effectCue} but the clip never raises Cue({ability.effectCue}) — the ability's effects never run.");
     }
+
+    const string LastStrike = "Strike (last)";
 
     static void CheckMoveData(AbilityDefinition ability, Row row)
     {
@@ -258,9 +256,9 @@ public class MoveReport : EditorWindow
     // Drift is the clip against the speed-class target: the animator's to-do list, not an error.
     static void CompareFrames(AbilityDefinition ability, string clip, int length, Dictionary<string, int> frames, Row row)
     {
-        bool stale = Differs("HitboxStart", ability.ActiveStart, frames) ||
-                     Differs("HitboxEnd", ability.RecoveryStart, frames) ||
-                     Differs("AnimUnlocked", ability.TotalFrames, frames);
+        bool stale = Differs("Strike", ability.ActiveStart, frames) ||
+                     Differs(LastStrike, ability.RecoveryStart - 1, frames) ||
+                     Differs("Unlocked", ability.TotalFrames, frames);
         if (stale)
             row.problems.Add($"{clip}: the move's frames don't match its clip — press Bake.");
 
@@ -270,9 +268,9 @@ public class MoveReport : EditorWindow
         int startup = AbilityDefinition.ClassStartup(ability.speedClass);
         int active = AbilityDefinition.ClassActive(ability.speedClass);
         int recovery = AbilityDefinition.ClassRecovery(ability.speedClass);
-        AddDrift(clip, "HitboxStart", startup, frames, row);
-        AddDrift(clip, "HitboxEnd", startup + active, frames, row);
-        AddDrift(clip, "AnimUnlocked", startup + active + recovery, frames, row);
+        AddDrift(clip, "Strike", startup, frames, row);
+        AddDrift(clip, LastStrike, startup + active - 1, frames, row);
+        AddDrift(clip, "Unlocked", startup + active + recovery, frames, row);
 
         if (row.drift.Count == before)
             row.lines.Add($"   ✔ clip hits its {ability.speedClass} target");

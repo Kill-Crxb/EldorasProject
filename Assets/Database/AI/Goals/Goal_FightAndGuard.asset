@@ -21,6 +21,7 @@ MonoBehaviour:
   attack: {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
   attackRange: 2.2
   attackInterval: 2
+  maxString: 3
   stopRange: 1.8
   slowRange: 1.5
   backOffRange: 1.1
@@ -28,3 +29,17 @@ MonoBehaviour:
   guardChance: 0.5
   guardHold: 0.8
   threatRange: 3
+  deflectChance: 0.3
+  deflectDelay: 0.08
+  deflectLead: 4
+  dodge: {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
+  dodgeAwaySpeed: 1
+  dodgeWindow: 0.3
+  dodgeChance: 1
+  dodgeSettle: 0.4
+  gapCloser: {fileID: 11400000, guid: 8044a4d633481d1b68767884d8cbd2ef, type: 2}
+  gapCloseMin: 4
+  gapCloseMax: 8
+  dashIn: {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
+  dashInMin: 4
+  closeFacing: 20

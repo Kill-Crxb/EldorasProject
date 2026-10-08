@@ -93,10 +93,12 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
         animator.Play(stateName, layerIndex);
     }
 
-    public void CrossFade(string stateName, float transitionDuration, int layerIndex = 0)
+    // Seconds, not a fraction of the state being left: a normalized 0.1 out of a 3 s attack kept the
+    // swing playing (and firing its events) for 0.3 s after a hit cancelled it.
+    public void CrossFade(string stateName, float seconds, int layerIndex = 0)
     {
         if (!IsEnabled || animator == null) return;
-        animator.CrossFade(stateName, transitionDuration, layerIndex);
+        animator.CrossFadeInFixedTime(stateName, seconds, layerIndex);
     }
 
     public void TriggerCombatAnimation(string triggerName)

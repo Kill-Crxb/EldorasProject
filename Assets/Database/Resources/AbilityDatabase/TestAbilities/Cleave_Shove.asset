@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
   m_Name: Cleave_Shove
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
-  effectTrigger: 19
+  effectCue: 1
   waitForAnimUnlock: 1
   maxDuration: 2
-  castWhileMoving: 1
+  castWhileMoving: 0
+  useRootMotion: 1
   animationTrigger: Cleave
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
@@ -26,8 +27,6 @@ MonoBehaviour:
   overrideDefaults: 0
   customRequiredFacts: []
   customForbiddenFacts: []
-  nextInChain: {fileID: 0}
-  chainWindow: 0.5
   resourceCosts:
   - resource: {fileID: 11400000, guid: 4cc10ff0880b2ba42a52ff48a27f66ce, type: 2}
     cost: 10
@@ -46,14 +45,15 @@ MonoBehaviour:
   speedClass: 3
   frames:
     startup: 16
-    active: 24
-    recovery: 8
+    active: 1
+    recovery: 31
     cancelFrom: 0
     cancelTo: 0
     iframeFrom: 0
     iframeTo: 0
     armorFrom: 0
     armorTo: 0
+    tell: 2
   bakedClip: {fileID: 7400000, guid: 3e4a0cfb0bece5d4b95686e07fee8b93, type: 2}
   bakedState: 1873745296
   bakedLayer: 3
@@ -79,8 +79,6 @@ MonoBehaviour:
   targetType: 4
   range: 5
   requiresLineOfSight: 0
-  hitboxTags:
-  - blade
   damageEffects:
   - useWeaponDamage: 1
     baseDamage: 0
@@ -107,3 +105,4 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
+  strikes: []

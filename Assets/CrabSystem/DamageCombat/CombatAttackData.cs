@@ -44,11 +44,6 @@ public class CombatAttackData
     [Header("Source")]
     public DamageSource source = DamageSource.Other;
 
-    [Header("Explosions")]
-    [Tooltip("The exploded part of the roll, kept apart from baseDamage — a glancing hit drops it.")]
-    public float explosionDamage;
-    public int explosions;
-
     /// <summary>Create basic attack data with minimal information</summary>
     public static CombatAttackData CreateBasic(Transform attacker, Vector3 hitPoint)
     {

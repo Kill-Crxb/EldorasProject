@@ -63,7 +63,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     // Stat_Resolution.md §4. Defense = 5 + Avoidance + armour's to-hit bonus.
     private const float BaseDefense = 5f;
     private const string AccuracyStat = "cmb.finesse";
-    private const string CunningStat = "cmb.cunning";
     private const string AvoidanceStat = "def.avoidance";
     private const string ArmourDefenseStat = "atr.arm_def";
 
@@ -110,7 +109,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         hurtboxGO.transform.localRotation = Quaternion.identity;
 
         // New GameObjects default to layer 0 (Default), which weapon hitLayers
-        // masks don't include — the hurtbox would be invisible to WeaponHitbox.
+        // masks don't include — the hurtbox would be invisible to strikes (StrikeHandler).
         // Use the project's Hurtbox layer, falling back to this GO's own layer.
         int hurtboxLayer = LayerMask.NameToLayer("Hurtbox");
         hurtboxGO.layer = hurtboxLayer >= 0 ? hurtboxLayer : gameObject.layer;
@@ -162,9 +161,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         if (attackData.source != DamageSource.Tick)
             damage += RollStatDice(config?.attackerStatIds, config?.attackerStatMultipliers);
 
-        // A crit is an explosion. Each one adds a Cunning die, in the exploded part.
-        float explosion = attackData.explosionDamage + RollCunningDice(attackData.explosions);
-
         // Attack context multipliers (<= 0 treated as unset → ×1)
         float multiplier = 1f;
         if (attackData.comboMultiplier > 0f) multiplier *= attackData.comboMultiplier;
@@ -173,10 +169,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
             multiplier *= attackData.heavyAttackMultiplier;
 
         damage *= multiplier;
-        explosion *= multiplier;
 
-        bool crit = attackData.explosions > 0;
-        float critMult = 1f;
         float accuracy = stats != null ? stats.GetValue(AccuracyStat) : 0f;
 
         // Combat_Framework §3.2: a parry's riposte makes this entity's next attack a read. The attacker
@@ -190,8 +183,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         var packet = new CombatDamagePacket(
             attackData.baseDamage,
             damage,
-            crit,
-            critMult,
             attackData.damageType,
             attackData.attackerTransform,
             attackData.attackerTransform?.name ?? "Unknown",
@@ -202,8 +193,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
             attackData.isHeavyAttack,
             attackData.weaponId ?? "",
             attackData.source,
-            explosion,
-            attackData.explosions,
             accuracy,
             advantage
         );
@@ -297,9 +286,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
         bool full = hit.roll + hit.accuracy >= hit.defense;
         hit.grade = full ? HitGrade.Full : HitGrade.Glancing;
-        hit.rolled = full
-            ? packet.finalDamage + packet.explosionDamage
-            : Mathf.Floor(packet.finalDamage / 2f);
+        hit.rolled = full ? packet.finalDamage : Mathf.Floor(packet.finalDamage / 2f);
 
         // Contact always costs something: the hit is worth at least 1. The armour shield then takes what
         // it can of a physical hit (Combat_Framework §6.1); everything else goes past it.
@@ -327,13 +314,6 @@ public class DamageSystem : MonoBehaviour, IBrainModule
             float mult = (multipliers != null && i < multipliers.Count) ? multipliers[i] : 1f;
             total += DiceRoll.RollModifier(stats.GetValue(statIds[i]) * mult);
         }
-        return total;
-    }
-
-    private float RollCunningDice(int explosions)
-    {
-        float total = 0f;
-        for (int i = 0; i < explosions; i++) total += DiceRoll.RollModifier(Stat(CunningStat));
         return total;
     }
 

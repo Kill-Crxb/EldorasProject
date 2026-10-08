@@ -26,6 +26,7 @@ public static class MoveClipReader
     {
         public string name;
         public int frame;
+        public int value;
     }
 
     // Every trigger in the controller → the states it sends a layer into.
@@ -53,7 +54,7 @@ public static class MoveClipReader
         foreach (AnimationEvent e in AnimationUtility.GetAnimationEvents(clip))
         {
             string name = e.functionName.StartsWith("On") ? e.functionName.Substring(2) : e.functionName;
-            events.Add(new ClipEvent { name = name, frame = Mathf.RoundToInt((e.time - start) / speed * Fps) });
+            events.Add(new ClipEvent { name = name, frame = Mathf.RoundToInt((e.time - start) / speed * Fps), value = e.intParameter });
         }
 
         events.Sort((a, b) => a.frame.CompareTo(b.frame));
@@ -74,7 +75,15 @@ public static class MoveClipReader
         return -1;
     }
 
-    // Last occurrence, or -1. A multi-hit move's active window runs to its last HitboxEnd.
+    // First occurrence carrying this value, or -1 (Cue(1), Invuln(0)).
+    public static int First(List<ClipEvent> events, string name, int value)
+    {
+        foreach (ClipEvent e in events)
+            if (e.name == name && e.value == value) return e.frame;
+        return -1;
+    }
+
+    // Last occurrence, or -1. A multi-hit move's active window runs to its last Strike.
     public static int Last(List<ClipEvent> events, string name)
     {
         int frame = -1;

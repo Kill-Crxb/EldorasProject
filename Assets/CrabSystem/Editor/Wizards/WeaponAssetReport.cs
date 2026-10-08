@@ -137,15 +137,8 @@ public class WeaponAssetReport : EditorWindow
             Row row = NewRow(item, "ItemDefinition", item.itemId, referrers);
 
             if (item.icon == null) row.Problems.Add("No icon.");
-            if (item.equippedPrefab == null)
-            {
-                row.Problems.Add("No equippedPrefab — nothing appears in hand when equipped.");
-            }
-            else
-            {
-                foreach (string problem in WeaponHitboxCheck.Problems(item.equippedPrefab))
-                    row.Problems.Add(problem);
-            }
+            if (item.equippedPrefab == null) row.Problems.Add("No equippedPrefab — nothing appears in hand when equipped.");
+            if (item.weaponData != null && item.reach <= 0f) row.Problems.Add("reach is 0 — its strikes only land on a target touching the wielder.");
             if (item.category == null) row.Problems.Add("category is null.");
             if (item.subType == null) row.Problems.Add("subType is null — this item can never be equipped.");
             else if (item.subType.equipmentSlot == null) row.Problems.Add($"subType '{item.subType.name}' has no equipmentSlot.");

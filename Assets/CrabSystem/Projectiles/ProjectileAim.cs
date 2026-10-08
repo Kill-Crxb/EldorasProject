@@ -224,7 +224,7 @@ public class ProjectileAim
     }
 
     /// <summary>
-    /// Entities with no FactionSystem are never friendly, matching WeaponHitbox.
+    /// Entities with no FactionSystem are never friendly, matching StrikeHandler.
     /// </summary>
     public static bool IsFriendly(ControllerBrain source, ControllerBrain target)
     {

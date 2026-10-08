@@ -24,7 +24,7 @@ MonoBehaviour:
   attackTrigger: RabbitAttack
   attackSpeed: 1
   effect1: 0.2
-  hitboxStart: 0.25
+  hitboxStart: 0.5
   hitboxEnd: 0.55
   unlock: 0.9
   hitboxBone: HeadJoint

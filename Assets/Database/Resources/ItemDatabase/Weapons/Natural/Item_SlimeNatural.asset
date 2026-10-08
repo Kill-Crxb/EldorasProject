@@ -24,6 +24,7 @@ MonoBehaviour:
   gridHeight: 2
   weaponData: {fileID: 11400000, guid: ff89efd519104a717b226db03634a567, type: 2}
   moveset: {fileID: 0}
+  reach: 0.8
   stats: []
   rarity: 0
   maxStackSize: 1

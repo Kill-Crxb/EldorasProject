@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using NinjaGame.Animation;
 using RPG.Factions;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -35,8 +34,6 @@ public static class MonsterBuilder
     const string ItemFolder = "Assets/Database/Resources/ItemDatabase/Weapons/Natural";
     const string GoalFolder = "Assets/Database/AI/Goals";
 
-    const int HitboxLayer = 11;
-    const int HitLayers = (1 << 11) | (1 << 12);
 
     static readonly string[] Roster = { "Slime", "Rabbit", "Bat", "Ghost" };
     static readonly string[] CoreStats = { "core.mind", "core.body", "core.spirit", "core.resilience", "core.endurance", "core.insight" };
@@ -130,8 +127,8 @@ public static class MonsterBuilder
         s.sourcePrefab = Load<GameObject>(PackPrefabs + "Slime/Slime_Green.prefab");
         s.height = 1.5f;
         s.attackSpeed = 0.8f;
-        SetEvents(s, 0.38f, 0.45f, 0.7f, 0.95f);
-        SetHitbox(s, "SlimeRootJoint", "SlimeBody", 0.75f, 0.5f);
+        SetEvents(s, 0.38f, 0.45f, 0.95f);
+        s.reach = 0.8f;
         SetBody(s, 45f, 2.4f, 10f);
         SetDice(s, 1, 6, 0);
 
@@ -154,8 +151,8 @@ public static class MonsterBuilder
         s.sourceModel = Load<GameObject>(PackModels + "Rabbit_Level_1.fbx");
         s.sourcePrefab = Load<GameObject>(PackPrefabs + "Rabbit/Rabbit_Cyan.prefab");
         s.height = 1f;
-        SetEvents(s, 0.2f, 0.25f, 0.55f, 0.9f);
-        SetHitbox(s, "HeadJoint", "RabbitKick", 0.5f, 0.25f);
+        SetEvents(s, 0.2f, 0.25f, 0.9f);
+        s.reach = 0.5f;
         SetBody(s, 20f, 6.5f, 14f);
         SetDice(s, 1, 4, 1);
 
@@ -179,8 +176,8 @@ public static class MonsterBuilder
         s.sourcePrefab = Load<GameObject>(PackPrefabs + "Bat/Bat_Violet.prefab");
         s.height = 0.9f;
         s.lift = 0.7f;
-        SetEvents(s, 0.15f, 0.2f, 0.6f, 0.9f);
-        SetHitbox(s, "HeadJoint", "BatBite", 0.5f, 0.3f);
+        SetEvents(s, 0.15f, 0.2f, 0.9f);
+        s.reach = 0.5f;
         SetBody(s, 25f, 5.5f, 16f);
         SetDice(s, 1, 4, 0);
 
@@ -204,7 +201,7 @@ public static class MonsterBuilder
         s.sourcePrefab = Load<GameObject>(PackPrefabs + "Ghost/Ghost_White.prefab");
         s.height = 1.2f;
         s.lift = 0.2f;
-        SetEvents(s, 0.55f, -1f, -1f, 0.95f);
+        SetEvents(s, 0.55f, -1f, 0.95f);
         SetBody(s, 30f, 3.2f, 18f);
 
         AbilityDefinition bolt = NewAbility("Ghost_Bolt", out SerializedObject so);
@@ -214,7 +211,7 @@ public static class MonsterBuilder
             Set(so, "abilityCategory", (int)AbilityCategory.Spell);
             Set(so, "range", 12f);
             Set(so, "castWhileMoving", false);
-            Set(so, "effectTrigger", (int)AnimationEventType.Effect1);
+            Set(so, "effectCue", 1);
             Set(so, "projectileData", SpiritBolt());
             Damage(so, false, 4f, DamageType.Magical);
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -227,7 +224,7 @@ public static class MonsterBuilder
             Set(so, "abilityCategory", (int)AbilityCategory.Movement);
             Set(so, "range", 3f);
             Set(so, "castWhileMoving", true);
-            Set(so, "effectTrigger", (int)AnimationEventType.PlayEffect);
+            Set(so, "effectCue", 0);
             Set(so, "waitForAnimUnlock", false);
             Set(so, "maxDuration", 0.5f);
             Set(so, "cooldown", 5f);
@@ -241,21 +238,13 @@ public static class MonsterBuilder
         s.goals.AddRange(new[] { g.wander, g.keepDistance, g.evade });
     }
 
-    static void SetEvents(MonsterSpec s, float effect1, float hitboxStart, float hitboxEnd, float unlock)
+    static void SetEvents(MonsterSpec s, float cue, float strike, float unlock)
     {
-        s.effect1 = effect1;
-        s.hitboxStart = hitboxStart;
-        s.hitboxEnd = hitboxEnd;
+        s.cue = cue;
+        s.strike = strike;
         s.unlock = unlock;
     }
 
-    static void SetHitbox(MonsterSpec s, string bone, string tag, float radius, float forward)
-    {
-        s.hitboxBone = bone;
-        s.hitboxTag = tag;
-        s.hitboxRadius = radius;
-        s.hitboxForward = forward;
-    }
 
     static void SetBody(MonsterSpec s, float health, float runSpeed, float aggroRange)
     {
@@ -332,28 +321,25 @@ public static class MonsterBuilder
         Set(so, "frames.recovery", 0);
         Set(so, "frames.cancelFrom", 0);
         Set(so, "frames.cancelTo", 0);
+        Set(so, "frames.tell", 0);
         so.FindProperty("routes").arraySize = 0;
-        so.FindProperty("hitboxTags").arraySize = 0;
+        so.FindProperty("strikes").arraySize = 0;
         so.FindProperty("knockbackEffects").arraySize = 0;
         so.FindProperty("movementEffects").arraySize = 0;
         so.FindProperty("statusEffects").arraySize = 0;
         return ability;
     }
 
-    // A natural-weapon hit: the monster's dice, its hitbox, its attack clip.
+    // A natural-weapon hit: the monster's dice, its reach (on the natural weapon item), its attack clip.
     static void Melee(SerializedObject so, MonsterSpec s, float range, bool castWhileMoving)
     {
         Set(so, "animationTrigger", s.attackTrigger);
         Set(so, "abilityCategory", (int)AbilityCategory.Natural);
         Set(so, "range", range);
         Set(so, "castWhileMoving", castWhileMoving);
-        Set(so, "effectTrigger", (int)AnimationEventType.Effect1);
+        Set(so, "effectCue", 1);
         Set(so, "waitForAnimUnlock", true);
         Set(so, "maxDuration", 2.5f);
-
-        SerializedProperty tags = so.FindProperty("hitboxTags");
-        tags.arraySize = 1;
-        tags.GetArrayElementAtIndex(0).stringValue = s.hitboxTag;
 
         Damage(so, true, 0f, DamageType.Physical);
     }
@@ -441,18 +427,18 @@ public static class MonsterBuilder
     static AnimationEvent[] AttackEvents(MonsterSpec s)
     {
         var list = new List<AnimationEvent>();
-        AddEvent(list, "OnEffect1", s.effect1);
-        AddEvent(list, "OnHitboxStart", s.hitboxStart);
-        AddEvent(list, "OnHitboxEnd", s.hitboxEnd);
-        AddEvent(list, "OnAnimUnlocked", s.unlock);
+        AddEvent(list, "OnTell", s.tell, 0);
+        AddEvent(list, "OnCue", s.cue, 1);
+        AddEvent(list, "OnStrike", s.strike, 0);
+        AddEvent(list, "OnUnlocked", s.unlock, 0);
         list.Sort((a, b) => a.time.CompareTo(b.time));
         return list.ToArray();
     }
 
-    static void AddEvent(List<AnimationEvent> list, string function, float time)
+    static void AddEvent(List<AnimationEvent> list, string function, float time, int value)
     {
         if (time < 0f) return;
-        list.Add(new AnimationEvent { functionName = function, time = time });
+        list.Add(new AnimationEvent { functionName = function, time = time, intParameter = value });
     }
 
     static AnimationClip Clip(MonsterSpec s, string suffix)
@@ -610,8 +596,8 @@ public static class MonsterBuilder
     // ── Model ────────────────────────────────────────────────────────────
 
     // An empty root (what ModelModule swaps) holding the pack's model, scaled to the spec's height,
-    // feet on the ground plus any lift. The Animator, its event forwarder and the hitbox sit on the
-    // pack model. `size` is the model's world size after scaling.
+    // feet on the ground plus any lift. The Animator and its event forwarder sit on the pack model.
+    // `size` is the model's world size after scaling.
     static GameObject BuildModel(MonsterSpec s, AnimatorController controller, out Vector3 size)
     {
         var root = new GameObject(s.displayName + "_Model");
@@ -635,8 +621,6 @@ public static class MonsterBuilder
         animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
         animator.gameObject.AddComponent<AnimationEventForwarder>();
 
-        AddHitbox(s, visual);
-
         string path = $"{Folder(s)}/{s.displayName}_Model.prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
         Object.DestroyImmediate(root);
@@ -653,43 +637,6 @@ public static class MonsterBuilder
         Bounds bounds = renderers[0].bounds;
         foreach (Renderer r in renderers) bounds.Encapsulate(r.bounds);
         return bounds;
-    }
-
-    static void AddHitbox(MonsterSpec s, GameObject visual)
-    {
-        if (string.IsNullOrEmpty(s.hitboxBone)) return;
-
-        Transform bone = FindDeep(visual.transform, s.hitboxBone);
-        if (bone == null)
-        {
-            Debug.LogWarning($"[MonsterBuilder] {s.displayName}: no bone '{s.hitboxBone}'; hitbox goes on the model root.");
-            bone = visual.transform;
-        }
-
-        var go = new GameObject("Hitbox_" + s.hitboxTag);
-        go.layer = HitboxLayer;
-        go.transform.SetParent(bone, false);
-        go.transform.position = bone.position + Vector3.forward * s.hitboxForward;
-        go.transform.rotation = Quaternion.identity;
-
-        var sphere = go.AddComponent<SphereCollider>();
-        sphere.isTrigger = true;
-        sphere.radius = s.hitboxRadius / Mathf.Max(0.0001f, go.transform.lossyScale.x);
-
-        var hitbox = go.AddComponent<WeaponHitbox>();
-        var so = new SerializedObject(hitbox);
-        Set(so, "weaponName", s.displayName);
-        Set(so, "hitboxTag", s.hitboxTag);
-        Set(so, "hitboxCollider", sphere);
-        Set(so, "hitLayers", HitLayers);
-        so.ApplyModifiedPropertiesWithoutUndo();
-    }
-
-    static Transform FindDeep(Transform parent, string name)
-    {
-        foreach (Transform t in parent.GetComponentsInChildren<Transform>(true))
-            if (t.name == name) return t;
-        return null;
     }
 
     static void RegisterModel(MonsterSpec s, GameObject prefab)
@@ -756,6 +703,7 @@ public static class MonsterBuilder
         Set(itemSo, "equippedPrefab", (Object)null);
         Set(itemSo, "moveset", (Object)null);
         Set(itemSo, "weaponData", dice);
+        Set(itemSo, "reach", s.reach);
         Set(itemSo, "baseValue", 0);
         Set(itemSo, "dropsOnDeath", false);
         Set(itemSo, "isTradeable", false);

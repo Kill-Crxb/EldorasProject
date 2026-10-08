@@ -403,13 +403,9 @@ namespace NinjaGame.Magic
             AbilityDefinition ability = def.castAbility;
             string tag = $"School {element} → '{ability.name}'";
 
-            bool triggerFires = ability.effectTrigger == NinjaGame.Animation.AnimationEventType.Effect1 ||
-                                ability.effectTrigger == NinjaGame.Animation.AnimationEventType.Effect2 ||
-                                ability.effectTrigger == NinjaGame.Animation.AnimationEventType.Effect3;
-
-            if (!triggerFires)
-                problems.Add($"{tag}: effectTrigger is {ability.effectTrigger}, not Effect1/2/3 — " +
-                             $"ProjectileLauncher never hears it and nothing spawns.");
+            if (ability.effectCue <= 0)
+                problems.Add($"{tag}: effectCue is 0 — the effects run as the cast starts, no Cue ever " +
+                             $"matches, ProjectileLauncher never fires and nothing spawns.");
 
             if (ability.projectileData == null)
                 problems.Add($"{tag}: projectileData is empty. ProjectileLauncher bails on null BEFORE " +
@@ -423,7 +419,7 @@ namespace NinjaGame.Magic
             // projectile, never by the ability executing on the caster.
             if (ability.targetType == AbilityTargetType.Self)
                 problems.Add($"{tag}: targetType is Self. AbilitySystem will apply the DamageEffect to " +
-                             $"THE CASTER on the effect trigger, dice-less, as well as firing the " +
+                             $"THE CASTER on the effect cue, dice-less, as well as firing the " +
                              $"projectile. Set it to Direction.");
 
             if (string.IsNullOrEmpty(ability.abilityId))

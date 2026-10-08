@@ -7,8 +7,9 @@ using UnityEngine;
 // This module sets how much of the FULL body shows: all of it standing still, none of it while
 // moving, so the legs come from locomotion and only the arms play the clip.
 //
-// A rooted ability (castWhileMoving off) needs no special case — MovementSystem stops the input,
-// speed falls, and the full body fades in on its own. While the Actions state machine rests, the
+// A rooted ability (castWhileMoving off) always plays full body: its legs belong to the clip. It used to
+// rely on speed falling once input stopped, but a root-motion move travels at running speed, and reading
+// that speed handed the legs to locomotion's run cycle mid-lunge — whose own travel then kept the speed up. While the Actions state machine rests, the
 // rest rule holds both layers at 0 whatever this claims.
 public class ActionsLayerDriver : MonoBehaviour, IBrainModule
 {
@@ -43,7 +44,8 @@ public class ActionsLayerDriver : MonoBehaviour, IBrainModule
         if (layers == null) return;
 
         float speed = movement != null ? movement.Speed : 0f;
-        float fullBody = 1f - Mathf.InverseLerp(fullBodyBelow, armsOnlyAbove, speed);
+        bool rooted = movement != null && movement.IsRooted;
+        float fullBody = rooted ? 1f : 1f - Mathf.InverseLerp(fullBodyBelow, armsOnlyAbove, speed);
 
         layers.Claim(this, AnimationLayerNames.Actions, fullBody, AnimationLayerController.PriorityAbility);
     }

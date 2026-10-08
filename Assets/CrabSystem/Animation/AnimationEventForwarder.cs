@@ -1,90 +1,45 @@
-// AnimationEventForwarder.cs - Broadcasts animation events to subscribed systems
 using System;
 using UnityEngine;
-using NinjaGame.Animation;
 
+// Hands a clip's move events to the brain (Combat_Framework.md §2.1). Unity calls clip events only on the
+// components next to the Animator, so this sits there; AbilitySystem binds to it, and presentation (the
+// socket relay) may listen too.
 public class AnimationEventForwarder : MonoBehaviour
 {
-    private ControllerBrain brain;
-
-    public event Action<AnimationEventType> OnAnimationEvent;
-    public event Action<UpperBodyState> OnStateTransitionEvent;
+    public event Action<MoveEvent, int> OnMoveEvent;
 
     // Unity fires a clip's events once per layer that plays it with weight above 0. The v2
     // animator's Actions Upper layer is SYNCED to Actions — same states, same clips — so while
     // both have weight (standing still) every event arrives twice in the same frame; moving drops
     // Actions to 0 and they arrive once (Known Issues B15). Events carry no layer index, so the
-    // duplicate is recognised instead: the same event twice in one frame is always the second
-    // layer, because one clip cannot fire one event twice in a frame.
-    private readonly int[] lastEventFrame = new int[Enum.GetValues(typeof(AnimationEventType)).Length];
-    private readonly int[] lastTransitionFrame = new int[Enum.GetValues(typeof(UpperBodyState)).Length];
+    // duplicate is recognised instead: the same event with the same value twice in one frame is
+    // always the second layer, because one clip cannot fire one event twice in a frame.
+    private static readonly int EventCount = Enum.GetValues(typeof(MoveEvent)).Length;
+    private readonly int[] lastFrame = new int[EventCount];
+    private readonly int[] lastValue = new int[EventCount];
 
-    /// <summary>
-    /// Called by AbilitySystem after it locates this component via GetComponentInChildren.
-    /// Avoids the timing problem where Start() fires before the model is parented.
-    /// </summary>
-    public void Initialize(ControllerBrain controllerBrain)
+    public void OnTell() => Broadcast(MoveEvent.Tell, 0);
+    public void OnStrike(int index) => Broadcast(MoveEvent.Strike, index);
+    public void OnCue(int cue) => Broadcast(MoveEvent.Cue, cue);
+    public void OnChainOpen() => Broadcast(MoveEvent.ChainOpen, 0);
+    public void OnUnlocked() => Broadcast(MoveEvent.Unlocked, 0);
+    public void OnInvuln(int on) => Broadcast(MoveEvent.Invuln, on);
+    public void OnTravel(int on) => Broadcast(MoveEvent.Travel, on);
+
+    private void Broadcast(MoveEvent evt, int value)
     {
-        brain = controllerBrain;
-    }
-
-    // ============================================================================
-    // ANIMATION EVENT SYSTEM
-    // These methods are called by Unity's Animation Event system
-    // ============================================================================
-
-    public void OnHitboxStart() => BroadcastEvent(AnimationEventType.HitboxStart);
-    public void OnHitboxEnd() => BroadcastEvent(AnimationEventType.HitboxEnd);
-    public void OnAnimLocked() => BroadcastEvent(AnimationEventType.AnimLocked);
-    public void OnAnimUnlocked() => BroadcastEvent(AnimationEventType.AnimUnlocked);
-    public void OnParryStart() => BroadcastEvent(AnimationEventType.ParryStart);
-    public void OnParryMax() => BroadcastEvent(AnimationEventType.ParryMax);
-    public void OnMovementLocked() => BroadcastEvent(AnimationEventType.MovementLocked);
-    public void OnMovementUnlocked() => BroadcastEvent(AnimationEventType.MovementUnlocked);
-    public void OnRootMotionStart() => BroadcastEvent(AnimationEventType.RootMotionStart);
-    public void OnRootMotionEnd() => BroadcastEvent(AnimationEventType.RootMotionEnd);
-    public void OnPlayEffect() => BroadcastEvent(AnimationEventType.PlayEffect);
-    public void OnWeaponTrailStart() => BroadcastEvent(AnimationEventType.WeaponTrailStart);
-    public void OnWeaponTrailEnd() => BroadcastEvent(AnimationEventType.WeaponTrailEnd);
-    public void OnTeleportFrame() => BroadcastEvent(AnimationEventType.TeleportFrame);
-    public void OnIFrameStart() => BroadcastEvent(AnimationEventType.IFrameStart);
-    public void OnIFrameEnd() => BroadcastEvent(AnimationEventType.IFrameEnd);
-    public void OnFeint() => BroadcastEvent(AnimationEventType.Feint);
-    public void OnEffect1() => BroadcastEvent(AnimationEventType.Effect1);
-    public void OnEffect2() => BroadcastEvent(AnimationEventType.Effect2);
-    public void OnEffect3() => BroadcastEvent(AnimationEventType.Effect3);
-
-    /// <summary>
-    /// Called by Unity Animation Events to trigger state transitions.
-    /// Animator passes state name as string parameter: OnStateTransition("MeleeSwing")
-    /// </summary>
-    public void OnStateTransition(string stateName)
-    {
-        if (System.Enum.TryParse<UpperBodyState>(stateName, true, out var state))
-            BroadcastStateTransition(state);
-        else
-            Debug.LogWarning($"[AnimationEventForwarder] Invalid state name: '{stateName}'. Must match UpperBodyState enum.");
-    }
-
-    private void BroadcastEvent(AnimationEventType eventType)
-    {
-        if (!FirstThisFrame(lastEventFrame, (int)eventType)) return;
-        OnAnimationEvent?.Invoke(eventType);
-    }
-
-    private void BroadcastStateTransition(UpperBodyState state)
-    {
-        if (!FirstThisFrame(lastTransitionFrame, (int)state)) return;
-        OnStateTransitionEvent?.Invoke(state);
+        if (IsDuplicate((int)evt, value)) return;
+        OnMoveEvent?.Invoke(evt, value);
     }
 
     // Frames are stored +1 so the zeroed array never matches frame 0.
-    private static bool FirstThisFrame(int[] lastFrame, int index)
+    private bool IsDuplicate(int index, int value)
     {
         int frame = Time.frameCount + 1;
-        if (lastFrame[index] == frame) return false;
+        if (lastFrame[index] == frame && lastValue[index] == value) return true;
 
         lastFrame[index] = frame;
-        return true;
+        lastValue[index] = value;
+        return false;
     }
 }

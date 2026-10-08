@@ -12,10 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c618fe18ae72648a35121c4b577a70, type: 3}
   m_Name: BasicAttack1
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
-  effectTrigger: 19
+  effectCue: 1
   waitForAnimUnlock: 1
   maxDuration: 2
-  castWhileMoving: 1
+  castWhileMoving: 0
+  useRootMotion: 1
+  rootMotionScale: 1
   animationTrigger: BasicAttack1
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
@@ -26,9 +28,11 @@ MonoBehaviour:
   overrideDefaults: 0
   customRequiredFacts: []
   customForbiddenFacts: []
-  nextInChain: {fileID: 0}
-  chainWindow: 0.5
-  resourceCosts: []
+  resourceCosts:
+  - resource: {fileID: 11400000, guid: 4cc10ff0880b2ba42a52ff48a27f66ce, type: 2}
+    cost: 3
+    drain: 0
+    refund: 0
   cooldown: 0
   castTime: 0
   blockDamageReduction: 0.5
@@ -41,16 +45,17 @@ MonoBehaviour:
   parryFrames: 0
   speedClass: 1
   frames:
-    startup: 16
-    active: 20
-    recovery: 30
-    cancelFrom: 14
-    cancelTo: 24
+    startup: 18
+    active: 1
+    recovery: 17
+    cancelFrom: 20
+    cancelTo: 30
     iframeFrom: 0
     iframeTo: 0
     armorFrom: 0
     armorTo: 0
-  bakedClip: {fileID: 7400000, guid: 2e2511c4fa5b176498a34c04f8001c40, type: 2}
+    tell: 6
+  bakedClip: {fileID: 7400000, guid: b077b8f136d1ee9e8bb75a3412498b06, type: 2}
   bakedState: 518653138
   bakedLayer: 3
   bakedFade: 0
@@ -80,8 +85,6 @@ MonoBehaviour:
   targetType: 1
   range: 5
   requiresLineOfSight: 0
-  hitboxTags:
-  - blade
   damageEffects:
   - useWeaponDamage: 1
     baseDamage: 0
@@ -95,7 +98,10 @@ MonoBehaviour:
   damageOverTimeEffects: []
   healEffects: []
   healOverTimeEffects: []
-  knockbackEffects: []
+  knockbackEffects:
+  - force: 4
+    direction: {x: 0, y: 0, z: 1}
+    useRelativeDirection: 1
   movementEffects: []
   statusEffects: []
   hitProcs: []
@@ -105,3 +111,4 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
+  strikes: []

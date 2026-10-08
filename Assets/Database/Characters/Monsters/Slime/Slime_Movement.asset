@@ -71,3 +71,4 @@ MonoBehaviour:
   airStrafeSpeed: 3
   airStrafeAccel: 12
   airStrafeReturn: 6
+  rootMotionContactGap: 0.3

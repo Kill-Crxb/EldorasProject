@@ -3,7 +3,7 @@ using UnityEditor.Animations;
 using UnityEngine;
 
 // Which animator controllers the move bake reads, in priority order: the first controller whose
-// state for an ability's trigger carries HitboxStart / HitboxEnd / AnimUnlocked wins. When CF5's
+// state for an ability's trigger carries a Strike and Unlocked wins. When CF5's
 // per-style override controllers arrive, they're listed here too.
 [CreateAssetMenu(fileName = "MoveBakeSettings", menuName = "CrabSystem/Combat/Move Bake Settings")]
 public class MoveBakeSettings : ScriptableObject

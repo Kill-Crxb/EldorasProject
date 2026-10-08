@@ -1,14 +1,13 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
-using NinjaGame.Animation;
 using UnityEngine;
 
 // Editor-only. Spawns itself when play starts. Moves run on their clip's events; for moves that also
-// carry authored frame data, this logs where HitboxStart / HitboxEnd / AnimUnlocked landed against
-// those frames, so the frame data can be kept honest (blockstun and armour windows read it).
+// carry baked frame data, this logs where Tell / the first Strike / Unlocked landed against those
+// frames, so the frame data can be kept honest (blockstun and armour windows read it).
 //
-//   [MoveClockTrace] Base_PC(Clone)  BasicAttack1  HitboxStart @22f, frames say 10 (+12)
-//   [MoveClockTrace] Base_PC(Clone)  BasicAttack1  AnimUnlocked after the move ended (frames say 30)
+//   [MoveClockTrace] Base_PC(Clone)  BasicAttack1  Strike @22f, frames say 10 (+12)
+//   [MoveClockTrace] Base_PC(Clone)  BasicAttack1  Unlocked after the move ended (frames say 30)
 public class MoveClockTrace : MonoBehaviour
 {
     [SerializeField] private float rescanInterval = 1f;
@@ -46,18 +45,18 @@ public class MoveClockTrace : MonoBehaviour
 
             AbilitySystem a = abilities;
             a.OnAbilityUsed += id => lastMove[a] = a.CurrentAbility;
-            a.OnAbilityAnimationEvent += evt => Check(a, evt);
+            a.OnMoveEvent += (evt, value) => Check(a, evt, value);
         }
     }
 
-    private void Check(AbilitySystem abilities, AnimationEventType evt)
+    private void Check(AbilitySystem abilities, MoveEvent evt, int value)
     {
         if (this == null || abilities == null) return;
 
         lastMove.TryGetValue(abilities, out AbilityDefinition move);
         if (move == null || !move.HasMoveData) return;
 
-        int expected = ExpectedFrame(move, evt);
+        int expected = ExpectedFrame(move, evt, value);
         if (expected < 0) return;
 
         string who = $"{abilities.transform.root.name}  {move.abilityId}  {evt}";
@@ -74,11 +73,11 @@ public class MoveClockTrace : MonoBehaviour
         Debug.Log($"[MoveClockTrace] {who} @{abilities.CurrentMoveFrame}f, frames say {expected} ({drift:+0;-0})");
     }
 
-    private static int ExpectedFrame(AbilityDefinition move, AnimationEventType evt) => evt switch
+    private static int ExpectedFrame(AbilityDefinition move, MoveEvent evt, int value) => evt switch
     {
-        AnimationEventType.HitboxStart => move.ActiveStart,
-        AnimationEventType.HitboxEnd => move.RecoveryStart,
-        AnimationEventType.AnimUnlocked => move.TotalFrames,
+        MoveEvent.Tell => move.frames.tell,
+        MoveEvent.Strike when value == 0 => move.ActiveStart,
+        MoveEvent.Unlocked => move.TotalFrames,
         _ => -1
     };
 }

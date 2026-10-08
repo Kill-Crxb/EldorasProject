@@ -674,8 +674,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8604473964335756580}
-  - component: {fileID: 3781698763355842973}
-  - component: {fileID: 1393791166249568181}
   m_Layer: 11
   m_Name: Hitbox_RabbitKick
   m_TagString: Untagged
@@ -698,49 +696,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5920971621903904789}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &3781698763355842973
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5017936260776203491}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.016828468
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1393791166249568181
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5017936260776203491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2e27ff75d53d3004f9afe37ff8d68e0f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WeaponHitbox
-  weaponName: Rabbit
-  hitboxTag: RabbitKick
-  hitboxCollider: {fileID: 3781698763355842973}
-  hitLayers:
-    serializedVersion: 2
-    m_Bits: 6144
-  allowFriendlyFire: 0
-  stanceFilter: 0
-  debugHitbox: 0
-  showGizmos: 1
 --- !u!1 &5351647286040997300
 GameObject:
   m_ObjectHideFlags: 0

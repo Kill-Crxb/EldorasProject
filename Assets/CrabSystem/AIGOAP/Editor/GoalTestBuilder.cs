@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using NinjaGame.Animation;
+
 using UnityEditor;
 using UnityEngine;
 
@@ -246,7 +246,7 @@ public static class GoalTestBuilder
         so.FindProperty("animationTrigger").stringValue = "";
         so.FindProperty("abilityCategory").intValue = (int)category;
         so.FindProperty("castWhileMoving").boolValue = true;
-        so.FindProperty("effectTrigger").intValue = (int)AnimationEventType.PlayEffect;
+        so.FindProperty("effectCue").intValue = 0;
         so.FindProperty("waitForAnimUnlock").boolValue = false;
         so.FindProperty("maxDuration").floatValue = 0.5f;
         so.FindProperty("bakedState").intValue = 0;
@@ -256,7 +256,7 @@ public static class GoalTestBuilder
         so.FindProperty("frames.recovery").intValue = 0;
         so.FindProperty("damageEffects").arraySize = 0;
         so.FindProperty("knockbackEffects").arraySize = 0;
-        so.FindProperty("hitboxTags").arraySize = 0;
+        so.FindProperty("strikes").arraySize = 0;
     }
 
     static void Push(SerializedObject so, Vector3 direction, float speed, float holiday)

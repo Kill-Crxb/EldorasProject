@@ -126,7 +126,39 @@ public abstract class LocomotionHandler : MonoBehaviour
     /// </summary>
     protected virtual void MoveCharacterController(Vector3 movement)
     {
-        characterController.Move(movement * Time.deltaTime);
+        Vector3 rootMotion = TakeRootMotion(out _);
+        characterController.Move(movement * Time.deltaTime + rootMotion);
+    }
+
+    // ========================================
+    // Root motion — moves that travel as animated
+    // ========================================
+
+    // Collected from RootMotionRelay (the model's OnAnimatorMove) and spent by the handler's own move
+    // while MovementSystem.RootMotionDriven is up. Dropped otherwise: locomotion clips travel too,
+    // and walking belongs to the handler alone.
+    protected Vector3 pendingRootMotion;
+    protected float pendingRootMotionTime;
+
+    /// <summary>The clip's travel over one animator frame, in world space. Only XZ is kept: gravity
+    /// and grounding stay the handler's.</summary>
+    public void AddRootMotion(Vector3 worldDelta, float deltaTime)
+    {
+        pendingRootMotion += new Vector3(worldDelta.x, 0f, worldDelta.z);
+        pendingRootMotionTime += deltaTime;
+    }
+
+    /// <summary>The travel collected since the last call and the time it covers; zero travel when no
+    /// root-motion move is playing.</summary>
+    protected Vector3 TakeRootMotion(out float overTime)
+    {
+        Vector3 delta = pendingRootMotion;
+        overTime = pendingRootMotionTime;
+        pendingRootMotion = Vector3.zero;
+        pendingRootMotionTime = 0f;
+
+        bool driven = movementSystem != null && movementSystem.RootMotionDriven;
+        return driven ? delta : Vector3.zero;
     }
 
     // ========================================
