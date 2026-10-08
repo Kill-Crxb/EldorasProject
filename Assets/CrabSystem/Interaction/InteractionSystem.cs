@@ -91,6 +91,7 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
         // Mirrors the priority in RouteInteraction — a merchant with both Dialogue
         // and Inventory should prompt "Talk", not "Loot", since dialogue wins routing.
         if (brain.GetModule<DialogueSystem>() != null) return InteractionAction.Talk;
+        if (brain.GetModule<VendorSystem>() != null) return InteractionAction.Shop;
 
         int count = CountInteractionCapabilities();
         if (count == 0) return GetContextualInteractionAction();
@@ -217,20 +218,20 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
             else return false;
         }
 
-        bool wasDialogue = RouteInteraction(actor);
+        bool wasPerson = RouteInteraction(actor);
 
-        // Dialogue is never "used up" — canInteractMultipleTimes exists for props
-        // (chests, one-time pickups), not conversations. Otherwise the first
-        // successful conversation permanently fails IsInteractable and the NPC
-        // silently drops out of detection forever.
-        if (!canInteractMultipleTimes && !wasDialogue)
+        // Dialogue and shops are never "used up" — canInteractMultipleTimes exists for props
+        // (chests, one-time pickups), not people. Otherwise the first successful
+        // conversation permanently fails IsInteractable and the NPC silently drops out of
+        // detection forever.
+        if (!canInteractMultipleTimes && !wasPerson)
             hasBeenInteracted = true;
 
         return true;
     }
 
-    // Returns true if this interaction was routed to DialogueSystem, so
-    // OnInteractedWith knows not to apply the single-use flag to conversations.
+    // Returns true if this interaction was routed to DialogueSystem or a VendorSystem, so
+    // OnInteractedWith knows not to apply the single-use flag to people.
     private bool RouteInteraction(ControllerBrain actor)
     {
         // DialogueSystem is the interface layer whenever it's present, regardless of
@@ -241,6 +242,15 @@ public class InteractionSystem : MonoBehaviour, IBrainModule
         if (dialogue != null)
         {
             dialogue.BeginConversation(actor);
+            return true;
+        }
+
+        // A vendor without dialogue opens the shop straight away. With dialogue, an
+        // OpenShop option does it.
+        var vendor = brain.GetModule<VendorSystem>();
+        if (vendor != null)
+        {
+            vendor.Open(actor);
             return true;
         }
 

@@ -346,6 +346,9 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
     public ContainerContents GetCurrentContents() => currentContents;
 
+    /// <summary>Whose inventory this is — a vendor's shelf is found through it.</summary>
+    public ControllerBrain Brain => brain;
+
     /// <summary>Authored layout used before any contents exist. Grids read their size from it.</summary>
     public ContainerData DefaultContainer => containers != null && containers.Length > 0 ? containers[0] : null;
 

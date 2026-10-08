@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d22a7f05a53cd63d974dadd14b844cb, type: 3}
+  m_Name: Vendor_NatureSpirit
+  m_EditorClassIdentifier: Assembly-CSharp::VendorDefinition
+  vendorId: nature_spirit
+  displayName: Nature Spirit
+  currencyItemId: 
+  margin: 0
+  buysFromPlayer: 1
+  shelfWidth: 12
+  shelfHeight: 7
+  stock:
+  - item: {fileID: 11400000, guid: 63b04390197656fd49668f4a6e31d25d, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 8b3ab40104c68a09f8498c93fc6904df, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: e93fe449ba30731b7906ee327698d827, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 922d1559564e47d0caf668a8e192afb0, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: cf1f126c35a576a7bbe7e77afe47813b, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 1ab83cf2cd8e7c7af9de9fa7587cca66, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 4b5a7c8fbd798df32a08da2ec2831e7e, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 7ccc3f0789d5db8df800f94268c8ebcb, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 7676878b3ba60373aaf4ddb12e3bcb15, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: b965953f1de1a47e9a082cdf4a0aff15, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 8a89cf00bac2c0980a14bcd82e08d50d, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 89fcdbe174d89afc8948c5e274fb896b, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 516bd1005eb779db3ada47dd1a64823f, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: 3404476f1358e20b2917eef920d65469, type: 2}
+    restocks: 1
+  - item: {fileID: 11400000, guid: d33cd327df9f24d0a80ad1d736bcdae9, type: 2}
+    restocks: 1

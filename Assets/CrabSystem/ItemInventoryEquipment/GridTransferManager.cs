@@ -142,26 +142,12 @@ public class GridTransferManager : MonoBehaviour
         if (target == null) return false;
 
         // Scan top-left to bottom-right for the first free position.
-        for (int y = 0; y < target.GridHeight; y++)
+        int slots = target.GridWidth * target.GridHeight;
+        for (int i = 0; i < slots; i++)
         {
-            for (int x = 0; x < target.GridWidth; x++)
-            {
-                var pos = new GridPosition(x, y);
-                if (!target.CanPlaceItemAt(item, pos)) continue;
-
-                if (!source.RemoveItem(item.instanceId))
-                {
-                    Debug.LogError("[GridTransferManager] QuickTransfer: could not remove item from source");
-                    return false;
-                }
-
-                if (target.AddItem(item, pos)) return true;
-
-                // AddItem failed — put it back.
-                Debug.LogError("[GridTransferManager] QuickTransfer: could not add item to target, returning to source");
-                source.AddItem(item, new GridPosition(item.gridX, item.gridY));
-                return false;
-            }
+            var pos = new GridPosition(i % target.GridWidth, i / target.GridWidth);
+            if (!target.CanPlaceItemAt(item, pos)) continue;
+            return HandleCrossGridTransfer(source, target, item.instanceId, item, pos);
         }
 
         return false; // No space in target
@@ -200,10 +186,19 @@ public class GridTransferManager : MonoBehaviour
         return grid.MoveItem(itemId, targetPos);
     }
 
+    // Shelf → bag is a purchase and bag → shelf a sale when either grid belongs to a vendor.
     private bool HandleCrossGridTransfer(UniversalGrid source, UniversalGrid target, string itemId, ItemInstance item, GridPosition targetPos)
     {
         if (!allowContainerToContainer && !source.IsPlayerInventory && !target.IsPlayerInventory) return false;
         if (!target.CanPlaceItemAt(item, targetPos, itemId)) return false;
+
+        VendorSystem vendor = TradingVendor(source, target);
+        bool fromShelf = vendor != null && vendor.IsShelf(source);
+        InventorySystem customer = InventoryOf(fromShelf ? target : source);
+        if (vendor != null && !vendor.Allows(item, fromShelf, customer)) return false;
+
+        // RemoveItem clears the item's grid position, so keep it for the way back.
+        var from = new GridPosition(item.gridX, item.gridY);
 
         if (!source.RemoveItem(itemId))
         {
@@ -214,11 +209,25 @@ public class GridTransferManager : MonoBehaviour
         if (!target.AddItem(item, targetPos))
         {
             Debug.LogError("[GridTransferManager] Failed to add item to target grid - returning to source!");
-            source.AddItem(item, new GridPosition(item.gridX, item.gridY));
+            source.AddItem(item, from);
             return false;
         }
 
+        if (vendor != null) vendor.Settle(item, fromShelf, customer, from);
         return true;
+    }
+
+    private static VendorSystem TradingVendor(UniversalGrid source, UniversalGrid target)
+    {
+        VendorSystem vendor = VendorSystem.Of(source);
+        if (vendor != null) return vendor;
+        return VendorSystem.Of(target);
+    }
+
+    private static InventorySystem InventoryOf(UniversalGrid grid)
+    {
+        var inventoryGrid = grid as UniversalInventoryGrid;
+        return inventoryGrid != null ? inventoryGrid.InventorySystem : null;
     }
 
     [ContextMenu("Debug: Print Registered Grids")]

@@ -395,8 +395,12 @@ public abstract class UniversalGrid : MonoBehaviour
         var tooltip = ItemTooltipData.For(GetItemInstance(itemId));
         if (tooltip == null) return;
 
+        DecorateTooltip(tooltip, GetItemInstance(itemId));
         UniversalWindowManager.Instance?.ShowTooltip(tooltip, pointerPosition);
     }
+
+    /// <summary>Adds what only this grid knows about the item — a vendor shelf adds its price.</summary>
+    protected virtual void DecorateTooltip(ItemTooltipData tooltip, ItemInstance item) { }
 
     public virtual void OnItemHoverExit()
     {

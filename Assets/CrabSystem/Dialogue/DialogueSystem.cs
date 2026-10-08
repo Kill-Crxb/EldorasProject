@@ -82,6 +82,9 @@ public class DialogueSystem : MonoBehaviour, IBrainModule
             case DialogueActionType.GiveItem:
                 completed = GiveItems(option);
                 break;
+            case DialogueActionType.OpenShop:
+                completed = OpenShop();
+                break;
         }
 
         // Only spend a once-only option if it actually did its job. A full bag would
@@ -101,6 +104,22 @@ public class DialogueSystem : MonoBehaviour, IBrainModule
     }
 
     private DialogueMemory Memory() => CurrentActor != null ? CurrentActor.GetModule<DialogueMemory>() : null;
+
+    // Ends the conversation first: the shop is a window, not a dialogue screen.
+    private bool OpenShop()
+    {
+        var vendor = brain.GetModule<VendorSystem>();
+        if (vendor == null)
+        {
+            Debug.LogWarning($"[DialogueSystem] {brain.name} has an OpenShop option but no VendorSystem.", this);
+            return false;
+        }
+
+        ControllerBrain customer = CurrentActor;
+        EndConversation();
+        vendor.Open(customer);
+        return true;
+    }
 
     private bool GiveItems(DialogueOptionData option)
     {

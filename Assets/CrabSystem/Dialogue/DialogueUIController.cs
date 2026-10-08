@@ -49,6 +49,7 @@ public class DialogueUIController : MonoBehaviour
     private void BuildOptions(DialogueSystem dialogue)
     {
         ClearOptions();
+        if (!dialogue.IsInConversation) return; // the pick ended it — OpenShop, say
 
         var options = dialogue.Database != null ? dialogue.Database.options : null;
 

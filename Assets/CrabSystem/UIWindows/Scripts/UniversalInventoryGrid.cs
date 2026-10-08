@@ -135,6 +135,13 @@ public class UniversalInventoryGrid : UniversalGrid
         return inventorySystem.GetItemInstance(itemId);
     }
 
+    protected override void DecorateTooltip(ItemTooltipData tooltip, ItemInstance item)
+    {
+        VendorSystem vendor = VendorSystem.Of(this);
+        if (vendor == null) return;
+        tooltip.description += $"\n\n{vendor.PriceLabel(item)}";
+    }
+
     public override void OnItemShiftClicked(string itemId)
     {
         var item = inventorySystem?.GetItemInstance(itemId);

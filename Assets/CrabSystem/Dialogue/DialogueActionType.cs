@@ -1,5 +1,6 @@
 public enum DialogueActionType
 {
     None,
-    GiveItem
+    GiveItem,
+    OpenShop
 }
