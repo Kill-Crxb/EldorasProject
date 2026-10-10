@@ -51,6 +51,10 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     public bool ReadThisSwing { get; set; }
     public bool DeflectReadThisSwing { get; set; }
     public int StringPressesLeft { get; set; }
+    // Fight And Guard: out of stamina and keeping away; pressing hard until EngageUntil; a Perilous move read.
+    public bool Winded { get; set; }
+    public float EngageUntil { get; set; } = -999f;
+    public bool PerilousRead { get; set; }
 
     // Scratch memory for whichever goal is running. Each goal sets what it uses in OnStart.
     public Vector3 Home { get; private set; }

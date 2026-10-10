@@ -25,6 +25,10 @@ namespace RPG.NPC.UI
         [SerializeField] private bool alwaysFaceCamera = true;
         [SerializeField] private bool showHealthBar = true;
         [SerializeField] private float healthBarUpdateSpeed = 5f;
+        [Tooltip("Health and posture bars show only while this NPC is the player's soft target (TargetingModule).")]
+        [SerializeField] private bool barsOnlyOnTarget = true;
+        [Tooltip("Seconds the bars stay up after the NPC stops being the target, so a sweep of the camera doesn't flicker them.")]
+        [SerializeField] private float targetLinger = 1f;
         [SerializeField] private Color postureColor = new Color(1f, 0.75f, 0.2f);
         [SerializeField] private Color postureDangerColor = new Color(1f, 0.25f, 0.1f);
         [Tooltip("Posture at or above this (0–1) shows the danger colour: close to a guard break.")]
@@ -54,6 +58,7 @@ namespace RPG.NPC.UI
         private float targetHealthPercent = 1f;
         private System.Action<float> healthChangedCallback;
         private bool hasRefreshedAfterStart = false;
+        private float targetedUntil = -999f;
 
         public string EntityName => npcName;
         public int EntityLevel => npcLevel;
@@ -109,7 +114,9 @@ namespace RPG.NPC.UI
             if (alwaysFaceCamera && mainCamera != null)
                 transform.rotation = Quaternion.LookRotation(transform.position - mainCamera.transform.position);
 
-            UpdatePosture();
+            bool bars = ShowBars();
+            if (healthBarPanel != null && healthBarPanel.activeSelf != bars) healthBarPanel.SetActive(bars);
+            UpdatePosture(bars);
 
             if (showHealthBar && healthBarFill != null && currentHealthPercent != targetHealthPercent)
             {
@@ -184,8 +191,6 @@ namespace RPG.NPC.UI
         public void UpdateHealth(float healthPercent)
         {
             targetHealthPercent = Mathf.Clamp01(healthPercent);
-            if (showHealthBar && healthBarPanel != null)
-                healthBarPanel.SetActive(true);
         }
 
         public void UpdateLevel(int newLevel) { npcLevel = newLevel; UpdateDisplay(); }
@@ -248,12 +253,23 @@ namespace RPG.NPC.UI
             healthChangedCallback = null;
         }
 
-        private void UpdatePosture()
+        private bool ShowBars()
+        {
+            if (!showHealthBar) return false;
+            if (!barsOnlyOnTarget) return true;
+
+            TargetingModule targeting = cachedPlayerBrain != null ? cachedPlayerBrain.GetModule<TargetingModule>() : null;
+            if (targeting != null && npcBrain != null && targeting.CurrentTarget == npcBrain)
+                targetedUntil = Time.time + targetLinger;
+            return Time.time < targetedUntil;
+        }
+
+        private void UpdatePosture(bool bars)
         {
             if (postureBarFill == null || npcBrain == null) return;
 
             float posture = PostureOf(npcBrain);
-            bool show = posture > 0.01f;
+            bool show = bars && posture > 0.01f;
             if (postureBarPanel != null && postureBarPanel.activeSelf != show) postureBarPanel.SetActive(show);
 
             postureBarFill.localScale = new Vector3(posture, 1f, 1f);

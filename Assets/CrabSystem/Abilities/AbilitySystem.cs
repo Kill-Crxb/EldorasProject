@@ -75,6 +75,8 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     private bool isInvincible = false;
     // A timed i-frame window (invulnSeconds) outlives its move; 0 = none running.
     private float invulnUntil;
+    // Below this travel speed a directional move counts as standing still and plays its forward clip.
+    private const float MinDirectionalSpeed = 1f;
 
     private StrikeHandler strikes;
     private int nextStrike;
@@ -1068,6 +1070,26 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
             return;
         }
 
-        if (animationProvider != null) animationProvider.TriggerCombatAnimation(ability.animationTrigger);
+        if (animationProvider != null) animationProvider.TriggerCombatAnimation(TriggerFor(ability));
+    }
+
+    // A directional move (a dash) plays the clip for the way the caster is travelling, if the animator has it.
+    private string TriggerFor(AbilityDefinition ability)
+    {
+        if (!ability.directionalTrigger || movementSystem == null) return ability.animationTrigger;
+
+        Vector3 travel = movementSystem.Velocity;
+        travel.y = 0f;
+        if (travel.sqrMagnitude < MinDirectionalSpeed * MinDirectionalSpeed) return ability.animationTrigger;
+
+        Transform body = brain.EntityRoot != null ? brain.EntityRoot : brain.transform;
+        float ahead = Vector3.Dot(travel, body.forward);
+        float side = Vector3.Dot(travel, body.right);
+
+        string suffix = Mathf.Abs(side) > Mathf.Abs(ahead) ? (side > 0f ? "Right" : "Left") : (ahead < 0f ? "Back" : "");
+        string trigger = ability.animationTrigger + suffix;
+
+        AnimationSystem animation = brain.Animation;
+        return suffix.Length > 0 && animation != null && animation.HasParameter(trigger) ? trigger : ability.animationTrigger;
     }
 }

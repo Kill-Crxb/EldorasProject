@@ -248,16 +248,23 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     }
 
     // The guard decides first, so a guard broken by this hit lets it through as a normal hit. Ticks
-    // aren't guarded.
+    // aren't guarded, and neither is a Perilous move: it can't be blocked or parried, only dodged.
     private GuardOutcome AskGuard(CombatDamagePacket packet, ControllerBrain attackerBrain)
     {
         if (OnDamageIntercept == null || blackboard == null) return GuardOutcome.None;
         if (packet.source == DamageSource.Tick) return GuardOutcome.None;
+        if (Perilous(attackerBrain)) return GuardOutcome.None;
         if (!blackboard.GetBool(BlackboardKey.IsBlocking)) return GuardOutcome.None;
 
         var args = new DamageInterceptArgs(packet.attackDirection, attackerBrain, packet.finalDamage);
         OnDamageIntercept.Invoke(args);
         return args.outcome;
+    }
+
+    private static bool Perilous(ControllerBrain attackerBrain)
+    {
+        ICombatantState attacker = attackerBrain != null ? attackerBrain.GetProvider<ICombatantState>() : null;
+        return attacker != null && attacker.CurrentAbility != null && attacker.CurrentAbility.hit.guard == GuardType.Perilous;
     }
 
     // Combat_Framework §3.1–3.2: no chip. A guarded hit never touches health — a block's damage went to

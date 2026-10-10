@@ -43,3 +43,14 @@ MonoBehaviour:
   dashIn: {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
   dashInMin: 4
   closeFacing: 20
+  perilousRange: 9
+  perilousLead: 12
+  staminaId: stamina
+  windedBelow: 0.35
+  restedAt: 0.95
+  keepAwayRange: 3.5
+  keepAwayStrafe: 0.5
+  strafeSwap: 1.5
+  engageSeconds: 4
+  engageInterval: 0.5
+  punishBelow: 0.2

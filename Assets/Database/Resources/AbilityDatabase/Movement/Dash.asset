@@ -20,6 +20,7 @@ MonoBehaviour:
   useRootMotion: 0
   rootMotionScale: 1
   animationTrigger: Dash
+  directionalTrigger: 1
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   projectileData: {fileID: 0}
@@ -76,6 +77,7 @@ MonoBehaviour:
     feel: 0
     bypass: 0
   routes: []
+  strikes: []
   abilityId: dash1
   abilityName: Dash
   description: its just a dash WIP
@@ -107,4 +109,3 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
-  strikes: []

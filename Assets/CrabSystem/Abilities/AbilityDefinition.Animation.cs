@@ -48,6 +48,10 @@ public partial class AbilityDefinition
     [Tooltip("Animation trigger parameter name")]
     [IdRef(IdKind.AnimatorParam)] public string animationTrigger = "Ability";
 
+    [Tooltip("Pick the clip by the caster's travel relative to its facing: the trigger plus Back, Left or Right " +
+             "(DashBack, DashLeft, DashRight) when the animator has it, the plain trigger when moving forward or still.")]
+    public bool directionalTrigger;
+
     [Tooltip("VFX spawned on cast start")]
     public GameObject castEffectPrefab;
 

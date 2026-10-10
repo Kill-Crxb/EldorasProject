@@ -15,10 +15,12 @@ MonoBehaviour:
   effectCue: 1
   waitForAnimUnlock: 1
   maxDuration: 5
+  invulnSeconds: 0
   castWhileMoving: 0
   useRootMotion: 1
   rootMotionScale: 1
   animationTrigger: DashThrust
+  directionalTrigger: 0
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   projectileData: {fileID: 0}
@@ -61,7 +63,7 @@ MonoBehaviour:
   bakedFade: 0
   bakedStartTime: 0
   hit:
-    guard: 0
+    guard: 1
     onHit: 2
     onHitFrames: 36
     blockStamina: 7
@@ -71,6 +73,12 @@ MonoBehaviour:
     feel: 3
     bypass: 0
   routes: []
+  strikes:
+  - reachBonus: 0.5
+    arc: 30
+    heightMin: 0
+    heightMax: 2
+    lineOfSight: 1
   abilityId: DashThrust
   abilityName: Dash Thrust
   description: A wind-up, a blinding dash, then a thrust.
@@ -106,9 +114,3 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
-  strikes:
-  - reachBonus: 0.5
-    arc: 30
-    heightMin: 0
-    heightMax: 2
-    lineOfSight: 1
