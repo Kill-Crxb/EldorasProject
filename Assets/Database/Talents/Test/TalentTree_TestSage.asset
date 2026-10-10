@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-7289975971461844260
+--- !u!114 &-6544846640672087140
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -16,44 +16,6 @@ MonoBehaviour:
   targetStatIds:
   - character.max_mana
   perPoint: 5
---- !u!114 &-5303312322564566201
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
-  m_Name: Bonus_core.insight
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
-  displayName: 
-  targetStatIds:
-  - core.insight
-  amount: 1
---- !u!114 &-1748148795681942482
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_clarity
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_clarity
-  displayName: Clarity
-  icon: {fileID: 0}
-  category: 0
-  description: 
-  maxRank: 3
-  costPerRank: 1
-  rewards:
-  - {fileID: 4314400411255504763}
-  keywords: []
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -73,40 +35,24 @@ MonoBehaviour:
   isLibrary: 0
   ownedKeywords: []
   placements:
-  - node: {fileID: 6305873451915949392}
+  - node: {fileID: 3636154948105599017}
     tier: 1
     column: 1
     requires: []
     exclusiveWith: {fileID: 0}
-  - node: {fileID: -1748148795681942482}
+  - node: {fileID: 5380727839894510881}
     tier: 1
     column: 3
     requires: []
     exclusiveWith: {fileID: 0}
-  - node: {fileID: 6417295972711726792}
+  - node: {fileID: 8303826323067276375}
     tier: 2
     column: 1
     requires:
-    - {fileID: 6305873451915949392}
+    - {fileID: 3636154948105599017}
     exclusiveWith: {fileID: 0}
   sockets: []
---- !u!114 &4314400411255504763
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_recollection
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
-  displayName: 
-  targetStatIds:
-  - character.max_recollection
-  perPoint: 2
---- !u!114 &6305873451915949392
+--- !u!114 &3636154948105599017
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -126,9 +72,47 @@ MonoBehaviour:
   maxRank: 5
   costPerRank: 1
   rewards:
-  - {fileID: -7289975971461844260}
+  - {fileID: -6544846640672087140}
   keywords: []
---- !u!114 &6417295972711726792
+--- !u!114 &5380727839894510881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_clarity
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_clarity
+  displayName: Clarity
+  icon: {fileID: 0}
+  category: 0
+  description: 
+  maxRank: 3
+  costPerRank: 1
+  rewards:
+  - {fileID: 7220800296425662151}
+  keywords: []
+--- !u!114 &7220800296425662151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
+  m_Name: Rate_character.max_recollection
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
+  displayName: 
+  targetStatIds:
+  - character.max_recollection
+  perPoint: 2
+--- !u!114 &8303826323067276375
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -148,5 +132,21 @@ MonoBehaviour:
   maxRank: 1
   costPerRank: 1
   rewards:
-  - {fileID: -5303312322564566201}
+  - {fileID: 8572776046705620108}
   keywords: []
+--- !u!114 &8572776046705620108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
+  m_Name: Bonus_core.insight
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
+  displayName: 
+  targetStatIds:
+  - core.insight
+  amount: 1

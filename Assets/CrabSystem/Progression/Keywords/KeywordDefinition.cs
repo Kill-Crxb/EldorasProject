@@ -4,7 +4,8 @@ using UnityEngine;
 
 namespace NinjaGame.Progression
 {
-    public enum KeywordCondition { Always, FromBehind }
+    // TargetHasStatus is Exploit (+1d6 vs Prone); SelfHasStatus is Thrive (while Hasted).
+    public enum KeywordCondition { Always, FromBehind, TargetHasStatus, SelfHasStatus }
 
     [Serializable]
     public struct ResourceGain
@@ -36,10 +37,18 @@ namespace NinjaGame.Progression
         [Tooltip("Granted to the attacker every time an ability carrying this keyword lands a hit — a generator.")]
         public List<ResourceGain> onHit = new();
 
-        [Header("Hit bonus")]
+        [Header("Condition (hit bonus and inflict)")]
         public KeywordCondition condition = KeywordCondition.Always;
         [Tooltip("FromBehind: the attacker counts as behind outside this many degrees of the defender's facing.")]
         [Range(90f, 180f)] public float behindAngle = 120f;
+        [Tooltip("TargetHasStatus / SelfHasStatus: the status that must be on the target, or on you.")]
+        public StatusDefinition conditionStatus;
+
+        [Header("Inflict")]
+        [Tooltip("Applied to the target on a hit that isn't guarded, when the condition holds. Talents add more.")]
+        public List<StatusDefinition> inflict = new();
+
+        [Header("Hit bonus")]
         [Tooltip("Added to the hit's to-hit when the condition holds.")]
         public int accuracy;
         [Tooltip("Roll the hit with advantage when the condition holds.")]

@@ -12,7 +12,8 @@ namespace NinjaGame.Progression
     {
         [SerializeField] private AbilityDefinition ability;
 
-        [Tooltip("Lifecycle this ability follows. Equipment is removed on unequip; " +
+        [Tooltip("Lifecycle this ability follows. Equipment is removed on unequip; Talent for talents (each " +
+                 "grant is its own instance, so two sources of one ability don't take it from each other); " +
                  "Permanent survives until the reward itself is withdrawn.")]
         [SerializeField] private AbilitySource source = AbilitySource.Permanent;
 

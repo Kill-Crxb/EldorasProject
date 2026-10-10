@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Prone
   icon: {fileID: 0}
   beneficial: 0
+  tags:
+  - control
   duration: 0.5
   durationFrames: 60
   stacking: 0

@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Rooted
   icon: {fileID: 0}
   beneficial: 0
+  tags:
+  - control
   duration: 4
   durationFrames: 0
   stacking: 0

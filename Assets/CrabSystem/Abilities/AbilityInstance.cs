@@ -13,7 +13,8 @@ public enum AbilitySource
     Permanent,      // Base character abilities (never removed)
     Equipment,      // Granted by equipped items (removed on unequip)
     Consumable,     // From consumable items (limited uses)
-    Temporary       // Buffs/potions with duration (auto-expires)
+    Temporary,      // Buffs/potions with duration (auto-expires)
+    Talent          // Granted by a learned talent (removed on refund, respec or tree swap)
 }
 
 // ========================================

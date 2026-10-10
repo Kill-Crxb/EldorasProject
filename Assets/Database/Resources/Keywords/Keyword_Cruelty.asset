@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: df0c27a63ed63e526a725bbeca68e6db, type: 3}
-  m_Name: Keyword_Ambushing
+  m_Name: Keyword_Cruelty
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordDefinition
-  keywordId: ambushing
-  displayName: Ambushing
+  keywordId: cruelty
+  displayName: Cruelty
   icon: {fileID: 0}
-  description: 'From behind: +2 to hit and advantage.'
+  description: 'Against a Sundered target: +1d6 damage.'
   ownerTree: {fileID: 0}
   onHit: []
-  condition: 1
+  condition: 2
   behindAngle: 120
-  conditionStatus: {fileID: 0}
+  conditionStatus: {fileID: 11400000, guid: 8985a12537ed4283af1c7e5b5baab014, type: 2}
   inflict: []
-  accuracy: 2
-  advantage: 1
-  bonusDice: 0
-  bonusDieFaces: 4
+  accuracy: 0
+  advantage: 0
+  bonusDice: 1
+  bonusDieFaces: 6

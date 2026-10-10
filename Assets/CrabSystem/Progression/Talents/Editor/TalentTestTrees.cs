@@ -4,8 +4,9 @@ using UnityEngine;
 
 // Tools → Crab → Talents → Create Test Trees (10 Oct). Two small trees to play the system with before real ones
 // are authored: Test Ninja (stats, Sprint and Double Jump grants, all seven rows, a capstone pair, a Sinister
-// socket and Ambushing talents) and Test Sage (a mana tree to swap to). Also the two test keywords and the "basic"
-// tag on the katana's light string. Test content — delete when real trees exist. Rerunnable: rebuilds the trees.
+// socket, Ambushing talents, and status talents: Inflict, Exploit, Intensify, Resist, Immune) and Test Sage (a mana
+// tree to swap to). Also the test keywords, the "basic" tag on the katana's light string and the "control" tag on
+// hit states and Rooted. Test content — delete when real trees exist. Rerunnable: rebuilds the trees.
 public static class TalentTestTrees
 {
     const string Tag = "TalentTestTrees";
@@ -13,6 +14,9 @@ public static class TalentTestTrees
     const string KeywordFolder = "Assets/Database/Resources/Keywords";
     const string StaminaPath = "Assets/CrabSystem/Resources/ResourceDefinitions/StaminaDefinition.asset";
     const string AttackFolder = "Assets/Database/Resources/AbilityDatabase/KatanaAbilities";
+    const string StatusFolder = "Assets/Database/Resources/Statuses";
+    static readonly string[] ControlStatuses = { "HitStates/Status_Flinched", "HitStates/Status_Staggered", "HitStates/Status_Prone",
+        "HitStates/Status_Launched", "HitStates/Status_GuardBroken", "Status_Rooted" };
 
     [MenuItem("Tools/Crab/Talents/Create Test Trees")]
     public static void Build()
@@ -21,6 +25,7 @@ public static class TalentTestTrees
         CrabWizardGUI.EnsureFolder(Folder);
         CrabWizardGUI.EnsureFolder(KeywordFolder);
         TagBasicAttacks();
+        TagControlStatuses();
 
         TalentTree ninja = Ninja();
         TalentTree sage = Sage();
@@ -59,9 +64,25 @@ public static class TalentTestTrees
         tree.sockets.Add(new KeywordSocket { keyword = sinister });
 
         TalentNode opportunist = Node(tree, "test_opportunist", "Opportunist", TalentCategory.Keyword, 1, 1, 1, Grant(tree, ambushing, "basic"));
-        Node(tree, "test_cheap_shot", "Cheap Shot", TalentCategory.Modifier, 1, 3, 1, CostCut(tree, "sinister", -2f));
+        TalentNode cheapShot = Node(tree, "test_cheap_shot", "Cheap Shot", TalentCategory.Modifier, 1, 3, 1, CostCut(tree, "sinister", -2f));
         TalentNode knifesEdge = Node(tree, "test_knifes_edge", "Knife's Edge", TalentCategory.Keyword, 2, 1, 3, Dice(tree, ambushing, 1, 4));
         tree.Find(knifesEdge).requires.Add(opportunist);
+
+        // Statuses: Inflict, Exploit, Intensify, Resist, Immune.
+        StatusDefinition sundered = Status("Status_Sundered");
+        StatusDefinition flinched = Status("HitStates/Status_Flinched");
+        KeywordDefinition cruelty = Keyword("cruelty", "Cruelty", "Against a Sundered target: +1d6 damage.", KeywordCondition.TargetHasStatus, 0, false);
+        cruelty.conditionStatus = sundered;
+        cruelty.bonusDice = 1;
+        cruelty.bonusDieFaces = 6;
+
+        TalentNode twist = Node(tree, "test_twist_the_knife", "Twist the Knife", TalentCategory.Keyword, 2, 3, 1, Inflict(tree, sinister, sundered));
+        tree.Find(twist).requires.Add(cheapShot);
+        Node(tree, "test_cruelty", "Cruelty", TalentCategory.Keyword, 3, 1, 1, Grant(tree, cruelty, "basic"));
+        TalentNode deepCuts = Node(tree, "test_deep_cuts", "Deep Cuts", TalentCategory.Modifier, 3, 3, 1, StatusMod(tree, "Intensify_sundered", sundered, null, StatusSide.Dealt, false, 3f, 1));
+        tree.Find(deepCuts).requires.Add(twist);
+        Node(tree, "test_steadfast", "Steadfast", TalentCategory.Generic, 4, 0, 2, StatusMod(tree, "Resist_control", null, "control", StatusSide.Taken, false, -0.1f, 0));
+        Node(tree, "test_unshakable", "Unshakable", TalentCategory.Capability, 4, 4, 1, StatusMod(tree, "Immune_flinched", flinched, null, StatusSide.Taken, true, 0f, 0), 2);
 
         TalentNode shadow = Node(tree, "test_shadow", "Shadow", TalentCategory.Capstone, 7, 1, 1, Bonus(tree, "character.max_movement_charges", 1), 3);
         TalentNode stone = Node(tree, "test_stone", "Stone", TalentCategory.Capstone, 7, 3, 1, Bonus(tree, "character.max_health", 20), 3);
@@ -102,6 +123,9 @@ public static class TalentTestTrees
         keyword.accuracy = accuracy;
         keyword.advantage = advantage;
         keyword.onHit.Clear();
+        keyword.inflict.Clear();
+        keyword.conditionStatus = null;
+        keyword.bonusDice = 0;
         if (id == "sinister")
             keyword.onHit.Add(new ResourceGain { resource = AssetDatabase.LoadAssetAtPath<ResourceDefinition>(StaminaPath), amount = 3f });
         EditorUtility.SetDirty(keyword);
@@ -118,6 +142,45 @@ public static class TalentTestTrees
             attack.tags.Add("basic");
             EditorUtility.SetDirty(attack);
         }
+    }
+
+    static StatusDefinition Status(string name) => AssetDatabase.LoadAssetAtPath<StatusDefinition>($"{StatusFolder}/{name}.asset");
+
+    static void TagControlStatuses()
+    {
+        foreach (string name in ControlStatuses)
+        {
+            StatusDefinition status = Status(name);
+            if (status == null || status.HasTag("control")) continue;
+
+            status.tags.Add("control");
+            EditorUtility.SetDirty(status);
+        }
+    }
+
+    static Reward Inflict(TalentTree tree, KeywordDefinition keyword, StatusDefinition status)
+    {
+        var reward = Inline<KeywordBonusReward>(tree, $"Inflict_{keyword.keywordId}");
+        var so = new SerializedObject(reward);
+        so.FindProperty("keyword").objectReferenceValue = keyword;
+        so.FindProperty("inflict").objectReferenceValue = status;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
+    }
+
+    static Reward StatusMod(TalentTree tree, string name, StatusDefinition status, string tag, StatusSide side, bool immune, float seconds, int stacks)
+    {
+        var reward = Inline<StatusModifierReward>(tree, name);
+        var so = new SerializedObject(reward);
+        SerializedProperty filter = so.FindProperty("filter");
+        filter.FindPropertyRelative("status").objectReferenceValue = status;
+        filter.FindPropertyRelative("tag").stringValue = tag ?? "";
+        so.FindProperty("side").enumValueIndex = (int)side;
+        so.FindProperty("immune").boolValue = immune;
+        so.FindProperty("seconds").floatValue = seconds;
+        so.FindProperty("stacks").intValue = stacks;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
     }
 
     static Reward Grant(TalentTree tree, KeywordDefinition keyword, string tag)

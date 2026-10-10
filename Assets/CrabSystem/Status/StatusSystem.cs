@@ -60,6 +60,12 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     // flinch is one, so the hit reaction replays.
     public event Action<StatusInstance> OnStatusReapplied;
 
+    // A status was refused: immune, or resisted down to no time at all.
+    public event Action<StatusDefinition> OnStatusResisted;
+
+    // Resist, Immune and Intensify from talents and gear (StatusModifierReward).
+    public StatusModifiers Modifiers { get; } = new();
+
     #endregion
 
     #region IBrainModule
@@ -117,10 +123,39 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     {
         if (definition == null) return;
 
+        // The bearer's Resist / Immune and the source's Intensify, at the one point every application passes.
+        if (Modifiers.Immune(definition))
+        {
+            OnStatusResisted?.Invoke(definition);
+            return;
+        }
+
+        StatusSystem dealer = source != null ? source.GetModule<StatusSystem>() : null;
+        float lifetime = seconds > 0f ? seconds : definition.Seconds;
+        if (lifetime > 0f)
+        {
+            lifetime += Modifiers.Seconds(definition, StatusSide.Taken);
+            if (dealer != null) lifetime += dealer.Modifiers.Seconds(definition, StatusSide.Dealt);
+            if (lifetime <= 0f)
+            {
+                OnStatusResisted?.Invoke(definition);
+                return;
+            }
+        }
+
+        StatusInstance instance = Place(definition, source, lifetime);
+        if (instance == null || definition.stacking != StatusStacking.Stack) return;
+
+        int extra = dealer != null ? dealer.Modifiers.Stacks(definition, StatusSide.Dealt) : 0;
+        for (int i = 0; i < extra; i++) Reapply(instance, source, lifetime);
+    }
+
+    private StatusInstance Place(StatusDefinition definition, ControllerBrain source, float seconds)
+    {
         if (string.IsNullOrEmpty(definition.id))
         {
             Debug.LogWarning($"[StatusSystem] '{definition.name}' has no id and cannot be applied.");
-            return;
+            return null;
         }
 
         if (byId.TryGetValue(definition.id, out StatusInstance existing))
@@ -136,7 +171,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
             else
             {
                 Reapply(existing, source, seconds);
-                return;
+                return existing;
             }
         }
 
@@ -154,6 +189,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
             Debug.Log($"[StatusSystem] +{definition.id} on {transform.root.name} ({instance.Remaining:F2}s)");
 
         OnStatusApplied?.Invoke(instance);
+        return instance;
     }
 
     private void Reapply(StatusInstance instance, ControllerBrain source, float seconds)

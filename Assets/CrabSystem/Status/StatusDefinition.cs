@@ -36,6 +36,11 @@ public class StatusDefinition : ScriptableObject
     [Tooltip("Helpful rather than harmful. Cleanse strips harmful; dispel strips helpful.")]
     public bool beneficial = true;
 
+    [Tooltip("Groups talents and gear can name, e.g. control (hit states, roots). StatusFilter matches on these.")]
+    public List<string> tags = new();
+
+    public bool HasTag(string tag) => tags != null && tags.Contains(tag);
+
     [Header("Lifetime")]
     [Tooltip("Seconds. ZERO means it lasts until something removes it explicitly — a stance, " +
              "an aura you are standing in, a curse that needs cleansing.")]

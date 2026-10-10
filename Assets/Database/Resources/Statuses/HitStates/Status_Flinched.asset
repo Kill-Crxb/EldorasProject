@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Flinched
   icon: {fileID: 0}
   beneficial: 0
+  tags:
+  - control
   duration: 0.5
   durationFrames: 18
   stacking: 0

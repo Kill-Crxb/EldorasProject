@@ -3,7 +3,8 @@ using NinjaGame.Progression;
 using UnityEngine;
 
 // What this character's keywords do (KeywordDefinition). On every hit an ability lands, each keyword it carries —
-// on its asset or granted by a socket or talent (AbilitySystem.Modifiers) — pays its on-hit gains. When this
+// on its asset or granted by a socket or talent (AbilitySystem.Modifiers) — pays its on-hit gains, and on a hit
+// that isn't guarded applies its statuses to the target if its condition holds (Inflict). When this
 // character's hit is being resolved, the keywords on the move in flight add their accuracy, advantage and bonus
 // dice if their condition holds (DamageSystem asks through IHitModifier). Talents add to a keyword through keyed
 // bonuses (KeywordBonusReward).
@@ -38,6 +39,10 @@ public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
     {
         if (abilities != null) abilities.OnHitLanded -= HandleHitLanded;
     }
+
+    // Play mode without a domain reload keeps statics; keywords made since the last play must still be found.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetCatalogue() => catalogue = null;
 
     public static KeywordDefinition Find(string keywordId)
     {
@@ -80,8 +85,25 @@ public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
             {
                 if (gain.resource != null && gain.amount > 0f) resources.RestoreResource(gain.resource, gain.amount);
             }
+
+            Inflict(keyword, target);
         }
     }
+
+    private void Inflict(KeywordDefinition keyword, ControllerBrain target)
+    {
+        StatusSystem statuses = target != null ? target.GetModule<StatusSystem>() : null;
+        if (statuses == null || Guarded(target) || !ConditionHolds(keyword, target)) return;
+
+        foreach (StatusDefinition status in keyword.inflict) statuses.Apply(status, brain);
+
+        foreach (KeywordBonus bonus in bonuses.Values)
+        {
+            if (bonus.KeywordId == keyword.keywordId && bonus.Inflict != null) statuses.Apply(bonus.Inflict, brain);
+        }
+    }
+
+    private static bool Guarded(ControllerBrain target) => target.Damage != null && target.Damage.LastHitGuarded;
 
     // ---- Hit bonuses (IHitModifier) ----
 
@@ -116,7 +138,9 @@ public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
     private bool ConditionHolds(KeywordDefinition keyword, ControllerBrain defender)
     {
         if (keyword.condition == KeywordCondition.Always) return true;
+        if (keyword.condition == KeywordCondition.SelfHasStatus) return HasStatus(brain, keyword.conditionStatus);
         if (defender == null) return false;
+        if (keyword.condition == KeywordCondition.TargetHasStatus) return HasStatus(defender, keyword.conditionStatus);
 
         Transform them = defender.EntityRoot != null ? defender.EntityRoot : defender.transform;
         Transform me = brain.EntityRoot != null ? brain.EntityRoot : brain.transform;
@@ -125,6 +149,12 @@ public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
         if (toMe.sqrMagnitude < 0.0001f) return false;
 
         return Vector3.Angle(them.forward, toMe) >= keyword.behindAngle;
+    }
+
+    private static bool HasStatus(ControllerBrain who, StatusDefinition status)
+    {
+        StatusSystem statuses = who != null && status != null ? who.GetModule<StatusSystem>() : null;
+        return statuses != null && statuses.Has(status.id);
     }
 }
 
@@ -136,4 +166,5 @@ public struct KeywordBonus
     public int Dice;
     public int DieFaces;
     public float Flat;
+    public StatusDefinition Inflict;
 }
