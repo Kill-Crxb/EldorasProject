@@ -43,6 +43,12 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     [SerializeField] private float hurtboxHeight = 2f;
     [SerializeField] private Vector3 hurtboxCenter = new Vector3(0, 1, 0);
 
+    [Header("Counter-hit (CF4)")]
+    [Tooltip("Added to the attacker's roll when this fighter is hit during its own move's startup.")]
+    [SerializeField] private int counterHitAccuracy = 2;
+    [Tooltip("Added to a counter-hit's damage before the armour shield. 0 = off.")]
+    [SerializeField] private int counterHitDamage = 0;
+
     // IBrainModule implementation
     public bool IsEnabled
     {
@@ -281,12 +287,15 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         hit.accuracy = packet.accuracy;
         hit.defense = BaseDefense + Stat(AvoidanceStat) + Stat(ArmourDefenseStat);
         hit.advantage = packet.advantage;
+        hit.counter = InStartup();
+        if (hit.counter) hit.accuracy += counterHitAccuracy;
         hit.roll = UnityEngine.Random.Range(1, 21);
         if (hit.advantage) hit.roll = Mathf.Max(hit.roll, UnityEngine.Random.Range(1, 21));
 
         bool full = hit.roll + hit.accuracy >= hit.defense;
         hit.grade = full ? HitGrade.Full : HitGrade.Glancing;
         hit.rolled = full ? packet.finalDamage : Mathf.Floor(packet.finalDamage / 2f);
+        if (hit.counter) hit.rolled += counterHitDamage;
 
         // Contact always costs something: the hit is worth at least 1. The armour shield then takes what
         // it can of a physical hit (Combat_Framework §6.1); everything else goes past it.
@@ -294,6 +303,15 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         hit.applied = AbsorbByShield(worth, packet.damageType);
         hit.soak = worth - hit.applied;
         return hit;
+    }
+
+    // Caught winding up: an attack in flight hasn't reached its first strike. Moves without frame data (a dash,
+    // a spell) don't count.
+    private bool InStartup()
+    {
+        ICombatantState self = brain != null ? brain.GetProvider<ICombatantState>() : null;
+        if (self == null || self.CurrentAbility == null || !self.CurrentAbility.HasMoveData) return false;
+        return self.CurrentPhase == MovePhase.Startup;
     }
 
     private float AbsorbByShield(float amount, DamageType type)

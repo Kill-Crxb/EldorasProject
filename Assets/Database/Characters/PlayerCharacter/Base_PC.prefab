@@ -108,6 +108,7 @@ GameObject:
   - component: {fileID: 2134284767731574623}
   - component: {fileID: 8623906753414368579}
   - component: {fileID: 9196161261799337341}
+  - component: {fileID: 5392573869111801634}
   m_Layer: 8
   m_Name: Camera_System
   m_TagString: Untagged
@@ -149,9 +150,9 @@ MonoBehaviour:
   targetCamera: {fileID: 5242127425537521219}
   modes:
   - modeName: Default
-    distance: 3
-    pivotHeight: 1.5
-    shoulderOffset: 0.25
+    distance: 2
+    pivotHeight: 1.75
+    shoulderOffset: 0.4
     sensitivity: 0.15
     minPitch: -35
     maxPitch: 60
@@ -165,9 +166,9 @@ MonoBehaviour:
     maxPitch: 30
     fovOffset: 10
   - modeName: Running
-    distance: 3
-    pivotHeight: 1.5
-    shoulderOffset: 0.25
+    distance: 2
+    pivotHeight: 1.75
+    shoulderOffset: 0.4
     sensitivity: 0.15
     minPitch: -35
     maxPitch: 60
@@ -214,6 +215,13 @@ MonoBehaviour:
     condition: {fileID: 0}
     modeName: Dialogue
     priority: 100
+  lookTargetTurnSpeed: 540
+  lockMinPitch: -10
+  lockMaxPitch: 20
+  aimPitchOffset: 6
+  aimMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!114 &9196161261799337341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -227,6 +235,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraEventListener
   cameraModule: {fileID: 8623906753414368579}
+--- !u!114 &5392573869111801634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 161205504405089135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac4e5bc940b94d28391b3dcee1f6b6a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TargetingModule
+  range: 15
+  softCone: 60
+  mask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  scanInterval: 0.1
+  trackingCone: 60
 --- !u!1 &251548406554361858
 GameObject:
   m_ObjectHideFlags: 0
@@ -2718,6 +2745,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
   weaponSlotId: mainwep
+  hitShakeAmplitude: 0.04
+  hitConfirmCancel: 0
   debugLogging: 0
 --- !u!114 &4019244290200516456
 MonoBehaviour:
@@ -3912,6 +3941,8 @@ MonoBehaviour:
   hurtboxRadius: 0.3
   hurtboxHeight: 1.75
   hurtboxCenter: {x: 0, y: 0.875, z: 0}
+  counterHitAccuracy: 2
+  counterHitDamage: 0
 --- !u!136 &3758023515325582047
 CapsuleCollider:
   m_ObjectHideFlags: 0

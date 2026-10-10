@@ -273,6 +273,8 @@ public class ParkourLocomotionHandler : LocomotionHandler
 
         DrainImpulses();
 
+        LimitDash();
+
         ClampSpeed();
 
         currentVelocity = motor.Move(currentVelocity, dt, Time.time >= snapSuppressedUntil, ResolveFacing(dt));
@@ -1012,7 +1014,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
     }
 
     /// <summary>
-    /// The body faces the camera, and nothing else is allowed to turn it.
+    /// The body faces the camera; only MovementSystem.FacingOverride (targeting) may turn it elsewhere.
     ///
     /// Never velocity: collide-and-slide clips velocity along walls, so a velocity-facing body
     /// swings parallel to any wall it touches and the level ends up steering the player. It also
@@ -1025,12 +1027,22 @@ public class ParkourLocomotionHandler : LocomotionHandler
     Quaternion ResolveFacing(float dt)
     {
         if (movementSystem.FacingLocked) return rootTransform.rotation;
-        if (profile.holdFacingWhileStationary && IsStationary()) return rootTransform.rotation;
+
+        Vector3 facing = FacingTarget();
+        if (facing == cameraForward && profile.holdFacingWhileStationary && IsStationary()) return rootTransform.rotation;
 
         return Quaternion.RotateTowards(
             rootTransform.rotation,
-            Quaternion.LookRotation(cameraForward),
+            Quaternion.LookRotation(facing),
             profile.cameraTurnDegreesPerSecond * dt);
+    }
+
+    // The camera, unless something this frame asks the body to face elsewhere (MovementSystem.FacingOverride).
+    Vector3 FacingTarget()
+    {
+        Vector3 wanted = movementSystem.FacingOverride;
+        wanted.y = 0f;
+        return wanted.sqrMagnitude < 0.0001f ? cameraForward : wanted.normalized;
     }
 
     bool IsStationary()
@@ -1207,6 +1219,17 @@ public class ParkourLocomotionHandler : LocomotionHandler
         if (overTime > 0f) rootMotionVelocity = delta / overTime * movementSystem.RootMotionScale;
 
         Vector3 limited = rootMotionContact.Limit(rootMotionVelocity, Time.fixedDeltaTime, profile.rootMotionContactGap);
+        currentVelocity.x = limited.x;
+        currentVelocity.z = limited.z;
+    }
+
+    // A dash (an impulse riding a friction holiday) stops at the body it reaches, the same way a lunge does, so it
+    // can't slide through or into another fighter. A dash away from a body closes on nothing and keeps going.
+    void LimitDash()
+    {
+        if (!FrictionSuppressed || movementSystem.RootMotionDriven) return;
+
+        Vector3 limited = rootMotionContact.Limit(currentVelocity, Time.fixedDeltaTime, profile.rootMotionContactGap);
         currentVelocity.x = limited.x;
         currentVelocity.z = limited.z;
     }

@@ -15,6 +15,7 @@ MonoBehaviour:
   effectCue: 1
   waitForAnimUnlock: 0
   maxDuration: 2
+  invulnSeconds: 0.2
   castWhileMoving: 1
   useRootMotion: 0
   rootMotionScale: 1

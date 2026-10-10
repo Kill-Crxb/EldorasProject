@@ -35,9 +35,23 @@ public class BarView : MonoBehaviour
     private int shownCurrent = -1;
     private int shownMax = -1;
 
+    // GI-23: the bar that blocked an action flashes once.
+    private float flashUntil;
+    private Color flashColor;
+    private Color baseColor = Color.white;
+
+    public ResourceDefinition Resource => bar == BarKind.Resource ? resource : null;
+
+    public void Flash(Color color, float seconds)
+    {
+        flashColor = color;
+        flashUntil = Time.unscaledTime + seconds;
+    }
+
     private void Start()
     {
         ApplyResourceColor();
+        if (fillImage != null) baseColor = fillImage.color;
         GameEvents.OnLoadCompleted += HandleLoadCompleted;
     }
 
@@ -62,9 +76,16 @@ public class BarView : MonoBehaviour
 
         if (hideWhenEmptyMax != null && hideWhenEmptyMax.activeSelf != max > 0f) hideWhenEmptyMax.SetActive(max > 0f);
         if (fillImage != null) fillImage.fillAmount = fill;
-        if (fillImage != null && tintWhenLow) fillImage.color = Color.Lerp(lowColor, highColor, Mathf.InverseLerp(0f, lowThreshold, fill));
+        if (fillImage != null) fillImage.color = FillColor(fill);
 
         ShowValue(Mathf.CeilToInt(current), Mathf.CeilToInt(max));
+    }
+
+    private Color FillColor(float fill)
+    {
+        if (Time.unscaledTime < flashUntil) return flashColor;
+        if (!tintWhenLow) return baseColor;
+        return Color.Lerp(lowColor, highColor, Mathf.InverseLerp(0f, lowThreshold, fill));
     }
 
     // Text is rebuilt only when the whole numbers change.

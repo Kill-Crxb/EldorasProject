@@ -40,6 +40,7 @@ public class ProjectileLauncher : MonoBehaviour, IBrainModule
     private VFXSystem vfxSystem;
     private PerceptionModule perception;
     private TargetLockModule targetLock;
+    private TargetingModule targeting;
     // Empty rather than null: Fire loops it unconditionally, and an entity whose LateInitialize
     // bailed should fire an unmodified projectile, not throw.
     private IProjectileLaunchModifier[] modifiers = System.Array.Empty<IProjectileLaunchModifier>();
@@ -225,12 +226,19 @@ public class ProjectileLauncher : MonoBehaviour, IBrainModule
         ProjectileAim aim = data.aim;
 
         Vector3 anchorOrigin = spawn.ResolveAnchor(brain, vfxSystem);
-        Vector3 baseDirection = aim.BaseDirection(brain);
+        Vector3 baseDirection = aim.BaseDirection(brain, anchorOrigin);
 
         Transform target = aim.UsesLockedTarget ? ResolveLockedTarget() : null;
 
         if (target == null && aim.UsesProbe)
             target = aim.Probe(brain, anchorOrigin, baseDirection, data.hitMask, stance);
+
+        Transform assisted = target == null && aim.UsesProbe ? SoftAssist(aim, anchorOrigin, baseDirection) : null;
+        if (assisted != null)
+        {
+            target = assisted;
+            baseDirection = (aim.TargetPoint(assisted) - anchorOrigin).normalized;
+        }
 
         Vector3 origin = spawn.ResolveOrigin(brain, anchorOrigin, baseDirection, target);
 
@@ -246,6 +254,19 @@ public class ProjectileLauncher : MonoBehaviour, IBrainModule
             direction = direction,
             target = target,
         };
+    }
+
+    // Aim assist: the player's soft target, when it sits within the aim's assist angle of where they aimed.
+    private Transform SoftAssist(ProjectileAim aim, Vector3 origin, Vector3 direction)
+    {
+        if (aim.softAssistDegrees <= 0f) return null;
+        if (targeting == null) targeting = brain.GetModule<TargetingModule>();
+
+        ControllerBrain soft = targeting != null ? targeting.CurrentTarget : null;
+        if (soft == null) return null;
+
+        Transform root = soft.EntityRoot != null ? soft.EntityRoot : soft.transform;
+        return Vector3.Angle(direction, aim.TargetPoint(root) - origin) <= aim.softAssistDegrees ? root : null;
     }
 
     /// <summary>

@@ -217,7 +217,27 @@ public class CameraModule : MonoBehaviour, IBrainModule, ICameraProvider
              "Empty means the module behaves exactly as it did before — manual SetMode only.")]
     [SerializeField] private List<CameraStateRule> stateRules = new List<CameraStateRule>();
 
+    [Header("Look Target (hard lock)")]
+    [Tooltip("How fast the camera swings round onto a look target, degrees per second. The lock turns the camera " +
+             "only; the mouse keeps the tilt.")]
+    [SerializeField] private float lookTargetTurnSpeed = 540f;
+    [Tooltip("Tilt range while locked (positive looks down), so a close target can't drag the view into the floor.")]
+    [SerializeField] private float lockMinPitch = -10f;
+    [SerializeField] private float lockMaxPitch = 20f;
+
+    [Header("Aim")]
+    [Tooltip("Degrees the aim ray points above the screen centre, so a camera tilted down to frame the character " +
+             "still aims level. The crosshair sits where the ray lands.")]
+    [SerializeField] private float aimPitchOffset = 6f;
+    [SerializeField] private LayerMask aimMask = ~0;
+
+    private static readonly RaycastHit[] AimHits = new RaycastHit[16];
+
     public bool IsEnabled { get; set; } = true;
+
+    // While set, the camera yaws onto this and the mouse keeps only the tilt. Unused since the Tab hard lock was
+    // parked (10 Oct); kept for an ability that locks a target (a berserker rage).
+    public Transform LookTarget { get; set; }
 
     private ControllerBrain brain;
     private Blackboard blackboard;
@@ -329,9 +349,17 @@ public class CameraModule : MonoBehaviour, IBrainModule, ICameraProvider
         SetCursorLocked(true);
 
         Vector2 look = input.LookInput;
-        yaw += look.x * sensitivity;
         pitch -= look.y * sensitivity;
-        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+
+        if (LookTarget == null)
+        {
+            yaw += look.x * sensitivity;
+            pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+            return;
+        }
+
+        pitch = Mathf.Clamp(pitch, Mathf.Max(minPitch, lockMinPitch), Mathf.Min(maxPitch, lockMaxPitch));
+        TurnToLookTarget();
     }
 
     /// <summary>
@@ -473,6 +501,43 @@ public class CameraModule : MonoBehaviour, IBrainModule, ICameraProvider
     // Gates look input on the entity's own BrainState (Dialogue, Inventory, Crafting,
     // Reading, etc.) via the existing IStateProvider.AllowsCameraInput contract — this
     // was already defined for this purpose, just never wired to a camera before.
+    // Yaw only: aiming the pitch at the target pointed the camera into the floor whenever the target was close.
+    private void TurnToLookTarget()
+    {
+        Vector3 to = LookTarget.position - target.position;
+        if (new Vector2(to.x, to.z).sqrMagnitude < 0.0001f) return;
+
+        float wantedYaw = Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
+        yaw = Mathf.MoveTowardsAngle(yaw, wantedYaw, lookTargetTurnSpeed * Time.deltaTime);
+    }
+
+    public Vector3 AimPoint(float range, out Collider hit)
+    {
+        hit = null;
+        if (cameraTransform == null) return target != null ? target.position + target.forward * range : Vector3.zero;
+
+        Vector3 origin = cameraTransform.position;
+        Vector3 direction = Quaternion.AngleAxis(-aimPitchOffset, cameraTransform.right) * cameraTransform.forward;
+        // Skip what sits between the lens and the player: the aim starts at the player's depth along the ray.
+        float skip = target != null ? Mathf.Max(0f, Vector3.Dot(target.position - origin, direction)) : 0f;
+        float reach = range + skip;
+
+        int count = Physics.RaycastNonAlloc(origin, direction, AimHits, reach, aimMask, QueryTriggerInteraction.Ignore);
+        float nearest = reach;
+
+        for (int i = 0; i < count; i++)
+        {
+            RaycastHit candidate = AimHits[i];
+            if (candidate.distance < skip || candidate.distance >= nearest) continue;
+            if (candidate.collider.GetComponentInParent<ControllerBrain>() == brain) continue;
+
+            nearest = candidate.distance;
+            hit = candidate.collider;
+        }
+
+        return origin + direction * nearest;
+    }
+
     private bool CameraInputAllowed() => stateProvider == null || stateProvider.AllowsCameraInput;
 
     private bool UiWantsCursor()

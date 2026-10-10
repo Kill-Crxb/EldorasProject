@@ -59,7 +59,8 @@ public class HitTrace : MonoBehaviour
         float total = hit.roll + hit.accuracy;
         string grade = hit.grade == HitGrade.Full ? "FULL" : "glancing";
         string adv = hit.advantage ? " (ADV)" : "";
-        return $"d20{adv} {hit.roll} {hit.accuracy:+0;-0} = {total:0} vs {hit.defense:0} {grade}";
+        string counter = hit.counter ? " COUNTER" : "";
+        return $"d20{adv} {hit.roll} {hit.accuracy:+0;-0} = {total:0} vs {hit.defense:0} {grade}{counter}";
     }
 
     private static string Damage(CombatDamagePacket packet, HitResolution hit)

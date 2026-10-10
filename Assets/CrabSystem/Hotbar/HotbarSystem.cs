@@ -46,6 +46,10 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
 
     private ControllerBrain brain;
     private AbilitySystem abilitySystem;
+
+    // A slot pressed while a hit state holds the player, fired on the first free frame instead of dropped. One is
+    // held; the latest press wins.
+    private AbilityDefinition heldPress;
     private SlotTransformationSystem transformSystem;
     private MovesetModule movesetModule;
     private Blackboard blackboard;
@@ -102,6 +106,8 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
     public void UpdateModule()
     {
         if (!IsEnabled) return;
+
+        FireHeldPress();
         if (Time.time < nextPageCheck) return;
 
         nextPageCheck = Time.time + pageCheckInterval;
@@ -476,9 +482,29 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
         }
 
         var ability = ResolveSlotAbility(slot);
-        if (ability != null)
-            abilitySystem.UseAbility(ability.abilityId);
+        if (ability == null) return;
+
+        if (Stunned())
+        {
+            heldPress = ability;
+            return;
+        }
+
+        abilitySystem.UseAbility(ability.abilityId);
     }
+
+    private void FireHeldPress()
+    {
+        if (heldPress == null || Stunned()) return;
+
+        AbilityDefinition press = heldPress;
+        heldPress = null;
+        if (brain.Damage != null && brain.Damage.IsDead) return;
+
+        abilitySystem.UseAbility(press.abilityId);
+    }
+
+    private bool Stunned() => blackboard != null && blackboard.GetBool(BlackboardKey.CannotAct);
 
     #endregion
 

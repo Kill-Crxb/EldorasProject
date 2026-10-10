@@ -16,6 +16,13 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     [Tooltip("Equipment slot whose weapon supplies a strike's reach (ItemDefinition.reach).")]
     [IdRef(IdKind.EquipmentSlot)] [SerializeField] private string weaponSlotId = "mainwep";
 
+    [Header("Hit feel")]
+    [Tooltip("GI-06: while a clean hit freezes this fighter, its model shakes sideways this far (metres). 0 = off.")]
+    [SerializeField] private float hitShakeAmplitude = 0.04f;
+    [Tooltip("GI-03: after a clean hit, the string's next step may start the moment the hit-stop ends, before the " +
+             "clip's ChainOpen. A whiff waits for ChainOpen or Unlocked.")]
+    [SerializeField] private bool hitConfirmCancel = false;
+
     [Header("Debug")]
     [Tooltip("Log move events and forwarder binding.")]
     [SerializeField] private bool debugLogging = false;
@@ -56,6 +63,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     private MovePhase movePhase;
     private Animator frozenAnimator;
     private float hitStopUntil;
+    private Transform shakenModel;
+    private Vector3 shakenHome;
+    private bool hitConfirmed;
     private Coroutine safetyTimeoutCoroutine;
 
     private string currentlyCastingAbility = null;
@@ -63,6 +73,8 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     private bool isAnimationLocked = false;
     private bool isInvincible = false;
+    // A timed i-frame window (invulnSeconds) outlives its move; 0 = none running.
+    private float invulnUntil;
 
     private StrikeHandler strikes;
     private int nextStrike;
@@ -97,6 +109,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     public bool InBlockstun => guard != null && guard.InBlockstun;
 
     public event Action<string> OnAbilityUsed;
+    // A press that did nothing and wasn't held: on cooldown, short of a resource (named), or denied by a fact. A press
+    // made mid-move is buffered, not refused. The HUD answers it (GI-23).
+    public event Action<AbilityDefinition, AbilityRefusal, ResourceDefinition> OnAbilityRefused;
     public event Action<string, float> OnAbilityCooldownChanged;
     public event Action<string> OnAbilityCastStart;
     public event Action<string> OnAbilityCastComplete;
@@ -216,9 +231,12 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         TickHitStop();
         if (!isEnabled) return;
 
+        TickHitConfirm();
+
         UpdateCooldownTimers();
         UpdateCasting();
         TickMoveClock();
+        TickTimedInvuln();
     }
 
     // Until the entity clock lands (CrabSystem_Standard §9).
@@ -259,8 +277,46 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     private void TickHitStop()
     {
         if (hitStopUntil <= 0f) return;
-        if (Time.unscaledTime < hitStopUntil) return;
+        if (Time.unscaledTime < hitStopUntil)
+        {
+            TickHitShake();
+            return;
+        }
         EndHitStop();
+    }
+
+    // The struck fighter jitters in place for the freeze: the fighting-game read that a hit landed. Moves the
+    // model under the body, never the body, and puts it back when the freeze ends.
+    public void HitShake()
+    {
+        Animator animator = brain != null ? brain.EntityAnimator : null;
+        if (hitShakeAmplitude <= 0f || animator == null || shakenModel != null) return;
+
+        shakenModel = animator.transform;
+        shakenHome = shakenModel.localPosition;
+    }
+
+    private void TickHitShake()
+    {
+        if (shakenModel == null) return;
+
+        float side = Time.frameCount % 2 == 0 ? 1f : -1f;
+        shakenModel.localPosition = shakenHome + Vector3.right * (hitShakeAmplitude * side);
+    }
+
+    private void EndHitShake()
+    {
+        if (shakenModel != null) shakenModel.localPosition = shakenHome;
+        shakenModel = null;
+    }
+
+    // GI-03: a clean hit opens the string's chain once the freeze is over.
+    private void TickHitConfirm()
+    {
+        if (!hitConfirmed || IsHitStopped) return;
+
+        hitConfirmed = false;
+        if (currentAbility != null) chainOpen = true;
     }
 
     // Restores to 1: nothing else writes animator.speed. When attack speed becomes a stat, this
@@ -270,6 +326,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         hitStopUntil = 0f;
         if (frozenAnimator != null) frozenAnimator.speed = 1f;
         frozenAnimator = null;
+        EndHitShake();
     }
 
     private void HandleLoaded()
@@ -420,19 +477,35 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         return new List<AbilityDefinition>(abilities);
     }
 
-    private bool HasSufficientResources(AbilityDefinition ability)
+    public void ReportRefused(string abilityId)
     {
-        if (ability.resourceCosts == null) return true;
-        if (resources == null) return true;
+        if (!abilityStates.TryGetValue(abilityId, out var state)) return;
+        if (currentAbility != null || currentlyCastingAbility != null || isAnimationLocked) return;
+        if (damageSystem != null && damageSystem.IsDead) return;
+
+        AbilityDefinition ability = state.definition;
+        ResourceDefinition shortOf = ShortResource(ability);
+
+        AbilityRefusal why = state.IsOnCooldown ? AbilityRefusal.Cooldown
+            : shortOf != null ? AbilityRefusal.Resource
+            : AbilityRefusal.Denied;
+
+        OnAbilityRefused?.Invoke(ability, why, why == AbilityRefusal.Resource ? shortOf : null);
+    }
+
+    private ResourceDefinition ShortResource(AbilityDefinition ability)
+    {
+        if (ability.resourceCosts == null || resources == null) return null;
 
         foreach (var cost in ability.resourceCosts)
         {
             if (cost.resource != null && cost.cost > 0 && !resources.HasResource(cost.resource, cost.cost))
-                return false;
+                return cost.resource;
         }
-
-        return true;
+        return null;
     }
+
+    private bool HasSufficientResources(AbilityDefinition ability) => ShortResource(ability) == null;
 
     private void ConsumeResourceCosts(AbilityDefinition ability)
     {
@@ -510,7 +583,11 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     public void UseAbility(string abilityId)
     {
-        if (!CanUseAbility(abilityId)) return;
+        if (!CanUseAbility(abilityId))
+        {
+            ReportRefused(abilityId);
+            return;
+        }
         if (!abilityStates.TryGetValue(abilityId, out var state))
         {
             Debug.LogError($"[AbilitySystem] Ability {abilityId} not found");
@@ -700,6 +777,8 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     private void ExecuteAbilityEffects(AbilityDefinition ability)
     {
+        if (ability.invulnSeconds > 0f) StartTimedInvuln(ability.invulnSeconds);
+
         bool isMovementAbility = ability.movementEffects != null && ability.movementEffects.Count > 0;
         if (isMovementAbility && movementSystem != null)
             ability.ExecuteMovement(movementSystem);
@@ -724,13 +803,14 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         SetFact(BlackboardKey.MoveRooted, false);
         SetFact(BlackboardKey.RootMotionDriven, false);
-        if (isInvincible) SetInvincible(false);
+        if (isInvincible && invulnUntil <= 0f) SetInvincible(false);
 
         if (currentAbility == ability)
         {
             currentAbility = null;
             isAnimationLocked = false;
             chainOpen = false;
+            hitConfirmed = false;
         }
 
         UpdateExecutingFact();
@@ -800,9 +880,22 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         CompleteAbility(currentAbility);
     }
 
+    private void StartTimedInvuln(float seconds)
+    {
+        invulnUntil = Time.time + seconds;
+        SetInvincible(true);
+    }
+
+    private void TickTimedInvuln()
+    {
+        if (invulnUntil <= 0f || Time.time < invulnUntil) return;
+        SetInvincible(false);
+    }
+
     // AbilitySystem is the one writer of IsInvincible; DamageSystem refuses damage while it is up.
     private void SetInvincible(bool on)
     {
+        if (!on) invulnUntil = 0f;
         isInvincible = on;
         SetFact(BlackboardKey.IsInvincible, on);
     }
@@ -948,8 +1041,10 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         if (ability == currentAbility && ability.HasMoveData && !Guarded(target))
         {
             HitStop(ability.hit.hitStop);
+            hitConfirmed = hitConfirmCancel;
             AbilitySystem defender = target != null ? target.Abilities : null;
             if (defender != null) defender.HitStop(ability.hit.hitStop);
+            if (defender != null && ability.hit.hitStop > 0) defender.HitShake();
         }
 
         OnHitLanded?.Invoke(ability, target);

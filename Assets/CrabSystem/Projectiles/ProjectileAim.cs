@@ -103,6 +103,10 @@ public class ProjectileAim
              "a shot to track; large means it grabs anything roughly ahead of you.")]
     public float probeRadius = 1.5f;
 
+    [Tooltip("Aim assist: when the probe finds nothing, the caster's soft target (TargetingModule) is used if it sits " +
+             "within this many degrees of the aim line, and the shot is aimed at it. 0 = off.")]
+    public float softAssistDegrees = 8f;
+
     // =========================================================================
     // Queries
     // =========================================================================
@@ -118,7 +122,7 @@ public class ProjectileAim
     /// The direction before any target is known. Never depends on a target, which is what
     /// keeps "aim at target" and "probe along aim" from chasing each other.
     /// </summary>
-    public Vector3 BaseDirection(ControllerBrain source)
+    public Vector3 BaseDirection(ControllerBrain source, Vector3 origin)
     {
         if (source == null) return Vector3.forward;
 
@@ -133,10 +137,18 @@ public class ProjectileAim
         // and fall through to body facing, which is what they should use anyway.
         ICameraProvider cameraProvider = source.GetModule<ICameraProvider>();
 
+        // From the cast origin to where the screen-centre aim ray lands, so the shot goes where the crosshair is.
+        // Flying parallel to the camera instead sent it into the floor whenever the camera looked down at the player.
         if (cameraProvider != null && cameraProvider.CameraTransform != null)
-            return cameraProvider.CameraTransform.forward;
+            return AimAt(cameraProvider.AimPoint(probeRange, out _), origin, cameraProvider.CameraTransform.forward);
 
         return root.forward;
+    }
+
+    private static Vector3 AimAt(Vector3 point, Vector3 origin, Vector3 fallback)
+    {
+        Vector3 to = point - origin;
+        return to.sqrMagnitude < 0.0001f ? fallback : to.normalized;
     }
 
     // =========================================================================
@@ -192,6 +204,8 @@ public class ProjectileAim
     /// The direction the projectile actually launches along. Only TowardTarget bends it,
     /// and only when a target was found.
     /// </summary>
+    public Vector3 TargetPoint(Transform target) => target.position + Vector3.up * targetHeightOffset;
+
     public Vector3 FinalDirection(Vector3 origin, Vector3 baseDirection, Transform target)
     {
         if (directionMode != AimDirectionMode.TowardTarget) return baseDirection;

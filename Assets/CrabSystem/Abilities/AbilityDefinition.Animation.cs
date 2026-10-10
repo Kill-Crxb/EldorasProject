@@ -19,6 +19,10 @@ public partial class AbilityDefinition
     [Tooltip("Safety timeout - force complete if Unlocked never fires (0 = no timeout)")]
     public float maxDuration = 2.0f;
 
+    [Tooltip("I-frames on a timer from the moment the move's effects fire, in seconds. For moves that end before " +
+             "their clip, like a dash, whose Invuln events would arrive after the move is over. 0 = none.")]
+    public float invulnSeconds = 0f;
+
     [Tooltip("On: the caster keeps walking — the clip plays on the arms while moving and on the whole " +
              "body when standing still. Off: the caster is rooted for the move (MoveRooted) and the " +
              "clip plays full body. Heavies and anything meant to be punishable root.")]

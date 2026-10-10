@@ -6,7 +6,7 @@ using UnityEngine;
 // two bodies stop gapMetres apart. A body AHEAD (within PinAngle of the travel) also takes the sideways
 // part, so the attacker stays planted on it instead of skating round it (8 Oct: an attack a little off
 // centre slid past). A body off to the side only stops what heads into it, so a clear miss still carries.
-// Every fighter runs it, so an NPC can't lunge through the player either.
+// Every fighter runs it, so an NPC can't lunge through the player either. Dashes use it too (10 Oct).
 //
 // A strategy inside ParkourLocomotionHandler, which calls it while MovementSystem.RootMotionDriven is up.
 public class RootMotionContact

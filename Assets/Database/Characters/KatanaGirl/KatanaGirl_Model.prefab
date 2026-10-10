@@ -10534,7 +10534,7 @@ MonoBehaviour:
   serializeData2:
     initData:
       initVersion: 2
-      localHash: 52984
+      localHash: 54562
       globalHash: 31051473
       clothType: 0
       clothTransformRecord:
@@ -14616,6 +14616,7 @@ MonoBehaviour:
   armedSheathSocket: Hand_L_Socket
   unarmedBladeSocket: Katana_Close
   unarmedSheathSocket: Put_Socket_Katana
+  guardBladeSocket: Hand_R_Socket
   commandPrefix: To_
   bladePart: Blade
   sheathPart: Sheath

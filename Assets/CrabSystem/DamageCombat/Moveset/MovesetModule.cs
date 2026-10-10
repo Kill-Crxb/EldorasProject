@@ -92,16 +92,19 @@ public class MovesetModule : MonoBehaviour, IBrainModule
 
         Grant(ability);
 
-        // Held while a step plays or the guard is in blockstun, so a punish comes out on the first free
-        // frame. A parry is never held: it can be pressed in blockstun.
-        bool stunned = guard != null && guard.InBlockstun && requested != MovesetChain.Parry;
+        // Held while a step plays, the guard is in blockstun or a hit state holds the fighter, so it comes out on
+        // the first free frame instead of being dropped. A parry is never held: it can be pressed in blockstun.
+        bool stunned = Stunned() && requested != MovesetChain.Parry;
         if (stepInFlight != null || stunned)
         {
             Buffer(requested, step);
             return true;
         }
 
-        return Fire(requested, step, ability);
+        if (Fire(requested, step, ability)) return true;
+
+        abilities.ReportRefused(ability.abilityId);
+        return false;
     }
 
     public AbilityDefinition PeekNext()
@@ -255,6 +258,13 @@ public class MovesetModule : MonoBehaviour, IBrainModule
             return;
         }
 
+        // Still held: the lifetime starts when the fighter is free again.
+        if (Stunned())
+        {
+            bufferedAt = Time.time;
+            return;
+        }
+
         // Counted from whichever came later, the press or the step ending, so a long step can't age it out.
         bool expired = stepInFlight == null && Time.time - Mathf.Max(bufferedAt, stepEndedAt) > bufferLifetime;
         if (expired)
@@ -283,6 +293,14 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         lastPreview = preview;
         lastBlockPreview = blockPreview;
         OnPreviewChanged?.Invoke();
+    }
+
+    private bool Stunned()
+    {
+        if (guard != null && guard.InBlockstun) return true;
+
+        Blackboard blackboard = brain.Blackboard;
+        return blackboard != null && blackboard.GetBool(BlackboardKey.CannotAct);
     }
 
     private bool IsBlocking()

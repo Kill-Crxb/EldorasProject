@@ -249,6 +249,10 @@ public class MovementSystem : MonoBehaviour, IBrainModule
     // below never reach it. The handler asks this instead. Hard control (stun, flinch) holds it too.
     public bool FacingLocked => IsDead || (blackboard != null && blackboard.GetBool(BlackboardKey.CannotAct));
 
+    // Where the body should face this frame instead of the camera (an attack tracking its target, a locked-on
+    // run). Zero = the camera. Written each frame by its owner (TargetingModule), so a stale value can't stick.
+    public Vector3 FacingOverride { get; set; }
+
     // A castWhileMoving-off move is playing: input is stripped and the clip owns the whole body.
     public bool IsRooted => blackboard != null && blackboard.GetBool(BlackboardKey.MoveRooted);
 
