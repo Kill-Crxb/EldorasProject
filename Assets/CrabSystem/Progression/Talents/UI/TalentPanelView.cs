@@ -28,11 +28,14 @@ public class TalentPanelView : UIPanelView
     private TalentSlot selected;
     private TalentNode hovered;
     private bool picking;
+    private int socketPicking = -1;
     private bool built;
 
     private readonly List<Button> tabs = new();
     private readonly List<TalentCell> cells = new();
     private readonly List<Button> pickButtons = new();
+    private readonly List<Button> socketButtons = new();
+    private RectTransform socketRow;
     private TextMeshProUGUI info;
     private TextMeshProUGUI detail;
     private RectTransform grid;
@@ -70,6 +73,7 @@ public class TalentPanelView : UIPanelView
     {
         if (talents != null) talents.Changed -= Refresh;
         picking = false;
+        socketPicking = -1;
         hovered = null;
     }
 
@@ -103,6 +107,7 @@ public class TalentPanelView : UIPanelView
         resetButton = NewButton(actions, "Reset tree", HandleReset);
         if (devButtons && Debug.isDebugBuild) NewButton(actions, "Dev: +1 level", HandleDevLevel);
 
+        socketRow = Row(root, 32f);
         grid = BuildGrid(root);
         picker = NewRect("TreePicker", root);
         VerticalLayoutGroup pickList = picker.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -174,6 +179,7 @@ public class TalentPanelView : UIPanelView
         RefreshTabs();
         RefreshInfo();
         RefreshGrid();
+        RefreshSockets();
         RefreshPicker();
         RefreshDetail();
     }
@@ -203,8 +209,9 @@ public class TalentPanelView : UIPanelView
 
     private void RefreshGrid()
     {
-        grid.gameObject.SetActive(!picking);
-        if (picking) return;
+        bool choosing = picking || socketPicking >= 0;
+        grid.gameObject.SetActive(!choosing);
+        if (choosing) return;
 
         foreach (TalentCell cell in cells)
         {
@@ -223,13 +230,44 @@ public class TalentPanelView : UIPanelView
         }
     }
 
+    // The selected tree's drawer: one button per keyword socket, showing what's in it.
+    private void RefreshSockets()
+    {
+        foreach (Button button in socketButtons) Destroy(button.gameObject);
+        socketButtons.Clear();
+
+        List<KeywordSocket> sockets = selected?.Tree != null ? selected.Tree.sockets : null;
+        socketRow.gameObject.SetActive(sockets != null && sockets.Count > 0 && !picking);
+        if (!socketRow.gameObject.activeSelf) return;
+
+        for (int i = 0; i < sockets.Count; i++)
+        {
+            int index = i;
+            bool open = talents.SocketOpen(selected, i);
+            string held = selected.Sockets.TryGetValue(i, out string abilityId) ? AbilityName(abilityId) : "empty";
+            string text = open ? $"<b>{sockets[i].Label}</b>: {held}" : $"<b>{sockets[i].Label}</b>: locked";
+
+            Button button = NewButton(socketRow, text, () => HandleSocketClicked(index));
+            button.interactable = open;
+            if (index == socketPicking) button.image.color = selectedTabColor;
+            socketButtons.Add(button);
+        }
+    }
+
     private void RefreshPicker()
     {
-        picker.gameObject.SetActive(picking);
-        if (!picking) return;
+        bool choosing = picking || socketPicking >= 0;
+        picker.gameObject.SetActive(choosing);
+        if (!choosing) return;
 
         foreach (Button button in pickButtons) Destroy(button.gameObject);
         pickButtons.Clear();
+
+        if (socketPicking >= 0)
+        {
+            PickAbilities();
+            return;
+        }
 
         foreach (TalentTree tree in talents.KnownTrees())
         {
@@ -244,6 +282,59 @@ public class TalentPanelView : UIPanelView
         }
 
         if (pickButtons.Count == 0) Debug.LogWarning("[TalentPanelView] The player knows no trees.", this);
+    }
+
+    // Every ability the player knows, plus an entry that empties the socket.
+    private void PickAbilities()
+    {
+        AddPick("<i>Empty the socket</i>", null, () => HandlePickAbility(null));
+
+        RuntimeAbilityManager known = PlayerBrainAccess.Find()?.GetModule<RuntimeAbilityManager>();
+        if (known == null) return;
+
+        foreach (AbilityInstance instance in known.GetAllInstances())
+        {
+            AbilityDefinition ability = instance?.definition;
+            if (ability == null) continue;
+
+            string why = talents.WhyNotSocket(selected, socketPicking, ability);
+            AddPick($"<b>{ability.abilityName}</b>", why, () => HandlePickAbility(ability));
+        }
+    }
+
+    private void AddPick(string text, string why, UnityEngine.Events.UnityAction onClick)
+    {
+        Button button = NewButton(picker, why != null ? $"{text}  <i>({why})</i>" : text, onClick);
+        button.interactable = why == null;
+        Fix((RectTransform)button.transform, 36f);
+        pickButtons.Add(button);
+    }
+
+    private static string AbilityName(string abilityId)
+    {
+        RuntimeAbilityManager known = PlayerBrainAccess.Find()?.GetModule<RuntimeAbilityManager>();
+        if (known == null) return abilityId;
+
+        foreach (AbilityInstance instance in known.GetAllInstances())
+        {
+            if (instance?.definition != null && instance.definition.abilityId == abilityId) return instance.definition.abilityName;
+        }
+        return abilityId;
+    }
+
+    private void HandleSocketClicked(int index)
+    {
+        socketPicking = socketPicking == index ? -1 : index;
+        picking = false;
+        Refresh();
+    }
+
+    private void HandlePickAbility(AbilityDefinition ability)
+    {
+        if (ability == null) talents.ClearSocket(selected, socketPicking);
+        else talents.SetSocket(selected, socketPicking, ability);
+        socketPicking = -1;
+        Refresh();
     }
 
     private void RefreshDetail()
@@ -287,6 +378,7 @@ public class TalentPanelView : UIPanelView
     {
         selected = slot;
         picking = slot.Tree == null;
+        socketPicking = -1;
         hovered = null;
         Refresh();
     }
@@ -313,6 +405,7 @@ public class TalentPanelView : UIPanelView
     private void HandleChangeTree()
     {
         picking = !picking;
+        socketPicking = -1;
         Refresh();
     }
 

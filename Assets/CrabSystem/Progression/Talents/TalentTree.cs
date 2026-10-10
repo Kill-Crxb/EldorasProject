@@ -23,6 +23,10 @@ namespace NinjaGame.Progression
         [Header("Talents")]
         public List<TalentPlacement> placements = new();
 
+        [Header("Keyword sockets")]
+        [Tooltip("Slots the player puts one of their abilities into; that ability gains the socket's keyword. Some trees have none.")]
+        public List<KeywordSocket> sockets = new();
+
         public string Label => string.IsNullOrEmpty(displayName) ? treeId : displayName;
 
         public TalentPlacement Find(TalentNode node)

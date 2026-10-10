@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63f1401dcb445534faca4def0618a012, type: 3}
+  m_Name: CombatDials
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatSchema
+  derived: 1
+  entries:
+  - id: cmb.parry_window
+    displayName: Parry Window
+    shortName: PRY
+    description: Frames (60 fps) added to the parry window.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.parry_stun
+    displayName: Parry Stun
+    shortName: PST
+    description: Frames added to the flinch a parried attacker takes.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.riposte_window
+    displayName: Riposte Window
+    shortName: RIP
+    description: Seconds added to the riposte window after a parry.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.block_stamina
+    displayName: Block Stamina
+    shortName: BLK
+    description: Added to the stamina a block costs. Negative is cheaper.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.max_posture
+    displayName: Max Posture
+    shortName: PSM
+    description: Added to the posture bar.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.posture_recovery
+    displayName: Posture Recovery
+    shortName: PSR
+    description: Posture recovered per second, added.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.dodge_invuln
+    displayName: Dodge I-Frames
+    shortName: IFR
+    description: Seconds added to an evasive move's invulnerability.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: res.health_regen
+    displayName: Health Regen
+    shortName: HRG
+    description: Added to health refill per second.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: res.health_regen_delay
+    displayName: Health Regen Delay
+    shortName: HRD
+    description: Seconds added before health refills.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: res.stamina_regen
+    displayName: Stamina Regen
+    shortName: SRG
+    description: Added to stamina refill per second.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: res.stamina_regen_delay
+    displayName: Stamina Regen Delay
+    shortName: SRD
+    description: Seconds added before stamina refills.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: res.mana_regen
+    displayName: Mana Regen
+    shortName: MRG
+    description: Added to mana refill per second.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: res.mana_regen_delay
+    displayName: Mana Regen Delay
+    shortName: MRD
+    description: Seconds added before mana refills.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: res.charge_regen
+    displayName: Charge Regen
+    shortName: CRG
+    description: Added to movement-charge refill per second.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999

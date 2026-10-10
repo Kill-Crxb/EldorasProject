@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63f1401dcb445534faca4def0618a012, type: 3}
+  m_Name: MovementStats
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Stats.StatSchema
+  derived: 1
+  entries:
+  - id: mov.walk_speed
+    displayName: Walk Speed
+    shortName: WLK
+    description: m/s added to walk speed.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.run_speed
+    displayName: Run Speed
+    shortName: RUN
+    description: m/s added to run speed.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.sprint_speed
+    displayName: Sprint Speed
+    shortName: SPR
+    description: m/s added to sprint speed.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.crouch_speed
+    displayName: Crouch Speed
+    shortName: CRH
+    description: m/s added to crouch speed.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.accel
+    displayName: Acceleration
+    shortName: ACC
+    description: Added to ground and air acceleration. Lower it with friction to keep top speed.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.friction
+    displayName: Friction
+    shortName: FRC
+    description: Added to ground and momentum friction.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.jump_speed
+    displayName: Jump Speed
+    shortName: JMP
+    description: m/s added to the jump's upward speed.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.air_jump_speed
+    displayName: Air Jump Speed
+    shortName: AJS
+    description: m/s added to an air jump's upward speed.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.air_jumps
+    displayName: Air Jumps
+    shortName: AJ
+    description: Extra air jumps.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.air_turn
+    displayName: Air Turn
+    shortName: ATN
+    description: Degrees per second added to air turning.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.air_strafe
+    displayName: Air Strafe
+    shortName: AST
+    description: m/s added to air strafe.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.wall_jumps
+    displayName: Wall Jumps
+    shortName: WJ
+    description: Extra wall jumps per airtime.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.mantles
+    displayName: Mantles
+    shortName: MNT
+    description: Extra mantles per airtime.
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: mov.dash_speed
+    displayName: Dash Speed
+    shortName: DSH
+    description: m/s added to the dash's push (and its cap).
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999

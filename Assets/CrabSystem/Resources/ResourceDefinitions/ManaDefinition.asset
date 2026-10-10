@@ -24,6 +24,9 @@ MonoBehaviour:
   secondsPerSourcePoint: 10
   regenPerSecond: 0
   regenDelay: 0
+  refillWholeUnits: 0
+  regenStatId: res.mana_regen
+  regenDelayStatId: res.mana_regen_delay
   resourceColor: {r: 0.20761417, g: 0.1318975, b: 0.7169812, a: 1}
   icon: {fileID: 0}
   depletedSound: {fileID: 0}

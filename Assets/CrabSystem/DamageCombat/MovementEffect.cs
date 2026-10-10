@@ -44,6 +44,10 @@ public class MovementEffect
 
     [Header("Dash/Impulse Settings")]
     public float speed = 15f;
+
+    [Tooltip("Caster stat added to Speed (and to Speed Cap when one is set), e.g. mov.dash_speed, so talents and " +
+             "the burden track move the push. Empty = speed as authored.")]
+    [IdRef(IdKind.Stat)] public string speedStatId;
     public float duration = 0.2f;
 
     [Header("Speed Cap")]
@@ -183,6 +187,10 @@ public class MovementEffect
     // These now call through LocomotionHandler, which is what MovementSystem.Locomotion is typed as.
     // Do not reintroduce a concrete-handler cast here.
 
+    private float SpeedBonus => string.IsNullOrEmpty(speedStatId) ? 0f : DialIds.Read(movementSystem.Brain != null ? movementSystem.Brain.Stats : null, speedStatId);
+
+    private float Speed => Mathf.Max(0f, speed + SpeedBonus);
+
     private void ApplyImpulse()
     {
         Vector3 worldDirection = CalculateWorldDirection(casterTransform);
@@ -196,13 +204,13 @@ public class MovementEffect
         // A dash OWNS locomotion for a duration, which not every handler offers — the parkour
         // handler deliberately does not, because that mode belongs to a LowerBodyState rather than
         // a coroutine. Say so once and degrade to an impulse, rather than doing nothing quietly.
-        if (movementSystem.Locomotion.BeginDash(worldDirection, speed, duration)) return;
+        if (movementSystem.Locomotion.BeginDash(worldDirection, Speed, duration)) return;
 
         if (!warnedNoDash)
         {
             warnedNoDash = true;
             Debug.LogWarning($"[MovementEffect] {movementSystem.Locomotion.GetType().Name} has no " +
-                             $"dash mode — applying an impulse of {speed} instead. Dash is channel 4 " +
+                             $"dash mode — applying an impulse of {Speed} instead. Dash is channel 4 " +
                              $"and is not built yet; see Movement_Ability_Interface.md.");
         }
 
@@ -243,12 +251,13 @@ public class MovementEffect
     /// </summary>
     private void Push(Vector3 worldDirection)
     {
-        float force = speed;
+        float bonus = SpeedBonus;
+        float force = Mathf.Max(0f, speed + bonus);
 
         if (speedCap > 0f)
         {
             float already = Vector3.Dot(movementSystem.Velocity, worldDirection);
-            force = Mathf.Min(speed, Mathf.Max(speedCap - already, 0f));
+            force = Mathf.Min(force, Mathf.Max(speedCap + bonus - already, 0f));
         }
 
         if (force <= 0f) return;

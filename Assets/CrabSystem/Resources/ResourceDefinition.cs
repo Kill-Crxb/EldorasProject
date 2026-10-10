@@ -55,6 +55,13 @@ public class ResourceDefinition : ScriptableObject
              "the unit: charges come back only after that long without using one. Flat regen only.")]
     public bool refillWholeUnits;
 
+    [Tooltip("Tuning dial added to the refill rate: to Regen Per Second for a flat pool, to the payout per second for " +
+             "a pool that draws on a source. Empty = as authored.")]
+    [IdRef(IdKind.Stat)] public string regenStatId;
+
+    [Tooltip("Tuning dial added to Regen Delay, in seconds. Empty = as authored.")]
+    [IdRef(IdKind.Stat)] public string regenDelayStatId;
+
     [Header("Visual / Audio")]
 
     public Color resourceColor = Color.red;

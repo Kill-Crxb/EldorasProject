@@ -123,6 +123,12 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     // A hit from this entity's ability connected (melee or projectile). SlotTransformationSystem
     // rolls the ability's procs off it.
     public event Action<AbilityDefinition, ControllerBrain> OnHitLanded;
+
+    // Per-character flat changes to costs, cooldowns and cast times (talents, gear, the burden track). Every
+    // use reads its numbers through here, never straight off the shared asset.
+    public AbilityModifiers Modifiers { get; } = new AbilityModifiers();
+
+    public float CostOf(AbilityDefinition ability, ResourceDefinition resource, float baseCost) => Modifiers.Cost(ability, resource, baseCost);
     private void SetFact(int key, bool value) => blackboard?.SetBool(key, value);
 
     private void UpdateExecutingFact()
@@ -501,8 +507,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         foreach (var cost in ability.resourceCosts)
         {
-            if (cost.resource != null && cost.cost > 0 && !resources.HasResource(cost.resource, cost.cost))
-                return cost.resource;
+            if (cost.resource == null) continue;
+            float amount = CostOf(ability, cost.resource, cost.cost);
+            if (amount > 0f && !resources.HasResource(cost.resource, amount)) return cost.resource;
         }
         return null;
     }
@@ -516,8 +523,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         foreach (var cost in ability.resourceCosts)
         {
-            if (cost.resource != null && cost.cost > 0)
-                resources.ConsumeResource(cost.resource, cost.cost);
+            if (cost.resource == null) continue;
+            float amount = CostOf(ability, cost.resource, cost.cost);
+            if (amount > 0f) resources.ConsumeResource(cost.resource, amount);
         }
     }
 
@@ -607,12 +615,12 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         ConsumeResourceCosts(ability);
 
-        if (ability.castTime > 0f)
+        if (Modifiers.CastTime(ability) > 0f)
             StartCast(ability);
         else
             ExecuteAbility(ability);
 
-        StartCooldown(abilityId, ability.cooldown);
+        StartCooldown(abilityId, Modifiers.Cooldown(ability));
         OnAbilityUsed?.Invoke(abilityId);
     }
 
@@ -691,7 +699,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         var ability = state.definition;
 
-        if (Time.time - castStartTime >= ability.castTime)
+        if (Time.time - castStartTime >= Modifiers.CastTime(ability))
         {
             ExecuteAbility(ability);
             currentlyCastingAbility = null;
@@ -779,7 +787,8 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     private void ExecuteAbilityEffects(AbilityDefinition ability)
     {
-        if (ability.invulnSeconds > 0f) StartTimedInvuln(ability.invulnSeconds);
+        // An evasive move's i-frames grow or shrink with the cmb.dodge_invuln dial; a move without any gets none.
+        if (ability.invulnSeconds > 0f) StartTimedInvuln(Mathf.Max(0f, ability.invulnSeconds + DialIds.Read(brain != null ? brain.Stats : null, DialIds.DodgeInvuln)));
 
         bool isMovementAbility = ability.movementEffects != null && ability.movementEffects.Count > 0;
         if (isMovementAbility && movementSystem != null)
@@ -979,7 +988,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     public float GetAbilityMaxCooldown(string abilityId)
     {
         if (!abilityStates.TryGetValue(abilityId, out var state)) return 0f;
-        return state.definition.cooldown;
+        return Modifiers.Cooldown(state.definition);
     }
 
 

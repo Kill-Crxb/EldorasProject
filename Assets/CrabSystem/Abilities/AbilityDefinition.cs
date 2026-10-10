@@ -140,6 +140,12 @@ public partial class AbilityDefinition : ScriptableObject
     [Tooltip("Category determines default blackboard requirements")]
     public AbilityCategory abilityCategory = AbilityCategory.Physical;
 
+    [Tooltip("Free-form tags that talents and gear can target (AbilityModifierReward), e.g. dodge, blade, thrown. " +
+             "Lower case.")]
+    public List<string> tags = new();
+
+    public bool HasTag(string tag) => !string.IsNullOrEmpty(tag) && tags != null && tags.Contains(tag);
+
     // ========================================
     // TARGETING
     // ========================================

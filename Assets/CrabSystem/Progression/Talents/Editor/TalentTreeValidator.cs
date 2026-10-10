@@ -26,6 +26,7 @@ public static class TalentTreeValidator
         CheckPlacements(tree, rules, issues);
         CheckIds(tree, issues);
         CheckOrphans(tree, issues);
+        CheckSockets(tree, issues);
         if (tree.isLibrary) return issues;
 
         CheckKeywords(tree, issues);
@@ -124,6 +125,24 @@ public static class TalentTreeValidator
 
             if (string.IsNullOrEmpty(node.nodeId)) Error(issues, "Has no node id.", node);
             else if (byId.TryGetValue(node.nodeId, out TalentNode owner) && owner != node) Error(issues, $"Node id '{node.nodeId}' is used by another node.", node);
+        }
+    }
+
+    // A tree-specific keyword can only be socketed by its own tree; a socket's unlock talent must be placed here.
+    static void CheckSockets(TalentTree tree, List<Issue> issues)
+    {
+        foreach (KeywordSocket socket in tree.sockets)
+        {
+            if (socket?.keyword == null)
+            {
+                Error(issues, "A keyword socket has no keyword.");
+                continue;
+            }
+
+            if (socket.keyword.ownerTree != null && socket.keyword.ownerTree != tree)
+                Error(issues, $"Socket {socket.Label}: {socket.keyword.Label} belongs to {socket.keyword.ownerTree.Label}.");
+            if (socket.unlockedBy != null && tree.Find(socket.unlockedBy) == null)
+                Error(issues, $"Socket {socket.Label} opens on {socket.unlockedBy.Label}, which isn't placed in this tree.");
         }
     }
 

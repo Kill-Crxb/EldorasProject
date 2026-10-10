@@ -512,11 +512,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitReactionSystem
   isEnabled: 1
-  heavyHitFraction: 0.15
-  staggerFraction: 0.3
   minTimeBetweenReactions: 0.2
+  restFadeSeconds: 0.1
   hitLightParam: HitLight
-  hitHeavyParam: HitHeavy
   staggerParam: Stagger
   deathParam: Death
   isDeadParam: IsDead
@@ -1543,6 +1541,8 @@ MonoBehaviour:
   - SecondaryStats
   - DefensiveCore
   - Progression
+  - MovementStats
+  - CombatDials
 --- !u!1 &4171811705333573557
 GameObject:
   m_ObjectHideFlags: 0
@@ -1646,6 +1646,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
   - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
   - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
+  weaponSlotId: mainwep
+  hitShakeAmplitude: 0.04
+  hitConfirmCancel: 0
   debugLogging: 0
 --- !u!114 &4019244290200516456
 MonoBehaviour:
@@ -2114,6 +2117,13 @@ MonoBehaviour:
   minSideHoldTime: 0.35
   centeredPivotLift: 0.35
   stateRules: []
+  lookTargetTurnSpeed: 540
+  lockMinPitch: -10
+  lockMaxPitch: 20
+  aimPitchOffset: 6
+  aimMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &7591293930480927091
 GameObject:
   m_ObjectHideFlags: 0
@@ -2275,6 +2285,8 @@ MonoBehaviour:
   hurtboxRadius: 0.3
   hurtboxHeight: 1.75
   hurtboxCenter: {x: 0, y: 0.875, z: 0}
+  counterHitAccuracy: 2
+  counterHitDamage: 0
 --- !u!136 &3758023515325582047
 CapsuleCollider:
   m_ObjectHideFlags: 0

@@ -817,7 +817,7 @@ public class TalentWizard : EditorWindow
     {
         CrabWizardGUI.Section("Tree");
         var so = new SerializedObject(tree);
-        foreach (string field in new[] { "treeId", "displayName", "icon", "description", "isLibrary", "ownedKeywords" })
+        foreach (string field in new[] { "treeId", "displayName", "icon", "description", "isLibrary", "ownedKeywords", "sockets" })
             EditorGUILayout.PropertyField(so.FindProperty(field), true);
         if (so.ApplyModifiedProperties()) Changed(tree);
 

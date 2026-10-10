@@ -222,22 +222,26 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     /// <summary>How a source pool comes back: a flat trickle, or nothing at all.</summary>
     private void TickFlatRegen(ResourceState state, ResourceDefinition def, float delta)
     {
-        if (def.regenPerSecond <= 0f) return;
+        float rate = def.regenPerSecond + Dial(def.regenStatId);
+        if (rate <= 0f) return;
         if (def.refillWholeUnits)
         {
-            TickWholeUnit(state, def, delta);
+            TickWholeUnit(state, rate, delta);
             return;
         }
 
         float headroom = state.max - state.current;
-        float granted = Mathf.Min(def.regenPerSecond * delta, headroom);
+        float granted = Mathf.Min(rate * delta, headroom);
 
         SetResourceValue(state, state.current + granted);
     }
 
-    private void TickWholeUnit(ResourceState state, ResourceDefinition def, float delta)
+    // The definition's regen stat ids are tuning dials: a stat added to the authored number (0 when unset).
+    private float Dial(string statId) => string.IsNullOrEmpty(statId) ? 0f : DialIds.Read(stats, statId);
+
+    private void TickWholeUnit(ResourceState state, float rate, float delta)
     {
-        state.unitProgress += def.regenPerSecond * delta;
+        state.unitProgress += rate * delta;
         if (state.unitProgress < 1f) return;
 
         state.unitProgress -= 1f;
@@ -257,7 +261,8 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
         if (source.current <= 0f) return;
 
         float headroom = state.max - state.current;
-        float perSecond = def.amountPerSourcePoint / def.secondsPerSourcePoint;
+        float perSecond = def.amountPerSourcePoint / def.secondsPerSourcePoint + Dial(def.regenStatId);
+        if (perSecond <= 0f) return;
         float granted = Mathf.Min(perSecond * delta, headroom);
         float cost = granted / def.amountPerSourcePoint;
 
@@ -278,9 +283,11 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     private void BlockRegen(ResourceState state)
     {
         if (state?.definition == null) return;
-        if (state.definition.regenDelay <= 0f) return;
 
-        state.regenReadyAt = Time.time + state.definition.regenDelay;
+        float delay = state.definition.regenDelay + Dial(state.definition.regenDelayStatId);
+        if (delay <= 0f) return;
+
+        state.regenReadyAt = Time.time + delay;
     }
 
     #endregion

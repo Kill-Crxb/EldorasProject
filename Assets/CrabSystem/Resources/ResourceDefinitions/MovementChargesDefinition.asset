@@ -25,6 +25,8 @@ MonoBehaviour:
   regenPerSecond: 0.5
   regenDelay: 0
   refillWholeUnits: 1
+  regenStatId: res.charge_regen
+  regenDelayStatId: 
   resourceColor: {r: 0.25, g: 0.75, b: 1, a: 1}
   icon: {fileID: 0}
   depletedSound: {fileID: 0}

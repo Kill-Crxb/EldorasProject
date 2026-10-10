@@ -20,6 +20,21 @@ namespace NinjaGame.Progression
         public KeywordVerb verb;
     }
 
+    // A slot in a tree's drawer: whatever ability the player puts in it carries the keyword, for them.
+    [Serializable]
+    public class KeywordSocket
+    {
+        public KeywordDefinition keyword;
+
+        [Tooltip("Shown on the slot. Empty = the keyword's name.")]
+        public string label;
+
+        [Tooltip("The socket opens once this talent is learned. Empty = open while the tree is slotted.")]
+        public TalentNode unlockedBy;
+
+        public string Label => !string.IsNullOrEmpty(label) ? label : keyword != null ? keyword.Label : "Socket";
+    }
+
     [Serializable]
     public class TalentPlacement
     {

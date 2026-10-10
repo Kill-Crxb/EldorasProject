@@ -296,12 +296,19 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         hit.advantage = packet.advantage;
         hit.counter = InStartup();
         if (hit.counter) hit.accuracy += counterHitAccuracy;
+
+        // The attacker's keywords (Ambushing from behind…) add to-hit, advantage and bonus damage before the roll.
+        float bonusDamage = 0f;
+        IHitModifier modifier = attackerBrain != null ? attackerBrain.GetProvider<IHitModifier>() : null;
+        if (modifier != null) modifier.ModifyHit(brain, ref hit.accuracy, ref hit.advantage, ref bonusDamage);
+
         hit.roll = UnityEngine.Random.Range(1, 21);
         if (hit.advantage) hit.roll = Mathf.Max(hit.roll, UnityEngine.Random.Range(1, 21));
 
         bool full = hit.roll + hit.accuracy >= hit.defense;
         hit.grade = full ? HitGrade.Full : HitGrade.Glancing;
-        hit.rolled = full ? packet.finalDamage : Mathf.Floor(packet.finalDamage / 2f);
+        float damage = packet.finalDamage + bonusDamage;
+        hit.rolled = full ? damage : Mathf.Floor(damage / 2f);
         if (hit.counter) hit.rolled += counterHitDamage;
 
         // Contact always costs something: the hit is worth at least 1. The armour shield then takes what

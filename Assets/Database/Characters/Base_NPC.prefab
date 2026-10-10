@@ -169,11 +169,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitReactionSystem
   isEnabled: 1
-  heavyHitFraction: 0.15
-  staggerFraction: 0.3
   minTimeBetweenReactions: 0.2
+  restFadeSeconds: 0.1
   hitLightParam: HitLight
-  hitHeavyParam: HitHeavy
   staggerParam: Stagger
   deathParam: Death
   isDeadParam: IsDead
@@ -233,6 +231,7 @@ Transform:
   - {fileID: 5806681704780818859}
   - {fileID: 1429729824859710832}
   - {fileID: 1888017827853395432}
+  - {fileID: 6279849475539921432}
   m_Father: {fileID: 505027778239189661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7834155014174466237
@@ -1000,6 +999,50 @@ MonoBehaviour:
   m_BeforeTransparentBundles: []
   m_BeforeStackBundles: []
   m_AfterStackBundles: []
+--- !u!1 &3775479394176345038
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6279849475539921432}
+  - component: {fileID: 7860522615910944659}
+  m_Layer: 0
+  m_Name: KeywordModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6279849475539921432
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3775479394176345038}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8373627434070198267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7860522615910944659
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3775479394176345038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e4e3fb88268b9d5bbefdad95a9a2810, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KeywordModule
 --- !u!1 &4021773971344676622
 GameObject:
   m_ObjectHideFlags: 0
@@ -1420,6 +1463,8 @@ MonoBehaviour:
   - SecondaryStats
   - DefensiveCore
   - Progression
+  - MovementStats
+  - CombatDials
 --- !u!1 &4171811705333573557
 GameObject:
   m_ObjectHideFlags: 0
@@ -1522,6 +1567,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
   - {fileID: 11400000, guid: 6737ebd81c50f5a419a02670d0e9b547, type: 2}
   - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
+  weaponSlotId: mainwep
+  hitShakeAmplitude: 0.04
+  hitConfirmCancel: 0
   debugLogging: 0
 --- !u!114 &4019244290200516456
 MonoBehaviour:
@@ -1978,6 +2026,13 @@ MonoBehaviour:
   minSideHoldTime: 0.35
   centeredPivotLift: 0.35
   stateRules: []
+  lookTargetTurnSpeed: 540
+  lockMinPitch: -10
+  lockMaxPitch: 20
+  aimPitchOffset: 6
+  aimMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &7591293930480927091
 GameObject:
   m_ObjectHideFlags: 0
@@ -2184,6 +2239,8 @@ MonoBehaviour:
   hurtboxRadius: 0.3
   hurtboxHeight: 1.75
   hurtboxCenter: {x: 0, y: 0.875, z: 0}
+  counterHitAccuracy: 2
+  counterHitDamage: 0
 --- !u!136 &3758023515325582047
 CapsuleCollider:
   m_ObjectHideFlags: 0

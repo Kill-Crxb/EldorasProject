@@ -277,7 +277,7 @@ public class GuardModule : MonoBehaviour, IBrainModule
             return;
         }
 
-        int blockCost = Mathf.Max(1, cost - Mathf.FloorToInt(Stat(DeflectionStat)));
+        int blockCost = Mathf.Max(1, cost - Mathf.FloorToInt(Stat(DeflectionStat)) + Mathf.RoundToInt(Stat(DialIds.BlockStamina)));
         DrainStamina(blockCost);
 
         float overflow = guardBar.Absorb(args.damage, Now);
@@ -314,32 +314,33 @@ public class GuardModule : MonoBehaviour, IBrainModule
         args.outcome = GuardOutcome.Parried;
         parryWindowEndsAt = -999f;
         lastParryPressAt = -999f;
-        riposteUntil = Now + riposteSeconds;
+        riposteUntil = Now + Mathf.Max(0f, riposteSeconds + Stat(DialIds.RiposteWindow));
 
         FlipDeflectSide();
         FreezeBoth(args.attacker, parryStopFrames);
         OnPerfectBlock?.Invoke();
 
         GuardModule attackerGuard = args.attacker != null ? args.attacker.GetModule<GuardModule>() : null;
-        if (attackerGuard != null) attackerGuard.TakeParried(cost);
+        if (attackerGuard != null) attackerGuard.TakeParried(cost, Mathf.RoundToInt(Stat(DialIds.ParryStun)));
     }
 
     // This entity's swing was parried: the blade rebounds (the animator's Parried trigger, if authored)
-    // and the fighter is flinched for parriedStunFrames. A posture break on top replaces it with Guard Break.
-    public void TakeParried(int cost)
+    // and the fighter is flinched for parriedStunFrames plus the parryer's cmb.parry_stun. A posture break on
+    // top replaces it with Guard Break.
+    public void TakeParried(int cost, int extraStunFrames)
     {
         DrainStamina(cost);
         TriggerIfPresent(ParriedTrigger);
-        FlinchParried();
+        FlinchParried(parriedStunFrames + extraStunFrames);
         TakePosture(cost * parryPostureMultiplier);
     }
 
-    private void FlinchParried()
+    private void FlinchParried(int frames)
     {
-        if (parriedStunFrames <= 0 || statuses == null) return;
+        if (frames <= 0 || statuses == null) return;
 
         StatusDefinition status = AbilityDefinition.LoadHitState(HitState.Flinch);
-        if (status != null) statuses.Apply(status, null, parriedStunFrames / 60f);
+        if (status != null) statuses.Apply(status, null, frames / 60f);
     }
 
     // Posture this entity takes as the attacker — its swing was parried or blocked.
@@ -382,7 +383,7 @@ public class GuardModule : MonoBehaviour, IBrainModule
         parryPresses = mashing ? parryPresses + 1 : 0;
         lastParryPressAt = Now;
 
-        int frames = Mathf.Max(minParryFrames, ability.parryFrames - parryPresses * parryDecayFrames);
+        int frames = Mathf.Max(minParryFrames, ability.parryFrames + Mathf.RoundToInt(Stat(DialIds.ParryWindow)) - parryPresses * parryDecayFrames);
         parryWindowEndsAt = Now + frames / 60f;
         // Only from a raised guard: the Parry state is entered from Block, and a trigger set without one would
         // stay armed and fire the next time the guard went up.

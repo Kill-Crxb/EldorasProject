@@ -46,6 +46,10 @@ public class ParkourLocomotionHandler : LocomotionHandler
     ICameraProvider cameraProvider;
     ModelModule modelModule;
 
+    // Tuning dials (DialIds, MovementStats schema): each is added flat to its MovementProfile value where the value
+    // is used, never cached, so a talent, a status or the burden track moves it the moment it changes.
+    IStatProvider stats;
+
     Transform modelRoot;
     Quaternion modelBaseRotation = Quaternion.identity;
     Vector3 modelBasePosition;
@@ -135,6 +139,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
     public override void Initialize(MovementSystem system)
     {
         movementSystem = system;
+        stats = system.Brain.Stats;
         rootTransform = system.Brain.EntityRoot != null ? system.Brain.EntityRoot : system.Brain.transform;
         animationProvider = system.Brain.GetProvider<IAnimationProvider>();
         cameraProvider = system.Brain.GetProvider<ICameraProvider>();
@@ -353,7 +358,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
         // the player is in — not a fraction of the current tier, or run and sprint would each land
         // somewhere different and only one would sit in the animator's walk band.
         float analog = Mathf.Min(magnitude, 1f);
-        float sidestep = IsCrouching ? profile.crouchSpeed : profile.walkSpeed;
+        float sidestep = IsCrouching ? CrouchSpeed : WalkSpeed;
         wishSpeed = Mathf.Lerp(sidestep, ResolveWishSpeed(), forwardCommitment) * analog;
 
 
@@ -384,12 +389,33 @@ public class ParkourLocomotionHandler : LocomotionHandler
     {
         switch (CurrentGait)
         {
-            case Gait.Crouch: return profile.crouchSpeed;
-            case Gait.Walk: return profile.walkSpeed;
-            case Gait.Sprint: return profile.sprintSpeed;
-            default: return profile.runSpeed;
+            case Gait.Crouch: return CrouchSpeed;
+            case Gait.Walk: return WalkSpeed;
+            case Gait.Sprint: return SprintSpeed;
+            default: return RunSpeed;
         }
     }
+
+    float Dial(string statId) => DialIds.Read(stats, statId);
+
+    float WalkSpeed => Mathf.Max(0f, profile.walkSpeed + Dial(DialIds.WalkSpeed));
+    float RunSpeed => Mathf.Max(0f, profile.runSpeed + Dial(DialIds.RunSpeed));
+    float SprintSpeed => Mathf.Max(0f, profile.sprintSpeed + Dial(DialIds.SprintSpeed));
+    float CrouchSpeed => Mathf.Max(0f, profile.crouchSpeed + Dial(DialIds.CrouchSpeed));
+
+    // Accel and friction share one dial each across ground and air: the burden track lowers both together so
+    // top speed (their ratio) holds and only responsiveness suffers (Movement_Tuning_Pass).
+    float GroundAccel => Mathf.Max(0f, profile.groundAccel + Dial(DialIds.Accel));
+    float AirAccel => Mathf.Max(0f, profile.airAccel + Dial(DialIds.Accel));
+    float GroundFriction => Mathf.Max(0f, profile.groundFriction + Dial(DialIds.Friction));
+    float MomentumFriction => Mathf.Max(0f, profile.momentumFriction + Dial(DialIds.Friction));
+
+    float JumpSpeed => Mathf.Max(0f, profile.jumpSpeed + Dial(DialIds.JumpSpeed));
+    float AirJumpSpeed => Mathf.Max(0f, profile.airJumpSpeed + Dial(DialIds.AirJumpSpeed));
+    float AirTurn => Mathf.Max(0f, profile.airTurnDegreesPerSecond + Dial(DialIds.AirTurn));
+    float AirStrafe => Mathf.Max(0f, profile.airStrafeSpeed + Dial(DialIds.AirStrafe));
+    int WallJumps => Mathf.Max(0, profile.wallJumps + Mathf.RoundToInt(Dial(DialIds.WallJumps)));
+    int Mantles => Mathf.Max(0, profile.mantles + Mathf.RoundToInt(Dial(DialIds.Mantles)));
 
     // The same decision ResolveWishSpeed serves, exposed so MovementSystem publishes IsRunning and
     // IsSprinting from what the player chose rather than from how fast momentum carried them.
@@ -532,14 +558,14 @@ public class ParkourLocomotionHandler : LocomotionHandler
         // Neutral stick leaves axis zero, so everything is "across" and decays at the normal
         // coefficient. Letting go still stops you exactly as it always did.
         float alongFriction = along.magnitude > ResolveWishSpeed()
-            ? profile.momentumFriction
-            : profile.groundFriction;
+            ? MomentumFriction
+            : GroundFriction;
 
         // Both scales are computed from TOTAL speed, the way the single-regime version was. That
         // is what makes momentumFriction == groundFriction restore the old behaviour EXACTLY:
         // equal coefficients give equal scales, and the vector shrinks uniformly as before.
         float alongScale = FrictionScale(speed, alongFriction, dt);
-        float acrossScale = FrictionScale(speed, profile.groundFriction, dt);
+        float acrossScale = FrictionScale(speed, GroundFriction, dt);
 
         Vector3 result = along * alongScale + across * acrossScale;
 
@@ -571,7 +597,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
     {
         if (wishSpeed <= 0f) return;
 
-        float accel = grounded ? profile.groundAccel : profile.airAccel;
+        float accel = grounded ? GroundAccel : AirAccel;
         if (!grounded) wishSpeed = Mathf.Min(wishSpeed, profile.airSpeedCap);
 
         float current = Vector3.Dot(currentVelocity, wishDir);
@@ -595,7 +621,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
     /// </summary>
     void ApplyAirTurn(float dt)
     {
-        float rate = profile.airTurnDegreesPerSecond * forwardCommitment;
+        float rate = AirTurn * forwardCommitment;
         if (rate <= 0f) return;
 
         Vector3 flat = new Vector3(currentVelocity.x, 0f, currentVelocity.z);
@@ -627,10 +653,11 @@ public class ParkourLocomotionHandler : LocomotionHandler
     /// </summary>
     void ApplyAirStrafe(float dt)
     {
-        if (profile.airStrafeSpeed <= 0f) return;
+        float strafe = AirStrafe;
+        if (strafe <= 0f) return;
 
         float current = Vector3.Dot(currentVelocity, cameraRight);
-        float target = rawLateral * profile.airStrafeSpeed;
+        float target = rawLateral * strafe;
 
         float rate = Mathf.Abs(target) >= Mathf.Abs(current)
             ? profile.airStrafeAccel
@@ -718,7 +745,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
     bool TryMantle()
     {
         if (!profile.mantleEnabled || assistant == null) return false;
-        if (profile.mantles <= 0 || mantlesUsed >= profile.mantles) return false;
+        if (Mantles <= 0 || mantlesUsed >= Mantles) return false;
         if (Time.time < mantleBlockedUntil) return false;
 
         LedgeInfo ledge = assistant.Ledge;
@@ -826,7 +853,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
     {
         if (!grounded && Time.time > lastGroundedTime + profile.coyoteTime) return false;
 
-        currentVelocity.y = profile.jumpSpeed;
+        currentVelocity.y = JumpSpeed;
 
         // Spent, or the coyote window hands out a second jump from the same ledge.
         lastGroundedTime = Mathf.NegativeInfinity;
@@ -846,8 +873,8 @@ public class ParkourLocomotionHandler : LocomotionHandler
     /// </summary>
     bool TryWallJump()
     {
-        if (assistant == null || profile.wallJumps <= 0) return false;
-        if (wallJumpsUsed >= profile.wallJumps) return false;
+        if (assistant == null || WallJumps <= 0) return false;
+        if (wallJumpsUsed >= WallJumps) return false;
 
         ParkourContact wall = NearestWall();
         if (!wall.Detected) return false;
@@ -900,7 +927,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
     {
         if (airJumpsUsed >= AirJumpBudget()) return false;
 
-        currentVelocity.y = profile.airJumpSpeed;
+        currentVelocity.y = AirJumpSpeed;
 
         airJumpsUsed++;
         RefillOnAirJump();
@@ -947,7 +974,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
         Blackboard blackboard = movementSystem.Brain != null ? movementSystem.Brain.Blackboard : null;
         bool granted = blackboard != null && blackboard.GetBool(BlackboardKey.DoubleJumpGranted);
 
-        return profile.airJumps + (granted ? 1 : 0);
+        return Mathf.Max(0, profile.airJumps + Mathf.RoundToInt(Dial(DialIds.AirJumps))) + (granted ? 1 : 0);
     }
 
     /// <summary>
@@ -956,8 +983,8 @@ public class ParkourLocomotionHandler : LocomotionHandler
     /// silently found no wall indistinguishable from one that found a wall and did nothing.
     /// </summary>
     public int AirJumpsLeft => profile == null ? 0 : Mathf.Max(AirJumpBudget() - airJumpsUsed, 0);
-    public int WallJumpsLeft => profile == null ? 0 : Mathf.Max(profile.wallJumps - wallJumpsUsed, 0);
-    public int MantlesLeft => profile == null ? 0 : Mathf.Max(profile.mantles - mantlesUsed, 0);
+    public int WallJumpsLeft => profile == null ? 0 : Mathf.Max(WallJumps - wallJumpsUsed, 0);
+    public int MantlesLeft => profile == null ? 0 : Mathf.Max(Mantles - mantlesUsed, 0);
     public bool WallInReach => assistant != null && NearestWall().Detected;
 
     /// <summary>
@@ -1140,7 +1167,7 @@ public class ParkourLocomotionHandler : LocomotionHandler
         // player switches to a pure sidestep their velocity is still high while friction bleeds it,
         // and the model would swing to full deflection during exactly the case that should face
         // forward and let the strafe animation do the talking.
-        float blend = forwardCommitment * Mathf.InverseLerp(profile.walkSpeed, profile.runSpeed, HorizontalSpeed);
+        float blend = forwardCommitment * Mathf.InverseLerp(WalkSpeed, RunSpeed, HorizontalSpeed);
         if (blend <= 0f) return 0f;
 
         float angle = Vector3.SignedAngle(cameraForward, wishDir, Vector3.up);

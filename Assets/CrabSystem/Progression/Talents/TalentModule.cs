@@ -19,6 +19,7 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
 
     private ControllerBrain brain;
     private RPGSystem rpg;
+    private AbilitySystem abilities;
 
     private readonly List<TalentSlot> slots = new();
     private readonly HashSet<string> learned = new();
@@ -50,6 +51,7 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
         }
 
         rpg = brain.RPG;
+        abilities = brain.Abilities;
         if (rpg != null) rpg.OnLevelChanged += HandleLevelChanged;
 
         ApplyAll();
@@ -139,7 +141,43 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
         return null;
     }
 
+    public bool SocketOpen(TalentSlot slot, int index)
+    {
+        if (slot?.Tree == null || index < 0 || index >= slot.Tree.sockets.Count) return false;
+        TalentNode unlock = slot.Tree.sockets[index].unlockedBy;
+        return unlock == null || slot.Rank(unlock.nodeId) > 0;
+    }
+
+    public string WhyNotSocket(TalentSlot slot, int index, AbilityDefinition ability)
+    {
+        if (!SocketOpen(slot, index)) return "Socket not open";
+        if (ability == null) return "No ability";
+        RuntimeAbilityManager known = brain.GetModule<RuntimeAbilityManager>();
+        if (known != null && !known.HasAbility(ability.abilityId)) return "Ability not known";
+        return null;
+    }
+
     // ---- Actions ----
+
+    public bool SetSocket(TalentSlot slot, int index, AbilityDefinition ability)
+    {
+        if (WhyNotSocket(slot, index, ability) != null) return false;
+
+        slot.Sockets[index] = ability.abilityId;
+        ApplySockets(slot);
+        Notify();
+        return true;
+    }
+
+    public bool ClearSocket(TalentSlot slot, int index)
+    {
+        if (slot == null || !slot.Sockets.Remove(index)) return false;
+
+        ApplySockets(slot);
+        Notify();
+        return true;
+    }
+
 
     public bool Spend(TalentSlot slot, TalentNode node)
     {
@@ -171,6 +209,7 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
 
         ClearSlot(slot);
         slot.Ranks.Clear();
+        ApplySockets(slot);
         Notify();
         return true;
     }
@@ -182,6 +221,7 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
 
         ClearSlot(slot);
         slot.Ranks.Clear();
+        slot.Sockets.Clear();
         learned.Add(tree.treeId);
         slot.Tree = tree;
         Notify();
@@ -247,6 +287,8 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
     {
         if (slot.Tree == null) return;
 
+        ApplySockets(slot);
+
         foreach (TalentPlacement placement in slot.Tree.placements)
         {
             if (placement?.node == null) continue;
@@ -260,12 +302,31 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
     {
         if (slot.Tree == null) return;
 
+        for (int i = 0; i < slot.Tree.sockets.Count; i++) abilities?.Modifiers.RemoveTag(SocketKey(slot, i));
+
         foreach (TalentPlacement placement in slot.Tree.placements)
         {
             if (placement?.node == null || TakenElsewhere(slot, placement.node.nodeId)) continue;
             SetRewards(placement.node, 0);
         }
     }
+
+    // A filled, open socket gives its ability the keyword for this character; anything else takes it back.
+    private void ApplySockets(TalentSlot slot)
+    {
+        if (abilities == null) return;
+
+        for (int i = 0; i < slot.Tree.sockets.Count; i++)
+        {
+            KeywordDefinition keyword = slot.Tree.sockets[i].keyword;
+            bool filled = slot.Sockets.TryGetValue(i, out string abilityId) && SocketOpen(slot, i) && keyword != null;
+
+            if (filled) abilities.Modifiers.SetTag(SocketKey(slot, i), new AbilityFilter { abilityId = abilityId }, keyword.keywordId);
+            else abilities.Modifiers.RemoveTag(SocketKey(slot, i));
+        }
+    }
+
+    private static string SocketKey(TalentSlot slot, int index) => $"socket:{slot.Tree.treeId}:{index}";
 
     // The index keeps two rewards on one node from sharing a key when they feed the same stat.
     private void SetRewards(TalentNode node, int rank)
@@ -296,6 +357,7 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
         {
             var record = new SlotRecord { treeId = slot.Tree != null ? slot.Tree.treeId : "" };
             foreach (KeyValuePair<string, int> rank in slot.Ranks) record.spent.Add(new SpentRecord { nodeId = rank.Key, rank = rank.Value });
+            foreach (KeyValuePair<int, string> socket in slot.Sockets) record.sockets.Add(new SocketRecord { index = socket.Key, abilityId = socket.Value });
             data.slots.Add(record);
         }
 
@@ -325,6 +387,7 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
     {
         slot.Tree = null;
         slot.Ranks.Clear();
+        slot.Sockets.Clear();
         if (record == null || string.IsNullOrEmpty(record.treeId)) return;
 
         slot.Tree = rules.FindTree(record.treeId);
@@ -339,6 +402,12 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
             TalentPlacement placement = slot.Tree.Find(spent.nodeId);
             if (placement == null || spent.rank <= 0) continue;
             slot.Ranks[spent.nodeId] = Mathf.Min(spent.rank, placement.node.maxRank);
+        }
+
+        foreach (SocketRecord socket in record.sockets)
+        {
+            if (socket.index >= 0 && socket.index < slot.Tree.sockets.Count && !string.IsNullOrEmpty(socket.abilityId))
+                slot.Sockets[socket.index] = socket.abilityId;
         }
     }
 
@@ -355,6 +424,14 @@ public class TalentModule : MonoBehaviour, IBrainModule, ISaveable, ITalentPoint
     {
         public string treeId;
         public List<SpentRecord> spent = new();
+        public List<SocketRecord> sockets = new();
+    }
+
+    [Serializable]
+    private class SocketRecord
+    {
+        public int index;
+        public string abilityId;
     }
 
     [Serializable]

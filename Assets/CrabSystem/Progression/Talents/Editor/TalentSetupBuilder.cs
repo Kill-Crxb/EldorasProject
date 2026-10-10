@@ -14,6 +14,7 @@ public static class TalentSetupBuilder
     const string Tag = "TalentSetup";
     const string RulesPath = "Assets/Database/Talents/TalentRules.asset";
     const string PlayerPath = "Assets/Database/Characters/PlayerCharacter/Base_PC.prefab";
+    const string NpcPath = "Assets/Database/Characters/Base_NPC.prefab";
     const string PageId = "talents";
     const string TemplatePageId = "spellbook";
 
@@ -22,6 +23,8 @@ public static class TalentSetupBuilder
     {
         TalentRules rules = Rules();
         AddModule(rules);
+        AddKeywordModule(PlayerPath);
+        AddKeywordModule(NpcPath);
         AddPage();
         AssetDatabase.SaveAssets();
         Debug.Log($"[{Tag}] Done. Make trees in Tools → Crab → Wizards → Talents, or Tools → Crab → Talents → Create Test Trees.");
@@ -70,6 +73,25 @@ public static class TalentSetupBuilder
         PrefabUtility.SaveAsPrefabAsset(root, PlayerPath);
         PrefabUtility.UnloadPrefabContents(root);
         Debug.Log($"[{Tag}] player: TalentModule {(created ? "added to" : "rewired on")} Base_PC; level cap {rules.levelCap}.");
+    }
+
+    // Keywords work on every fighter (an NPC's Ambushing counts too), so both bases carry the module.
+    static void AddKeywordModule(string path)
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(path);
+        var abilities = root.GetComponentInChildren<AbilitySystem>(true);
+        if (abilities == null || root.GetComponentInChildren<KeywordModule>(true) != null)
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+            return;
+        }
+
+        var go = new GameObject("KeywordModule");
+        go.transform.SetParent(abilities.transform.parent, false);
+        go.AddComponent<KeywordModule>();
+        PrefabUtility.SaveAsPrefabAsset(root, path);
+        PrefabUtility.UnloadPrefabContents(root);
+        Debug.Log($"[{Tag}] keywords: KeywordModule added to {System.IO.Path.GetFileNameWithoutExtension(path)}.");
     }
 
     // A copy of the Spellbook page's button and a new slot holding the TalentPanelView, registered as a page.

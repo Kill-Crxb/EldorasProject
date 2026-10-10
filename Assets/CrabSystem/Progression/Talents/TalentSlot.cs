@@ -12,6 +12,9 @@ namespace NinjaGame.Progression
         // nodeId → rank.
         public readonly Dictionary<string, int> Ranks = new();
 
+        // Socket index → the abilityId put in it.
+        public readonly Dictionary<int, string> Sockets = new();
+
         public TalentSlot(int index)
         {
             Index = index;

@@ -84,6 +84,8 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 6dacbaf720087474e976e2c25a7e0c0e, type: 3}
   abilityType: 2
   abilityCategory: 2
+  tags:
+  - dodge
   targetType: 4
   range: 0
   requiresLineOfSight: 0
@@ -97,6 +99,7 @@ MonoBehaviour:
     directionSource: 1
     direction: {x: 0, y: 1, z: 1}
     speed: 8
+    speedStatId: mov.dash_speed
     duration: 2
     speedCap: 9.2
     frictionHoliday: 0.25

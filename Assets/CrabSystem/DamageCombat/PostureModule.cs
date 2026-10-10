@@ -24,14 +24,20 @@ public class PostureModule : MonoBehaviour, IBrainModule, IBarSource
     private float recoverAt;
     private float brokenUntil = -999f;
 
+    private IStatProvider stats;
+
     public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
     public float Current => current;
-    public float Max => maxPosture;
-    public float Fraction => maxPosture > 0f ? current / maxPosture : 0f;
+    // Authored size plus the cmb.max_posture dial, so talents and gear grow or shrink the bar.
+    public float Max => Mathf.Max(1f, maxPosture + DialIds.Read(stats, DialIds.MaxPosture));
+    public float Fraction => Mathf.Clamp01(current / Max);
     public float BreakSeconds => breakSeconds;
     public bool IsBroken => Time.time < brokenUntil;
 
-    public void Initialize(ControllerBrain brain) { }
+    public void Initialize(ControllerBrain brain)
+    {
+        stats = brain.Stats;
+    }
 
     public void LateInitialize() { }
 
@@ -46,9 +52,11 @@ public class PostureModule : MonoBehaviour, IBrainModule, IBarSource
             return;
         }
 
+        current = Mathf.Min(current, Max);
         if (current <= 0f || Time.time < recoverAt) return;
 
-        current = Mathf.Max(0f, current - recoveryPerSecond * Time.deltaTime);
+        float recovery = Mathf.Max(0f, recoveryPerSecond + DialIds.Read(stats, DialIds.PostureRecovery));
+        current = Mathf.Max(0f, current - recovery * Time.deltaTime);
     }
 
     // True when this fills the bar: the caller breaks the guard. A broken fighter takes no more.
@@ -56,9 +64,10 @@ public class PostureModule : MonoBehaviour, IBrainModule, IBarSource
     {
         if (!isEnabled || amount <= 0f || IsBroken) return false;
 
-        current = Mathf.Min(maxPosture, current + amount);
+        float max = Max;
+        current = Mathf.Min(max, current + amount);
         recoverAt = Time.time + recoveryDelay;
-        if (current < maxPosture) return false;
+        if (current < max) return false;
 
         brokenUntil = Time.time + breakSeconds;
         return true;

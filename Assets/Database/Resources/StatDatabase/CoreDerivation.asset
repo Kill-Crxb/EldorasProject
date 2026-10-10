@@ -189,3 +189,45 @@ MonoBehaviour:
       - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
   - sourceStatId: character.level
     breakpoints: []
+  - sourceStatId: equip.load
+    breakpoints:
+    - threshold: 1
+      rewards:
+      - {fileID: 11400000, guid: 396e9110f23ce6d0480c238f576d3d7c, type: 2}
+      - {fileID: 11400000, guid: 118718548eec41e4fa612348d2a69019, type: 2}
+    - threshold: 2
+      rewards:
+      - {fileID: 11400000, guid: b31df1ddbd85f96f6bc52d38ad19b145, type: 2}
+    - threshold: 3
+      rewards:
+      - {fileID: 11400000, guid: 08e8bc554563619a998de2efebfe1e7d, type: 2}
+    - threshold: 4
+      rewards:
+      - {fileID: 11400000, guid: fe886f8cdb1f95d16a199ed5b1da8bbe, type: 2}
+      - {fileID: 11400000, guid: 6ae72cbf4baf6c84ba05e3891a2bfd07, type: 2}
+    - threshold: 5
+      rewards:
+      - {fileID: 11400000, guid: 18a214c83a8b05ce6b98a9a305906472, type: 2}
+    - threshold: 6
+      rewards:
+      - {fileID: 11400000, guid: 28f546bc9b1324398a4a7275691fe192, type: 2}
+    - threshold: 7
+      rewards:
+      - {fileID: 11400000, guid: 115a9b8f1011332dc98feff382189ca7, type: 2}
+    - threshold: 8
+      rewards:
+      - {fileID: 11400000, guid: 2fdf1ef3d81565798bc7db0fe9f2f06c, type: 2}
+    - threshold: 9
+      rewards:
+      - {fileID: 11400000, guid: b81fd1941fc71079b878f65683d01b51, type: 2}
+    - threshold: 10
+      rewards:
+      - {fileID: 11400000, guid: 041873812a13d76828a025fe65efd4f4, type: 2}
+      - {fileID: 11400000, guid: c4d3d2c811e84b85391ba355905b8a70, type: 2}
+      - {fileID: 11400000, guid: 92dfe5eb5ab41fb598ddaf5f3907f107, type: 2}
+    - threshold: 11
+      rewards:
+      - {fileID: 11400000, guid: a588c9df8eb1799889fa736fb733b896, type: 2}
+    - threshold: 12
+      rewards:
+      - {fileID: 11400000, guid: 7d6532f67da038144bcdb129a9f1add8, type: 2}

@@ -15,10 +15,12 @@ MonoBehaviour:
   effectCue: 1
   waitForAnimUnlock: 1
   maxDuration: 2
+  invulnSeconds: 0
   castWhileMoving: 0
   useRootMotion: 1
   rootMotionScale: 1
   animationTrigger: BasicAttack3
+  directionalTrigger: 0
   castEffectPrefab: {fileID: 0}
   hitEffectPrefab: {fileID: 0}
   projectileData: {fileID: 0}
@@ -71,12 +73,15 @@ MonoBehaviour:
     feel: 3
     bypass: 0
   routes: []
+  strikes: []
   abilityId: BasicAttack3
   abilityName: BasicAttack3
   description: 
   icon: {fileID: 21300000, guid: ec43947907fb8664ebb77fd084710de8, type: 3}
   abilityType: 0
   abilityCategory: 1
+  tags:
+  - basic
   targetType: 1
   range: 5
   requiresLineOfSight: 0
@@ -106,4 +111,3 @@ MonoBehaviour:
   targetConditions: []
   chargeAbility: {fileID: 0}
   chargeThreshold: 0.8
-  strikes: []

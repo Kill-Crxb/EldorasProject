@@ -24,6 +24,9 @@ MonoBehaviour:
   secondsPerSourcePoint: 5
   regenPerSecond: 0
   regenDelay: 1
+  refillWholeUnits: 0
+  regenStatId: res.stamina_regen
+  regenDelayStatId: res.stamina_regen_delay
   resourceColor: {r: 0.4412469, g: 0.8207547, b: 0.081301175, a: 1}
   icon: {fileID: 0}
   depletedSound: {fileID: 0}
