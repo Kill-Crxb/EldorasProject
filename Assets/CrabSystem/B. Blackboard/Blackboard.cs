@@ -40,6 +40,10 @@ public class Blackboard
     private Dictionary<int, float> floats;
     private Dictionary<int, int> ints;
 
+    // A held flag (a capability grant, a status's denial) is raised while any source claims it. Keyed by source,
+    // so re-claiming under one key is a no-op and a release can only drop its own claim.
+    private readonly Dictionary<int, HashSet<string>> claims = new();
+
     // Change events for reactive systems
     public event Action<int, bool> OnBoolChanged;
     public event Action<int, float> OnFloatChanged;
@@ -216,6 +220,7 @@ public class Blackboard
         if (bools != null) bools.Clear();
         if (floats != null) floats.Clear();
         if (ints != null) ints.Clear();
+        claims.Clear();
 
         if (debugLogging)
             Debug.Log($"[Blackboard:{ownerName}] Cleared all facts");
@@ -247,4 +252,29 @@ public class Blackboard
     }
 
     #endregion
+
+    // One ledger for every held flag: statuses claim under status:{id}, rewards under their source key.
+    public void Claim(int key, string sourceKey)
+    {
+        if (!claims.TryGetValue(key, out HashSet<string> sources))
+        {
+            sources = new HashSet<string>();
+            claims[key] = sources;
+        }
+
+        sources.Add(sourceKey);
+        SetBool(key, true);
+    }
+
+    public void Release(int key, string sourceKey)
+    {
+        if (!claims.TryGetValue(key, out HashSet<string> sources)) return;
+        if (!sources.Remove(sourceKey)) return;
+        if (sources.Count > 0) return;
+
+        claims.Remove(key);
+        SetBool(key, false);
+    }
+
+    public bool IsClaimed(int key) => claims.ContainsKey(key);
 }

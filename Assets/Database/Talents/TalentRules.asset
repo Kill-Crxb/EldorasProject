@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6afb0b44e4ae8a66d8308f1a3fcf2624, type: 3}
+  m_Name: TalentRules
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentRules
+  slots: 3
+  pointsPerLevel: 2
+  levelCap: 30
+  tierGates: 00000000050000000a0000000f00000014000000190000001e000000i
+  columns: 5
+  trees:
+  - {fileID: 11400000, guid: d8a4077cad9cdb9c390c318d126adeee, type: 2}
+  - {fileID: 11400000, guid: 83200d6ea37e771d9b2c304a9667e6a0, type: 2}
+  knownAtStart:
+  - {fileID: 11400000, guid: d8a4077cad9cdb9c390c318d126adeee, type: 2}
+  - {fileID: 11400000, guid: 83200d6ea37e771d9b2c304a9667e6a0, type: 2}

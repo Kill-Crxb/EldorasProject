@@ -46,9 +46,8 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     private readonly Dictionary<string, StatusInstance> byId = new();
 
     // Blackboard facts are shared ground. Two statuses asserting "rooted" must not clear it
-    // out from under each other when the first one expires, so hold a count per fact and
-    // only write false when the last claimant lets go.
-    private readonly Dictionary<int, int> flagClaims = new();
+    // out from under each other when the first one expires, so each claims the fact under its
+    // own key on the blackboard's ledger (Blackboard.Claim), shared with talent grants.
 
     /// <summary>What is currently on this entity. The buff bar reads this.</summary>
     public IReadOnlyList<StatusInstance> Active => active;
@@ -280,31 +279,9 @@ public class StatusSystem : MonoBehaviour, IBrainModule
             bool held = previousStacks >= threshold;
             bool holds = currentStacks >= threshold;
 
-            if (!held && holds) ClaimFlag(new BlackboardKey(flags[i].fact).hash);
-            if (held && !holds) ReleaseFlag(new BlackboardKey(flags[i].fact).hash);
+            if (!held && holds) blackboard?.Claim(new BlackboardKey(flags[i].fact).hash, instance.Definition.SourceKey);
+            if (held && !holds) blackboard?.Release(new BlackboardKey(flags[i].fact).hash, instance.Definition.SourceKey);
         }
-    }
-
-    private void ClaimFlag(int key)
-    {
-        flagClaims.TryGetValue(key, out int claims);
-        flagClaims[key] = claims + 1;
-
-        if (claims == 0) blackboard?.SetBool(key, true);
-    }
-
-    private void ReleaseFlag(int key)
-    {
-        if (!flagClaims.TryGetValue(key, out int claims)) return;
-
-        if (claims > 1)
-        {
-            flagClaims[key] = claims - 1;
-            return;
-        }
-
-        flagClaims.Remove(key);
-        blackboard?.SetBool(key, false);
     }
 
     #endregion
@@ -322,7 +299,6 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         // up anyway: contributions live in a store that is being destroyed alongside this.
         active.Clear();
         byId.Clear();
-        flagClaims.Clear();
 
         OnStatusApplied = null;
         OnStatusRemoved = null;
