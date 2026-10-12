@@ -42,6 +42,8 @@ public static class DialsBuilder
         (DialIds.MaxPosture, "Max Posture", "PSM", "Added to the posture bar."),
         (DialIds.PostureRecovery, "Posture Recovery", "PSR", "Posture recovered per second, added."),
         (DialIds.DodgeInvuln, "Dodge I-Frames", "IFR", "Seconds added to an evasive move's invulnerability."),
+        (DialIds.CcPower, "CC Power", "CCP", "Lengthens the crowd control you apply (against the target's tenacity)."),
+        (DialIds.Tenacity, "Tenacity", "TEN", "Shortens crowd control on you (against the source's CC power)."),
         (DialIds.HealthRegen, "Health Regen", "HRG", "Added to health refill per second."),
         (DialIds.HealthRegenDelay, "Health Regen Delay", "HRD", "Seconds added before health refills."),
         (DialIds.StaminaRegen, "Stamina Regen", "SRG", "Added to stamina refill per second."),

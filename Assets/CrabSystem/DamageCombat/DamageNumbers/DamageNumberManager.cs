@@ -4,7 +4,8 @@ using UnityEngine;
 // Spawns the floating combat text (GI-73). A hit shows what happened to it, read from the target's
 // DamageSystem.LastHit: glancing (small, grey), counter, advantage, the keyword dice that added to it
 // ("+4 Cruelty"), what armour absorbed, blocked / parried / evaded. Statuses landing on anyone show their name and
-// stacks ("Sundered ×2"), or "Resisted" when immunity or resistance refused them; hit states (tag control) don't,
+// stacks ("Sundered ×2"), "Resisted" when immunity, resistance or diminishing returns refused them, "Saved" when a
+// saving throw weakened them; hit states (tag hitstate) don't,
 // the reaction already shows them.
 //
 // Setup: on Manager_Brain, with the DamageNumber prefab assigned. Call sites: DamageEffect, ProjectilePayload.
@@ -71,7 +72,8 @@ public class DamageNumberManager : MonoBehaviour
             StatusSystem bearer = statuses;
             bearer.OnStatusApplied += status => ShowStatus(bearer, status.Definition, status.Stacks);
             bearer.OnStacksChanged += status => ShowStatus(bearer, status.Definition, status.Stacks);
-            bearer.OnStatusResisted += definition => ShowResisted(bearer, definition);
+            bearer.OnStatusResisted += definition => ShowWord(bearer, definition, "Resisted");
+            bearer.OnStatusSaved += definition => ShowWord(bearer, definition, "Saved");
         }
     }
 
@@ -116,19 +118,20 @@ public class DamageNumberManager : MonoBehaviour
 
     private void ShowStatus(StatusSystem bearer, StatusDefinition status, int stacks)
     {
-        if (this == null || bearer == null || status == null || status.HasTag("control")) return;
+        if (this == null || bearer == null || status == null || status.HasTag("hitstate")) return;
 
         string name = string.IsNullOrEmpty(status.displayName) ? status.id : status.displayName;
         string text = stacks > 1 ? $"{name} ×{stacks}" : name;
         Show(text, StatusPoint(bearer), statusScale, status.beneficial ? beneficialColor : harmfulColor);
     }
 
-    private void ShowResisted(StatusSystem bearer, StatusDefinition status)
+    // "Resisted X" when immunity, resistance or diminishing returns refused it; "Saved X" when a save weakened it.
+    private void ShowWord(StatusSystem bearer, StatusDefinition status, string word)
     {
         if (this == null || bearer == null || status == null) return;
 
         string name = string.IsNullOrEmpty(status.displayName) ? status.id : status.displayName;
-        Show($"Resisted {name}", StatusPoint(bearer), statusScale, resistedColor);
+        Show($"{word} {name}", StatusPoint(bearer), statusScale, resistedColor);
     }
 
     private Vector3 StatusPoint(StatusSystem bearer)

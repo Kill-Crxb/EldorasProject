@@ -15,8 +15,15 @@ MonoBehaviour:
   id: crippled
   displayName: Crippled
   icon: {fileID: 0}
+  description: Slowed; at more stacks it can't attack, block or act.
   beneficial: 0
+  tags: []
+  control: 4
+  save: 1
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 8
+  durationFrames: 0
   stacking: 1
   maxStacks: 3
   contributions: []
@@ -28,3 +35,4 @@ MonoBehaviour:
   - fact: CannotAct
     minStacks: 3
   auraVfx: {fileID: 0}
+  auraAnchor: 3

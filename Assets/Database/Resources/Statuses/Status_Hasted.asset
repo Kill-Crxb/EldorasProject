@@ -15,7 +15,13 @@ MonoBehaviour:
   id: hasted
   displayName: Hasted
   icon: {fileID: 0}
+  description: Sprint granted.
   beneficial: 1
+  tags: []
+  control: 0
+  save: 0
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 12
   durationFrames: 0
   stacking: 0
@@ -25,3 +31,4 @@ MonoBehaviour:
   - fact: SprintGranted
     minStacks: 1
   auraVfx: {fileID: 0}
+  auraAnchor: 3

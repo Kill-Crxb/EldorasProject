@@ -15,9 +15,15 @@ MonoBehaviour:
   id: guardbroken
   displayName: Guard Broken
   icon: {fileID: 0}
+  description: "Guard broken \u2014 open to the next hit."
   beneficial: 0
   tags:
   - control
+  - hitstate
+  control: 0
+  save: 0
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 0.5
   durationFrames: 60
   stacking: 0
@@ -29,3 +35,4 @@ MonoBehaviour:
   - fact: CannotBlock
     minStacks: 1
   auraVfx: {fileID: 0}
+  auraAnchor: 3

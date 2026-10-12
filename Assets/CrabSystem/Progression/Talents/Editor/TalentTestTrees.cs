@@ -91,7 +91,7 @@ public static class TalentTestTrees
         // Sinister abilities becoming Shadow Strike.
         CrabWizardGUI.EnsureFolder(TestAbilityFolder);
         AbilityDefinition stoneskin = Load<AbilityDefinition>($"{AbilityFolder}/Spells/CastStoneskin.asset");
-        AbilityDefinition riposte = TestAbility("KatanaAbilities/DashThrust", "ShadowRiposte", "test_shadow_riposte", "Shadow Riposte");
+        AbilityDefinition riposte = TestAbility("KatanaAbilities/BasicAttack1", "ShadowRiposte", "test_shadow_riposte", "Shadow Riposte");
         AbilityDefinition shadowStrike = TestAbility("KatanaAbilities/BasicAttack3", "ShadowStrike", "test_shadow_strike", "Shadow Strike");
         KeywordDefinition ironclad = Keyword("ironclad", "Ironclad", "While you have Stoneskin: +1d4 damage.", KeywordCondition.SelfHasStatus, 0, false);
         ironclad.conditionStatus = Status("Status_Stoneskin");
@@ -103,6 +103,12 @@ public static class TalentTestTrees
         Node(tree, "test_bloodthirst", "Bloodthirst", TalentCategory.Trigger, 4, 3, 1, OnKill(tree));
         Node(tree, "test_stone_fist", "Stone Fist", TalentCategory.Keyword, 5, 0, 1, Grant(tree, ironclad, "basic"));
         Node(tree, "test_shadow_strikes", "Shadow Strikes", TalentCategory.Modifier, 5, 3, 1, Replace(tree, "sinister", shadowStrike));
+
+        // Crowd control: a stun to test diminishing returns and saves on the Mirror, and immunity to hard CC.
+        StatusDefinition stunned = ControlSetupBuilder.Stunned();
+        Node(tree, "test_concussive_thrust", "Concussive Thrust", TalentCategory.Trigger, 6, 1, 1, StunOnThrust(tree, stunned));
+        Node(tree, "test_stalwart", "Stalwart", TalentCategory.Capability, 6, 4, 1, ImmuneToHard(tree));
+        Node(tree, "test_contagion", "Contagion", TalentCategory.Trigger, 6, 0, 1, SpreadOnKill(tree, sundered));
 
         TalentNode shadow = Node(tree, "test_shadow", "Shadow", TalentCategory.Capstone, 7, 1, 1, Bonus(tree, "character.max_movement_charges", 1), 3);
         TalentNode stone = Node(tree, "test_stone", "Stone", TalentCategory.Capstone, 7, 3, 1, Bonus(tree, "character.max_health", 20), 3);
@@ -166,11 +172,13 @@ public static class TalentTestTrees
 
     static T Load<T>(string path) where T : Object => AssetDatabase.LoadAssetAtPath<T>(path);
 
-    // A copy of a katana ability under a new id, so a test talent has an ability of its own to proc or swap in.
+    // A fresh copy of a katana ability under a new id each run, so a test talent has an ability of its own to proc or
+    // swap in, and a change of source here takes effect.
     static AbilityDefinition TestAbility(string source, string file, string id, string displayName)
     {
         string path = $"{TestAbilityFolder}/{file}.asset";
-        if (Load<AbilityDefinition>(path) == null) AssetDatabase.CopyAsset($"{AbilityFolder}/{source}.asset", path);
+        AssetDatabase.DeleteAsset(path);
+        AssetDatabase.CopyAsset($"{AbilityFolder}/{source}.asset", path);
 
         var ability = Load<AbilityDefinition>(path);
         ability.abilityId = id;
@@ -212,6 +220,42 @@ public static class TalentTestTrees
         so.FindProperty("trigger").enumValueIndex = (int)TriggerEvent.Kill;
         so.FindProperty("cooldownFilter").FindPropertyRelative("abilityId").stringValue = "DashThrust";
         so.FindProperty("cooldownSeconds").floatValue = 5f;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
+    }
+
+    static Reward StunOnThrust(TalentTree tree, StatusDefinition stunned)
+    {
+        var reward = Inline<TriggerReward>(tree, "Trigger_stun");
+        var so = new SerializedObject(reward);
+        so.FindProperty("trigger").enumValueIndex = (int)TriggerEvent.HitLanded;
+        so.FindProperty("filterAbility").boolValue = true;
+        so.FindProperty("ability").FindPropertyRelative("abilityId").stringValue = "DashThrust";
+        so.FindProperty("applyStatus").objectReferenceValue = stunned;
+        so.FindProperty("statusOnTarget").boolValue = true;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
+    }
+
+    static Reward SpreadOnKill(TalentTree tree, StatusDefinition status)
+    {
+        var reward = Inline<TriggerReward>(tree, $"Spread_{status.id}");
+        var so = new SerializedObject(reward);
+        so.FindProperty("trigger").enumValueIndex = (int)TriggerEvent.Kill;
+        so.FindProperty("spreadStatus").objectReferenceValue = status;
+        so.FindProperty("spreadRadius").floatValue = 8f;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
+    }
+
+    static Reward ImmuneToHard(TalentTree tree)
+    {
+        var reward = Inline<StatusModifierReward>(tree, "Immune_hard");
+        var so = new SerializedObject(reward);
+        SerializedProperty filter = so.FindProperty("filter");
+        filter.FindPropertyRelative("matchControl").boolValue = true;
+        filter.FindPropertyRelative("control").enumValueIndex = (int)ControlCategory.Hard;
+        so.FindProperty("immune").boolValue = true;
         so.ApplyModifiedPropertiesWithoutUndo();
         return reward;
     }

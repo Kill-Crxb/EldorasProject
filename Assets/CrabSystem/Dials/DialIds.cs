@@ -28,6 +28,8 @@ public static class DialIds
     public const string MaxPosture = "cmb.max_posture";
     public const string PostureRecovery = "cmb.posture_recovery";
     public const string DodgeInvuln = "cmb.dodge_invuln";
+    public const string CcPower = "cmb.cc_power";
+    public const string Tenacity = "cmb.tenacity";
 
     // Resources (CombatDials) — per second and seconds, named on each ResourceDefinition.
     public const string HealthRegen = "res.health_regen";

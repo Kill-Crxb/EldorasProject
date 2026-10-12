@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8895314203955424591
+--- !u!114 &-9092285460878935252
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -9,36 +9,39 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_deep_breath
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_deep_breath
-  displayName: Deep Breath
-  icon: {fileID: 0}
-  category: 0
-  description: 
-  maxRank: 5
-  costPerRank: 1
-  rewards:
-  - {fileID: -3130481879969480150}
-  keywords: []
---- !u!114 &-8517465989021037278
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
-  m_Name: Bonus_core.body
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
+  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
+  m_Name: Rate_character.max_health
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
   displayName: 
   targetStatIds:
-  - core.body
-  amount: 2
---- !u!114 &-8380921172946848852
+  - character.max_health
+  perPoint: 4
+--- !u!114 &-8738347862075458951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44a0874a92ad7f5f92b152a10aa541a, type: 3}
+  m_Name: Immune_flinched
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatusModifierReward
+  displayName: 
+  filter:
+    status: {fileID: 11400000, guid: d62450a2f5b553a6485f09003f3a6051, type: 2}
+    matchDisposition: 0
+    beneficial: 0
+    tag: 
+    matchControl: 0
+    control: 0
+  side: 0
+  immune: 1
+  seconds: 0
+  stacks: 0
+  perRank: 1
+--- !u!114 &-8353409662259804461
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -48,19 +51,214 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_bloodthirst
+  m_Name: test_stone_fist
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_bloodthirst
-  displayName: Bloodthirst
+  nodeId: test_stone_fist
+  displayName: Stone Fist
   icon: {fileID: 0}
-  category: 5
+  category: 1
   description: 
   maxRank: 1
   costPerRank: 1
   rewards:
-  - {fileID: -2600200939024203955}
+  - {fileID: -2805835808548150882}
   keywords: []
---- !u!114 &-7496180660332296015
+--- !u!114 &-8329278747715684867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_twist_the_knife
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_twist_the_knife
+  displayName: Twist the Knife
+  icon: {fileID: 0}
+  category: 1
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 1688039660321855434}
+  keywords: []
+--- !u!114 &-7613555474020030728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9f5fcc7e2e0fa73faea9e38d49574c6, type: 3}
+  m_Name: Dice_ambushing
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordBonusReward
+  displayName: 
+  keyword: {fileID: 11400000, guid: d3496ea0e7dae7ba48675a47c0f72b67, type: 2}
+  accuracy: 0
+  dice: 1
+  dieFaces: 4
+  flat: 0
+  inflict: {fileID: 0}
+  perRank: 1
+--- !u!114 &-7480510254585055531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_iron_body
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_iron_body
+  displayName: Iron Body
+  icon: {fileID: 0}
+  category: 2
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 7721119543386819142}
+  keywords: []
+--- !u!114 &-7403371317339697113
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
+  m_Name: Rate_character.max_stamina
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
+  displayName: 
+  targetStatIds:
+  - character.max_stamina
+  perPoint: 5
+--- !u!114 &-7091262238432350602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_stoneskin_mantra
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_stoneskin_mantra
+  displayName: Stoneskin Mantra
+  icon: {fileID: 0}
+  category: 3
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 3586680229709345019}
+  keywords: []
+--- !u!114 &-6972293902110650008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18898d17d9b4d3771a42838b993883fc, type: 3}
+  m_Name: Trigger_stun
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TriggerReward
+  displayName: 
+  trigger: 0
+  filterAbility: 1
+  ability:
+    abilityId: DashThrust
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: 
+  status: {fileID: 0}
+  dc: 1
+  internalCooldown: 0
+  resource: {fileID: 0}
+  resourceAmount: 0
+  applyStatus: {fileID: 11400000, guid: 0c46a2af95e3cb1c38d9008d8c764ad8, type: 2}
+  statusOnTarget: 1
+  cooldownFilter:
+    abilityId: 
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: 
+  cooldownSeconds: 0
+  proc: {fileID: 0}
+  procSlot:
+    abilityId: 
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: 
+  procSeconds: 3
+  spreadStatus: {fileID: 0}
+  spreadRadius: 8
+  perRank: 1
+--- !u!114 &-6493505385558228605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_cheap_shot
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_cheap_shot
+  displayName: Cheap Shot
+  icon: {fileID: 0}
+  category: 2
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 8848140673638799987}
+  keywords: []
+--- !u!114 &-6063847604712049453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
+  m_Name: Rate_character.max_health
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
+  displayName: 
+  targetStatIds:
+  - character.max_health
+  perPoint: 4
+--- !u!114 &-6016017026717777371
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -70,13 +268,120 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
-  m_Name: Bonus_character.max_health
+  m_Name: Bonus_character.max_movement_charges
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
   displayName: 
   targetStatIds:
-  - character.max_health
-  amount: 20
---- !u!114 &-6200591248009814567
+  - character.max_movement_charges
+  amount: 1
+--- !u!114 &-5587431713046366811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
+  m_Name: Rate_character.max_stamina
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
+  displayName: 
+  targetStatIds:
+  - character.max_stamina
+  perPoint: 3
+--- !u!114 &-5515895476472225450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_knifes_edge
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_knifes_edge
+  displayName: Knife's Edge
+  icon: {fileID: 0}
+  category: 1
+  description: 
+  maxRank: 3
+  costPerRank: 1
+  rewards:
+  - {fileID: -7613555474020030728}
+  keywords: []
+--- !u!114 &-5344840056139836179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44a0874a92ad7f5f92b152a10aa541a, type: 3}
+  m_Name: Intensify_sundered
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatusModifierReward
+  displayName: 
+  filter:
+    status: {fileID: 11400000, guid: 8985a12537ed4283af1c7e5b5baab014, type: 2}
+    matchDisposition: 0
+    beneficial: 0
+    tag: 
+    matchControl: 0
+    control: 0
+  side: 1
+  immune: 0
+  seconds: 3
+  stacks: 1
+  perRank: 1
+--- !u!114 &-5060891883288003617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_cruelty
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_cruelty
+  displayName: Cruelty
+  icon: {fileID: 0}
+  category: 1
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 2985953729728144894}
+  keywords: []
+--- !u!114 &-4888916472848730218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_steadfast
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_steadfast
+  displayName: Steadfast
+  icon: {fileID: 0}
+  category: 0
+  description: 
+  maxRank: 2
+  costPerRank: 1
+  rewards:
+  - {fileID: 2923691223952884258}
+  keywords: []
+--- !u!114 &-4740066769979255366
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -96,9 +401,54 @@ MonoBehaviour:
   maxRank: 1
   costPerRank: 1
   rewards:
-  - {fileID: -6124794340737013589}
+  - {fileID: 3432436409828327750}
   keywords: []
---- !u!114 &-6125209002169745857
+--- !u!114 &-4091035983274107239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_stalwart
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_stalwart
+  displayName: Stalwart
+  icon: {fileID: 0}
+  category: 4
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 1714446174789377190}
+  keywords: []
+--- !u!114 &-3292664921396048027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dcc7e14e7d355f75adaf9d3cd71d04f, type: 3}
+  m_Name: Grant_ambushing
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordGrantReward
+  displayName: 
+  keyword: {fileID: 11400000, guid: d3496ea0e7dae7ba48675a47c0f72b67, type: 2}
+  filter:
+    abilityId: 
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: basic
+--- !u!114 &-2805835808548150882
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -121,136 +471,7 @@ MonoBehaviour:
     matchSpeedClass: 0
     speedClass: 0
     tag: basic
---- !u!114 &-6124794340737013589
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59d6099d1782ad97b95980e2b72c13b2, type: 3}
-  m_Name: Flag_SprintGranted
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.FlagReward
-  displayName: 
-  fact: SprintGranted
---- !u!114 &-6037621532019533910
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_vigor
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_vigor
-  displayName: Vigor
-  icon: {fileID: 0}
-  category: 0
-  description: 
-  maxRank: 3
-  costPerRank: 1
-  rewards:
-  - {fileID: -5118375216115859856}
-  keywords: []
---- !u!114 &-5938311425389936218
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ea837650e6d77318a8c53cde42c457c, type: 3}
-  m_Name: Cost_sinister
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.AbilityModifierReward
-  displayName: 
-  filter:
-    abilityId: 
-    matchType: 0
-    type: 0
-    matchCategory: 0
-    category: 0
-    matchSpeedClass: 0
-    speedClass: 0
-    tag: sinister
-  resource: {fileID: 11400000, guid: 4cc10ff0880b2ba42a52ff48a27f66ce, type: 2}
-  costDelta: -2
-  cooldownDelta: 0
-  castTimeDelta: 0
-  perRank: 1
---- !u!114 &-5910176414656090059
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_stoneskin_mantra
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_stoneskin_mantra
-  displayName: Stoneskin Mantra
-  icon: {fileID: 0}
-  category: 3
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: -4664770301434661697}
-  keywords: []
---- !u!114 &-5705331505278441168
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_endurance
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_endurance
-  displayName: Endurance
-  icon: {fileID: 0}
-  category: 0
-  description: 
-  maxRank: 5
-  costPerRank: 1
-  rewards:
-  - {fileID: -4304461414038251153}
-  keywords: []
---- !u!114 &-5135553605134167902
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_iron_body
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_iron_body
-  displayName: Iron Body
-  icon: {fileID: 0}
-  category: 2
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: -8517465989021037278}
-  keywords: []
---- !u!114 &-5118375216115859856
+--- !u!114 &-1898015128512524029
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -260,13 +481,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_stamina
+  m_Name: Rate_character.max_health
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
   displayName: 
   targetStatIds:
-  - character.max_stamina
-  perPoint: 3
---- !u!114 &-5022253169003963291
+  - character.max_health
+  perPoint: 5
+--- !u!114 &-1894097721532134295
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -286,9 +507,9 @@ MonoBehaviour:
   maxRank: 5
   costPerRank: 1
   rewards:
-  - {fileID: 8619903715249458046}
+  - {fileID: -6063847604712049453}
   keywords: []
---- !u!114 &-4664770301434661697
+--- !u!114 &-1503263753304523074
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -297,13 +518,97 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b6d7fc16cc5b987d7e117c46fef9eeb, type: 3}
-  m_Name: Ability_cast_stoneskin
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.AbilityReward
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_deep_breath
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_deep_breath
+  displayName: Deep Breath
+  icon: {fileID: 0}
+  category: 0
+  description: 
+  maxRank: 5
+  costPerRank: 1
+  rewards:
+  - {fileID: -7403371317339697113}
+  keywords: []
+--- !u!114 &-1116331846568129315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_shadow_riposte
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_shadow_riposte
+  displayName: Riposte from Shadow
+  icon: {fileID: 0}
+  category: 5
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 6132065326443436025}
+  keywords: []
+--- !u!114 &-1060690009036152607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18898d17d9b4d3771a42838b993883fc, type: 3}
+  m_Name: Spread_sundered
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TriggerReward
   displayName: 
-  ability: {fileID: 11400000, guid: 83fdafc888011dd4b9a0279602b98523, type: 2}
-  source: 4
---- !u!114 &-4304461414038251153
+  trigger: 2
+  filterAbility: 0
+  ability:
+    abilityId: 
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: 
+  status: {fileID: 0}
+  dc: 1
+  internalCooldown: 0
+  resource: {fileID: 0}
+  resourceAmount: 0
+  applyStatus: {fileID: 0}
+  statusOnTarget: 0
+  cooldownFilter:
+    abilityId: 
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: 
+  cooldownSeconds: 0
+  proc: {fileID: 0}
+  procSlot:
+    abilityId: 
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: 
+  procSeconds: 3
+  spreadStatus: {fileID: 11400000, guid: 8985a12537ed4283af1c7e5b5baab014, type: 2}
+  spreadRadius: 8
+  perRank: 1
+--- !u!114 &-1047273023404269666
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -312,14 +617,356 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_stamina
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_endurance
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_endurance
+  displayName: Endurance
+  icon: {fileID: 0}
+  category: 0
+  description: 
+  maxRank: 5
+  costPerRank: 1
+  rewards:
+  - {fileID: 8231532914856648493}
+  keywords: []
+--- !u!114 &-591343875155830119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
+  m_Name: Bonus_core.insight
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
   displayName: 
   targetStatIds:
-  - character.max_stamina
-  perPoint: 3
---- !u!114 &-4193047317791764386
+  - core.insight
+  amount: 2
+--- !u!114 &-56180463629774743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_steady
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_steady
+  displayName: Steady
+  icon: {fileID: 0}
+  category: 0
+  description: 
+  maxRank: 5
+  costPerRank: 1
+  rewards:
+  - {fileID: 6305067433132915256}
+  keywords: []
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26ceec46a7a52cc6e981bd919cabf0eb, type: 3}
+  m_Name: TalentTree_TestNinja
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentTree
+  treeId: test_ninja
+  displayName: Test Ninja
+  icon: {fileID: 0}
+  description: Stamina and movement.
+  isLibrary: 0
+  ownedKeywords: []
+  placements:
+  - node: {fileID: -1503263753304523074}
+    tier: 1
+    column: 0
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 7247169536476172366}
+    tier: 1
+    column: 2
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 3052822561496849657}
+    tier: 1
+    column: 4
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -4740066769979255366}
+    tier: 2
+    column: 0
+    requires:
+    - {fileID: -1503263753304523074}
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -7480510254585055531}
+    tier: 2
+    column: 2
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -56180463629774743}
+    tier: 2
+    column: 4
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 8188033921242398470}
+    tier: 3
+    column: 2
+    requires:
+    - {fileID: -7480510254585055531}
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -1047273023404269666}
+    tier: 3
+    column: 0
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -1894097721532134295}
+    tier: 4
+    column: 2
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 83550181094756025}
+    tier: 5
+    column: 1
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 6564520954952257924}
+    tier: 6
+    column: 3
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 3764692103475491776}
+    tier: 1
+    column: 1
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -6493505385558228605}
+    tier: 1
+    column: 3
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -5515895476472225450}
+    tier: 2
+    column: 1
+    requires:
+    - {fileID: 3764692103475491776}
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -8329278747715684867}
+    tier: 2
+    column: 3
+    requires:
+    - {fileID: -6493505385558228605}
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -5060891883288003617}
+    tier: 3
+    column: 1
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 6693148948766231500}
+    tier: 3
+    column: 3
+    requires:
+    - {fileID: -8329278747715684867}
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -4888916472848730218}
+    tier: 4
+    column: 0
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 2948387399179999930}
+    tier: 4
+    column: 4
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -7091262238432350602}
+    tier: 3
+    column: 4
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -1116331846568129315}
+    tier: 4
+    column: 1
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 8960998308739260210}
+    tier: 4
+    column: 3
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -8353409662259804461}
+    tier: 5
+    column: 0
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 268943039458126995}
+    tier: 5
+    column: 3
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 3409516118443727336}
+    tier: 6
+    column: 1
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: -4091035983274107239}
+    tier: 6
+    column: 4
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 1442940413955802927}
+    tier: 6
+    column: 0
+    requires: []
+    exclusiveWith: {fileID: 0}
+  - node: {fileID: 8564494997345161486}
+    tier: 7
+    column: 1
+    requires: []
+    exclusiveWith: {fileID: 3250938957782573270}
+  - node: {fileID: 3250938957782573270}
+    tier: 7
+    column: 3
+    requires: []
+    exclusiveWith: {fileID: 8564494997345161486}
+  sockets:
+  - keyword: {fileID: 11400000, guid: d8cfd24c5b8ace5978ae3b775b7d2620, type: 2}
+    label: 
+    unlockedBy: {fileID: 0}
+--- !u!114 &83550181094756025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_vigor
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_vigor
+  displayName: Vigor
+  icon: {fileID: 0}
+  category: 0
+  description: 
+  maxRank: 3
+  costPerRank: 1
+  rewards:
+  - {fileID: -5587431713046366811}
+  keywords: []
+--- !u!114 &162298881541874298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59d6099d1782ad97b95980e2b72c13b2, type: 3}
+  m_Name: Flag_DoubleJumpGranted
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.FlagReward
+  displayName: 
+  fact: DoubleJumpGranted
+--- !u!114 &268943039458126995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_shadow_strikes
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_shadow_strikes
+  displayName: Shadow Strikes
+  icon: {fileID: 0}
+  category: 2
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 6154841999633034494}
+  keywords: []
+--- !u!114 &1442940413955802927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_contagion
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_contagion
+  displayName: Contagion
+  icon: {fileID: 0}
+  category: 5
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: -1060690009036152607}
+  keywords: []
+--- !u!114 &1688039660321855434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9f5fcc7e2e0fa73faea9e38d49574c6, type: 3}
+  m_Name: Inflict_sinister
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordBonusReward
+  displayName: 
+  keyword: {fileID: 11400000, guid: d8cfd24c5b8ace5978ae3b775b7d2620, type: 2}
+  accuracy: 0
+  dice: 0
+  dieFaces: 4
+  flat: 0
+  inflict: {fileID: 11400000, guid: 8985a12537ed4283af1c7e5b5baab014, type: 2}
+  perRank: 1
+--- !u!114 &1714446174789377190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44a0874a92ad7f5f92b152a10aa541a, type: 3}
+  m_Name: Immune_hard
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatusModifierReward
+  displayName: 
+  filter:
+    status: {fileID: 0}
+    matchDisposition: 0
+    beneficial: 0
+    tag: 
+    matchControl: 1
+    control: 1
+  side: 0
+  immune: 1
+  seconds: 0
+  stacks: 0
+  perRank: 1
+--- !u!114 &2923691223952884258
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -337,12 +984,14 @@ MonoBehaviour:
     matchDisposition: 0
     beneficial: 0
     tag: control
+    matchControl: 0
+    control: 0
   side: 0
   immune: 0
   seconds: -0.1
   stacks: 0
   perRank: 1
---- !u!114 &-3236201580455783450
+--- !u!114 &2948387399179999930
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -352,19 +1001,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_cheap_shot
+  m_Name: test_unshakable
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_cheap_shot
-  displayName: Cheap Shot
+  nodeId: test_unshakable
+  displayName: Unshakable
   icon: {fileID: 0}
-  category: 2
+  category: 4
   description: 
   maxRank: 1
-  costPerRank: 1
+  costPerRank: 2
   rewards:
-  - {fileID: -5938311425389936218}
+  - {fileID: -8738347862075458951}
   keywords: []
---- !u!114 &-3130481879969480150
+--- !u!114 &2985953729728144894
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -373,34 +1022,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_stamina
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
+  m_Script: {fileID: 11500000, guid: 4dcc7e14e7d355f75adaf9d3cd71d04f, type: 3}
+  m_Name: Grant_cruelty
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordGrantReward
   displayName: 
-  targetStatIds:
-  - character.max_stamina
-  perPoint: 5
---- !u!114 &-2955215487248270244
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9f5fcc7e2e0fa73faea9e38d49574c6, type: 3}
-  m_Name: Dice_ambushing
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordBonusReward
-  displayName: 
-  keyword: {fileID: 11400000, guid: d3496ea0e7dae7ba48675a47c0f72b67, type: 2}
-  accuracy: 0
-  dice: 1
-  dieFaces: 4
-  flat: 0
-  inflict: {fileID: 0}
-  perRank: 1
---- !u!114 &-2661588261838403692
+  keyword: {fileID: 11400000, guid: df10021bfb072a61b92fa11529b27c03, type: 2}
+  filter:
+    abilityId: 
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: basic
+--- !u!114 &3052822561496849657
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -420,9 +1056,104 @@ MonoBehaviour:
   maxRank: 1
   costPerRank: 2
   rewards:
-  - {fileID: 1961677679172935724}
+  - {fileID: 162298881541874298}
   keywords: []
---- !u!114 &-2600200939024203955
+--- !u!114 &3250938957782573270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_stone
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_stone
+  displayName: Stone
+  icon: {fileID: 0}
+  category: 6
+  description: 
+  maxRank: 1
+  costPerRank: 3
+  rewards:
+  - {fileID: 5600040174529143668}
+  keywords: []
+--- !u!114 &3409516118443727336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_concussive_thrust
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_concussive_thrust
+  displayName: Concussive Thrust
+  icon: {fileID: 0}
+  category: 5
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: -6972293902110650008}
+  keywords: []
+--- !u!114 &3432436409828327750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59d6099d1782ad97b95980e2b72c13b2, type: 3}
+  m_Name: Flag_SprintGranted
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.FlagReward
+  displayName: 
+  fact: SprintGranted
+--- !u!114 &3586680229709345019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b6d7fc16cc5b987d7e117c46fef9eeb, type: 3}
+  m_Name: Ability_cast_stoneskin
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.AbilityReward
+  displayName: 
+  ability: {fileID: 11400000, guid: 83fdafc888011dd4b9a0279602b98523, type: 2}
+  source: 4
+--- !u!114 &3764692103475491776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_opportunist
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_opportunist
+  displayName: Opportunist
+  icon: {fileID: 0}
+  category: 1
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: -3292664921396048027}
+  keywords: []
+--- !u!114 &4534852046423039768
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -474,8 +1205,10 @@ MonoBehaviour:
     speedClass: 0
     tag: 
   procSeconds: 3
+  spreadStatus: {fileID: 0}
+  spreadRadius: 8
   perRank: 1
---- !u!114 &-1930723191546766411
+--- !u!114 &5600040174529143668
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -484,43 +1217,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d44a0874a92ad7f5f92b152a10aa541a, type: 3}
-  m_Name: Intensify_sundered
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatusModifierReward
+  m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
+  m_Name: Bonus_character.max_health
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
   displayName: 
-  filter:
-    status: {fileID: 11400000, guid: 8985a12537ed4283af1c7e5b5baab014, type: 2}
-    matchDisposition: 0
-    beneficial: 0
-    tag: 
-  side: 1
-  immune: 0
-  seconds: 3
-  stacks: 1
-  perRank: 1
---- !u!114 &-1564944097647626075
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_deep_cuts
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_deep_cuts
-  displayName: Deep Cuts
-  icon: {fileID: 0}
-  category: 2
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: -1930723191546766411}
-  keywords: []
---- !u!114 &-1082570582976091437
+  targetStatIds:
+  - character.max_health
+  amount: 20
+--- !u!114 &6132065326443436025
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -572,368 +1276,10 @@ MonoBehaviour:
     speedClass: 0
     tag: basic
   procSeconds: 3
+  spreadStatus: {fileID: 0}
+  spreadRadius: 8
   perRank: 1
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26ceec46a7a52cc6e981bd919cabf0eb, type: 3}
-  m_Name: TalentTree_TestNinja
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentTree
-  treeId: test_ninja
-  displayName: Test Ninja
-  icon: {fileID: 0}
-  description: Stamina and movement.
-  isLibrary: 0
-  ownedKeywords: []
-  placements:
-  - node: {fileID: -8895314203955424591}
-    tier: 1
-    column: 0
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 5337560880502324732}
-    tier: 1
-    column: 2
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -2661588261838403692}
-    tier: 1
-    column: 4
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -6200591248009814567}
-    tier: 2
-    column: 0
-    requires:
-    - {fileID: -8895314203955424591}
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -5135553605134167902}
-    tier: 2
-    column: 2
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 9215463740782424942}
-    tier: 2
-    column: 4
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 5066441359757030485}
-    tier: 3
-    column: 2
-    requires:
-    - {fileID: -5135553605134167902}
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -5705331505278441168}
-    tier: 3
-    column: 0
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -5022253169003963291}
-    tier: 4
-    column: 2
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -6037621532019533910}
-    tier: 5
-    column: 1
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 8823784881438463764}
-    tier: 6
-    column: 3
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 8259368856340830645}
-    tier: 1
-    column: 1
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -3236201580455783450}
-    tier: 1
-    column: 3
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 6776783353685634276}
-    tier: 2
-    column: 1
-    requires:
-    - {fileID: 8259368856340830645}
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 2532024091674316731}
-    tier: 2
-    column: 3
-    requires:
-    - {fileID: -3236201580455783450}
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 3820225678460428660}
-    tier: 3
-    column: 1
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -1564944097647626075}
-    tier: 3
-    column: 3
-    requires:
-    - {fileID: 2532024091674316731}
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 7248066995456671805}
-    tier: 4
-    column: 0
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 7101346351004180006}
-    tier: 4
-    column: 4
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -5910176414656090059}
-    tier: 3
-    column: 4
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 4905186862718172147}
-    tier: 4
-    column: 1
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: -8380921172946848852}
-    tier: 4
-    column: 3
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 1281800678276797625}
-    tier: 5
-    column: 0
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 438958106633637733}
-    tier: 5
-    column: 3
-    requires: []
-    exclusiveWith: {fileID: 0}
-  - node: {fileID: 8213765589586691945}
-    tier: 7
-    column: 1
-    requires: []
-    exclusiveWith: {fileID: 1165181067099970538}
-  - node: {fileID: 1165181067099970538}
-    tier: 7
-    column: 3
-    requires: []
-    exclusiveWith: {fileID: 8213765589586691945}
-  sockets:
-  - keyword: {fileID: 11400000, guid: d8cfd24c5b8ace5978ae3b775b7d2620, type: 2}
-    label: 
-    unlockedBy: {fileID: 0}
---- !u!114 &438958106633637733
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_shadow_strikes
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_shadow_strikes
-  displayName: Shadow Strikes
-  icon: {fileID: 0}
-  category: 2
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: 3708927619349464207}
-  keywords: []
---- !u!114 &1054013000430123467
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9f5fcc7e2e0fa73faea9e38d49574c6, type: 3}
-  m_Name: Inflict_sinister
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordBonusReward
-  displayName: 
-  keyword: {fileID: 11400000, guid: d8cfd24c5b8ace5978ae3b775b7d2620, type: 2}
-  accuracy: 0
-  dice: 0
-  dieFaces: 4
-  flat: 0
-  inflict: {fileID: 11400000, guid: 8985a12537ed4283af1c7e5b5baab014, type: 2}
-  perRank: 1
---- !u!114 &1165181067099970538
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_stone
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_stone
-  displayName: Stone
-  icon: {fileID: 0}
-  category: 6
-  description: 
-  maxRank: 1
-  costPerRank: 3
-  rewards:
-  - {fileID: -7496180660332296015}
-  keywords: []
---- !u!114 &1192790113019731320
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_health
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
-  displayName: 
-  targetStatIds:
-  - character.max_health
-  perPoint: 4
---- !u!114 &1281800678276797625
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_stone_fist
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_stone_fist
-  displayName: Stone Fist
-  icon: {fileID: 0}
-  category: 1
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: -6125209002169745857}
-  keywords: []
---- !u!114 &1330503862985214081
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_recovery
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
-  displayName: 
-  targetStatIds:
-  - character.max_recovery
-  perPoint: 2
---- !u!114 &1396163835522418624
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_health
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
-  displayName: 
-  targetStatIds:
-  - character.max_health
-  perPoint: 5
---- !u!114 &1961677679172935724
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59d6099d1782ad97b95980e2b72c13b2, type: 3}
-  m_Name: Flag_DoubleJumpGranted
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.FlagReward
-  displayName: 
-  fact: DoubleJumpGranted
---- !u!114 &2089472514016815870
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
-  m_Name: Bonus_character.max_movement_charges
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
-  displayName: 
-  targetStatIds:
-  - character.max_movement_charges
-  amount: 1
---- !u!114 &2532024091674316731
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_twist_the_knife
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_twist_the_knife
-  displayName: Twist the Knife
-  icon: {fileID: 0}
-  category: 1
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: 1054013000430123467}
-  keywords: []
---- !u!114 &3112442275244675813
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
-  m_Name: Bonus_core.insight
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
-  displayName: 
-  targetStatIds:
-  - core.insight
-  amount: 2
---- !u!114 &3708927619349464207
+--- !u!114 &6154841999633034494
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -956,274 +1302,7 @@ MonoBehaviour:
     speedClass: 0
     tag: sinister
   replacement: {fileID: 11400000, guid: a8a3ae94a4d2d35fa8ab56a7a20c097e, type: 2}
---- !u!114 &3820225678460428660
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_cruelty
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_cruelty
-  displayName: Cruelty
-  icon: {fileID: 0}
-  category: 1
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: 7796070048578871756}
-  keywords: []
---- !u!114 &4905186862718172147
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_shadow_riposte
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_shadow_riposte
-  displayName: Riposte from Shadow
-  icon: {fileID: 0}
-  category: 5
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: -1082570582976091437}
-  keywords: []
---- !u!114 &5020369601298594898
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4dcc7e14e7d355f75adaf9d3cd71d04f, type: 3}
-  m_Name: Grant_ambushing
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordGrantReward
-  displayName: 
-  keyword: {fileID: 11400000, guid: d3496ea0e7dae7ba48675a47c0f72b67, type: 2}
-  filter:
-    abilityId: 
-    matchType: 0
-    type: 0
-    matchCategory: 0
-    category: 0
-    matchSpeedClass: 0
-    speedClass: 0
-    tag: basic
---- !u!114 &5066441359757030485
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_focus
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_focus
-  displayName: Focus
-  icon: {fileID: 0}
-  category: 2
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: 3112442275244675813}
-  keywords: []
---- !u!114 &5337560880502324732
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_tough_skin
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_tough_skin
-  displayName: Tough Skin
-  icon: {fileID: 0}
-  category: 0
-  description: 
-  maxRank: 5
-  costPerRank: 1
-  rewards:
-  - {fileID: 1396163835522418624}
-  keywords: []
---- !u!114 &5714141111262620808
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d44a0874a92ad7f5f92b152a10aa541a, type: 3}
-  m_Name: Immune_flinched
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatusModifierReward
-  displayName: 
-  filter:
-    status: {fileID: 11400000, guid: d62450a2f5b553a6485f09003f3a6051, type: 2}
-    matchDisposition: 0
-    beneficial: 0
-    tag: 
-  side: 0
-  immune: 1
-  seconds: 0
-  stacks: 0
-  perRank: 1
---- !u!114 &6776783353685634276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_knifes_edge
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_knifes_edge
-  displayName: Knife's Edge
-  icon: {fileID: 0}
-  category: 1
-  description: 
-  maxRank: 3
-  costPerRank: 1
-  rewards:
-  - {fileID: -2955215487248270244}
-  keywords: []
---- !u!114 &7101346351004180006
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_unshakable
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_unshakable
-  displayName: Unshakable
-  icon: {fileID: 0}
-  category: 4
-  description: 
-  maxRank: 1
-  costPerRank: 2
-  rewards:
-  - {fileID: 5714141111262620808}
-  keywords: []
---- !u!114 &7248066995456671805
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_steadfast
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_steadfast
-  displayName: Steadfast
-  icon: {fileID: 0}
-  category: 0
-  description: 
-  maxRank: 2
-  costPerRank: 1
-  rewards:
-  - {fileID: -4193047317791764386}
-  keywords: []
---- !u!114 &7796070048578871756
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4dcc7e14e7d355f75adaf9d3cd71d04f, type: 3}
-  m_Name: Grant_cruelty
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.KeywordGrantReward
-  displayName: 
-  keyword: {fileID: 11400000, guid: df10021bfb072a61b92fa11529b27c03, type: 2}
-  filter:
-    abilityId: 
-    matchType: 0
-    type: 0
-    matchCategory: 0
-    category: 0
-    matchSpeedClass: 0
-    speedClass: 0
-    tag: basic
---- !u!114 &8213765589586691945
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_shadow
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_shadow
-  displayName: Shadow
-  icon: {fileID: 0}
-  category: 6
-  description: 
-  maxRank: 1
-  costPerRank: 3
-  rewards:
-  - {fileID: 2089472514016815870}
-  keywords: []
---- !u!114 &8259368856340830645
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_opportunist
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_opportunist
-  displayName: Opportunist
-  icon: {fileID: 0}
-  category: 1
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: 5020369601298594898}
-  keywords: []
---- !u!114 &8619903715249458046
+--- !u!114 &6305067433132915256
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1233,13 +1312,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_health
+  m_Name: Rate_character.max_recovery
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
   displayName: 
   targetStatIds:
-  - character.max_health
-  perPoint: 4
---- !u!114 &8823784881438463764
+  - character.max_recovery
+  perPoint: 2
+--- !u!114 &6564520954952257924
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1259,9 +1338,9 @@ MonoBehaviour:
   maxRank: 3
   costPerRank: 1
   rewards:
-  - {fileID: 1192790113019731320}
+  - {fileID: -9092285460878935252}
   keywords: []
---- !u!114 &9215463740782424942
+--- !u!114 &6693148948766231500
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1271,15 +1350,162 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_steady
+  m_Name: test_deep_cuts
   m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_steady
-  displayName: Steady
+  nodeId: test_deep_cuts
+  displayName: Deep Cuts
+  icon: {fileID: 0}
+  category: 2
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: -5344840056139836179}
+  keywords: []
+--- !u!114 &7247169536476172366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_tough_skin
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_tough_skin
+  displayName: Tough Skin
   icon: {fileID: 0}
   category: 0
   description: 
   maxRank: 5
   costPerRank: 1
   rewards:
-  - {fileID: 1330503862985214081}
+  - {fileID: -1898015128512524029}
+  keywords: []
+--- !u!114 &7721119543386819142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fc60e27f23822888f92433db7e254f1, type: 3}
+  m_Name: Bonus_core.body
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatBonusReward
+  displayName: 
+  targetStatIds:
+  - core.body
+  amount: 2
+--- !u!114 &8188033921242398470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_focus
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_focus
+  displayName: Focus
+  icon: {fileID: 0}
+  category: 2
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: -591343875155830119}
+  keywords: []
+--- !u!114 &8231532914856648493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
+  m_Name: Rate_character.max_stamina
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
+  displayName: 
+  targetStatIds:
+  - character.max_stamina
+  perPoint: 3
+--- !u!114 &8564494997345161486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_shadow
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_shadow
+  displayName: Shadow
+  icon: {fileID: 0}
+  category: 6
+  description: 
+  maxRank: 1
+  costPerRank: 3
+  rewards:
+  - {fileID: -6016017026717777371}
+  keywords: []
+--- !u!114 &8848140673638799987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ea837650e6d77318a8c53cde42c457c, type: 3}
+  m_Name: Cost_sinister
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.AbilityModifierReward
+  displayName: 
+  filter:
+    abilityId: 
+    matchType: 0
+    type: 0
+    matchCategory: 0
+    category: 0
+    matchSpeedClass: 0
+    speedClass: 0
+    tag: sinister
+  resource: {fileID: 11400000, guid: 4cc10ff0880b2ba42a52ff48a27f66ce, type: 2}
+  costDelta: -2
+  cooldownDelta: 0
+  castTimeDelta: 0
+  perRank: 1
+--- !u!114 &8960998308739260210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_bloodthirst
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_bloodthirst
+  displayName: Bloodthirst
+  icon: {fileID: 0}
+  category: 5
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 4534852046423039768}
   keywords: []

@@ -1744,6 +1744,12 @@ MonoBehaviour:
   isEnabled: 1
   debugStatuses: 0
   activeDebug: []
+  drWindow: 15
+  drSteps:
+  - 1
+  - 0.5
+  - 0.25
+  ccPowerScale: 0.05
 --- !u!114 &5422542059696098438
 MonoBehaviour:
   m_ObjectHideFlags: 0

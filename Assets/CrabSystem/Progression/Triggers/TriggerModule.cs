@@ -24,6 +24,8 @@ public struct TalentTrigger
     public AbilityDefinition Proc;
     public AbilityFilter ProcSlot;
     public float ProcSeconds;
+    public StatusDefinition Spread;
+    public float SpreadRadius;
 }
 
 // Talent triggers — "on dodge, regain stamina", "on kill, Dash Thrust is ready sooner", "on a perfect dodge your
@@ -165,5 +167,32 @@ public class TriggerModule : MonoBehaviour, IBrainModule
         if (trigger.CooldownSeconds > 0f && abilities != null) abilities.ReduceCooldowns(trigger.CooldownFilter, trigger.CooldownSeconds);
 
         if (trigger.Proc != null && slots != null) slots.ProcOnSlot(trigger.ProcSlot, trigger.Proc, trigger.ProcSeconds);
+
+        if (trigger.Spread != null) Spread(trigger.Spread, trigger.SpreadRadius, target);
     }
+
+    // Spread: the other fighter (the one hit or killed) carried the status, so it jumps to whoever is nearest them —
+    // not this character, not them, not the dead — within the radius.
+    private void Spread(StatusDefinition status, float radius, ControllerBrain from)
+    {
+        StatusSystem carrier = from != null ? from.GetModule<StatusSystem>() : null;
+        if (carrier == null || !carrier.HadAtDeathOrHas(status.id)) return;
+
+        ControllerBrain nearest = null;
+        float best = radius * radius;
+        foreach (ControllerBrain other in FindObjectsByType<ControllerBrain>(FindObjectsSortMode.None))
+        {
+            if (other == brain || other == from || other.Damage == null || other.Damage.IsDead) continue;
+
+            float distance = (Position(other) - Position(from)).sqrMagnitude;
+            if (distance > best) continue;
+            best = distance;
+            nearest = other;
+        }
+
+        StatusSystem next = nearest != null ? nearest.GetModule<StatusSystem>() : null;
+        if (next != null) next.Apply(status, brain);
+    }
+
+    private static Vector3 Position(ControllerBrain who) => who.EntityRoot != null ? who.EntityRoot.position : who.transform.position;
 }

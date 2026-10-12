@@ -1,28 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-9009004408758281994
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_insight
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_insight
-  displayName: Insight
-  icon: {fileID: 0}
-  category: 2
-  description: 
-  maxRank: 1
-  costPerRank: 1
-  rewards:
-  - {fileID: 2461566400463139269}
-  keywords: []
---- !u!114 &-2044280020102286650
+--- !u!114 &-8665446851269897353
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,7 +20,67 @@ MonoBehaviour:
   maxRank: 3
   costPerRank: 1
   rewards:
-  - {fileID: 2720486333793700122}
+  - {fileID: 3916077864832645143}
+  keywords: []
+--- !u!114 &-5676631915368688124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_calm_mind
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_calm_mind
+  displayName: Calm Mind
+  icon: {fileID: 0}
+  category: 0
+  description: 
+  maxRank: 5
+  costPerRank: 1
+  rewards:
+  - {fileID: -5127017194128517255}
+  keywords: []
+--- !u!114 &-5127017194128517255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
+  m_Name: Rate_character.max_mana
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
+  displayName: 
+  targetStatIds:
+  - character.max_mana
+  perPoint: 5
+--- !u!114 &-2266786109285579497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
+  m_Name: test_insight
+  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
+  nodeId: test_insight
+  displayName: Insight
+  icon: {fileID: 0}
+  category: 2
+  description: 
+  maxRank: 1
+  costPerRank: 1
+  rewards:
+  - {fileID: 1665380770086440949}
   keywords: []
 --- !u!114 &11400000
 MonoBehaviour:
@@ -63,46 +101,24 @@ MonoBehaviour:
   isLibrary: 0
   ownedKeywords: []
   placements:
-  - node: {fileID: 1992193430836746235}
+  - node: {fileID: -5676631915368688124}
     tier: 1
     column: 1
     requires: []
     exclusiveWith: {fileID: 0}
-  - node: {fileID: -2044280020102286650}
+  - node: {fileID: -8665446851269897353}
     tier: 1
     column: 3
     requires: []
     exclusiveWith: {fileID: 0}
-  - node: {fileID: -9009004408758281994}
+  - node: {fileID: -2266786109285579497}
     tier: 2
     column: 1
     requires:
-    - {fileID: 1992193430836746235}
+    - {fileID: -5676631915368688124}
     exclusiveWith: {fileID: 0}
   sockets: []
---- !u!114 &1992193430836746235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 606e648d91fa24734a25205d31a092ba, type: 3}
-  m_Name: test_calm_mind
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.TalentNode
-  nodeId: test_calm_mind
-  displayName: Calm Mind
-  icon: {fileID: 0}
-  category: 0
-  description: 
-  maxRank: 5
-  costPerRank: 1
-  rewards:
-  - {fileID: 8806342386656770936}
-  keywords: []
---- !u!114 &2461566400463139269
+--- !u!114 &1665380770086440949
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -118,7 +134,7 @@ MonoBehaviour:
   targetStatIds:
   - core.insight
   amount: 1
---- !u!114 &2720486333793700122
+--- !u!114 &3916077864832645143
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -134,19 +150,3 @@ MonoBehaviour:
   targetStatIds:
   - character.max_recollection
   perPoint: 2
---- !u!114 &8806342386656770936
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b62608328a9a7ce1ee487583c2fa392, type: 3}
-  m_Name: Rate_character.max_mana
-  m_EditorClassIdentifier: Assembly-CSharp::NinjaGame.Progression.StatRateReward
-  displayName: 
-  targetStatIds:
-  - character.max_mana
-  perPoint: 5

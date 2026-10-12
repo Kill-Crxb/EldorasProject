@@ -33,6 +33,9 @@ public class StatusDefinition : ScriptableObject
     [Tooltip("Icon for the buff bar.")]
     public Sprite icon;
 
+    [Tooltip("What it does, in a sentence — the status bar's tooltip.")]
+    [TextArea(1, 3)] public string description = "";
+
     [Tooltip("Helpful rather than harmful. Cleanse strips harmful; dispel strips helpful.")]
     public bool beneficial = true;
 
@@ -40,6 +43,21 @@ public class StatusDefinition : ScriptableObject
     public List<string> tags = new();
 
     public bool HasTag(string tag) => tags != null && tags.Contains(tag);
+
+    [Header("Control and saves")]
+    [Tooltip("Crowd control category (Combat_Framework §11): diminishing returns per category per target, and the " +
+             "CC power vs tenacity rule. None for hit states and ordinary statuses.")]
+    public ControlCategory control = ControlCategory.None;
+
+    [Tooltip("The save the bearer rolls against it (Stat_Resolution §6): d20 + save stat vs 10 + the source's " +
+             "matching stat. A success halves the duration, or swaps it for the downgrade. None = no save.")]
+    public SaveType save = SaveType.None;
+
+    [Tooltip("Applied instead on a successful save — knockdown becomes stagger, launch becomes flinch. Empty = halve.")]
+    public StatusDefinition saveDowngrade;
+
+    [Tooltip("Removed the moment the bearer takes damage (sleep, charm, pacify).")]
+    public bool breaksOnDamage;
 
     [Header("Lifetime")]
     [Tooltip("Seconds. ZERO means it lasts until something removes it explicitly — a stance, " +
@@ -74,6 +92,9 @@ public class StatusDefinition : ScriptableObject
     [Tooltip("Aura spawned at the bearer's VFXSystem Aura anchor. Belongs to the PERSON, not " +
              "to whatever delivered the status — the projectile dies on impact, the glow does not.")]
     public GameObject auraVfx;
+
+    [Tooltip("Where the aura sits: Aura (the body) for most; Overhead for a stun's stars.")]
+    public VFXAnchor auraAnchor = VFXAnchor.Aura;
 
     [NonSerialized] private string cachedSourceKey;
 
@@ -118,6 +139,11 @@ public class StatusDefinition : ScriptableObject
 /// a damage-over-time concern, and adding it later is a key change — "status:{id}:{sourceId}"
 /// — not a redesign.
 /// </summary>
+public enum ControlCategory { None, Hard, Root, SilenceDisarm, Snare, LossOfControl }
+
+// Each save pairs the bearer's defence with the source's matching stat for the DC (Stat_Resolution §6).
+public enum SaveType { None, Toughness, Alteration, Dexterity, Preparation }
+
 public enum StatusStacking
 {
     /// <summary>One instance. Re-applying resets the clock and changes nothing else.</summary>

@@ -31,6 +31,14 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     [Tooltip("Live view of what is currently on this entity. Read-only — editing does nothing.")]
     [SerializeField] private List<string> activeDebug = new();
 
+    [Header("Crowd control (Combat_Framework §11)")]
+    [Tooltip("Diminishing returns: seconds from the last application of a category before it lands full again.")]
+    [SerializeField] private float drWindow = 15f;
+    [Tooltip("Duration share of the 1st, 2nd, 3rd application of one category in the window; the next is refused.")]
+    [SerializeField] private float[] drSteps = { 1f, 0.5f, 0.25f };
+    [Tooltip("k in clamp(1 + (source CC power − tenacity) × k, 0.5, 2).")]
+    [SerializeField] private float ccPowerScale = 0.05f;
+
     #endregion
 
     #region State
@@ -44,6 +52,8 @@ public class StatusSystem : MonoBehaviour, IBrainModule
 
     private readonly List<StatusInstance> active = new();
     private readonly Dictionary<string, StatusInstance> byId = new();
+    private readonly Dictionary<ControlCategory, (int count, float last)> diminishing = new();
+    private readonly List<StatusDefinition> heldAtDeath = new();
 
     // Blackboard facts are shared ground. Two statuses asserting "rooted" must not clear it
     // out from under each other when the first one expires, so each claims the fact under its
@@ -60,8 +70,11 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     // flinch is one, so the hit reaction replays.
     public event Action<StatusInstance> OnStatusReapplied;
 
-    // A status was refused: immune, or resisted down to no time at all.
+    // A status was refused: immune, diminished away, or resisted down to no time at all.
     public event Action<StatusDefinition> OnStatusResisted;
+
+    // The bearer made its saving throw: the status lands halved, or as its downgrade.
+    public event Action<StatusDefinition> OnStatusSaved;
 
     // Resist, Immune and Intensify from talents and gear (StatusModifierReward).
     public StatusModifiers Modifiers { get; } = new();
@@ -88,7 +101,8 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         if (stats == null)
             Debug.LogError($"[StatusSystem] No IStatProvider on {brain.EntityName} — every status will be inert.");
 
-        if (damage != null) damage.OnDeath += RemoveAll;
+        if (damage != null) damage.OnDeath += HandleDeath;
+        if (damage != null) damage.OnDamageApplied += HandleDamageApplied;
     }
 
     public void UpdateModule()
@@ -123,10 +137,19 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     {
         if (definition == null) return;
 
-        // The bearer's Resist / Immune and the source's Intensify, at the one point every application passes.
-        if (Modifiers.Immune(definition))
+        // Every application passes here: Immune, diminishing returns, the save, the bearer's Resist and the
+        // source's Intensify, CC power vs tenacity.
+        if (Modifiers.Immune(definition) || DiminishStep(definition) <= 0f)
         {
             OnStatusResisted?.Invoke(definition);
+            return;
+        }
+
+        bool saved = SavedAgainst(definition, source);
+        if (saved) OnStatusSaved?.Invoke(definition);
+        if (saved && definition.saveDowngrade != null)
+        {
+            Apply(definition.saveDowngrade, source);
             return;
         }
 
@@ -136,12 +159,15 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         {
             lifetime += Modifiers.Seconds(definition, StatusSide.Taken);
             if (dealer != null) lifetime += dealer.Modifiers.Seconds(definition, StatusSide.Dealt);
+            lifetime *= ControlScale(definition, source) * DiminishStep(definition) * (saved ? 0.5f : 1f);
             if (lifetime <= 0f)
             {
                 OnStatusResisted?.Invoke(definition);
                 return;
             }
         }
+
+        RecordControl(definition);
 
         StatusInstance instance = Place(definition, source, lifetime);
         if (instance == null || definition.stacking != StatusStacking.Stack) return;
@@ -217,6 +243,62 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         OnStacksChanged?.Invoke(instance);
     }
 
+    // ---- Crowd control and saves ----
+
+    // 1 for anything that isn't crowd control or is outside the window; then 1 → ½ → ¼ → 0 (refused).
+    private float DiminishStep(StatusDefinition definition)
+    {
+        if (definition.control == ControlCategory.None) return 1f;
+        if (!diminishing.TryGetValue(definition.control, out var dr) || Time.time - dr.last > drWindow) return 1f;
+        return dr.count < drSteps.Length ? drSteps[dr.count] : 0f;
+    }
+
+    private void RecordControl(StatusDefinition definition)
+    {
+        if (definition.control == ControlCategory.None) return;
+
+        bool inWindow = diminishing.TryGetValue(definition.control, out var dr) && Time.time - dr.last <= drWindow;
+        diminishing[definition.control] = (inWindow ? dr.count + 1 : 1, Time.time);
+    }
+
+    private float ControlScale(StatusDefinition definition, ControllerBrain source)
+    {
+        if (definition.control == ControlCategory.None) return 1f;
+
+        float power = source != null ? DialIds.Read(source.Stats, DialIds.CcPower) : 0f;
+        float tenacity = DialIds.Read(stats, DialIds.Tenacity);
+        return Mathf.Clamp(1f + (power - tenacity) * ccPowerScale, 0.5f, 2f);
+    }
+
+    // d20 + the bearer's save stat vs 10 + the source's matching stat. Nothing saves against its own statuses.
+    private bool SavedAgainst(StatusDefinition definition, ControllerBrain source)
+    {
+        if (definition.save == SaveType.None || source == brain) return false;
+
+        (string saveStat, string dcStat) = SaveStats(definition.save);
+        float dc = 10f + (source != null ? DialIds.Read(source.Stats, dcStat) : 0f);
+        return UnityEngine.Random.Range(1, 21) + DialIds.Read(stats, saveStat) >= dc;
+    }
+
+    private static (string save, string dc) SaveStats(SaveType save) => save switch
+    {
+        SaveType.Toughness => ("def.toughness", "cmb.efficacy"),
+        SaveType.Alteration => ("def.alteration", "cmb.arcana"),
+        SaveType.Dexterity => ("def.dexterity", "cmb.initiative"),
+        _ => ("def.preparation", "cmb.cunning"),
+    };
+
+    // Sleep, charm, pacify: any damage that reaches the bearer ends them.
+    private void HandleDamageApplied(CombatDamagePacket packet, float applied)
+    {
+        if (applied <= 0f) return;
+
+        for (int i = active.Count - 1; i >= 0; i--)
+        {
+            if (active[i].Definition.breaksOnDamage) RemoveAt(i);
+        }
+    }
+
     #endregion
 
     #region Remove
@@ -227,6 +309,13 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         if (!byId.TryGetValue(id, out StatusInstance instance)) return;
 
         RemoveAt(active.IndexOf(instance));
+    }
+
+    private void HandleDeath()
+    {
+        heldAtDeath.Clear();
+        foreach (StatusInstance instance in active) heldAtDeath.Add(instance.Definition);
+        RemoveAll();
     }
 
     /// <summary>Death, dispel, a full cleanse.</summary>
@@ -271,6 +360,9 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     #region Queries
 
     public bool Has(string id) => !string.IsNullOrEmpty(id) && byId.ContainsKey(id);
+
+    // On now, or on at the moment of death — a killer's trigger runs after death has cleared everything (Spread).
+    public bool HadAtDeathOrHas(string id) => Has(id) || heldAtDeath.Exists(d => d.id == id);
 
     public int Stacks(string id) => byId.TryGetValue(id, out StatusInstance i) ? i.Stacks : 0;
 
@@ -326,7 +418,8 @@ public class StatusSystem : MonoBehaviour, IBrainModule
 
     private void OnDestroy()
     {
-        if (damage != null) damage.OnDeath -= RemoveAll;
+        if (damage != null) damage.OnDeath -= HandleDeath;
+        if (damage != null) damage.OnDamageApplied -= HandleDamageApplied;
 
         // Deliberately NOT RemoveAll(). On teardown the StatSystem and BlackboardSystem may
         // already be destroyed, and `stats` is held as an interface — Unity's null-check

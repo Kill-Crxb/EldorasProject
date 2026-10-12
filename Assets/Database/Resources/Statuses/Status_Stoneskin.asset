@@ -15,8 +15,15 @@ MonoBehaviour:
   id: stoneskin
   displayName: Stoneskin
   icon: {fileID: 0}
+  description: An extra armour shield die.
   beneficial: 1
+  tags: []
+  control: 0
+  save: 0
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 60
+  durationFrames: 0
   stacking: 1
   maxStacks: 3
   contributions:
@@ -24,3 +31,4 @@ MonoBehaviour:
     amountPerStack: 1
   blackboardFlags: []
   auraVfx: {fileID: 419411002348774512, guid: af7a85a0794c88b40bd4e29609de3561, type: 3}
+  auraAnchor: 3

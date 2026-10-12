@@ -15,9 +15,15 @@ MonoBehaviour:
   id: flinched
   displayName: Flinched
   icon: {fileID: 0}
+  description: "Interrupted \u2014 can't act."
   beneficial: 0
   tags:
   - control
+  - hitstate
+  control: 0
+  save: 0
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 0.5
   durationFrames: 18
   stacking: 0
@@ -27,3 +33,4 @@ MonoBehaviour:
   - fact: CannotAct
     minStacks: 1
   auraVfx: {fileID: 0}
+  auraAnchor: 3

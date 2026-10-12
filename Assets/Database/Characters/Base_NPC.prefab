@@ -233,6 +233,7 @@ Transform:
   - {fileID: 1888017827853395432}
   - {fileID: 6279849475539921432}
   - {fileID: 3480417542418773315}
+  - {fileID: 4756604681519656848}
   m_Father: {fileID: 505027778239189661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7834155014174466237
@@ -271,6 +272,74 @@ MonoBehaviour:
   debugStateMachine: 0
   debugTransitions: 0
   showDebugUI: 0
+--- !u!1 &2115288315002879763
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4756604681519656848}
+  - component: {fileID: 6877595136920384460}
+  - component: {fileID: 5879420166944758832}
+  m_Layer: 0
+  m_Name: StatusSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4756604681519656848
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2115288315002879763}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8373627434070198267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6877595136920384460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2115288315002879763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4be28419ec36954ab597318fbfa6bfd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatusSystem
+  isEnabled: 1
+  debugStatuses: 0
+  activeDebug: []
+  drWindow: 15
+  drSteps:
+  - 1
+  - 0.5
+  - 0.25
+  ccPowerScale: 0.05
+--- !u!114 &5879420166944758832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2115288315002879763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acf4265cf7c9a6544a9d46ba6db0b3c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatusVfxBinder
+  isEnabled: 1
+  fadeOutOnRemove: 1
 --- !u!1 &2267143952919017368
 GameObject:
   m_ObjectHideFlags: 0

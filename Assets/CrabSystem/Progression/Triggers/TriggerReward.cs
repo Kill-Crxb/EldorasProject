@@ -34,6 +34,9 @@ namespace NinjaGame.Progression
         [Tooltip("Which slot it takes over: the first whose ability this filter picks (tag basic = the light attack).")]
         [SerializeField] private AbilityFilter procSlot;
         [SerializeField] private float procSeconds = 3f;
+        [Tooltip("Spread: if the other fighter (hit or killed) carries this status, the nearest fighter to them gets it too.")]
+        [SerializeField] private StatusDefinition spreadStatus;
+        [SerializeField] private float spreadRadius = 8f;
 
         [Tooltip("Multiply the resource and cooldown amounts by the talent's rank.")]
         [SerializeField] private bool perRank = true;
@@ -60,7 +63,9 @@ namespace NinjaGame.Progression
                 CooldownSeconds = cooldownSeconds * scale,
                 Proc = proc,
                 ProcSlot = procSlot,
-                ProcSeconds = procSeconds
+                ProcSeconds = procSeconds,
+                Spread = spreadStatus,
+                SpreadRadius = spreadRadius
             });
         }
 
@@ -76,6 +81,7 @@ namespace NinjaGame.Progression
             if (filterAbility) when += $" ({ability.Describe()})";
             if (dc > 1) when += $", {21 - dc} in 20";
 
+            if (spreadStatus != null) return $"{when}: {spreadStatus.displayName} spreads to the nearest within {spreadRadius:0.#} m";
             if (proc != null) return $"{when}: {procSlot.Describe()} becomes {proc.abilityName} for {procSeconds:0.#} s";
             if (resource != null && resourceAmount > 0f) return $"{when}: +{resourceAmount:0.#} {resource.displayName}";
             if (applyStatus != null) return $"{when}: apply {applyStatus.displayName}";

@@ -15,9 +15,14 @@ MonoBehaviour:
   id: rooted
   displayName: Rooted
   icon: {fileID: 0}
+  description: Can't move or jump; can still act and turn.
   beneficial: 0
   tags:
   - control
+  control: 2
+  save: 3
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 4
   durationFrames: 0
   stacking: 0
@@ -29,3 +34,4 @@ MonoBehaviour:
   - fact: CannotJump
     minStacks: 1
   auraVfx: {fileID: 0}
+  auraAnchor: 3

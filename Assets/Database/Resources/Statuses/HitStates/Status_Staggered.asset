@@ -15,9 +15,15 @@ MonoBehaviour:
   id: staggered
   displayName: Staggered
   icon: {fileID: 0}
+  description: Can't act or block.
   beneficial: 0
   tags:
   - control
+  - hitstate
+  control: 0
+  save: 0
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 0.5
   durationFrames: 40
   stacking: 0
@@ -29,3 +35,4 @@ MonoBehaviour:
   - fact: CannotBlock
     minStacks: 1
   auraVfx: {fileID: 0}
+  auraAnchor: 3

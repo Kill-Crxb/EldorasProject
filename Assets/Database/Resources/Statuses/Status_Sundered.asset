@@ -15,8 +15,15 @@ MonoBehaviour:
   id: sundered
   displayName: Sundered
   icon: {fileID: 0}
+  description: Armour shield reduced, more per stack.
   beneficial: 0
+  tags: []
+  control: 0
+  save: 1
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 10
+  durationFrames: 0
   stacking: 1
   maxStacks: 5
   contributions:
@@ -24,3 +31,4 @@ MonoBehaviour:
     amountPerStack: -1
   blackboardFlags: []
   auraVfx: {fileID: 0}
+  auraAnchor: 3

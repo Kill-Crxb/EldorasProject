@@ -15,8 +15,15 @@ MonoBehaviour:
   id: silenced
   displayName: Silenced
   icon: {fileID: 0}
+  description: Can't cast techniques.
   beneficial: 0
+  tags: []
+  control: 3
+  save: 2
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
   duration: 15
+  durationFrames: 0
   stacking: 0
   maxStacks: 1
   contributions: []
@@ -24,3 +31,4 @@ MonoBehaviour:
   - fact: CannotCast
     minStacks: 1
   auraVfx: {fileID: 0}
+  auraAnchor: 3

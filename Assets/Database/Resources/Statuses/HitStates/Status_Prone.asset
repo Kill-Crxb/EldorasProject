@@ -15,9 +15,15 @@ MonoBehaviour:
   id: prone
   displayName: Prone
   icon: {fileID: 0}
+  description: "Knocked down \u2014 can't dodge, sprint or jump."
   beneficial: 0
   tags:
   - control
+  - hitstate
+  control: 0
+  save: 1
+  saveDowngrade: {fileID: 11400000, guid: 98c48ceaa719a999fae84eab18ad0072, type: 2}
+  breaksOnDamage: 0
   duration: 0.5
   durationFrames: 60
   stacking: 0
@@ -31,3 +37,4 @@ MonoBehaviour:
   - fact: CannotJump
     minStacks: 1
   auraVfx: {fileID: 0}
+  auraAnchor: 3

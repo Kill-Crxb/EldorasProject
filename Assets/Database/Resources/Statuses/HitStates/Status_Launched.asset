@@ -15,9 +15,15 @@ MonoBehaviour:
   id: launched
   displayName: Launched
   icon: {fileID: 0}
+  description: "In the air \u2014 can't act or block."
   beneficial: 0
   tags:
   - control
+  - hitstate
+  control: 0
+  save: 3
+  saveDowngrade: {fileID: 11400000, guid: d62450a2f5b553a6485f09003f3a6051, type: 2}
+  breaksOnDamage: 0
   duration: 0.5
   durationFrames: 50
   stacking: 0
@@ -29,3 +35,4 @@ MonoBehaviour:
   - fact: CannotBlock
     minStacks: 1
   auraVfx: {fileID: 0}
+  auraAnchor: 3

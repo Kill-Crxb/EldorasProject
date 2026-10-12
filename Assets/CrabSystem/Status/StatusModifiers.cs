@@ -16,11 +16,16 @@ public struct StatusFilter
     [Tooltip("An entry in the status's tags, e.g. control. Empty = any.")]
     public string tag;
 
+    [Tooltip("Only one crowd-control category — Immune to Hard is ImmuneToControl (Stalwart).")]
+    public bool matchControl;
+    public ControlCategory control;
+
     public bool Matches(StatusDefinition definition)
     {
         if (definition == null) return false;
         if (status != null && status.id != definition.id) return false;
         if (matchDisposition && definition.beneficial != beneficial) return false;
+        if (matchControl && definition.control != control) return false;
         return string.IsNullOrEmpty(tag) || definition.HasTag(tag);
     }
 
@@ -30,6 +35,7 @@ public struct StatusFilter
 
         var parts = new List<string>();
         if (matchDisposition) parts.Add(beneficial ? "beneficial" : "harmful");
+        if (matchControl) parts.Add(control.ToString());
         if (!string.IsNullOrEmpty(tag)) parts.Add(tag);
         return parts.Count > 0 ? string.Join(" ", parts) : "any status";
     }

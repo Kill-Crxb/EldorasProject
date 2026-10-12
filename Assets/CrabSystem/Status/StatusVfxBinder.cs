@@ -80,7 +80,7 @@ public class StatusVfxBinder : MonoBehaviour, IBrainModule
 
         // GetAnchor falls back to the brain root rather than returning null, so an entity whose
         // Aura transform was never wired still shows the effect somewhere sensible.
-        Transform anchor = vfx.GetAnchor(VFXAnchor.Aura);
+        Transform anchor = vfx.GetAnchor(instance.Definition.auraAnchor);
 
         // PARENTED — the aura follows the character. That is the whole difference from an
         // impact effect, which is spawned in world space at the point of contact and forgotten.
