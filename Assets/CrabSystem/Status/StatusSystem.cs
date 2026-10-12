@@ -277,7 +277,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
 
         (string saveStat, string dcStat) = SaveStats(definition.save);
         float dc = 10f + (source != null ? DialIds.Read(source.Stats, dcStat) : 0f);
-        return UnityEngine.Random.Range(1, 21) + DialIds.Read(stats, saveStat) >= dc;
+        return DiceRoll.Die(20) + DialIds.Read(stats, saveStat) >= dc;
     }
 
     private static (string save, string dc) SaveStats(SaveType save) => save switch

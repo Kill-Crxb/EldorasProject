@@ -152,7 +152,7 @@ public class TriggerModule : MonoBehaviour, IBrainModule
         if (readyAt.TryGetValue(key, out float ready) && Time.time < ready) return false;
         if (trigger.FilterAbility && (ability == null || !trigger.Ability.Matches(ability, abilities.Modifiers))) return false;
         if (trigger.Event == TriggerEvent.StatusGained && trigger.Status != null && (status == null || status.id != trigger.Status.id)) return false;
-        return trigger.Dc <= 1 || Random.Range(1, 21) >= trigger.Dc;
+        return trigger.Dc <= 1 || DiceRoll.Die(20) >= trigger.Dc;
     }
 
     private void Run(TalentTrigger trigger, ControllerBrain target)

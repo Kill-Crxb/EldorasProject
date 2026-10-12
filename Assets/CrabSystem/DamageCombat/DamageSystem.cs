@@ -316,8 +316,8 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         hit.bonus = bonusDamage;
         hit.bonusSource = bonusSource;
 
-        hit.roll = UnityEngine.Random.Range(1, 21);
-        if (hit.advantage) hit.roll = Mathf.Max(hit.roll, UnityEngine.Random.Range(1, 21));
+        hit.roll = DiceRoll.Die(20);
+        if (hit.advantage) hit.roll = Mathf.Max(hit.roll, DiceRoll.Die(20));
 
         bool full = hit.roll + hit.accuracy >= hit.defense;
         hit.grade = full ? HitGrade.Full : HitGrade.Glancing;

@@ -12,11 +12,21 @@ public struct DiceRoll
     [Min(1)] public int diceCount;
     [Min(2)] public int diceFaces;
 
+    // The one source of gameplay randomness (hit rolls, saves, procs, damage dice), so a server can own and seed it
+    // (CrabSystem_Standard §7, tracker AU24). Presentation randomness (sparks, number spread) stays on
+    // UnityEngine.Random.
+    static System.Random rng = new System.Random();
+
+    public static void Seed(int seed) => rng = new System.Random(seed);
+
+    // 1 to faces inclusive; a die of fewer than 2 faces always shows 1.
+    public static int Die(int faces) => faces < 2 ? 1 : rng.Next(1, faces + 1);
+
     public int Roll()
     {
         int total = 0;
         for (int i = 0; i < diceCount; i++)
-            total += UnityEngine.Random.Range(1, diceFaces + 1);
+            total += Die(diceFaces);
         return total;
     }
 
@@ -26,8 +36,7 @@ public struct DiceRoll
     {
         int faces = Mathf.FloorToInt(modifier);
         if (faces <= 0) return 0;
-        if (faces == 1) return 1;
-        return UnityEngine.Random.Range(1, faces + 1);
+        return Die(faces);
     }
 
     public int Min() => diceCount;

@@ -61,6 +61,9 @@ public class ControllerBrain : MonoBehaviour
     public EntityType EntityType => entityType;
     public bool IsPlayer => entityType == EntityType.Player;
     public bool IsNPC => entityType == EntityType.NPC;
+    // Driven by this machine: reads its keyboard, owns its camera. Every player until netcode lands, when a remote
+    // player is a Player but not local (the network owner flag answers it then; tracker AR25).
+    public bool IsLocal => IsPlayer;
 
     // The root object's name ("TargetDummy_Heavy", "Porphi") for logs; the brain itself sits on
     // "Component_Brain" in every entity.
@@ -114,7 +117,7 @@ public class ControllerBrain : MonoBehaviour
 
     void CreatePlayerInput()
     {
-        if (!IsPlayer) return;
+        if (!IsLocal) return;
         playerInputControls = new PlayerInputControls();
         playerInputControls.Enable();
     }
@@ -149,7 +152,7 @@ public class ControllerBrain : MonoBehaviour
         providerCache[type] = module;
     }
 
-    bool IsDeclined(IBrainModule module) => module.PlayerOnly && !IsPlayer;
+    bool IsDeclined(IBrainModule module) => module.PlayerOnly && !IsLocal;
 
     // A declined module is switched off, not merely skipped: CameraModule's Initialize locks the
     // cursor, so initializing it on an NPC would take the cursor from the player.

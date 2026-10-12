@@ -132,7 +132,7 @@ public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
                 if (bonus.DieFaces > faces) faces = bonus.DieFaces;
             }
 
-            for (int i = 0; i < dice; i++) bonusDamage += Random.Range(1, Mathf.Max(1, faces) + 1);
+            for (int i = 0; i < dice; i++) bonusDamage += DiceRoll.Die(faces);
             if (bonusDamage > before) bonusSource = string.IsNullOrEmpty(bonusSource) ? keyword.Label : $"{bonusSource} {keyword.Label}";
         }
     }
