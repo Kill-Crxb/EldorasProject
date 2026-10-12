@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NPCSpawnConfig
   spawnConfigId: npc_nature_spirit_01
   displayName: Nature Spirit
-  prefab: {fileID: 4161431986582699676, guid: dc71cdd5d88c18b46a75a83e2e707e21, type: 3}
+  prefab: {fileID: 2876641701607941056, guid: dc71cdd5d88c18b46a75a83e2e707e21, type: 3}
   archetype: {fileID: 11400000, guid: 10507c4779efbdc45829d883abf69be9, type: 2}
   useRandomVariant: 0
   variants: []

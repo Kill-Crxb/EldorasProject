@@ -87,6 +87,10 @@ public static class NpcParkourSwap
             }
         }
 
+        // The motor owns the transform; the controller stays for its body shape, switched off as on Base_PC.
+        var oldController = root.GetComponent<CharacterController>();
+        if (oldController != null) oldController.enabled = false;
+
         var motor = root.GetComponent<CharacterMotor>();
         if (motor != null) return motor;
 
