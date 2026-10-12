@@ -142,6 +142,7 @@ public class NPCSpawner : MonoBehaviour
         );
 
         configData.characterId = brain.Identity?.EntityId ?? spawnedNPC.name;
+        configData.archetypeId = config.archetype.archetypeId;
 
         if (brain.IsInitialized)
         {

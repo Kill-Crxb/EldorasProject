@@ -22,6 +22,9 @@ public class IdentitySystem : MonoBehaviour, IBrainModule, ISaveable
     public EntityType Type => brain != null ? brain.EntityType : EntityType.Entity;
     public int Level => brain != null && brain.RPG != null ? brain.RPG.CurrentLevel : 1;
 
+    // Set by the character's config on every spawn, never saved: the archetype is the prefab's, not the save's.
+    public string ArchetypeId { get; set; } = "";
+
     // Entity unique identifier
     private string entityId = System.Guid.NewGuid().ToString();
     public string EntityId { get => entityId; set => entityId = value; }

@@ -76,6 +76,7 @@ public class PersistentNPCConfigurator : MonoBehaviour
         );
 
         configData.characterId = entityId;
+        configData.archetypeId = archetype.archetypeId;
         configData.isPersistent = true;
 
         CharacterConfigurationHandler.Apply(brain, configData);

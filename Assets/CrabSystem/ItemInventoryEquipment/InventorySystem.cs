@@ -85,24 +85,11 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         var saveData = new InventorySaveData
         {
             version = GetSaveVersion(),
-            items = new List<ItemSaveEntry>()
+            items = new List<ItemRecord>()
         };
 
         foreach (var item in inventoryItems)
-        {
-            if (item == null) continue;
-
-            saveData.items.Add(new ItemSaveEntry
-            {
-                instanceId = item.instanceId,
-                definitionId = item.definitionId,
-                rarity = (int)item.currentTier,
-                gridX = item.gridX,
-                gridY = item.gridY,
-                stackCount = item.stackCount,
-                durability = item.durability
-            });
-        }
+            if (item != null) saveData.items.Add(ItemRecord.From(item));
 
         return JsonUtility.ToJson(saveData);
     }
@@ -116,25 +103,16 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
 
         ClearInventory();
         restoring = true;
-
-        foreach (var entry in saveData.items)
-        {
-            if (string.IsNullOrEmpty(entry.definitionId)) continue;
-
-            var item = new ItemInstance(entry.definitionId, (ItemRarity)entry.rarity)
-            {
-                instanceId = entry.instanceId,
-                stackCount = entry.stackCount,
-                durability = entry.durability
-            };
-
-            item.PlaceAtPosition(entry.gridX, entry.gridY);
-
-            if (!AddItem(item))
-                Debug.LogWarning($"[InventorySystem] Failed to restore item {entry.definitionId} at ({entry.gridX},{entry.gridY})");
-        }
-
+        foreach (var record in saveData.items) Restore(record);
         EndRestore();
+    }
+
+    private void Restore(ItemRecord record)
+    {
+        ItemInstance item = record.ToInstance();
+        if (item == null) return;
+        if (!AddItem(item))
+            Debug.LogWarning($"[InventorySystem] Failed to restore item {record.definitionId} at ({record.gridX},{record.gridY})", this);
     }
 
     private void EndRestore()
@@ -149,19 +127,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
     private class InventorySaveData
     {
         public int version;
-        public List<ItemSaveEntry> items;
-    }
-
-    [Serializable]
-    private class ItemSaveEntry
-    {
-        public string instanceId;
-        public string definitionId;
-        public int rarity;
-        public int gridX;
-        public int gridY;
-        public int stackCount;
-        public float durability;
+        public List<ItemRecord> items;
     }
 
     #endregion
@@ -302,18 +268,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         ClearInventory();
         currentContents = contents;
         restoring = true;
-
-        foreach (var containerItem in contents.items)
-        {
-            var itemInstance = ItemManager.CreateItem(containerItem.itemId, containerItem.rarity);
-            if (itemInstance == null) continue;
-
-            itemInstance.PlaceAtPosition(containerItem.gridX, containerItem.gridY);
-
-            if (!AddItem(itemInstance))
-                Debug.LogWarning($"[InventorySystem] Failed to load item {containerItem.itemId} at ({containerItem.gridX},{containerItem.gridY})");
-        }
-
+        foreach (var record in contents.items) Restore(record);
         EndRestore();
     }
 
@@ -326,7 +281,7 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         currentContents.gridHeight = containers[0].gridHeight;
         currentContents.containerId = brain?.name ?? "unknown";
         currentContents.displayName = "Inventory";
-        currentContents.items = new List<ContainerItem>();
+        currentContents.items = new List<ItemRecord>();
     }
 
     public ContainerContents SaveToContents()
@@ -336,10 +291,8 @@ public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, 
         currentContents.items.Clear();
 
         foreach (var item in inventoryItems)
-        {
-            if (item == null || !item.IsPlaced) continue;
-            currentContents.AddItem(item.definitionId, item.currentTier, item.gridX, item.gridY);
-        }
+            if (item != null && item.IsPlaced) currentContents.items.Add(ItemRecord.From(item));
+        currentContents.UpdateTimestamp();
 
         return currentContents;
     }

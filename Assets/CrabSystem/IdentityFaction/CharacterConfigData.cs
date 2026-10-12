@@ -6,6 +6,9 @@ public class CharacterConfigData
 {
     [Header("Identity")]
     public string characterId;
+    // What kind of thing this is (wolf, bandit), from its NPCArchetype; empty for the player. Quests, loot and
+    // per-archetype rules key on it, since characterId is the instance (Known Issues B19).
+    [IdRef(IdKind.Archetype)] public string archetypeId;
     public string displayName;
     // Empty means "whoever configured this entity already decided" — the prefab's own
     // FactionSystem, or an NPC archetype. "faction_neutral" was a default that matched no

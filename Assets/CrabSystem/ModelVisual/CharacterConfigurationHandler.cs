@@ -83,6 +83,7 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
             return;
 
         identity.DisplayName = data.displayName;
+        identity.ArchetypeId = data.archetypeId ?? "";
     }
 
     private void ConfigureFaction(CharacterConfigData data)

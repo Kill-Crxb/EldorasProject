@@ -60,7 +60,7 @@ public class ContainerContents : ScriptableObject
 
     [Header("Items")]
     [Tooltip("Items currently in this container (editable in inspector)")]
-    public List<ContainerItem> items = new List<ContainerItem>();
+    public List<ItemRecord> items = new List<ItemRecord>();
 
     [Header("Metadata")]
     [Tooltip("Last modified timestamp (runtime updated)")]
@@ -70,26 +70,6 @@ public class ContainerContents : ScriptableObject
     public string creatorId;
 
     #region Runtime API
-
-    /// <summary>
-    /// Add an item to this container
-    /// Returns true if added successfully
-    /// </summary>
-    public bool AddItem(string itemId, ItemRarity rarity, int gridX, int gridY)
-    {
-        var item = new ContainerItem
-        {
-            itemId = itemId,
-            rarity = rarity,
-            gridX = gridX,
-            gridY = gridY,
-            timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-        };
-
-        items.Add(item);
-        UpdateTimestamp();
-        return true;
-    }
 
     /// <summary>
     /// Remove an item by index
@@ -109,7 +89,7 @@ public class ContainerContents : ScriptableObject
     /// </summary>
     public bool RemoveItem(string itemId)
     {
-        int index = items.FindIndex(i => i.itemId == itemId);
+        int index = items.FindIndex(i => i.definitionId == itemId);
         if (index >= 0)
         {
             items.RemoveAt(index);
@@ -152,14 +132,10 @@ public class ContainerContents : ScriptableObject
     {
         var itemInstances = new List<ItemInstance>();
 
-        foreach (var item in items)
+        foreach (var record in items)
         {
-            var instance = ItemManager.CreateItem(item.itemId, item.rarity);
-            if (instance != null)
-            {
-                instance.PlaceAtPosition(item.gridX, item.gridY);
-                itemInstances.Add(instance);
-            }
+            ItemInstance instance = record.ToInstance();
+            if (instance != null) itemInstances.Add(instance);
         }
 
         return new ContainerData
@@ -183,22 +159,10 @@ public class ContainerContents : ScriptableObject
         contents.gridWidth = data.gridWidth;
         contents.gridHeight = data.gridHeight;
         contents.lastModified = data.lastModified;
-        contents.items = new List<ContainerItem>();
+        contents.items = new List<ItemRecord>();
 
         if (data.items != null)
-        {
-            foreach (var instance in data.items)
-            {
-                contents.items.Add(new ContainerItem
-                {
-                    itemId = instance.definitionId,
-                    rarity = instance.currentTier,
-                    gridX = instance.gridX,
-                    gridY = instance.gridY,
-                    timestamp = data.lastModified
-                });
-            }
-        }
+            foreach (var instance in data.items) contents.items.Add(ItemRecord.From(instance));
 
         return contents;
     }
@@ -262,7 +226,7 @@ public class ContainerContents : ScriptableObject
         Debug.Log($"Items: {items.Count}");
         foreach (var item in items)
         {
-            Debug.Log($"  - {item.itemId} ({item.rarity}) at ({item.gridX}, {item.gridY})");
+            Debug.Log($"  - {item.definitionId} ({item.rarity}) x{item.stackCount} at ({item.gridX}, {item.gridY})");
         }
     }
 

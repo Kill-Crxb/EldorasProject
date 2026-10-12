@@ -106,14 +106,9 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         {
             if (kvp.Value == null) continue;
 
-            saveData.slots.Add(new EquipmentSlotEntry
-            {
-                slotId = kvp.Key,
-                instanceId = kvp.Value.instanceId,
-                definitionId = kvp.Value.definitionId,
-                rarity = (int)kvp.Value.currentTier,
-                durability = kvp.Value.durability
-            });
+            var entry = new EquipmentSlotEntry { slotId = kvp.Key };
+            entry.CopyFrom(kvp.Value);
+            saveData.slots.Add(entry);
         }
 
         return JsonUtility.ToJson(saveData);
@@ -136,14 +131,10 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
 
         foreach (var entry in saveData.slots)
         {
-            if (string.IsNullOrEmpty(entry.slotId) || string.IsNullOrEmpty(entry.definitionId))
-                continue;
+            if (string.IsNullOrEmpty(entry.slotId)) continue;
 
-            var item = new ItemInstance(entry.definitionId, (ItemRarity)entry.rarity)
-            {
-                instanceId = entry.instanceId,
-                durability = entry.durability
-            };
+            ItemInstance item = entry.ToInstance();
+            if (item == null) continue;
 
             equipment[entry.slotId] = item;
             ApplyItemStats(item);
@@ -161,14 +152,11 @@ public class EquipmentSystem : MonoBehaviour, IBrainModule, ISaveable
         public List<EquipmentSlotEntry> slots;
     }
 
+    // The item fields are ItemRecord's (Known Issues B17); the names match the old entry, so old saves load.
     [Serializable]
-    private class EquipmentSlotEntry
+    private class EquipmentSlotEntry : ItemRecord
     {
         public string slotId;
-        public string instanceId;
-        public string definitionId;
-        public int rarity;
-        public float durability;
     }
 
     #endregion
