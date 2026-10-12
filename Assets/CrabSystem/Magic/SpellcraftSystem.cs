@@ -662,11 +662,8 @@ namespace NinjaGame.Magic
             if (pending.schoolDef == null) return false;
             if (ability != pending.schoolDef.castAbility) return false;
 
-            // Ignite rides ON TOP of whatever the Effect does, because Modify answers "how does
-            // it behave", not "what is it". A burning heal is nonsense, but that is the grammar's
-            // problem to express, not this method's to prevent.
-            if (pending.HasModify && pending.modify == SpellElement.Fire)
-                ApplyIgnite(ability, target);
+            // Modify · Fire (Ignite) applied a DamageOverTimeEffect that never ticked: nothing carried the
+            // EffectManagerModule that ran it. It returns as a burning status with Magic v3 (roadmap S3, M5).
 
             if (pending.effect == SpellElement.Water)
                 return ApplyRestore(ability, target);
@@ -693,58 +690,10 @@ namespace NinjaGame.Magic
             IHealthProvider health = target.GetProvider<IHealthProvider>();
             if (health == null) return false;
 
-            EffectManagerModule effects = target.GetModule<EffectManagerModule>();
-
             for (int i = 0; i < ability.healEffects.Count; i++)
-            {
-                HealEffect heal = ability.healEffects[i];
-                if (heal == null) continue;
-
-                if (effects != null) effects.ApplyHealEffect(heal, health);
-                else heal.Apply(health);
-            }
+                if (ability.healEffects[i] != null) ability.healEffects[i].Apply(health);
 
             return true;
-        }
-
-        /// <summary>
-        /// Modify · Fire — the effect also applies over time.
-        ///
-        /// Applies a COPY of the template rather than the asset's own instance.
-        /// DamageOverTimeEffect holds its timer in a NonSerialized field, so handing the same
-        /// instance to two burning targets would have them share one timer and one of them would
-        /// silently stop ticking. The shared asset is a template; each application needs its own.
-        /// </summary>
-        private void ApplyIgnite(AbilityDefinition ability, ControllerBrain target)
-        {
-            if (ability.damageOverTimeEffects == null || ability.damageOverTimeEffects.Count == 0) return;
-
-            DamageSystem targetDamage = target.GetModule<DamageSystem>();
-            DamageSystem sourceDamage = brain.GetModule<DamageSystem>();
-            EffectManagerModule effects = target.GetModule<EffectManagerModule>();
-
-            if (targetDamage == null || sourceDamage == null || effects == null) return;
-
-            for (int i = 0; i < ability.damageOverTimeEffects.Count; i++)
-            {
-                DamageOverTimeEffect template = ability.damageOverTimeEffects[i];
-                if (template == null) continue;
-
-                var dot = new DamageOverTimeEffect
-                {
-                    duration = template.duration,
-                    tickInterval = template.tickInterval,
-                    damagePerTick = template.damagePerTick,
-                    tickDice = template.tickDice,
-
-                    // The school's type, not the template's — a Nature spell that ignites should
-                    // burn as Nature, because Ignite says "over time", not "as fire".
-                    damageType = pending.schoolDef.damageType,
-                };
-
-                dot.SetAttacker(sourceDamage);
-                effects.ApplyDamageOverTimeEffect(dot, targetDamage);
-            }
         }
 
         // =========================================================================

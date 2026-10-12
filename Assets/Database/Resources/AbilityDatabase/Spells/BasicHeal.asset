@@ -48,12 +48,10 @@ MonoBehaviour:
   range: 5
   requiresLineOfSight: 1
   damageEffects: []
-  damageOverTimeEffects: []
   healEffects: []
-  healOverTimeEffects:
-  - duration: 10
-    tickInterval: 1
-    healPerTick: 5
+  statusEffects:
+  - status: {fileID: 11400000, guid: e76e9bff7dd2422eb47cf579ad0a8a94, type: 2}
+    recipient: 1
   knockbackEffects: []
   movementEffects: []
   hitProcs: []

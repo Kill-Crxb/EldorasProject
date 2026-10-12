@@ -167,9 +167,7 @@ public partial class AbilityDefinition : ScriptableObject
 
     [Header("Combat Effects")]
     public List<DamageEffect> damageEffects = new List<DamageEffect>();
-    public List<DamageOverTimeEffect> damageOverTimeEffects = new List<DamageOverTimeEffect>();
     public List<HealEffect> healEffects = new List<HealEffect>();
-    public List<HealOverTimeEffect> healOverTimeEffects = new List<HealOverTimeEffect>();
     public List<KnockbackEffect> knockbackEffects = new List<KnockbackEffect>();
 
     [Header("Movement Effects")]
@@ -190,7 +188,7 @@ public partial class AbilityDefinition : ScriptableObject
     /// <summary>
     /// Push this ability's statuses onto whoever it reached.
     ///
-    /// Called from all three places an ability actually lands — Execute (self-targeted),
+    /// Called from all three places an ability actually lands — ExecuteOnSelf (self-targeted),
     /// StrikeHandler (melee contact) and ProjectilePayload (arrival) — for the same reason all
     /// three already read damageEffects: an ability is authored once, and how it was delivered
     /// is not supposed to change what it does.

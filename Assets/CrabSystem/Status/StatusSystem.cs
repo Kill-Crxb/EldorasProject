@@ -5,18 +5,17 @@ using UnityEngine;
 /// <summary>
 /// The bearer's named, expiring state. One instance per status id per entity.
 ///
-/// This module owns a clock and a list. It owns no mechanics: everything a status does, it
-/// does by pushing stat contributions and blackboard facts that other systems were already
-/// reading. Mitigation, bonus damage, movement gating — none of those systems learn that
+/// This module owns a clock and a list. Its one mechanic is the tick (damage or healing over
+/// time); everything else a status does, it does by pushing stat contributions and blackboard
+/// facts that other systems were already reading. Mitigation, bonus damage, movement gating — none of those systems learn that
 /// statuses exist, and gear and talents reach the same stats through the same door.
 ///
 /// Removal is by contribution KEY, never by subtracting a remembered number, so a status
 /// cannot drift a stat by expiring twice, by being re-applied mid-flight, or by having its
 /// authored contribution list edited while it was live.
 ///
-/// Lives on the BEARER. That is the difference from EffectManagerModule, which is held by
-/// whoever applied the effect — so its effects die with their applier, and nothing can ask
-/// an entity what is on it.
+/// Lives on the BEARER, so a status outlives whoever applied it and anything can ask an
+/// entity what is on it.
 /// </summary>
 public class StatusSystem : MonoBehaviour, IBrainModule
 {
@@ -115,6 +114,9 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         for (int i = active.Count - 1; i >= 0; i--)
         {
             StatusInstance instance = active[i];
+            AdvanceTicks(instance, deltaTime);
+            // A tick's damage can kill the bearer or break statuses, changing the list under this loop.
+            if (i >= active.Count || active[i] != instance) continue;
             if (instance.IsPermanent) continue;
 
             instance.Remaining -= deltaTime;
@@ -122,6 +124,52 @@ public class StatusSystem : MonoBehaviour, IBrainModule
 
             RemoveAt(i);
         }
+    }
+
+    // Death clears every status, so the instance is checked before each further tick.
+    private void AdvanceTicks(StatusInstance instance, float deltaTime)
+    {
+        if (!instance.Definition.Ticks) return;
+
+        instance.NextTick -= deltaTime;
+        while (instance.NextTick <= 0f && byId.ContainsKey(instance.Id))
+        {
+            instance.NextTick += instance.Definition.tickSeconds;
+            Tick(instance);
+        }
+    }
+
+    private void Tick(StatusInstance instance)
+    {
+        StatusDefinition definition = instance.Definition;
+        if (definition.tickHeals && brain.Health != null)
+            brain.Health.ApplyHealing(RollPerStack(definition.tickHeal, instance.Stacks));
+
+        if (definition.tickDealsDamage && damage != null)
+            damage.TakeDamage(TickPacket(instance));
+    }
+
+    private static int RollPerStack(DiceRoll dice, int stacks)
+    {
+        int total = 0;
+        for (int i = 0; i < stacks; i++) total += dice.Roll();
+        return total;
+    }
+
+    // Dealt by whoever applied it, so the kill is theirs; by the bearer once that source is gone.
+    private CombatDamagePacket TickPacket(StatusInstance instance)
+    {
+        DamageSystem dealer = instance.Source != null && instance.Source.Damage != null ? instance.Source.Damage : damage;
+        var attack = new CombatAttackData
+        {
+            baseDamage = RollPerStack(instance.Definition.tickDamage, instance.Stacks),
+            damageType = instance.Definition.tickDamageType,
+            attackerTransform = dealer.transform,
+            hitPoint = transform.position,
+            hitNormal = Vector3.up,
+            source = DamageSource.Tick
+        };
+        return dealer.CalculateDamage(attack);
     }
 
     #endregion

@@ -88,6 +88,22 @@ public class StatusDefinition : ScriptableObject
              "clear it out from under each other.")]
     public List<StatusFlag> blackboardFlags = new();
 
+    [Header("Over time")]
+    [Tooltip("Seconds between ticks; 0 = no ticks. Poison, burning and regeneration are statuses that tick on the " +
+             "bearer, so saves, resists, immunity and cleanses reach them like any status (roadmap S14).")]
+    public float tickSeconds = 0f;
+
+    [Tooltip("Each tick deals tickDamage, rolled once per stack, as an unrolled tick hit from whoever applied it.")]
+    public bool tickDealsDamage;
+    public DiceRoll tickDamage = DiceRoll.D4();
+    public DamageType tickDamageType = DamageType.Poison;
+
+    [Tooltip("Each tick heals tickHeal, rolled once per stack.")]
+    public bool tickHeals;
+    public DiceRoll tickHeal = DiceRoll.D4();
+
+    public bool Ticks => tickSeconds > 0f && (tickDealsDamage || tickHeals);
+
     [Header("Visuals")]
     [Tooltip("Aura spawned at the bearer's VFXSystem Aura anchor. Belongs to the PERSON, not " +
              "to whatever delivered the status — the projectile dies on impact, the glow does not.")]
@@ -122,6 +138,7 @@ public class StatusDefinition : ScriptableObject
         cachedSourceKey = null;
 
         if (duration < 0f) duration = 0f;
+        if (tickSeconds < 0f) tickSeconds = 0f;
         if (durationFrames < 0) durationFrames = 0;
         if (maxStacks < 1) maxStacks = 1;
         if (stacking == StatusStacking.Refresh) maxStacks = 1;

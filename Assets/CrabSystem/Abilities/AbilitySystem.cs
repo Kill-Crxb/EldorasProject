@@ -831,8 +831,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
                 return;
             }
 
-            var effectManager = brain.GetModule<EffectManagerModule>();
-            ability.ExecuteOnSelf(brain, effectManager, resources);
+            ability.ExecuteOnSelf(brain);
         }
     }
 
