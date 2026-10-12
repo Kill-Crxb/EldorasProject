@@ -19,8 +19,11 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
     // nothing yields inside the loop that uses it — a guarantee nobody was tracking.
     private readonly List<int> fadeKeysScratch = new List<int>();
 
-    private static readonly string[] LocomotionParams = { "MovementState", "IsLockedOn", "StrafeX", "StrafeY", "MovementSpeed", "IsGrounded", "VerticalVelocity", "JumpTrigger", "DashTrigger", "IsDashing" };
-    private static readonly string[] CombatParams = { "BasicAttack1", "BasicAttack2", "BasicAttack3", "Cleave", "Whirlwind", "Thrust", "Slam", "HitLight", "HitHeavy", "Stagger", "Death", "IsDead" };
+    // Parameters the current controller has. One locomotion handler drives the player's full controller and a
+    // training dummy's two-state one; a parameter the controller lacks is skipped rather than warned every frame.
+    // Rebuilt when a model swap brings another controller.
+    private readonly HashSet<int> knownParams = new HashSet<int>();
+    private RuntimeAnimatorController knownParamsController;
 
     public bool IsEnabled { get; set; } = true;
 
@@ -52,31 +55,31 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
 
     public void SetTrigger(string parameterName)
     {
-        if (!IsEnabled || animator == null) return;
+        if (!IsEnabled || !HasParameter(parameterName)) return;
         animator.SetTrigger(parameterName);
     }
 
     public void ResetTrigger(string parameterName)
     {
-        if (!IsEnabled || animator == null) return;
+        if (!IsEnabled || !HasParameter(parameterName)) return;
         animator.ResetTrigger(parameterName);
     }
 
     public void SetBool(string parameterName, bool value)
     {
-        if (!IsEnabled || animator == null) return;
+        if (!IsEnabled || !HasParameter(parameterName)) return;
         animator.SetBool(parameterName, value);
     }
 
     public void SetFloat(string parameterName, float value)
     {
-        if (!IsEnabled || animator == null) return;
+        if (!IsEnabled || !HasParameter(parameterName)) return;
         animator.SetFloat(parameterName, value);
     }
 
     public void SetInteger(string parameterName, int value)
     {
-        if (!IsEnabled || animator == null) return;
+        if (!IsEnabled || !HasParameter(parameterName)) return;
         animator.SetInteger(parameterName, value);
     }
 
@@ -109,9 +112,19 @@ public class AnimationSystem : MonoBehaviour, IBrainModule, IAnimationProvider
     public bool HasParameter(string parameterName)
     {
         if (animator == null) return false;
-        foreach (var param in animator.parameters)
-            if (param.name == parameterName) return true;
-        return false;
+        RefreshKnownParams();
+        return knownParams.Contains(Animator.StringToHash(parameterName));
+    }
+
+    private void RefreshKnownParams()
+    {
+        if (animator.runtimeAnimatorController == knownParamsController) return;
+
+        // A freshly spawned Animator reports no parameters until it binds its controller (Known Issues B10), so
+        // nothing is cached until it does.
+        knownParams.Clear();
+        foreach (var param in animator.parameters) knownParams.Add(param.nameHash);
+        if (knownParams.Count > 0) knownParamsController = animator.runtimeAnimatorController;
     }
 
     public bool IsInState(string stateName, int layerIndex = 0) => animator != null && animator.GetCurrentAnimatorStateInfo(layerIndex).IsName(stateName);

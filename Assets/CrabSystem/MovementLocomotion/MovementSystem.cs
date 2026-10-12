@@ -371,13 +371,11 @@ public class MovementSystem : MonoBehaviour, IBrainModule
         var sources = GetComponentsInChildren<IMovementControlSource>();
         availableControlSources.AddRange(sources);
 
-        // Check if InputSystem implements IMovementControlSource
-        // InputSystem lives at Brain level, not as a child of MovementSystem
-        var inputSystem = brain.GetModule<InputSystem>();
-        if (inputSystem is IMovementControlSource inputAsControlSource && !availableControlSources.Contains(inputAsControlSource))
-        {
-            availableControlSources.Add(inputAsControlSource);
-        }
+        // The brain's own control source lives beside this module, not under it: InputSystem on the player,
+        // AIControlSource on an NPC (a declined InputSystem answers no interface).
+        var brainSource = brain.GetProvider<IMovementControlSource>();
+        if (brainSource != null && !availableControlSources.Contains(brainSource))
+            availableControlSources.Add(brainSource);
 
         if (showDebugInfo)
         {
