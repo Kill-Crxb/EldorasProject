@@ -19,8 +19,7 @@ public struct AIRoleAbility
 // ScriptableObjects shared by every NPC that uses them, so nothing per-entity can live on a goal.
 //
 // Setup: put it on a child of the brain. At LateInitialize it makes itself the active movement
-// control source, replacing InputSystem's AI mode (and its StubAIControlSource). As the ability
-// control source it answers brain.GetProvider<IAbilityControlSource>() because InputSystem is
+// control source. As the ability control source it answers brain.GetProvider<IAbilityControlSource>() because InputSystem is
 // player-only and switched off on an NPC.
 public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSource, IAbilityControlSource
 {

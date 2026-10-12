@@ -4,14 +4,13 @@ using UnityEngine;
 // Tools → Crab → Statuses → Set Up Control (12 Oct). Gives the existing statuses their crowd-control category and
 // saving throw (Combat_Framework §11, Stat_Resolution §6), tags the hit states "hitstate" (not CC, kept out of the
 // status bar and combat text), fills empty descriptions for the status bar's tooltip, makes a test Stunned (Hard,
-// Toughness, an overhead aura) and gives Base_NPC the StatusSystem and aura binder it lacked (roadmap F6).
+// Toughness, an overhead aura).
 // Rerunnable: it overwrites only the fields it sets, and never a description someone has written.
 public static class ControlSetupBuilder
 {
     const string Tag = "ControlSetup";
     const string Folder = "Assets/Database/Resources/Statuses";
     const string StunVfx = "Assets/Database/Assets/VFX/Prefab/Stun.prefab";
-    const string NpcPath = "Assets/Database/Characters/Base_NPC.prefab";
 
     static readonly (string asset, string text)[] Descriptions =
     {
@@ -45,7 +44,6 @@ public static class ControlSetupBuilder
 
         Stunned();
         foreach ((string asset, string text) in Descriptions) Describe(Load(asset), text);
-        GiveNpcStatuses();
         AssetDatabase.SaveAssets();
         Debug.Log($"[{Tag}] Done. Categories and saves set; hit states tagged; descriptions filled; Status_Stunned ready.");
     }
@@ -108,27 +106,6 @@ public static class ControlSetupBuilder
 
         status.description = text;
         EditorUtility.SetDirty(status);
-    }
-
-    // F6: Base_NPC had no StatusSystem, so anything built on it ignored every status. Adds it (and the aura binder)
-    // as a child beside AbilitySystem, unless it is already there.
-    static void GiveNpcStatuses()
-    {
-        GameObject root = PrefabUtility.LoadPrefabContents(NpcPath);
-        var abilities = root.GetComponentInChildren<AbilitySystem>(true);
-        if (abilities == null || root.GetComponentInChildren<StatusSystem>(true) != null)
-        {
-            PrefabUtility.UnloadPrefabContents(root);
-            return;
-        }
-
-        var go = new GameObject("StatusSystem");
-        go.transform.SetParent(abilities.transform.parent, false);
-        go.AddComponent<StatusSystem>();
-        go.AddComponent<StatusVfxBinder>();
-        PrefabUtility.SaveAsPrefabAsset(root, NpcPath);
-        PrefabUtility.UnloadPrefabContents(root);
-        Debug.Log($"[{Tag}] Base_NPC: StatusSystem and StatusVfxBinder added (F6).");
     }
 
     static void AddTag(StatusDefinition status, string tag)

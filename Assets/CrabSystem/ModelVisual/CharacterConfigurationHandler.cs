@@ -63,9 +63,6 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
             return;
         }
 
-        if (brain.IsNPC)
-            DisablePlayerOnlySystems();
-
         ConfigureIdentity(data);
         ConfigureFaction(data);
         ConfigureStats(data);
@@ -78,17 +75,6 @@ public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
     #endregion
 
     #region Configuration
-
-    private void DisablePlayerOnlySystems()
-    {
-        if (brain.Input != null)
-        {
-            brain.Input.SetMode(InputMode.AI);
-            brain.Input.IsEnabled = false;
-        }
-
-        // Camera disable reconnects here after the camera rebuild.
-    }
 
     private void ConfigureIdentity(CharacterConfigData data)
     {

@@ -14,7 +14,6 @@ public static class TalentSetupBuilder
     const string Tag = "TalentSetup";
     const string RulesPath = "Assets/Database/Talents/TalentRules.asset";
     const string PlayerPath = "Assets/Database/Characters/PlayerCharacter/Base_PC.prefab";
-    const string NpcPath = "Assets/Database/Characters/Base_NPC.prefab";
     const string PageId = "talents";
     const string TemplatePageId = "spellbook";
 
@@ -24,9 +23,7 @@ public static class TalentSetupBuilder
         TalentRules rules = Rules();
         AddModule(rules);
         AddModule<KeywordModule>(PlayerPath);
-        AddModule<KeywordModule>(NpcPath);
         AddModule<TriggerModule>(PlayerPath);
-        AddModule<TriggerModule>(NpcPath);
         AddPage();
         AssetDatabase.SaveAssets();
         Debug.Log($"[{Tag}] Done. Make trees in Tools → Crab → Wizards → Talents, or Tools → Crab → Talents → Create Test Trees.");
@@ -77,7 +74,7 @@ public static class TalentSetupBuilder
         Debug.Log($"[{Tag}] player: TalentModule {(created ? "added to" : "rewired on")} Base_PC; level cap {rules.levelCap}.");
     }
 
-    // Keywords work on every fighter (an NPC's Ambushing counts too), so both bases carry the module.
+    // Keywords work on every fighter (an NPC's Ambushing counts too); Base_NPC is a Base_PC variant, so it inherits it.
     // A module child beside AbilitySystem (KeywordModule, TriggerModule); skipped when the prefab has one.
     static void AddModule<T>(string path) where T : Component
     {

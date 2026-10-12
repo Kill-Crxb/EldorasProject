@@ -3,7 +3,6 @@ using RPG.Factions;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 // Tools → AI → Build Monsters
 //
@@ -20,7 +19,6 @@ public static class MonsterBuilder
     const string Root = "Assets/Database/Characters/Monsters";
     const string PackModels = "Assets/Level 1 Monster Pack/Models/";
     const string PackPrefabs = "Assets/Level 1 Monster Pack/Prefabs/";
-    const string BasePath = "Assets/Database/Characters/PlayerCharacter/Base_PC.prefab";
     const string HumanoidController = "Assets/Database/3d/Humanoid/HumanoidAnimator_v2.controller";
     const string ModelDatabasePath = "Assets/Database/Characters/EldoraModelDatabase.asset";
     const string BakeSettingsPath = "Assets/Database/GameData/Combat/MoveBakeSettings.asset";
@@ -767,13 +765,8 @@ public static class MonsterBuilder
 
     static void BuildVariant(MonsterSpec s, string weaponId, Vector3 size, NPCArchetype archetype, MovementProfile movement)
     {
-        var root = (GameObject)PrefabUtility.InstantiatePrefab(Load<GameObject>(BasePath));
-        root.name = s.displayName;
-
-        var brain = root.GetComponentInChildren<ControllerBrain>(true);
-        Write(brain, "entityType", p => p.intValue = (int)EntityType.NPC);
-
-        DisablePlayerView(root);
+        GameObject root = NpcPrefabKit.InstantiateBasePc(s.displayName);
+        ControllerBrain brain = NpcPrefabKit.MakeNpc(root);
         DisableHumanoidFeel(root);
         SizeBody(root, size, s.lift);
         Equip(root, weaponId);
@@ -785,15 +778,15 @@ public static class MonsterBuilder
             list.GetArrayElementAtIndex(i).objectReferenceValue = s.abilities[i].ability;
         abilities.ApplyModifiedPropertiesWithoutUndo();
 
-        Write(root.GetComponentInChildren<ParkourLocomotionHandler>(true), "profile", p => p.objectReferenceValue = movement);
+        NpcPrefabKit.Write(root.GetComponentInChildren<ParkourLocomotionHandler>(true), "profile", p => p.objectReferenceValue = movement);
 
         AddAI(brain, s);
 
         var config = root.AddComponent<PersistentNPCConfigurator>();
-        Write(config, "entityId", p => p.stringValue = s.monsterId + "_01");
-        Write(config, "archetype", p => p.objectReferenceValue = archetype);
-        Write(config, "brain", p => p.objectReferenceValue = brain);
-        Write(config, "level", p => p.intValue = 1);
+        NpcPrefabKit.Write(config, "entityId", p => p.stringValue = s.monsterId + "_01");
+        NpcPrefabKit.Write(config, "archetype", p => p.objectReferenceValue = archetype);
+        NpcPrefabKit.Write(config, "brain", p => p.objectReferenceValue = brain);
+        NpcPrefabKit.Write(config, "level", p => p.intValue = 1);
 
         string path = $"{Folder(s)}/{s.displayName}.prefab";
         PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -802,10 +795,8 @@ public static class MonsterBuilder
 
     static void AddAI(ControllerBrain brain, MonsterSpec s)
     {
-        var ai = new GameObject("AI_System");
-        ai.transform.SetParent(brain.transform, false);
-
-        var control = ai.AddComponent<AIControlSource>();
+        GameObject ai = NpcPrefabKit.EnsureAiSystem(brain);
+        var control = ai.GetComponent<AIControlSource>();
         var controlSo = new SerializedObject(control);
         SerializedProperty roles = controlSo.FindProperty("roleAbilities");
         roles.arraySize = s.abilities.Count;
@@ -818,9 +809,9 @@ public static class MonsterBuilder
         controlSo.ApplyModifiedPropertiesWithoutUndo();
 
         var perception = ai.AddComponent<PerceptionModule>();
-        Write(perception, "requireLineOfSight", p => p.boolValue = false);
-        Write(perception, "visionAngle", p => p.floatValue = 360f);
-        Write(perception, "visionRange", p => p.floatValue = s.aggroRange);
+        NpcPrefabKit.Write(perception, "requireLineOfSight", p => p.boolValue = false);
+        NpcPrefabKit.Write(perception, "visionAngle", p => p.floatValue = 360f);
+        NpcPrefabKit.Write(perception, "visionRange", p => p.floatValue = s.aggroRange);
 
         var goap = ai.AddComponent<GOAPModule>();
         goap.goalPool.AddRange(s.goals);
@@ -829,7 +820,7 @@ public static class MonsterBuilder
         if (!s.reactions) return;
         var react = AssetDatabase.LoadAssetAtPath<GOAPGoal>(ReactGoalPath);
         if (react == null) Debug.LogWarning($"[MonsterBuilder] {s.displayName}: no {ReactGoalPath} — run Tools → AI → Build Goal Test Variants, then rebuild for reactions.");
-        Write(goap, "evadeGoal", p => p.objectReferenceValue = react);
+        NpcPrefabKit.Write(goap, "evadeGoal", p => p.objectReferenceValue = react);
     }
 
     const string ReactGoalPath = "Assets/Database/AI/Goals/Goal_React.asset";
@@ -871,19 +862,6 @@ public static class MonsterBuilder
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    // The player's camera rig, audio listener and post-process volumes come along with Base_PC.
-    static void DisablePlayerView(GameObject root)
-    {
-        foreach (var cam in root.GetComponentsInChildren<Camera>(true))
-            cam.gameObject.SetActive(false);
-
-        foreach (var listener in root.GetComponentsInChildren<AudioListener>(true))
-            listener.gameObject.SetActive(false);
-
-        foreach (var volume in root.GetComponentsInChildren<Volume>(true))
-            volume.gameObject.SetActive(false);
-    }
-
     // Foot IK, head look, lean and footsteps read humanoid bones. Off on a generic rig.
     static void DisableHumanoidFeel(GameObject root)
     {
@@ -914,15 +892,6 @@ public static class MonsterBuilder
         string parent = System.IO.Path.GetDirectoryName(path).Replace('\\', '/');
         EnsureFolder(parent);
         AssetDatabase.CreateFolder(parent, System.IO.Path.GetFileName(path));
-    }
-
-    static void Write(Object target, string field, System.Action<SerializedProperty> write)
-    {
-        var so = new SerializedObject(target);
-        SerializedProperty prop = Find(so, field);
-        if (prop == null) return;
-        write(prop);
-        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static SerializedProperty Find(SerializedObject so, string path)

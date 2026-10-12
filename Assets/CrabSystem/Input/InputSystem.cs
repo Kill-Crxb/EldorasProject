@@ -70,7 +70,6 @@ public class InputProfileSaveData
 public enum InputMode
 {
     Player,     // Read Unity Input System (keyboard/gamepad)
-    AI,         // Read AI decisions (GOAP, pathfinding)
     Network,    // Read network packets (multiplayer)
     Admin,      // Read scripted commands (possession/testing)
     Test        // Automated test sequences
@@ -135,18 +134,12 @@ public class InputSystem : MonoBehaviour,
     [Tooltip("Camera provider for camera-relative movement (auto-discovered)")]
     [SerializeField] private MonoBehaviour cameraProviderComponent;
 
-    [Header("AI Control Source")]
-    [Tooltip("Control source for NPCs without AI behavior (stub that returns zero input)")]
-    [SerializeField] private StubAIControlSource stubAIControlSource;
-
     // References
 
     private ControllerBrain brain;
     private PlayerInputControls inputActions;
     private ICameraProvider cameraProvider;
     private HotbarSystem hotbarSystem;
-
-    private string aiRequestedAbility;
 
     // Input State (IInputProvider)
 
@@ -196,8 +189,7 @@ public class InputSystem : MonoBehaviour,
     public ControllerBrain Brain => brain;
     public InputMode CurrentMode => currentMode;
     public bool IsActive =>
-        isEnabled &&
-        (currentMode == InputMode.Player || currentMode == InputMode.AI);
+        isEnabled && currentMode == InputMode.Player;
     public string SourceName => $"InputSystem ({currentMode})";
 
     // IBrainModule
@@ -212,24 +204,7 @@ public class InputSystem : MonoBehaviour,
             Debug.LogError($"[InputSystem] PlayerInputControls is NULL on {brain.EntityName}! " +
                            $"This IS a Player entity but has no PlayerInputControls!");
         }
-        // Non-player entities (NPC, Entity, etc.) never get PlayerInputControls —
-        // that's expected, since they run in InputMode.AI below. No log needed.
-
-        if (brain.IsNPC)
-        {
-            currentMode = InputMode.AI;
-
-            // Auto-discover stub AI control source if not assigned
-            if (stubAIControlSource == null)
-            {
-                stubAIControlSource = GetComponentInChildren<StubAIControlSource>();
-            }
-
-            if (stubAIControlSource == null)
-            {
-                Debug.LogWarning($"[InputSystem] No StubAIControlSource found on NPC {brain.EntityName}. Create a child GameObject with StubAIControlSource component.");
-            }
-        }
+        // Player-only: an NPC's brain declines this module, and AIControlSource is its control source.
 
         SetupDependencies();
         ValidateKeybindRouting();
@@ -418,7 +393,6 @@ public class InputSystem : MonoBehaviour,
         switch (currentMode)
         {
             case InputMode.Player: return GetPlayerMovementInput();
-            case InputMode.AI: return GetAIMovementInput();
             case InputMode.Admin: return GetAdminMovementInput();
             default: return MovementInput.Zero;
         }
@@ -448,7 +422,6 @@ public class InputSystem : MonoBehaviour,
         switch (currentMode)
         {
             case InputMode.Player: return GetPlayerAbilityInput();
-            case InputMode.AI: return GetAIAbilityInput();
             case InputMode.Admin: return GetAdminAbilityInput();
             default: return null;
         }
@@ -463,21 +436,6 @@ public class InputSystem : MonoBehaviour,
     }
 
     public InputMode GetMode() => currentMode;
-
-    // AI Control API
-
-    public void RequestAbility(string slotKey)
-    {
-        if (currentMode != InputMode.AI)
-        {
-            Debug.LogWarning($"[InputSystem] RequestAbility() called but mode is {currentMode}");
-            return;
-        }
-        aiRequestedAbility = slotKey;
-    }
-
-    public bool HasPendingAbilityRequest() => !string.IsNullOrEmpty(aiRequestedAbility);
-    public void ClearAbilityRequest() => aiRequestedAbility = null;
 
     // Player Input Reading
 
@@ -765,14 +723,7 @@ public class InputSystem : MonoBehaviour,
     /// </summary>
     private string GetPlayerAbilityInput() => null;
 
-    // AI / Admin Ability Input
-
-    private string GetAIAbilityInput()
-    {
-        string slot = aiRequestedAbility;
-        aiRequestedAbility = null;
-        return slot;
-    }
+    // Admin Ability Input
 
     private string GetAdminAbilityInput()
     {
@@ -852,12 +803,6 @@ public class InputSystem : MonoBehaviour,
         }
 
         return moveDir.magnitude > 0.1f ? moveDir : Vector2.zero;
-    }
-
-    private MovementInput GetAIMovementInput()
-    {
-        if (stubAIControlSource == null) return MovementInput.Zero;
-        return stubAIControlSource.GetMovementInput();
     }
 
     private MovementInput GetAdminMovementInput()

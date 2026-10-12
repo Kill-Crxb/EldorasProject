@@ -2991,7 +2991,6 @@ MonoBehaviour:
   abilities:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
   - {fileID: 11400000, guid: d2a2c77dd656fa26a90cec8c9b87b943, type: 2}
-  - {fileID: 0}
   - {fileID: 11400000, guid: c083f1cf71991364891541c5fccf33d9, type: 2}
   weaponSlotId: mainwep
   hitShakeAmplitude: 0.04
