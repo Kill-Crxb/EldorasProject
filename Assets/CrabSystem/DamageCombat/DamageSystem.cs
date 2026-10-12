@@ -81,6 +81,8 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     // Whether the hit being taken right now (or the last one) was blocked or parried. Read by the
     // attacker's hit-state step in the same call chain; a guard that's up but flanked doesn't count (B29).
     public bool LastHitGuarded { get; private set; }
+    // The last hit's breakdown, for whoever shows it (combat text).
+    public HitResolution LastHit { get; private set; }
 
     public event Action<float> OnHealthChanged;
     public event Action<float, float> OnHealthChangedDetailed;
@@ -91,6 +93,8 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     public event Action<ControllerBrain> OnKill;
     public event Action<CombatDamagePacket> OnDamageDealt;
     public event Action<CombatDamagePacket> OnDamageTaken;
+    // A hit arrived while this entity was invincible (dodge i-frames) and did nothing.
+    public event Action<CombatDamagePacket> OnEvaded;
     // Same moment as OnDamageTaken, with the damage actually applied — post-mitigation, post-block.
     public event Action<CombatDamagePacket, float> OnDamageApplied;
     // Same moment again, with the whole breakdown — roll, Defense, grade, soak. For logs and talents.
@@ -213,8 +217,14 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     /// </summary>
     public float TakeDamage(CombatDamagePacket packet)
     {
+        LastHit = default;
         if (!isEnabled || isDead) return 0f;
-        if (blackboard != null && blackboard.GetBool(BlackboardKey.IsInvincible)) return 0f;
+        if (blackboard != null && blackboard.GetBool(BlackboardKey.IsInvincible))
+        {
+            LastHit = new HitResolution { grade = HitGrade.Evaded };
+            OnEvaded?.Invoke(packet);
+            return 0f;
+        }
 
         ControllerBrain attackerBrain = packet.attacker != null
             ? packet.attacker.GetComponentInParent<ControllerBrain>()
@@ -240,6 +250,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         incomingAttacker = null;
 
         hit.applied = dmg;
+        LastHit = hit;
 
         OnDamageTaken?.Invoke(packet);
         OnDamageApplied?.Invoke(packet, dmg);
@@ -299,8 +310,11 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
         // The attacker's keywords (Ambushing from behind…) add to-hit, advantage and bonus damage before the roll.
         float bonusDamage = 0f;
+        string bonusSource = null;
         IHitModifier modifier = attackerBrain != null ? attackerBrain.GetProvider<IHitModifier>() : null;
-        if (modifier != null) modifier.ModifyHit(brain, ref hit.accuracy, ref hit.advantage, ref bonusDamage);
+        if (modifier != null) modifier.ModifyHit(brain, ref hit.accuracy, ref hit.advantage, ref bonusDamage, ref bonusSource);
+        hit.bonus = bonusDamage;
+        hit.bonusSource = bonusSource;
 
         hit.roll = UnityEngine.Random.Range(1, 21);
         if (hit.advantage) hit.roll = Mathf.Max(hit.roll, UnityEngine.Random.Range(1, 21));

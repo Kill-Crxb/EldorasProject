@@ -3,5 +3,5 @@
 // provider cache.
 public interface IHitModifier
 {
-    void ModifyHit(ControllerBrain defender, ref float accuracy, ref bool advantage, ref float bonusDamage);
+    void ModifyHit(ControllerBrain defender, ref float accuracy, ref bool advantage, ref float bonusDamage, ref string bonusSource);
 }

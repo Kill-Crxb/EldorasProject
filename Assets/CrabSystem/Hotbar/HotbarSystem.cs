@@ -63,6 +63,8 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
     private float nextPageCheck;
 
     public event Action<string, int> OnSlotChanged;
+    // A slot's key was pressed, whether or not anything played (GI-49: the icon dips).
+    public event Action<string, int> OnSlotPressed;
 
     /// <summary>Fires when the active page changes. Views must rebuild — slot counts can differ.</summary>
     public event Action<string> OnPageChanged;
@@ -414,6 +416,14 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
         if (movesetModule != null) movesetModule.OnPreviewChanged -= HandleMovesetPreviewChanged;
     }
 
+    // GI-25: a press on this slot is being held to fire on the first free frame (the moveset's buffer, or a press
+    // made while stunned).
+    public bool IsBuffered(string barId, int index)
+    {
+        if (IsMovesetSlot(barId, index)) return index == movesetSlotIndex && movesetModule.HasBufferedPress;
+        return heldPress != null && ResolveSlotAbility(GetSlot(barId, index)) == heldPress;
+    }
+
     public bool IsMovesetSlot(string barId, int index)
         => movesetModule != null && barId == movesetBarId && (index == movesetSlotIndex || index == blockSlotIndex);
 
@@ -454,6 +464,7 @@ public class HotbarSystem : MonoBehaviour, IBrainModule, ISaveable
     public void TriggerSlot(string barId, int index)
     {
         if (abilitySystem == null) return;
+        OnSlotPressed?.Invoke(barId, index);
 
         if (IsMovesetSlot(barId, index))
         {

@@ -24,7 +24,15 @@ namespace RPG.NPC.UI
         [SerializeField] private Vector3 nameplateOffset = new Vector3(0, 2.5f, 0);
         [SerializeField] private bool alwaysFaceCamera = true;
         [SerializeField] private bool showHealthBar = true;
-        [SerializeField] private float healthBarUpdateSpeed = 5f;
+        [Tooltip("GI-19: the ghost chunk drains this much of the bar per second, after holding.")]
+        [SerializeField] private float ghostDrain = 0.6f;
+        [SerializeField] private Color ghostColor = new Color(1f, 1f, 1f, 0.7f);
+        [SerializeField] private float ghostHold = 0.5f;
+        [Tooltip("GI-51: the bar shakes this long and this far (canvas units) when the target takes a hit.")]
+        [SerializeField] private float shakeSeconds = 0.2f;
+        [SerializeField] private float shakeAmplitude = 4f;
+        [Tooltip("GI-19: in the danger zone the posture bar pulses this fast.")]
+        [SerializeField] private float posturePulseSpeed = 10f;
         [Tooltip("Health and posture bars show only while this NPC is the player's soft target (TargetingModule).")]
         [SerializeField] private bool barsOnlyOnTarget = true;
         [Tooltip("Seconds the bars stay up after the NPC stops being the target, so a sweep of the camera doesn't flicker them.")]
@@ -54,7 +62,10 @@ namespace RPG.NPC.UI
         private FactionDefinition npcFaction;
         private FactionRelationship cachedRelationship;
 
-        private float currentHealthPercent = 1f;
+        private GhostBar healthGhost;
+        private RectTransform healthPanelRect;
+        private Vector2 healthPanelHome;
+        private float shakeUntil;
         private float targetHealthPercent = 1f;
         private System.Action<float> healthChangedCallback;
         private bool hasRefreshedAfterStart = false;
@@ -72,6 +83,10 @@ namespace RPG.NPC.UI
 
             if (!showHealthBar && healthBarPanel != null)
                 healthBarPanel.SetActive(false);
+
+            healthGhost = new GhostBar(healthBarFill, ghostColor, ghostHold, ghostDrain);
+            healthPanelRect = healthBarPanel != null ? healthBarPanel.transform as RectTransform : null;
+            if (healthPanelRect != null) healthPanelHome = healthPanelRect.anchoredPosition;
 
             TryResolveCamera();
         }
@@ -118,10 +133,16 @@ namespace RPG.NPC.UI
             if (healthBarPanel != null && healthBarPanel.activeSelf != bars) healthBarPanel.SetActive(bars);
             UpdatePosture(bars);
 
-            if (showHealthBar && healthBarFill != null && currentHealthPercent != targetHealthPercent)
+            if (showHealthBar && healthBarFill != null)
             {
-                currentHealthPercent = Mathf.Lerp(currentHealthPercent, targetHealthPercent, Time.deltaTime * healthBarUpdateSpeed);
-                healthBarFill.fillAmount = currentHealthPercent;
+                healthBarFill.fillAmount = targetHealthPercent;
+                if (healthGhost.Tick(targetHealthPercent) && bars) shakeUntil = Time.unscaledTime + shakeSeconds;
+            }
+
+            if (healthPanelRect != null)
+            {
+                bool shaking = Time.unscaledTime < shakeUntil;
+                healthPanelRect.anchoredPosition = shaking ? healthPanelHome + Random.insideUnitCircle * shakeAmplitude : healthPanelHome;
             }
         }
 
@@ -273,7 +294,10 @@ namespace RPG.NPC.UI
             if (postureBarPanel != null && postureBarPanel.activeSelf != show) postureBarPanel.SetActive(show);
 
             postureBarFill.localScale = new Vector3(posture, 1f, 1f);
-            if (postureBarImage != null) postureBarImage.color = posture >= postureDanger ? postureDangerColor : postureColor;
+            if (postureBarImage == null) return;
+
+            float pulse = (Mathf.Sin(Time.unscaledTime * posturePulseSpeed) + 1f) * 0.2f;
+            postureBarImage.color = posture >= postureDanger ? Color.Lerp(postureDangerColor, Color.white, pulse) : postureColor;
         }
 
         private static float PostureOf(ControllerBrain brain)

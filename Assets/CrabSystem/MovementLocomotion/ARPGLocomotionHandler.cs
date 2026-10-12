@@ -79,10 +79,12 @@ public class ARPGLocomotionHandler : LocomotionHandler
     private int wallJumpsUsed;
 
     private ParkourAssistant parkour;
+    private IStatProvider stats;
 
     public override void Initialize(MovementSystem system)
     {
         base.Initialize(system);
+        stats = system.Brain.Stats;
         animationProvider = system.Brain.GetProvider<IAnimationProvider>();
         targetLock = system.Brain.GetModule<TargetLockModule>();
         parkour = system.Brain.GetModule<ParkourAssistant>();
@@ -288,8 +290,16 @@ public class ARPGLocomotionHandler : LocomotionHandler
                      $"isInWalkMode: {isInWalkMode}");
         }
 
-        return baseSpeed;
+        return Mathf.Max(0f, baseSpeed + GaitDial());
     }
+
+    // The mov.* dials (Dials_Build.md) the parkour handler reads, so slows, gear and the burden track reach NPCs on
+    // this handler too. Strafe speeds take the same gait dial.
+    float Dial(string statId) => DialIds.Read(stats, statId);
+
+    float GaitDial() => Dial(isSprinting ? DialIds.SprintSpeed : isInWalkMode ? DialIds.WalkSpeed : DialIds.RunSpeed);
+
+    float JumpForce => Mathf.Max(0f, jumpForce + Dial(DialIds.JumpSpeed));
 
     float GetStrafeSpeed()
     {
@@ -311,7 +321,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
             baseSpeed = strafeRunSpeed;
         }
 
-        return baseSpeed;
+        return Mathf.Max(0f, baseSpeed + GaitDial());
     }
 
     // ============================
@@ -333,7 +343,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
 
         if (grounded || coyote)
         {
-            verticalVelocity.y = jumpForce;
+            verticalVelocity.y = JumpForce;
             lastJumpInputTime = 0f;
 
             // Trigger jump animation
@@ -346,9 +356,9 @@ public class ARPGLocomotionHandler : LocomotionHandler
         {
             lastJumpInputTime = 0f;
         }
-        else if (airJumpsUsed < maxAirJumps)
+        else if (airJumpsUsed < maxAirJumps + Mathf.RoundToInt(Dial(DialIds.AirJumps)))
         {
-            verticalVelocity.y = jumpForce;
+            verticalVelocity.y = Mathf.Max(0f, jumpForce + Dial(DialIds.AirJumpSpeed));
             airJumpsUsed++;
             lastJumpInputTime = 0f;
 
@@ -377,7 +387,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
     bool TryWallJump()
     {
         if (!canWallJump || parkour == null) return false;
-        if (wallJumpsUsed >= maxWallJumps) return false;
+        if (wallJumpsUsed >= maxWallJumps + Mathf.RoundToInt(Dial(DialIds.WallJumps))) return false;
         if (movementSystem.IsGrounded) return false;
 
         // Facing comes from the entity root, not from the brain object — the brain is a child
@@ -396,7 +406,7 @@ public class ARPGLocomotionHandler : LocomotionHandler
         else
             return false;
 
-        verticalVelocity.y = wallJumpForce > 0f ? wallJumpForce : jumpForce;
+        verticalVelocity.y = wallJumpForce > 0f ? wallJumpForce : JumpForce;
 
         // Overwrite horizontal velocity rather than adding to it. Adding lets a player running
         // at the wall keep their inbound speed and stick to the face instead of leaving it.

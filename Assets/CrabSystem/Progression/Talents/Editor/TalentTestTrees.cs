@@ -4,7 +4,8 @@ using UnityEngine;
 
 // Tools → Crab → Talents → Create Test Trees (10 Oct). Two small trees to play the system with before real ones
 // are authored: Test Ninja (stats, Sprint and Double Jump grants, all seven rows, a capstone pair, a Sinister
-// socket, Ambushing talents, and status talents: Inflict, Exploit, Intensify, Resist, Immune) and Test Sage (a mana
+// socket, Ambushing talents, status talents (Inflict, Exploit, Intensify, Resist, Immune), a granted ability, two
+// triggers, Thrive and an ability swap) and Test Sage (a mana
 // tree to swap to). Also the test keywords, the "basic" tag on the katana's light string and the "control" tag on
 // hit states and Rooted. Test content — delete when real trees exist. Rerunnable: rebuilds the trees.
 public static class TalentTestTrees
@@ -15,6 +16,8 @@ public static class TalentTestTrees
     const string StaminaPath = "Assets/CrabSystem/Resources/ResourceDefinitions/StaminaDefinition.asset";
     const string AttackFolder = "Assets/Database/Resources/AbilityDatabase/KatanaAbilities";
     const string StatusFolder = "Assets/Database/Resources/Statuses";
+    const string AbilityFolder = "Assets/Database/Resources/AbilityDatabase";
+    const string TestAbilityFolder = "Assets/Database/Talents/Test/Abilities";
     static readonly string[] ControlStatuses = { "HitStates/Status_Flinched", "HitStates/Status_Staggered", "HitStates/Status_Prone",
         "HitStates/Status_Launched", "HitStates/Status_GuardBroken", "Status_Rooted" };
 
@@ -84,6 +87,23 @@ public static class TalentTestTrees
         Node(tree, "test_steadfast", "Steadfast", TalentCategory.Generic, 4, 0, 2, StatusMod(tree, "Resist_control", null, "control", StatusSide.Taken, false, -0.1f, 0));
         Node(tree, "test_unshakable", "Unshakable", TalentCategory.Capability, 4, 4, 1, StatusMod(tree, "Immune_flinched", flinched, null, StatusSide.Taken, true, 0f, 0), 2);
 
+        // Abilities and triggers: a granted ability, a proc on a perfect dodge, an on-kill cooldown cut, Thrive, and
+        // Sinister abilities becoming Shadow Strike.
+        CrabWizardGUI.EnsureFolder(TestAbilityFolder);
+        AbilityDefinition stoneskin = Load<AbilityDefinition>($"{AbilityFolder}/Spells/CastStoneskin.asset");
+        AbilityDefinition riposte = TestAbility("KatanaAbilities/DashThrust", "ShadowRiposte", "test_shadow_riposte", "Shadow Riposte");
+        AbilityDefinition shadowStrike = TestAbility("KatanaAbilities/BasicAttack3", "ShadowStrike", "test_shadow_strike", "Shadow Strike");
+        KeywordDefinition ironclad = Keyword("ironclad", "Ironclad", "While you have Stoneskin: +1d4 damage.", KeywordCondition.SelfHasStatus, 0, false);
+        ironclad.conditionStatus = Status("Status_Stoneskin");
+        ironclad.bonusDice = 1;
+        ironclad.bonusDieFaces = 4;
+
+        Node(tree, "test_stoneskin_mantra", "Stoneskin Mantra", TalentCategory.Ability, 3, 4, 1, GrantAbility(tree, stoneskin));
+        Node(tree, "test_shadow_riposte", "Riposte from Shadow", TalentCategory.Trigger, 4, 1, 1, Evade(tree, riposte));
+        Node(tree, "test_bloodthirst", "Bloodthirst", TalentCategory.Trigger, 4, 3, 1, OnKill(tree));
+        Node(tree, "test_stone_fist", "Stone Fist", TalentCategory.Keyword, 5, 0, 1, Grant(tree, ironclad, "basic"));
+        Node(tree, "test_shadow_strikes", "Shadow Strikes", TalentCategory.Modifier, 5, 3, 1, Replace(tree, "sinister", shadowStrike));
+
         TalentNode shadow = Node(tree, "test_shadow", "Shadow", TalentCategory.Capstone, 7, 1, 1, Bonus(tree, "character.max_movement_charges", 1), 3);
         TalentNode stone = Node(tree, "test_stone", "Stone", TalentCategory.Capstone, 7, 3, 1, Bonus(tree, "character.max_health", 20), 3);
         tree.Find(shadow).exclusiveWith = stone;
@@ -142,6 +162,68 @@ public static class TalentTestTrees
             attack.tags.Add("basic");
             EditorUtility.SetDirty(attack);
         }
+    }
+
+    static T Load<T>(string path) where T : Object => AssetDatabase.LoadAssetAtPath<T>(path);
+
+    // A copy of a katana ability under a new id, so a test talent has an ability of its own to proc or swap in.
+    static AbilityDefinition TestAbility(string source, string file, string id, string displayName)
+    {
+        string path = $"{TestAbilityFolder}/{file}.asset";
+        if (Load<AbilityDefinition>(path) == null) AssetDatabase.CopyAsset($"{AbilityFolder}/{source}.asset", path);
+
+        var ability = Load<AbilityDefinition>(path);
+        ability.abilityId = id;
+        ability.abilityName = displayName;
+        ability.cooldown = 0f;
+        EditorUtility.SetDirty(ability);
+        return ability;
+    }
+
+    static Reward GrantAbility(TalentTree tree, AbilityDefinition ability)
+    {
+        var reward = Inline<AbilityReward>(tree, $"Ability_{ability.abilityId}");
+        var so = new SerializedObject(reward);
+        so.FindProperty("ability").objectReferenceValue = ability;
+        so.FindProperty("source").enumValueIndex = (int)AbilitySource.Talent;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
+    }
+
+    static Reward Evade(TalentTree tree, AbilityDefinition proc)
+    {
+        var reward = Inline<TriggerReward>(tree, "Trigger_evade");
+        var so = new SerializedObject(reward);
+        so.FindProperty("trigger").enumValueIndex = (int)TriggerEvent.Evade;
+        so.FindProperty("internalCooldown").floatValue = 1f;
+        so.FindProperty("resource").objectReferenceValue = Load<ResourceDefinition>(StaminaPath);
+        so.FindProperty("resourceAmount").floatValue = 3f;
+        so.FindProperty("proc").objectReferenceValue = proc;
+        so.FindProperty("procSlot").FindPropertyRelative("tag").stringValue = "basic";
+        so.FindProperty("procSeconds").floatValue = 3f;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
+    }
+
+    static Reward OnKill(TalentTree tree)
+    {
+        var reward = Inline<TriggerReward>(tree, "Trigger_kill");
+        var so = new SerializedObject(reward);
+        so.FindProperty("trigger").enumValueIndex = (int)TriggerEvent.Kill;
+        so.FindProperty("cooldownFilter").FindPropertyRelative("abilityId").stringValue = "DashThrust";
+        so.FindProperty("cooldownSeconds").floatValue = 5f;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
+    }
+
+    static Reward Replace(TalentTree tree, string tag, AbilityDefinition replacement)
+    {
+        var reward = Inline<AbilityReplaceReward>(tree, $"Replace_{tag}");
+        var so = new SerializedObject(reward);
+        so.FindProperty("filter").FindPropertyRelative("tag").stringValue = tag;
+        so.FindProperty("replacement").objectReferenceValue = replacement;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        return reward;
     }
 
     static StatusDefinition Status(string name) => AssetDatabase.LoadAssetAtPath<StatusDefinition>($"{StatusFolder}/{name}.asset");

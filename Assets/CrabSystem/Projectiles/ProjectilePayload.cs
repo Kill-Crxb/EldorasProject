@@ -153,7 +153,7 @@ public class ProjectilePayload : MonoBehaviour, IProjectileModule
             CombatDamagePacket packet = sourceDamage.CalculateDamage(BuildAttack(sourceDamage, hit, multiplier));
             float applied = targetDamage.TakeDamage(packet);
 
-            DamageNumberManager.Spawn(applied, NumberPoint(hit.targetBrain, hit.point));
+            DamageNumberManager.Spawn(targetDamage, applied, NumberPoint(hit.targetBrain, hit.point));
         }
 
         // Statuses ride the arrival, whichever damage branch ran — the branch is about where the

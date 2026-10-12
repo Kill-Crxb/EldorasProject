@@ -132,7 +132,31 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
         if (activeOverrides.TryGetValue(key, out var ov) && ov.ability != null)
             return ov.ability;
 
-        return hotbarSystem?.ResolveSlotAbility(hotbarSystem.GetSlot(barId, index));
+        AbilityDefinition slotAbility = hotbarSystem?.ResolveSlotAbility(hotbarSystem.GetSlot(barId, index));
+        return abilitySystem != null && slotAbility != null ? abilitySystem.Resolve(slotAbility) : slotAbility;
+    }
+
+    // A talent proc: the first slot whose ability the filter picks shows `ability` for `seconds`, once.
+    public bool ProcOnSlot(AbilityFilter filter, AbilityDefinition ability, float seconds)
+    {
+        if (hotbarSystem == null || ability == null) return false;
+
+        foreach (ActionBarDefinition bar in hotbarSystem.GetAvailableBars())
+        {
+            string barId = bar != null ? bar.barId : null;
+            ActionBarConfig config = barId != null ? hotbarSystem.GetConfig(barId) : null;
+            if (config == null) continue;
+
+            for (int i = 0; i < config.slots.Count; i++)
+            {
+                AbilityDefinition slotAbility = hotbarSystem.ResolveSlotAbility(config.slots[i]);
+                if (slotAbility == null || !filter.Matches(slotAbility, abilitySystem.Modifiers)) continue;
+
+                ApplyOverride(barId, i, ability, TransformationType.HitProc, seconds, 30);
+                return true;
+            }
+        }
+        return false;
     }
 
     public bool HasOverride(string barId, int index)

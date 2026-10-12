@@ -20,9 +20,10 @@ public class DamageNumber : MonoBehaviour
     [SerializeField] private float randomSpread = 0.5f;
 
     private float elapsed;
+    private float startAlpha = 1f;
     private Camera cam;
 
-    public void Init(float damage, Vector3 worldPos)
+    public void Init(string label, Vector3 worldPos, float scale, Color color)
     {
         Vector3 offset = new Vector3(
             Random.Range(-randomSpread, randomSpread),
@@ -31,7 +32,10 @@ public class DamageNumber : MonoBehaviour
         );
 
         transform.position = worldPos + offset;
-        text.text = Mathf.RoundToInt(damage).ToString();
+        text.text = label;
+        text.fontSize *= scale;
+        text.color = color;
+        startAlpha = color.a;
         cam = Camera.main;
 
         // Set correct facing immediately on spawn so there's no one-frame pop
@@ -48,7 +52,7 @@ public class DamageNumber : MonoBehaviour
         if (cam != null)
             BillboardToCamera();
 
-        text.alpha = 1f - (elapsed / lifetime);
+        text.alpha = startAlpha * (1f - elapsed / lifetime);
 
         if (elapsed >= lifetime)
             Destroy(gameObject);

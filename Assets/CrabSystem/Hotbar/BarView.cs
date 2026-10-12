@@ -31,7 +31,15 @@ public class BarView : MonoBehaviour
     [SerializeField] private Color lowColor = new Color(0.80f, 0.15f, 0.10f);
     [SerializeField] private float lowThreshold = 0.25f;
 
+    [Header("Ghost (GI-19)")]
+    [Tooltip("Resource and Armour bars: a pale chunk marks what was just lost, then drains.")]
+    [SerializeField] private bool ghost = true;
+    [SerializeField] private Color ghostColor = new Color(1f, 1f, 1f, 0.6f);
+    [SerializeField] private float ghostHold = 0.5f;
+    [SerializeField] private float ghostDrain = 0.5f;
+
     private IBarSource source;
+    private GhostBar ghostBar;
     private int shownCurrent = -1;
     private int shownMax = -1;
 
@@ -52,6 +60,8 @@ public class BarView : MonoBehaviour
     {
         ApplyResourceColor();
         if (fillImage != null) baseColor = fillImage.color;
+        if (ghost && fillImage != null && (bar == BarKind.Resource || bar == BarKind.Armour))
+            ghostBar = new GhostBar(fillImage, ghostColor, ghostHold, ghostDrain);
         GameEvents.OnLoadCompleted += HandleLoadCompleted;
     }
 
@@ -77,6 +87,7 @@ public class BarView : MonoBehaviour
         if (hideWhenEmptyMax != null && hideWhenEmptyMax.activeSelf != max > 0f) hideWhenEmptyMax.SetActive(max > 0f);
         if (fillImage != null) fillImage.fillAmount = fill;
         if (fillImage != null) fillImage.color = FillColor(fill);
+        ghostBar?.Tick(fill);
 
         ShowValue(Mathf.CeilToInt(current), Mathf.CeilToInt(max));
     }

@@ -65,10 +65,15 @@ public struct AbilityModifier
 // Also the character's granted tags: a socket or a talent gives the abilities a filter picks a tag (a keyword)
 // for this character only. Granted tags count everywhere a tag is asked about, cost filters included; a grant's
 // own filter sees the asset's tags only, so grants never chain.
+//
+// And the character's replacements: "your Sinister abilities become Shadow Strike". Every use of an ability the
+// filter picks plays the replacement instead (AbilitySystem resolves it). The replacement carries the tag its
+// filter matched on, so Shadow Strike is still Sinister for gains, costs and hit bonuses.
 public class AbilityModifiers
 {
     private readonly Dictionary<string, AbilityModifier> byKey = new();
     private readonly Dictionary<string, (AbilityFilter filter, string tag)> tagGrants = new();
+    private readonly Dictionary<string, (AbilityFilter filter, AbilityDefinition replacement)> replacements = new();
 
     public event Action Changed;
 
@@ -94,6 +99,38 @@ public class AbilityModifiers
         if (tagGrants.Remove(key)) Changed?.Invoke();
     }
 
+    public void SetReplacement(string key, AbilityFilter filter, AbilityDefinition replacement)
+    {
+        replacements[key] = (filter, replacement);
+        Changed?.Invoke();
+    }
+
+    public void RemoveReplacement(string key)
+    {
+        if (replacements.Remove(key)) Changed?.Invoke();
+    }
+
+    public bool IsReplacement(AbilityDefinition ability)
+    {
+        foreach ((AbilityFilter _, AbilityDefinition replacement) in replacements.Values)
+        {
+            if (replacement == ability) return true;
+        }
+        return false;
+    }
+
+    // What this character plays when it uses the ability: the first replacement whose filter picks it, or itself.
+    public AbilityDefinition Replace(AbilityDefinition ability)
+    {
+        if (ability == null) return null;
+
+        foreach ((AbilityFilter filter, AbilityDefinition replacement) in replacements.Values)
+        {
+            if (replacement != null && replacement != ability && filter.Matches(ability, this)) return replacement;
+        }
+        return ability;
+    }
+
     public bool HasTag(AbilityDefinition ability, string tag)
     {
         if (ability == null || string.IsNullOrEmpty(tag)) return false;
@@ -102,6 +139,11 @@ public class AbilityModifiers
         foreach ((AbilityFilter filter, string granted) in tagGrants.Values)
         {
             if (granted == tag && filter.Matches(ability)) return true;
+        }
+
+        foreach ((AbilityFilter filter, AbilityDefinition replacement) in replacements.Values)
+        {
+            if (replacement == ability && filter.tag == tag) return true;
         }
         return false;
     }

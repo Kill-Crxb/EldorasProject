@@ -117,7 +117,7 @@ public class DamageEffect
 
         float applied = target.TakeDamage(packet);
 
-        DamageNumberManager.Spawn(applied, numberPoint);
+        DamageNumberManager.Spawn(target, applied, numberPoint);
 
         Complete();
         return applied;

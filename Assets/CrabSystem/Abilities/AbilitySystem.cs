@@ -547,13 +547,41 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     public bool CanUseAbility(string abilityId)
     {
         if (currentAbility != null) return false;
-        return CanStart(abilityId);
+        return CanStart(ResolveId(abilityId));
+    }
+
+    // What this character plays for the ability: a talent may replace it (AbilityModifiers.Replace).
+    public AbilityDefinition Resolve(AbilityDefinition ability)
+    {
+        AbilityDefinition replacement = Modifiers.Replace(ability);
+        return replacement != null && abilityStates.ContainsKey(replacement.abilityId) ? replacement : ability;
+    }
+
+    private string ResolveId(string abilityId)
+    {
+        if (abilityId == null || !abilityStates.TryGetValue(abilityId, out var state)) return abilityId;
+        return Resolve(state.definition).abilityId;
+    }
+
+    // "On kill, Dash Thrust is ready 5 s sooner": runs the clocks of the abilities a filter picks forward.
+    public void ReduceCooldowns(AbilityFilter filter, float seconds)
+    {
+        if (seconds <= 0f) return;
+
+        foreach (AbilityState state in abilityStates.Values)
+        {
+            if (!state.IsOnCooldown || !filter.Matches(state.definition, Modifiers)) continue;
+
+            state.cooldown.Tick(seconds);
+            OnAbilityCooldownChanged?.Invoke(state.definition.abilityId, state.cooldown.CurrentTime);
+        }
     }
 
     // The string's next step may start from the step's ChainOpen: the step in flight ends here instead of
     // at Unlocked. False, with the step still playing, when the next can't start.
     public bool ChainInto(string abilityId)
     {
+        abilityId = ResolveId(abilityId);
         if (!ChainOpen || !CanStart(abilityId)) return false;
 
         CompleteAbility(currentAbility);
@@ -593,6 +621,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     public void UseAbility(string abilityId)
     {
+        abilityId = ResolveId(abilityId);
         if (!CanUseAbility(abilityId))
         {
             ReportRefused(abilityId);

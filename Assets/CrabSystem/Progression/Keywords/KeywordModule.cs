@@ -107,7 +107,7 @@ public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
 
     // ---- Hit bonuses (IHitModifier) ----
 
-    public void ModifyHit(ControllerBrain defender, ref float accuracy, ref bool advantage, ref float bonusDamage)
+    public void ModifyHit(ControllerBrain defender, ref float accuracy, ref bool advantage, ref float bonusDamage, ref string bonusSource)
     {
         AbilityDefinition ability = abilities != null ? abilities.CurrentAbility : null;
         if (!IsEnabled || ability == null) return;
@@ -117,6 +117,7 @@ public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
             if (!abilities.Modifiers.HasTag(ability, keyword.keywordId)) continue;
             if (!ConditionHolds(keyword, defender)) continue;
 
+            float before = bonusDamage;
             int dice = keyword.bonusDice;
             int faces = keyword.bonusDieFaces;
             accuracy += keyword.accuracy;
@@ -132,6 +133,7 @@ public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
             }
 
             for (int i = 0; i < dice; i++) bonusDamage += Random.Range(1, Mathf.Max(1, faces) + 1);
+            if (bonusDamage > before) bonusSource = string.IsNullOrEmpty(bonusSource) ? keyword.Label : $"{bonusSource} {keyword.Label}";
         }
     }
 

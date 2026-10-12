@@ -210,7 +210,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
 
         chain = requested;
         nextStep = step + 1;
-        stepInFlight = ability;
+        stepInFlight = abilities.Resolve(ability);
         return true;
     }
 
@@ -221,7 +221,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         if (!abilities.CanUseAbility(ability.abilityId)) return false;
 
         abilities.UseAbility(ability.abilityId);
-        return abilities.CurrentAbility == ability;
+        return abilities.CurrentAbility == abilities.Resolve(ability);
     }
 
     private void Buffer(MovesetChain requested, int step)

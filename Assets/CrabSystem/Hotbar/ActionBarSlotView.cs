@@ -19,6 +19,17 @@ public class ActionBarSlotView : MonoBehaviour, IPointerClickHandler, IDropHandl
     [SerializeField] private Color assignedSlotColor = new Color(0.20f, 0.20f, 0.20f, 0.95f);
     [SerializeField] private Color cooldownTint = new Color(0f, 0f, 0f, 0.55f);
 
+    [Header("Tells")]
+    [Tooltip("GI-49: the slot dips to this scale on a press and springs back.")]
+    [SerializeField] private float pressScale = 0.88f;
+    [SerializeField] private float pressSeconds = 0.12f;
+    [Tooltip("GI-25: while a press is held for the first free frame the slot pulses this much.")]
+    [SerializeField] private float bufferedPulse = 0.06f;
+    [SerializeField] private float bufferedPulseSpeed = 18f;
+    [Tooltip("GI-26: a white flash when the ability comes off cooldown or a proc lands on the slot.")]
+    [SerializeField] private Color readyFlashColor = new Color(1f, 1f, 1f, 0.6f);
+    [SerializeField] private float readyFlashSeconds = 0.25f;
+
     private static readonly Color[] s_borderColors =
     {
         new Color(0.937f, 0.624f, 0.153f),
@@ -35,7 +46,23 @@ public class ActionBarSlotView : MonoBehaviour, IPointerClickHandler, IDropHandl
     private SlotTransformationSystem transformSystem;
     private AbilitySystem abilitySystem;
 
+    private Image readyFlash;
+    private float pressedAt = -99f;
+    private float flashedAt = -99f;
+    private bool wasCooling;
+    private bool hadOverride;
+
     void Awake() => EnsureComponents();
+
+    void OnDestroy()
+    {
+        if (hotbarSystem != null) hotbarSystem.OnSlotPressed -= HandlePressed;
+    }
+
+    private void HandlePressed(string pressedBar, int pressedIndex)
+    {
+        if (pressedBar == barId && pressedIndex == slotIndex) pressedAt = Time.unscaledTime;
+    }
 
     public void Setup(string barId, int index,
                       HotbarSystem hotbar,
@@ -44,8 +71,10 @@ public class ActionBarSlotView : MonoBehaviour, IPointerClickHandler, IDropHandl
     {
         this.barId = barId;
         this.slotIndex = index;
+        if (this.hotbarSystem != null) this.hotbarSystem.OnSlotPressed -= HandlePressed;
         this.hotbarSystem = hotbar;
         this.transformSystem = transforms;
+        if (hotbar != null) hotbar.OnSlotPressed += HandlePressed;
 
         playerBrain = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
         abilitySystem = playerBrain?.GetModule<AbilitySystem>();
@@ -87,7 +116,17 @@ public class ActionBarSlotView : MonoBehaviour, IPointerClickHandler, IDropHandl
             float remaining = abilitySystem.GetAbilityCooldownRemaining(eff.abilityId);
             float total = abilitySystem.GetAbilityMaxCooldown(eff.abilityId);
             cooldownOverlay.fillAmount = total > 0f ? remaining / total : 0f;
+
+            bool cooling = remaining > 0f;
+            if (wasCooling && !cooling) flashedAt = Time.unscaledTime;
+            wasCooling = cooling;
         }
+
+        bool hasOverride = transformSystem.HasOverride(barId, slotIndex);
+        if (hasOverride && !hadOverride) flashedAt = Time.unscaledTime;
+        hadOverride = hasOverride;
+
+        UpdateTells();
 
         if (overrideTimerRing != null)
         {
@@ -104,6 +143,25 @@ public class ActionBarSlotView : MonoBehaviour, IPointerClickHandler, IDropHandl
                 overrideTimerRing.enabled = false;
             }
         }
+    }
+
+    // Press dip, buffered pulse and the ready flash, all on the slot's own scale and one overlay.
+    private void UpdateTells()
+    {
+        float sincePress = Time.unscaledTime - pressedAt;
+        float dip = sincePress < pressSeconds ? Mathf.Lerp(pressScale, 1f, sincePress / pressSeconds) : 1f;
+        float pulse = hotbarSystem.IsBuffered(barId, slotIndex) ? 1f + bufferedPulse * Mathf.Abs(Mathf.Sin(Time.unscaledTime * bufferedPulseSpeed)) : 1f;
+        transform.localScale = Vector3.one * (dip * pulse);
+
+        if (readyFlash == null) return;
+        float sinceFlash = Time.unscaledTime - flashedAt;
+        bool flashing = sinceFlash < readyFlashSeconds;
+        readyFlash.enabled = flashing;
+        if (!flashing) return;
+
+        Color color = readyFlashColor;
+        color.a *= 1f - sinceFlash / readyFlashSeconds;
+        readyFlash.color = color;
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -179,6 +237,7 @@ public class ActionBarSlotView : MonoBehaviour, IPointerClickHandler, IDropHandl
         cooldownOverlay ??= CreateRadialImage("Cooldown", cooldownTint);
         overrideTimerRing ??= CreateRadialImage("OverrideTimer", new Color(1f, 1f, 1f, 0.6f));
         overrideBorder ??= CreateChildImage("OverrideBorder", Vector2.zero, Vector2.zero);
+        readyFlash = CreateChildImage("ReadyFlash", Vector2.zero, Vector2.zero);
 
         if (overrideBorder != null)
             overrideBorder.enabled = false;
