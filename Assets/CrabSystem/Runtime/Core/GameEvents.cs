@@ -17,6 +17,10 @@ namespace CrabSystem
         public static event Action<ControllerBrain, ControllerBrain> OnDialogueStarted;
         public static event Action<ControllerBrain> OnDialogueEnded;
 
+        // A chest, corpse or vendor asks to be shown to a viewer; the window manager listens, so gameplay never
+        // reaches for the UI.
+        public static event Action<ControllerBrain, ControllerBrain> OnContainerOpenRequested;
+
         public static void CharacterSelected(string characterId) =>
             OnCharacterSelected?.Invoke(characterId);
 
@@ -38,6 +42,9 @@ namespace CrabSystem
         public static void DialogueEnded(ControllerBrain npc) =>
             OnDialogueEnded?.Invoke(npc);
 
+        public static void ContainerOpenRequested(ControllerBrain viewer, ControllerBrain container) =>
+            OnContainerOpenRequested?.Invoke(viewer, container);
+
         public static void ClearAll()
         {
             OnCharacterSelected = null;
@@ -47,6 +54,7 @@ namespace CrabSystem
             OnCameraModeChangeRequested = null;
             OnDialogueStarted = null;
             OnDialogueEnded = null;
+            OnContainerOpenRequested = null;
         }
     }
 }

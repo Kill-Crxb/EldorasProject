@@ -542,12 +542,7 @@ namespace CrabSystem
 
         private bool CameraInputAllowed() => stateProvider == null || stateProvider.AllowsCameraInput;
 
-        private bool UiWantsCursor()
-        {
-            if (UIPanelRegistry.AnyOpen) return true;
-            if (UniversalWindowManager.Instance != null && UniversalWindowManager.Instance.IsAnyWindowOpen()) return true;
-            return false;
-        }
+        private static bool UiWantsCursor() => UIPanelRegistry.CursorWanted;
 
         private void SetCursorLocked(bool locked)
         {

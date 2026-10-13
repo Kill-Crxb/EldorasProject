@@ -268,15 +268,7 @@ namespace CrabSystem
             return false;
         }
 
-        private void OpenLootWindow(ControllerBrain actor)
-        {
-            if (UniversalWindowManager.Instance == null)
-            {
-                Debug.LogError("[InteractionSystem] UniversalWindowManager not found!");
-                return;
-            }
-            UniversalWindowManager.Instance.OpenContainerWindow(actor, brain);
-        }
+        private void OpenLootWindow(ControllerBrain actor) => GameEvents.ContainerOpenRequested(actor, brain);
 
         // Reached only when there's no DialogueSystem to hand off to (checked earlier
         // in RouteInteraction) but this brain has 2+ non-dialogue capabilities anyway —

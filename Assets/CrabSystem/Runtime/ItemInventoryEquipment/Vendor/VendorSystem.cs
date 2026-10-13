@@ -57,11 +57,7 @@ namespace CrabSystem
             return vendor;
         }
 
-        public void Open(ControllerBrain customer)
-        {
-            if (UniversalWindowManager.Instance == null) return;
-            UniversalWindowManager.Instance.OpenContainerWindow(customer, brain);
-        }
+        public void Open(ControllerBrain customer) => GameEvents.ContainerOpenRequested(customer, brain);
 
         public bool IsShelf(UniversalGrid grid)
         {

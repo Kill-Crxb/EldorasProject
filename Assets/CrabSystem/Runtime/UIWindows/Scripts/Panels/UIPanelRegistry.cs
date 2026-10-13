@@ -28,6 +28,25 @@ namespace CrabSystem
             }
         }
 
+        // Other UI that holds the cursor (UniversalWindowManager's windows) registers a check here, so gameplay asks
+        // one place whether to free the cursor.
+        private static readonly List<System.Func<bool>> cursorClaims = new();
+
+        public static bool CursorWanted
+        {
+            get
+            {
+                if (AnyOpen) return true;
+                foreach (var claim in cursorClaims)
+                    if (claim()) return true;
+                return false;
+            }
+        }
+
+        public static void RegisterCursorClaim(System.Func<bool> claim) => cursorClaims.Add(claim);
+
+        public static void UnregisterCursorClaim(System.Func<bool> claim) => cursorClaims.Remove(claim);
+
         public static UIPanel Get(PanelSide side) => panels.GetValueOrDefault(side);
 
         public static void Register(UIPanel panel)

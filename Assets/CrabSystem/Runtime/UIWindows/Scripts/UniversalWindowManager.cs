@@ -76,6 +76,20 @@ namespace CrabSystem
             InitializeTooltip();
         }
 
+        private void OnEnable()
+        {
+            GameEvents.OnContainerOpenRequested += OpenRequestedContainer;
+            UIPanelRegistry.RegisterCursorClaim(IsAnyWindowOpen);
+        }
+
+        private void OnDisable()
+        {
+            GameEvents.OnContainerOpenRequested -= OpenRequestedContainer;
+            UIPanelRegistry.UnregisterCursorClaim(IsAnyWindowOpen);
+        }
+
+        private void OpenRequestedContainer(ControllerBrain viewer, ControllerBrain container) => OpenContainerWindow(viewer, container);
+
         private void OnDestroy()
         {
             if (instance == this) instance = null;
