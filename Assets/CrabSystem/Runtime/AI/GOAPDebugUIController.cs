@@ -25,7 +25,7 @@ namespace CrabSystem
     public class GOAPDebugUIController : MonoBehaviour
     {
         [Header("Target Link")]
-        [SerializeField] private TargetLockModule playerTargeting;
+        [SerializeField] private TargetingModule playerTargeting;
 
         [Header("UI Panel")]
         [SerializeField] private GameObject debugPanel;
@@ -65,10 +65,10 @@ namespace CrabSystem
             // Try to auto-find player targeting if not assigned
             if (playerTargeting == null)
             {
-                playerTargeting = Object.FindAnyObjectByType<TargetLockModule>();
+                playerTargeting = FindPlayerTargeting();
                 if (playerTargeting == null)
                 {
-                    Debug.LogWarning("[GOAPDebugUI] No TargetLockModule found. Assign manually.");
+                    Debug.LogWarning("[GOAPDebugUI] No player TargetingModule found. Assign manually.");
                 }
             }
         }
@@ -78,7 +78,7 @@ namespace CrabSystem
             if (playerTargeting == null) return;
 
             // Check if target changed
-            Transform newTarget = playerTargeting.LockedTarget;
+            Transform newTarget = playerTargeting.CurrentTarget != null ? playerTargeting.CurrentTarget.transform : null;
             if (newTarget != currentTarget)
             {
                 OnTargetChanged(newTarget);
@@ -313,6 +313,17 @@ namespace CrabSystem
             {
                 debugPanel.SetActive(show);
             }
+        }
+
+        // Debug panel only: the player's targeting, found once.
+        static TargetingModule FindPlayerTargeting()
+        {
+            foreach (TargetingModule targeting in Object.FindObjectsByType<TargetingModule>())
+            {
+                var owner = targeting.GetComponentInParent<ControllerBrain>();
+                if (owner != null && owner.IsPlayer) return targeting;
+            }
+            return null;
         }
     }
 }

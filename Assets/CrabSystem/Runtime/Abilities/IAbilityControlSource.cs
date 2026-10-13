@@ -6,16 +6,9 @@ namespace CrabSystem
 {
     public interface IAbilityControlSource
     {
-        // The slot key to fire this frame ("BasicAttack", "Q", ...), or null.
-        string GetAbilitySlotToTrigger();
-
         // The block key. GuardModule keeps a guard up only while this is true.
         bool GuardHeld { get; }
 
-        void OnActivated();
-        void OnDeactivated();
-        void UpdateSource();
         bool IsActive { get; }
-        string SourceName { get; }
     }
 }

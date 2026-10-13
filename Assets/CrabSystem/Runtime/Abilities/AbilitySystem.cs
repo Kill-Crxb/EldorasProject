@@ -11,7 +11,6 @@ namespace CrabSystem
         public int InitOrder => 80;
 
         [SerializeField] private bool isEnabled = true;
-        [SerializeField] private AbilityLoadoutModule loadoutModule;
         [SerializeField] private List<AbilityDefinition> abilities = new List<AbilityDefinition>();
 
         [Header("Strikes")]
@@ -93,7 +92,6 @@ namespace CrabSystem
         }
 
         public ControllerBrain Brain => brain;
-        public AbilityLoadoutModule Loadout => loadoutModule;
         public bool IsExecuting => currentAbility != null || currentlyCastingAbility != null || isAnimationLocked;
         public bool IsCasting => currentlyCastingAbility != null;
         public AbilityDefinition CurrentAbility => currentAbility;

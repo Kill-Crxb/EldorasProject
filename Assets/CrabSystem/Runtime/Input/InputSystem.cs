@@ -420,16 +420,6 @@ namespace CrabSystem
         // update in. Only Player mode holds a guard; an AI-driven entity guards through AIControlSource.
         public bool GuardHeld => currentMode == InputMode.Player && inputActions != null && inputActions.Player.Block.IsPressed();
 
-        public string GetAbilitySlotToTrigger()
-        {
-            switch (currentMode)
-            {
-                case InputMode.Player: return GetPlayerAbilityInput();
-                case InputMode.Admin: return GetAdminAbilityInput();
-                default: return null;
-            }
-        }
-
         // Mode Switching
 
         public void SetMode(InputMode mode)
@@ -716,22 +706,6 @@ namespace CrabSystem
                     break;
             }
             return false;
-        }
-
-        // Player Ability Input  (→ AbilityLoadoutModule)
-
-        /// <summary>
-        /// All player ability input now routes through BridgeBarInput → HotbarSystem.
-        /// AbilityLoadoutModule receives no player input — returns null always.
-        /// </summary>
-        private string GetPlayerAbilityInput() => null;
-
-        // Admin Ability Input
-
-        private string GetAdminAbilityInput()
-        {
-            // TODO: scripted admin abilities
-            return null;
         }
 
         // ClearPlayerInput

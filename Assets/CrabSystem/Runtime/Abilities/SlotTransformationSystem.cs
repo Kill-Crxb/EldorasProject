@@ -32,7 +32,7 @@ namespace CrabSystem
         private AbilitySystem abilitySystem;
         private IResourceProvider resourceProvider;
         private BlackboardSystem blackboardSystem;
-        private TargetLockModule targetLock;
+        private TargetingModule targeting;
 
         // ── Override state ────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ namespace CrabSystem
             brain            = controllerBrain;
             abilitySystem    = brain.GetModule<AbilitySystem>();
             blackboardSystem = brain.GetModule<BlackboardSystem>();
-            targetLock       = brain.GetModule<TargetLockModule>();
+            targeting        = brain.GetModule<TargetingModule>();
             resourceProvider = brain.GetProvider<IResourceProvider>();
         }
 
@@ -368,13 +368,12 @@ namespace CrabSystem
 
         private void EvaluateTargetConditions(string barId, int index, AbilityDefinition ability)
         {
-            if (ability.targetConditions == null || targetLock == null) return;
+            if (ability.targetConditions == null || targeting == null) return;
 
-            var target = targetLock.LockedTarget;
-            if (target == null) return;
+            ControllerBrain targetBrain = targeting.CurrentTarget;
+            if (targetBrain == null) return;
 
-            var targetBrain = target.GetComponentInParent<ControllerBrain>();
-            var targetBlackboard = targetBrain?.GetModule<BlackboardSystem>()?.Blackboard;
+            var targetBlackboard = targetBrain.GetModule<BlackboardSystem>()?.Blackboard;
             if (targetBlackboard == null) return;
 
             foreach (var entry in ability.targetConditions)

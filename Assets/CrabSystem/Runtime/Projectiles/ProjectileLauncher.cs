@@ -42,7 +42,6 @@ namespace CrabSystem
         private AbilitySystem abilitySystem;
         private VFXSystem vfxSystem;
         private PerceptionModule perception;
-        private TargetLockModule targetLock;
         private TargetingModule targeting;
         // Empty rather than null: Fire loops it unconditionally, and an entity whose LateInitialize
         // bailed should fire an unmodified projectile, not throw.
@@ -272,27 +271,16 @@ namespace CrabSystem
             return Vector3.Angle(direction, aim.TargetPoint(root) - origin) <= aim.softAssistDegrees ? root : null;
         }
 
-        /// <summary>
-        /// The entity's DELIBERATE target — its explicit choice, as opposed to whatever the aim
-        /// probe happens to find. Only consulted when ProjectileAim ticks Locked Target.
-        ///
-        /// ==== THIS IS THE SEAM FOR REAL TARGETING ====
-        /// TargetLockModule is the legacy module and is off by default in ProjectileAim. When a
-        /// proper targeting system exists, this ONE METHOD is the only thing that changes — the
-        /// aim block, the launcher and every projectile stay as they are.
-        ///
-        /// No IsPlayer branch needed: TargetLock is null on NPCs and PerceptionModule is null on
-        /// the player, so each entity falls through to whatever it actually has.
-        /// </summary>
+        // The entity's deliberate target, used when ProjectileAim ticks Locked Target: the player's
+        // TargetingModule target, or what an NPC's perception has picked. Each entity has only one of them.
         private Transform ResolveLockedTarget()
         {
-            // Resolved through GetModule, not a brain property — ControllerBrain no longer exposes
-            // target lock at all. Returns null when the module is absent, which is the common case.
-            if (targetLock == null)
-                targetLock = brain.GetModule<TargetLockModule>();
+            if (targeting == null)
+                targeting = brain.GetModule<TargetingModule>();
 
-            if (targetLock != null && targetLock.IsLockedOn && targetLock.LockedTarget != null)
-                return targetLock.LockedTarget;
+            ControllerBrain locked = targeting != null ? targeting.CurrentTarget : null;
+            if (locked != null)
+                return locked.EntityRoot != null ? locked.EntityRoot : locked.transform;
 
             if (perception == null)
                 perception = brain.GetModule<PerceptionModule>();

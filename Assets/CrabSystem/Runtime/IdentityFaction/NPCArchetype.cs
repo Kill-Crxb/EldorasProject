@@ -33,7 +33,6 @@ namespace CrabSystem
         public List<AbilityDefinition> abilities = new List<AbilityDefinition>();
 
         [Header("Ability Loadout")]
-        public AbilityLoadoutConfiguration loadoutConfig;
 
         [Header("Combat")]
         public string combatBehaviorClassName;

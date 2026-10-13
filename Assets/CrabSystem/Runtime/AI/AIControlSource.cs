@@ -229,7 +229,6 @@ namespace CrabSystem
 
         // IAbilityControlSource. Goals fire the moveset directly for now (roadmap A5, ability half).
 
-        public string GetAbilitySlotToTrigger() => null;
 
         // Shared by both control-source interfaces.
 
