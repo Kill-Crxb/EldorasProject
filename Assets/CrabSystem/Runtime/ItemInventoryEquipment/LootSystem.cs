@@ -164,7 +164,7 @@ namespace CrabSystem
                 if (item == null) continue;
 
                 // Roll drop chance
-                if (UnityEngine.Random.value > equipmentDropChance) continue;
+                if (DiceRoll.Value() > equipmentDropChance) continue;
 
                 lootedItems.Add(item);
 
@@ -183,7 +183,7 @@ namespace CrabSystem
             foreach (var item in inventoryItems)
             {
                 // Roll drop chance
-                if (UnityEngine.Random.value > inventoryDropChance) continue;
+                if (DiceRoll.Value() > inventoryDropChance) continue;
 
                 lootedItems.Add(item);
 
@@ -231,7 +231,7 @@ namespace CrabSystem
 
             foreach (var item in items)
             {
-                Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * radius;
+                Vector2 randomOffset = DiceRoll.InsideUnitCircle() * radius;
                 Vector3 spawnPos = center + new Vector3(randomOffset.x, 0, randomOffset.y);
 
                 // TODO: Implement ItemManager.SpawnItemInWorld in Phase 3

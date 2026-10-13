@@ -67,6 +67,7 @@ namespace CrabSystem
 
         // Core components
         private ControllerBrain brain;
+        private float Now => brain.Clock.Now;
         private Blackboard blackboard;
 
         // Update timing
@@ -119,7 +120,7 @@ namespace CrabSystem
             ValidateConditions();
 
             // Initialize update timing
-            nextUpdateTime = Time.time + updateInterval;
+            nextUpdateTime = Now + updateInterval;
 
             if (debugLogging)
             {
@@ -140,8 +141,8 @@ namespace CrabSystem
             if (activeConditions == null || activeConditions.Count == 0) return;
 
             // Pulse-based updates (not every frame)
-            if (Time.time < nextUpdateTime) return;
-            nextUpdateTime = Time.time + updateInterval;
+            if (Now < nextUpdateTime) return;
+            nextUpdateTime = Now + updateInterval;
 
             // Evaluate all conditions
             EvaluateAllConditions();
@@ -183,7 +184,7 @@ namespace CrabSystem
             bool result = condition.Evaluate(brain);
 
             // Write to blackboard
-            int factHash = HashFactKey(condition.OutputFactKey);
+            int factHash = BlackboardKey.Hash(condition.OutputFactKey);
             blackboard.SetBool(factHash, result);
 
             if (debugLogging)
@@ -192,14 +193,6 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Hash fact key for blackboard lookup
-        /// </summary>
-        private int HashFactKey(string key)
-        {
-            if (string.IsNullOrEmpty(key)) return 0;
-            return key.GetHashCode();
-        }
 
     #endregion
 

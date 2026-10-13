@@ -26,7 +26,7 @@ namespace CrabSystem
         private ControllerBrain brain;
 
         // Gameplay time (EntityClock).
-        private float Now => brain.Clock.Now;
+        public float Now => brain.Clock.Now;
         private float Delta => brain.Clock.Delta;
         private HotbarSystem hotbarSystem;
         private AbilitySystem abilitySystem;
@@ -345,7 +345,7 @@ namespace CrabSystem
             {
                 if (entry?.transformAbility == null || string.IsNullOrEmpty(entry.blackboardKey)) continue;
 
-                bool active = blackboard.GetBool(entry.blackboardKey.GetHashCode());
+                bool active = blackboard.GetBool(BlackboardKey.Hash(entry.blackboardKey));
                 string key  = SlotKey(barId, index);
 
                 if (active)
@@ -380,7 +380,7 @@ namespace CrabSystem
             {
                 if (entry?.transformAbility == null || string.IsNullOrEmpty(entry.blackboardKey)) continue;
 
-                bool active = targetBlackboard.GetBool(entry.blackboardKey.GetHashCode());
+                bool active = targetBlackboard.GetBool(BlackboardKey.Hash(entry.blackboardKey));
                 string key  = SlotKey(barId, index);
 
                 if (active)

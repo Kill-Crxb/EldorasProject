@@ -242,7 +242,7 @@ namespace CrabSystem
             int spare = Mathf.Max(0, statPointPool - floorTotal);
 
             for (int i = 0; i < spare; i++)
-                stats[UnityEngine.Random.Range(0, StatCount)] += 1;
+                stats[DiceRoll.Range(0, StatCount)] += 1;
         }
 
         private void RefreshStatDisplay()

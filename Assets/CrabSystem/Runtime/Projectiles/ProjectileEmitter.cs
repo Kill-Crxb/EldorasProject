@@ -111,8 +111,8 @@ namespace CrabSystem
             float half = scatterAngle * 0.5f;
 
             Quaternion offset = Quaternion.Euler(
-                Random.Range(-half, half),
-                Random.Range(-half, half),
+                DiceRoll.Range(-half, half),
+                DiceRoll.Range(-half, half),
                 0f);
 
             return offset * forward;

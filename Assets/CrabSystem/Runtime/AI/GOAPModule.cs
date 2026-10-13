@@ -103,6 +103,7 @@ namespace CrabSystem
 
         // Core references
         private ControllerBrain brain;
+        private float Now => brain.Clock.Now;
         private GOAPContext context;
 
         // Current execution state
@@ -392,7 +393,7 @@ namespace CrabSystem
         private GOAPGoal SelectWeightedRandom()
         {
             float totalWeight = evaluatedGoals.Sum(x => x.weight);
-            float roll = Random.Range(0f, totalWeight);
+            float roll = DiceRoll.Range(0f, totalWeight);
 
             float cumulative = 0f;
             foreach (var (goal, weight) in evaluatedGoals)
@@ -419,7 +420,7 @@ namespace CrabSystem
 
             // Weighted random among top goals
             float totalWeight = topGoals.Sum(x => x.weight);
-            float roll = Random.Range(0f, totalWeight);
+            float roll = DiceRoll.Range(0f, totalWeight);
 
             float cumulative = 0f;
             foreach (var (goal, weight) in topGoals)
@@ -464,7 +465,7 @@ namespace CrabSystem
             // Check if we should switch goals (anti-thrashing check)
             if (!IsExecutingInterrupt && useGoalCommitment)
             {
-                float timeInGoal = Time.time - goalStartTime;
+                float timeInGoal = Now - goalStartTime;
                 float minDuration = activeGoal.minimumActiveDuration > 0
                     ? activeGoal.minimumActiveDuration
                     : minimumGoalDuration;
@@ -481,7 +482,7 @@ namespace CrabSystem
             activeGoal.Execute(context);
 
             // Periodically re-evaluate (not every frame for performance)
-            if (Time.time - lastGoalChangeTime > 0.5f)
+            if (Now - lastGoalChangeTime > 0.5f)
             {
                 // Check if a better goal is available
                 SelectNewGoal();
@@ -506,8 +507,8 @@ namespace CrabSystem
             }
 
             currentGoal = newGoal;
-            goalStartTime = Time.time;
-            lastGoalChangeTime = Time.time;
+            goalStartTime = Now;
+            lastGoalChangeTime = Now;
 
             if (currentGoal != null)
             {
@@ -607,7 +608,7 @@ namespace CrabSystem
 
             // Start interrupt
             interruptGoal = interrupt;
-            interruptStartTime = Time.time;
+            interruptStartTime = Now;
             interruptGoal.OnStart(context);
         }
 
@@ -625,7 +626,7 @@ namespace CrabSystem
             // Resume previous goal if available and not too old
             if (resumeAfterInterrupt && goalStack.Count > 0)
             {
-                float interruptDuration = Time.time - interruptStartTime;
+                float interruptDuration = Now - interruptStartTime;
 
                 if (interruptDuration < interruptContextTimeout)
                 {
@@ -635,7 +636,7 @@ namespace CrabSystem
                         Debug.Log($"[GOAPModule] Resuming goal: {resumeGoal.goalName}");
 
                     currentGoal = resumeGoal;
-                    goalStartTime = Time.time;
+                    goalStartTime = Now;
                     resumeGoal.OnStart(context);
                 }
                 else

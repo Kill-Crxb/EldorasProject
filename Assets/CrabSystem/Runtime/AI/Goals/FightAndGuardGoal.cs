@@ -132,7 +132,7 @@ namespace CrabSystem
             {
                 control.ReadThisSwing = true;
                 if (StartDodge(ctx)) return;
-                if (CanGuard(ctx) && Random.value < guardChance) control.GuardUntil = Time.time + guardHold;
+                if (CanGuard(ctx) && DiceRoll.Value() < guardChance) control.GuardUntil = ctx.Now + guardHold;
             }
             if (!threatened)
             {
@@ -146,14 +146,14 @@ namespace CrabSystem
                 return;
             }
 
-            if (Time.time < control.GoalUntil)
+            if (ctx.Now < control.GoalUntil)
             {
                 control.Face(ctx.toTarget);
                 control.Stop();
                 return;
             }
 
-            bool guarding = Time.time < control.GuardUntil && (IsBlocking(ctx) || CanGuard(ctx));
+            bool guarding = ctx.Now < control.GuardUntil && (IsBlocking(ctx) || CanGuard(ctx));
             if (!guarding) control.GuardUntil = -999f;
 
             control.GuardHeld = guarding;
@@ -194,7 +194,7 @@ namespace CrabSystem
             if (!targetState.StrikeWouldReach(ctx.brain)) return;
 
             control.DeflectReadThisSwing = true;
-            if (Random.value >= deflectChance) return;
+            if (DiceRoll.Value() >= deflectChance) return;
 
             ctx.brain.GetModule<MovesetModule>()?.Perform(MovesetChain.Parry);
         }
@@ -213,7 +213,7 @@ namespace CrabSystem
 
         protected override int StringPresses(GOAPContext ctx) => Engaging(ctx) ? Mathf.Max(0, maxString - 1) : base.StringPresses(ctx);
 
-        static bool Engaging(GOAPContext ctx) => Time.time < ctx.aiControl.EngageUntil;
+        static bool Engaging(GOAPContext ctx) => ctx.Now < ctx.aiControl.EngageUntil;
 
         // Winded below one share of stamina, rested again only at another, so she doesn't flicker between them.
         // Getting her wind back starts an engage; so does the target running dry while she has hers.
@@ -242,8 +242,8 @@ namespace CrabSystem
         // A fresh engage swings at once; one already running is just extended.
         void Engage(AIControlSource control)
         {
-            if (Time.time >= control.EngageUntil) control.LastAttackTime = -999f;
-            control.EngageUntil = Time.time + engageSeconds;
+            if (control.Now >= control.EngageUntil) control.LastAttackTime = -999f;
+            control.EngageUntil = control.Now + engageSeconds;
         }
 
         float StaminaFraction(ControllerBrain brain)
@@ -263,10 +263,10 @@ namespace CrabSystem
             AIControlSource control = ctx.aiControl;
             control.Face(ctx.toTarget);
 
-            if (Time.time >= control.NextDecisionAt)
+            if (ctx.Now >= control.NextDecisionAt)
             {
                 control.GoalSign = GoalSteer.RandomSign();
-                control.NextDecisionAt = Time.time + strafeSwap * Random.Range(1f, 2f);
+                control.NextDecisionAt = ctx.Now + strafeSwap * DiceRoll.Range(1f, 2f);
             }
 
             Vector3 toward = ctx.toTarget.normalized;
@@ -327,7 +327,7 @@ namespace CrabSystem
 
             ctx.abilityModule.UseAbility(dodge.abilityId);
             control.GoalPhase = 0;
-            control.GoalUntil = Time.time + dodgeSettle;
+            control.GoalUntil = ctx.Now + dodgeSettle;
         }
 
         static bool IsPerilous(ICombatantState state)
@@ -339,13 +339,13 @@ namespace CrabSystem
 
         bool StartDodge(GOAPContext ctx)
         {
-            if (!CanDodge(ctx) || Random.value >= dodgeChance) return false;
+            if (!CanDodge(ctx) || DiceRoll.Value() >= dodgeChance) return false;
 
             AIControlSource control = ctx.aiControl;
             control.GuardUntil = -999f;
             control.GuardHeld = false;
             control.GoalPhase = DodgingPhase;
-            control.GoalUntil = Time.time + dodgeWindow;
+            control.GoalUntil = ctx.Now + dodgeWindow;
             BackOffAndDash(ctx);
             return true;
         }
@@ -358,7 +358,7 @@ namespace CrabSystem
             control.Face(ctx.toTarget);
             GoalSteer.Away(ctx, 1f);
 
-            if (Time.time >= control.GoalUntil)
+            if (ctx.Now >= control.GoalUntil)
             {
                 control.GoalPhase = 0;
                 return;
@@ -370,7 +370,7 @@ namespace CrabSystem
 
             ctx.abilityModule.UseAbility(dodge.abilityId);
             control.GoalPhase = 0;
-            control.GoalUntil = Time.time + dodgeSettle;
+            control.GoalUntil = ctx.Now + dodgeSettle;
         }
 
         // Out of reach: the gap closer when the gap suits it; while it's ready she walks into its band. Once it's

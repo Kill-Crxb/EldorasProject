@@ -31,7 +31,7 @@ namespace CrabSystem
         public override void OnStart(GOAPContext ctx)
         {
             ctx.aiControl.GoalPhase = 1;
-            ctx.aiControl.GoalUntil = Time.time + legTimeout;
+            ctx.aiControl.GoalUntil = ctx.Now + legTimeout;
         }
 
         public override void Execute(GOAPContext ctx)
@@ -41,21 +41,21 @@ namespace CrabSystem
             if (control.GoalPhase == 0)
             {
                 control.Stop();
-                if (Time.time < control.GoalUntil) return;
+                if (ctx.Now < control.GoalUntil) return;
 
                 control.PatrolIndex = (control.PatrolIndex + 1) % control.PatrolOffsets.Count;
                 control.GoalPhase = 1;
-                control.GoalUntil = Time.time + legTimeout;
+                control.GoalUntil = ctx.Now + legTimeout;
                 return;
             }
 
             Vector3 point = control.Home + control.PatrolOffsets[control.PatrolIndex % control.PatrolOffsets.Count];
             control.Face(point - ctx.self.position);
 
-            if (!GoalSteer.ToPoint(ctx, point, arrive, strength) && Time.time < control.GoalUntil) return;
+            if (!GoalSteer.ToPoint(ctx, point, arrive, strength) && ctx.Now < control.GoalUntil) return;
 
             control.GoalPhase = 0;
-            control.GoalUntil = Time.time + pause;
+            control.GoalUntil = ctx.Now + pause;
         }
 
         public override void OnEnd(GOAPContext ctx)

@@ -2,8 +2,9 @@
 // read Now and Delta here instead of Time.time and Time.deltaTime, so the clock that drives them can change in one
 // place: scaled by action speed (CF11), frozen by hit-stop, or stepped by a server tick.
 //
-// Today it advances by Time.deltaTime at scale 1 from Time.time, so Now tracks Time.time and code still reading Time
-// stays comparable with code reading the clock.
+// Today it advances by Time.deltaTime at scale 1 from Time.time. Two places stay on Time on purpose: physics-step
+// movement (CharacterMotor, ParkourLocomotionHandler), whose timers share the fixed step with its velocities, and the
+// camera, which belongs to the viewer rather than a character.
 
 namespace CrabSystem
 {

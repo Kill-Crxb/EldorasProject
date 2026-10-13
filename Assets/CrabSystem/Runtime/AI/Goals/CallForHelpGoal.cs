@@ -44,7 +44,7 @@ namespace CrabSystem
             if (abilities != null && abilities.IsCasting) return;
 
             // The cast is over. It ran its full time, or it was cut short.
-            bool completed = Time.time >= control.LastAttackTime + call.castTime - 0.05f;
+            bool completed = ctx.Now >= control.LastAttackTime + call.castTime - 0.05f;
             if (completed) Answerers(ctx, true);
             control.GoalPhase = 2;
         }

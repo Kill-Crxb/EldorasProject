@@ -63,7 +63,7 @@ namespace CrabSystem
             if (!GoalSteer.TryUse(ctx, strike)) return;
 
             ctx.aiControl.GoalPhase = 1;
-            ctx.aiControl.GoalUntil = Time.time + Random.Range(retreatTime * 0.8f, retreatTime * 1.2f);
+            ctx.aiControl.GoalUntil = ctx.Now + DiceRoll.Range(retreatTime * 0.8f, retreatTime * 1.2f);
             ctx.aiControl.GoalSign = GoalSteer.RandomSign();
         }
 
@@ -71,7 +71,7 @@ namespace CrabSystem
         {
             AIControlSource control = ctx.aiControl;
 
-            if (Time.time - control.LastAttackTime < carryTime)
+            if (ctx.Now - control.LastAttackTime < carryTime)
             {
                 control.Steer(ctx.self.forward, strength);
                 return;
@@ -82,12 +82,12 @@ namespace CrabSystem
             control.Face(away);
             control.Steer(away, strength);
 
-            if (ctx.distanceToTarget < retreatDistance && Time.time < control.GoalUntil) return;
+            if (ctx.distanceToTarget < retreatDistance && ctx.Now < control.GoalUntil) return;
 
             if (GoalSteer.Roll(hangBackOdds))
             {
                 control.GoalPhase = 2;
-                control.GoalUntil = Time.time + Random.Range(minHangBack, maxHangBack);
+                control.GoalUntil = ctx.Now + DiceRoll.Range(minHangBack, maxHangBack);
                 return;
             }
             control.GoalPhase = 0;
@@ -97,7 +97,7 @@ namespace CrabSystem
         {
             ctx.aiControl.Face(ctx.toTarget);
             ctx.aiControl.Stop();
-            if (Time.time >= ctx.aiControl.GoalUntil) ctx.aiControl.GoalPhase = 0;
+            if (ctx.Now >= ctx.aiControl.GoalUntil) ctx.aiControl.GoalPhase = 0;
         }
 
         public override void OnEnd(GOAPContext ctx)

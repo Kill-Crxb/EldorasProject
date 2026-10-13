@@ -20,16 +20,16 @@ namespace CrabSystem
         public override bool CanExecute(GOAPContext ctx)
         {
             if (ctx.target == null || ctx.aiControl == null) return false;
-            return GoalSteer.HealthFraction(ctx) <= fleeBelow && Time.time >= ctx.aiControl.FleeReadyAt;
+            return GoalSteer.HealthFraction(ctx) <= fleeBelow && ctx.Now >= ctx.aiControl.FleeReadyAt;
         }
 
         public override float CalculateWeight(GOAPContext ctx) => 1f;
 
-        public override bool IsComplete(GOAPContext ctx) => ctx.target == null || Time.time >= ctx.aiControl.GoalUntil;
+        public override bool IsComplete(GOAPContext ctx) => ctx.target == null || ctx.Now >= ctx.aiControl.GoalUntil;
 
         public override void OnStart(GOAPContext ctx)
         {
-            ctx.aiControl.GoalUntil = Time.time + fleeTime;
+            ctx.aiControl.GoalUntil = ctx.Now + fleeTime;
         }
 
         public override void Execute(GOAPContext ctx)
@@ -41,7 +41,7 @@ namespace CrabSystem
         public override void OnEnd(GOAPContext ctx)
         {
             if (ctx.aiControl == null) return;
-            ctx.aiControl.FleeReadyAt = Time.time + cooldown;
+            ctx.aiControl.FleeReadyAt = ctx.Now + cooldown;
             ctx.aiControl.Release();
         }
     }

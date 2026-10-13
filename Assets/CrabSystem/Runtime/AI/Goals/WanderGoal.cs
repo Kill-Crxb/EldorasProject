@@ -38,11 +38,11 @@ namespace CrabSystem
             if (control.GoalPhase == 0)
             {
                 control.Stop();
-                if (Time.time < control.GoalUntil) return;
+                if (ctx.Now < control.GoalUntil) return;
 
-                Vector2 offset = Random.insideUnitCircle * radius;
+                Vector2 offset = DiceRoll.InsideUnitCircle() * radius;
                 control.GoalPoint = control.Home + new Vector3(offset.x, 0f, offset.y);
-                control.GoalUntil = Time.time + legTimeout;
+                control.GoalUntil = ctx.Now + legTimeout;
                 control.GoalPhase = 1;
                 return;
             }
@@ -50,7 +50,7 @@ namespace CrabSystem
             Vector3 to = control.GoalPoint - ctx.self.position;
             control.Face(to);
 
-            if (GoalSteer.ToPoint(ctx, control.GoalPoint, 0.5f, strength) || Time.time > control.GoalUntil)
+            if (GoalSteer.ToPoint(ctx, control.GoalPoint, 0.5f, strength) || ctx.Now > control.GoalUntil)
                 Pause(control);
         }
 
@@ -62,7 +62,7 @@ namespace CrabSystem
         void Pause(AIControlSource control)
         {
             control.GoalPhase = 0;
-            control.GoalUntil = Time.time + Random.Range(minPause, maxPause);
+            control.GoalUntil = control.Now + DiceRoll.Range(minPause, maxPause);
         }
     }
 }

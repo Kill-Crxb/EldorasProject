@@ -37,7 +37,7 @@ namespace CrabSystem
         public override void OnStart(GOAPContext ctx)
         {
             ctx.aiControl.GoalPhase = 0;
-            ctx.aiControl.LastAttackTime = Time.time;
+            ctx.aiControl.LastAttackTime = ctx.Now;
         }
 
         public override void Execute(GOAPContext ctx)
@@ -48,7 +48,7 @@ namespace CrabSystem
             bool attacking = TargetAttacking(ctx);
             if (attacking) Open(control, false);
             if (!attacking && control.GoalPhase == 0 && InHoldRange(ctx) && GoalSteer.Rested(ctx, patience)) Open(control, true);
-            if (control.GoalPhase == 1 && Time.time >= control.GoalUntil) control.GoalPhase = 0;
+            if (control.GoalPhase == 1 && ctx.Now >= control.GoalUntil) control.GoalPhase = 0;
 
             bool countering = control.GoalPhase == 1 && !attacking;
             if (countering)
@@ -61,7 +61,7 @@ namespace CrabSystem
         void Open(AIControlSource control, bool now)
         {
             control.GoalPhase = 1;
-            control.GoalUntil = Time.time + counterWindow + (now ? 0f : 0.5f);
+            control.GoalUntil = control.Now + counterWindow + (now ? 0f : 0.5f);
         }
 
         void Counter(GOAPContext ctx)

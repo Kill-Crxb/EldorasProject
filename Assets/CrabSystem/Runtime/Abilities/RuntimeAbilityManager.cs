@@ -81,6 +81,7 @@ namespace CrabSystem
             var instance = new AbilityInstance(
                 definition,
                 source,
+                brain.Clock.Now,
                 sourceId,
                 maxUses,
                 durationSeconds
@@ -197,7 +198,7 @@ namespace CrabSystem
             {
                 var instance = kvp.Value;
 
-                if (instance.ShouldRemove())
+                if (instance.ShouldRemove(brain.Clock.Now))
                 {
                     if (toRemove == null)
                         toRemove = new List<string>();

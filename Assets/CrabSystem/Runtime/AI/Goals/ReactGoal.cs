@@ -50,13 +50,13 @@ namespace CrabSystem
 
         public override float CalculateWeight(GOAPContext ctx) => 1f;
 
-        public override bool IsComplete(GOAPContext ctx) => ctx.target == null || ctx.aiControl.GoalPhase == 2 || Time.time >= ctx.aiControl.GoalUntil;
+        public override bool IsComplete(GOAPContext ctx) => ctx.target == null || ctx.aiControl.GoalPhase == 2 || ctx.Now >= ctx.aiControl.GoalUntil;
 
         public override void OnStart(GOAPContext ctx)
         {
             AIControlSource control = ctx.aiControl;
             control.GoalPhase = control.Reaction;
-            control.GoalUntil = Time.time + (control.Reaction == Punish ? punishWindow : stepTime);
+            control.GoalUntil = ctx.Now + (control.Reaction == Punish ? punishWindow : stepTime);
             control.GoalSign = GoalSteer.Roll(stepBackOdds) ? 0f : GoalSteer.RandomSign();
         }
 
@@ -96,7 +96,7 @@ namespace CrabSystem
             ctx.aiControl?.Release();
         }
 
-        bool Fresh(AIControlSource control, float at) => at > control.ReactedTo && Time.time - at <= freshFor;
+        bool Fresh(AIControlSource control, float at) => at > control.ReactedTo && control.Now - at <= freshFor;
 
         // Every fresh event is used up whether the roll succeeds or not, so it is rolled exactly once.
         bool Consume(AIControlSource control, float at, bool react, int reaction)

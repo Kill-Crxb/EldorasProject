@@ -25,6 +25,20 @@ namespace CrabSystem
         // 1 to faces inclusive; a die of fewer than 2 faces always shows 1.
         public static int Die(int faces) => faces < 2 ? 1 : rng.Next(1, faces + 1);
 
+        // Uniform 0 to 1, for chances and weights.
+        public static float Value() => (float)rng.NextDouble();
+
+        public static float Range(float min, float max) => min + (max - min) * Value();
+
+        // Max exclusive, like UnityEngine.Random.Range(int, int).
+        public static int Range(int min, int max) => max <= min ? min : rng.Next(min, max);
+
+        public static Vector2 InsideUnitCircle()
+        {
+            float angle = Value() * Mathf.PI * 2f;
+            return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * Mathf.Sqrt(Value());
+        }
+
         public int Roll()
         {
             int total = 0;

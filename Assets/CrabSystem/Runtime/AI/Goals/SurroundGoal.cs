@@ -46,7 +46,7 @@ namespace CrabSystem
             AIControlSource control = ctx.aiControl;
             control.Face(ctx.toTarget);
 
-            if (Time.time >= control.GoalUntil) Pick(control);
+            if (ctx.Now >= control.GoalUntil) Pick(control);
 
             if (ctx.distanceToTarget > ringRadius + 1.5f)
                 GoalSteer.Approach(ctx, ringRadius, 1f, GoalSteer.Gait(ctx, ringRadius, 4f, strength));
@@ -68,7 +68,7 @@ namespace CrabSystem
             bool pause = GoalSteer.Roll(pauseOdds);
             control.GoalPhase = pause ? 1 : 0;
             control.GoalSign = GoalSteer.RandomSign();
-            control.GoalUntil = Time.time + (pause ? Random.Range(0.5f, 1.5f) : Random.Range(minStrafe, maxStrafe));
+            control.GoalUntil = control.Now + (pause ? DiceRoll.Range(0.5f, 1.5f) : DiceRoll.Range(minStrafe, maxStrafe));
         }
 
         bool CloserAlly(GOAPContext ctx)

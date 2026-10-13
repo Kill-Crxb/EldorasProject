@@ -64,17 +64,17 @@ namespace CrabSystem
 
             if (ContinueString(ctx)) return;
             if (ctx.distanceToTarget > attackRange) return;
-            if (Time.time - control.LastAttackTime < Interval(ctx)) return;
+            if (ctx.Now - control.LastAttackTime < Interval(ctx)) return;
             if (!Attack(ctx)) return;
 
-            control.LastAttackTime = Time.time;
+            control.LastAttackTime = ctx.Now;
             control.StringPressesLeft = StringPresses(ctx);
         }
 
         // Seconds between strings, and presses after the first. Goals that change pace override these.
         protected virtual float Interval(GOAPContext ctx) => attackInterval;
 
-        protected virtual int StringPresses(GOAPContext ctx) => Random.Range(0, Mathf.Max(1, maxString));
+        protected virtual int StringPresses(GOAPContext ctx) => DiceRoll.Range(0, Mathf.Max(1, maxString));
 
         // Presses the next step of the string she started. The moveset buffers a press made while a
         // step plays, so one press per step is enough. A string ends early when she's interrupted or
@@ -98,7 +98,7 @@ namespace CrabSystem
             if (moveset.StepInFlight || moveset.HasBufferedPress) return true;
             if (moveset.Perform(MovesetChain.Light)) control.StringPressesLeft--;
 
-            control.LastAttackTime = Time.time;
+            control.LastAttackTime = ctx.Now;
             return true;
         }
 

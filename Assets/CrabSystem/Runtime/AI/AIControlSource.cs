@@ -45,7 +45,7 @@ namespace CrabSystem
         private ControllerBrain brain;
 
         // Gameplay time (EntityClock).
-        private float Now => brain.Clock.Now;
+        public float Now => brain.Clock.Now;
         private float Delta => brain.Clock.Delta;
         private PerceptionModule perception;
         private Vector2 moveDirection;

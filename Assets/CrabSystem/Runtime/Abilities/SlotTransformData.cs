@@ -108,8 +108,8 @@ namespace CrabSystem
     {
         public AbilityDefinition ability;
         public TransformationType type;
-        public float expiresAt;   // Time.time + duration; -1 = permanent until cleared
-        public float appliedAt;   // Time.time when applied — used for the UI timer ring
+        public float expiresAt;   // clock time it ends; -1 = permanent until cleared
+        public float appliedAt;   // clock time applied — used for the UI timer ring
         public int priority;
     }
 }

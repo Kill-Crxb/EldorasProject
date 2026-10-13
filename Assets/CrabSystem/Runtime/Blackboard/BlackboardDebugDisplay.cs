@@ -224,7 +224,7 @@ namespace CrabSystem
 
             foreach (var key in schema.keys)
             {
-                int hash = key.keyName.GetHashCode();
+                int hash = BlackboardKey.Hash(key.keyName);
 
                 // Draw based on type
                 switch (key.type)

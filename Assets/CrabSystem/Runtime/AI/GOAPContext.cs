@@ -13,6 +13,9 @@ namespace CrabSystem
     public class GOAPContext
     {
         public ControllerBrain brain;
+
+        // Gameplay time (EntityClock); goals and AIControlSource share it.
+        public float Now => brain.Clock.Now;
         public Transform self;
         public Transform target;
 

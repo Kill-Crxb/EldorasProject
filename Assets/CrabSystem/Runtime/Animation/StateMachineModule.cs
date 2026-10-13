@@ -83,10 +83,10 @@ namespace CrabSystem
             }
 
             // Initialize state machines
-            brainState = new StateMachine<BrainState>(startingBrainState);
-            upperBodyState = new StateMachine<UpperBodyState>(startingUpperBodyState);
-            lowerBodyState = new StateMachine<LowerBodyState>(startingLowerBodyState);
-            postureState = new StateMachine<PostureState>(startingPostureState);
+            brainState = new StateMachine<BrainState>(startingBrainState, brain.Clock);
+            upperBodyState = new StateMachine<UpperBodyState>(startingUpperBodyState, brain.Clock);
+            lowerBodyState = new StateMachine<LowerBodyState>(startingLowerBodyState, brain.Clock);
+            postureState = new StateMachine<PostureState>(startingPostureState, brain.Clock);
 
             // Subscribe to state change events for forwarding
             brainState.OnStateChanged += (old, newState) => OnBrainStateChanged?.Invoke(old, newState);

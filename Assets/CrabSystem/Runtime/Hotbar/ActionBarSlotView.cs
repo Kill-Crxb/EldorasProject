@@ -136,7 +136,7 @@ namespace CrabSystem
                 if (ov != null && ov.expiresAt > 0f)
                 {
                     float total = ov.expiresAt - ov.appliedAt;
-                    float elapsed = Time.time - ov.appliedAt;
+                    float elapsed = transformSystem.Now - ov.appliedAt;
                     overrideTimerRing.fillAmount = total > 0f ? 1f - (elapsed / total) : 0f;
                     overrideTimerRing.enabled = true;
                 }

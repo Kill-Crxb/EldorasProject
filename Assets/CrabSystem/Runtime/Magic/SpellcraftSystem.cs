@@ -91,6 +91,8 @@ namespace CrabSystem.Magic
         [SerializeField] private bool debugLogging = false;
 
         private ControllerBrain brain;
+
+        private float Now => brain.Clock.Now;
         private AbilitySystem abilities;
         private AnimationSystem animation;
         private VFXSystem vfx;
@@ -263,7 +265,7 @@ namespace CrabSystem.Magic
         {
             if (!isEnabled) return;
             if (SequenceLength >= SpellSequence.MaxLength) return;
-            if (Time.time < nextDrawTime) return;
+            if (Now < nextDrawTime) return;
             if (HasFact(BlackboardKey.CannotAct)) return;
 
             // CannotCast: the hand sign still plays and still costs its draw time, but the element
@@ -276,7 +278,7 @@ namespace CrabSystem.Magic
 
             sequence[SequenceLength] = element;
             SequenceLength++;
-            nextDrawTime = Time.time + CurrentDrawInterval;
+            nextDrawTime = Now + CurrentDrawInterval;
 
             PlayDraw(element);
 
@@ -288,7 +290,7 @@ namespace CrabSystem.Magic
         // never enters the sequence, and the burst comes out grey.
         private void Fizzle(SpellElement element)
         {
-            nextDrawTime = Time.time + CurrentDrawInterval;
+            nextDrawTime = Now + CurrentDrawInterval;
 
             ElementDefinition def = grammar.GetElement(element);
             if (def != null)

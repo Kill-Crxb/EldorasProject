@@ -65,12 +65,12 @@ namespace CrabSystem
         public static void SwapSign(GOAPContext ctx, float period)
         {
             AIControlSource control = ctx.aiControl;
-            if (Time.time < control.GoalUntil) return;
+            if (ctx.Now < control.GoalUntil) return;
             control.GoalSign = -control.GoalSign;
-            control.GoalUntil = Time.time + period;
+            control.GoalUntil = ctx.Now + period;
         }
 
-        public static float RandomSign() => Random.value < 0.5f ? -1f : 1f;
+        public static float RandomSign() => DiceRoll.Value() < 0.5f ? -1f : 1f;
 
         public static bool Ready(GOAPContext ctx, AbilityDefinition ability)
         {
@@ -82,19 +82,19 @@ namespace CrabSystem
         {
             if (!Ready(ctx, ability)) return false;
             ctx.abilityModule.UseAbility(ability.abilityId);
-            ctx.aiControl.LastAttackTime = Time.time;
+            ctx.aiControl.LastAttackTime = ctx.Now;
             return true;
         }
 
         public static bool Facing(GOAPContext ctx, float degrees) => ctx.angleToTarget <= degrees;
 
-        public static bool Rested(GOAPContext ctx, float interval) => Time.time - ctx.aiControl.LastAttackTime >= interval;
+        public static bool Rested(GOAPContext ctx, float interval) => ctx.Now - ctx.aiControl.LastAttackTime >= interval;
 
         public static float HealthFraction(GOAPContext ctx) => ctx.healthModule != null ? ctx.healthModule.GetHealthPercentage() : 1f;
 
         public static bool HasRole(GOAPContext ctx, AIRole role) => ctx.aiControl != null && ctx.aiControl.AbilityFor(role) != null;
 
-        public static bool Roll(int odds) => Random.Range(0, 100) < odds;
+        public static bool Roll(int odds) => DiceRoll.Range(0, 100) < odds;
 
         // Busy with a move (swinging, casting, recovering).
         public static bool Busy(GOAPContext ctx)
@@ -113,18 +113,18 @@ namespace CrabSystem
         // Roll what to do after an attack. Call it the moment the attack is pressed.
         public static void RollAfterAct(GOAPContext ctx, AfterAct odds)
         {
-            int roll = Random.Range(0, 100);
+            int roll = DiceRoll.Range(0, 100);
             ctx.aiControl.GoalSign = RandomSign();
 
             if (roll < odds.nothing) return;
             roll -= odds.nothing;
 
             if (roll < odds.backAndStrafe)
-                BeginSpacing(ctx, PhaseBackAndStrafe, Random.Range(2f, 3f));
+                BeginSpacing(ctx, PhaseBackAndStrafe, DiceRoll.Range(2f, 3f));
             else if (roll < odds.backAndStrafe + odds.back)
-                BeginSpacing(ctx, PhaseBack, Random.Range(1f, 1.5f));
+                BeginSpacing(ctx, PhaseBack, DiceRoll.Range(1f, 1.5f));
             else
-                BeginSpacing(ctx, PhaseWait, Random.Range(0.5f, 1f));
+                BeginSpacing(ctx, PhaseWait, DiceRoll.Range(0.5f, 1f));
         }
 
         // Now and then, instead of pressing in, pause or strafe a 30–45° arc for a moment — the milling
@@ -132,22 +132,22 @@ namespace CrabSystem
         public static bool Hesitate(GOAPContext ctx, int odds, float interval)
         {
             AIControlSource control = ctx.aiControl;
-            if (Time.time < control.NextDecisionAt) return false;
-            control.NextDecisionAt = Time.time + interval;
+            if (ctx.Now < control.NextDecisionAt) return false;
+            control.NextDecisionAt = ctx.Now + interval;
             if (!Roll(odds)) return false;
 
             control.GoalSign = RandomSign();
             if (Roll(50))
-                BeginSpacing(ctx, PhaseWait, Random.Range(0.5f, 1.5f));
+                BeginSpacing(ctx, PhaseWait, DiceRoll.Range(0.5f, 1.5f));
             else
-                BeginSpacing(ctx, PhaseStrafe, Random.Range(1f, 2.5f));
+                BeginSpacing(ctx, PhaseStrafe, DiceRoll.Range(1f, 2.5f));
             return true;
         }
 
         public static void BeginSpacing(GOAPContext ctx, int phase, float seconds)
         {
             ctx.aiControl.GoalPhase = phase;
-            ctx.aiControl.GoalUntil = Time.time + seconds;
+            ctx.aiControl.GoalUntil = ctx.Now + seconds;
         }
 
         // Runs a spacing phase. True while one is running. Its clock only starts once any move in
@@ -163,7 +163,7 @@ namespace CrabSystem
                 return true;
             }
 
-            if (Time.time >= control.GoalUntil)
+            if (ctx.Now >= control.GoalUntil)
             {
                 control.GoalPhase = 0;
                 return false;

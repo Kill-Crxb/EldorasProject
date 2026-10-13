@@ -607,7 +607,7 @@ namespace CrabSystem
             if (runtimeAbilityManager != null)
             {
                 var instance = runtimeAbilityManager.GetInstanceByDefinition(abilityId);
-                if (instance != null && !instance.IsUsable())
+                if (instance != null && !instance.IsUsable(Now))
                     return false;
             }
 
@@ -683,7 +683,7 @@ namespace CrabSystem
                 bool anyMet = false;
                 foreach (var fact in requiredAny)
                 {
-                    if (blackboard.GetBool(fact.GetHashCode()))
+                    if (blackboard.GetBool(BlackboardKey.Hash(fact)))
                     {
                         anyMet = true;
                         break;
@@ -696,13 +696,13 @@ namespace CrabSystem
 
             foreach (var fact in requiredAll)
             {
-                if (!blackboard.GetBool(fact.GetHashCode()))
+                if (!blackboard.GetBool(BlackboardKey.Hash(fact)))
                     return false;
             }
 
             foreach (var fact in forbidden)
             {
-                if (blackboard.GetBool(fact.GetHashCode()))
+                if (blackboard.GetBool(BlackboardKey.Hash(fact)))
                     return false;
             }
 
@@ -1009,11 +1009,6 @@ namespace CrabSystem
             return state.cooldown?.CurrentTime ?? 0f;
         }
 
-        public float GetAbilityCooldown(string abilityId)
-        {
-            return GetAbilityCooldownRemaining(abilityId);
-        }
-
         public float GetAbilityMaxCooldown(string abilityId)
         {
             if (!abilityStates.TryGetValue(abilityId, out var state)) return 0f;
@@ -1048,7 +1043,7 @@ namespace CrabSystem
             var instance = runtimeAbilityManager.GetInstanceByDefinition(abilityId);
             if (instance == null) return -1f;
 
-            return instance.GetRemainingDuration();
+            return instance.GetRemainingDuration(Now);
         }
 
         public bool IsAbilityConsumable(string abilityId)

@@ -174,7 +174,7 @@ namespace CrabSystem
 
             if (spawnRadius > 0f)
             {
-                Vector2 randomCircle = Random.insideUnitCircle * spawnRadius;
+                Vector2 randomCircle = DiceRoll.InsideUnitCircle() * spawnRadius;
                 basePosition += new Vector3(randomCircle.x, 0f, randomCircle.y);
             }
 

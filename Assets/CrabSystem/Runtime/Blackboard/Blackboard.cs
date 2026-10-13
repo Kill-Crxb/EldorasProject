@@ -95,7 +95,7 @@ namespace CrabSystem
             // Set default values
             foreach (var key in schema.keys)
             {
-                int hash = key.keyName.GetHashCode();
+                int hash = BlackboardKey.Hash(key.keyName);
 
                 switch (key.type)
                 {

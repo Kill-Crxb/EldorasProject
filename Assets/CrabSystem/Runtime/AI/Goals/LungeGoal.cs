@@ -38,7 +38,7 @@ namespace CrabSystem
         {
             ctx.aiControl.GoalPhase = 0;
             ctx.aiControl.GoalSign = GoalSteer.RandomSign();
-            ctx.aiControl.GoalUntil = Time.time + circleSwap;
+            ctx.aiControl.GoalUntil = ctx.Now + circleSwap;
         }
 
         public override void Execute(GOAPContext ctx)

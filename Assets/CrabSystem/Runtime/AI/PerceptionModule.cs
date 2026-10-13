@@ -60,6 +60,7 @@ namespace CrabSystem
 
         // References
         private ControllerBrain brain;
+        private float Now => brain.Clock.Now;
         private FactionSystem factionSystem;
 
         // Detection state
@@ -99,7 +100,7 @@ namespace CrabSystem
         /// <summary>
         /// Has a memory of where target was
         /// </summary>
-        public bool HasMemory => hasMemory && Time.time - lastSeenTime < memoryDuration;
+        public bool HasMemory => hasMemory && Now - lastSeenTime < memoryDuration;
 
         /// <summary>
         /// Vision range
@@ -140,8 +141,8 @@ namespace CrabSystem
             if (!isEnabled) return;
 
             // Throttle detection checks for performance
-            if (Time.time < nextDetectionTime) return;
-            nextDetectionTime = Time.time + detectionInterval;
+            if (Now < nextDetectionTime) return;
+            nextDetectionTime = Now + detectionInterval;
 
             if (debugMode)
                 Debug.Log($"[PerceptionModule] Running detection scan (interval: {detectionInterval}s)");
@@ -292,7 +293,7 @@ namespace CrabSystem
             // Keep a target that slipped out of one scan until memory runs out, so a single missed
             // scan doesn't drop the goal and reset its movement.
             // A dead target is dropped at once, memory or not.
-            if (bestTarget == null && currentTarget != null && enableMemory && Time.time - lastSeenTime < memoryDuration
+            if (bestTarget == null && currentTarget != null && enableMemory && Now - lastSeenTime < memoryDuration
                 && IsAlive(currentTarget.GetComponent<ControllerBrain>()))
                 return;
 
@@ -314,7 +315,7 @@ namespace CrabSystem
             if (currentTarget != null)
             {
                 lastKnownPosition = currentTarget.position;
-                lastSeenTime = Time.time;
+                lastSeenTime = Now;
                 hasMemory = enableMemory;
             }
         }
@@ -398,7 +399,7 @@ namespace CrabSystem
             if (target == null) return;
             currentTarget = target;
             lastKnownPosition = target.position;
-            lastSeenTime = Time.time;
+            lastSeenTime = Now;
             hasMemory = enableMemory;
         }
 

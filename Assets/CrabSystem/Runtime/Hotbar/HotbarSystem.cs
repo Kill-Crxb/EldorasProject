@@ -48,6 +48,8 @@ namespace CrabSystem
         [SerializeField] private bool debugLogging = false;
 
         private ControllerBrain brain;
+
+        private float Now => brain.Clock.Now;
         private AbilitySystem abilitySystem;
 
         // A slot pressed while a hit state holds the player, fired on the first free frame instead of dropped. One is
@@ -105,7 +107,7 @@ namespace CrabSystem
             if (movesetModule != null) movesetModule.OnPreviewChanged += HandleMovesetPreviewChanged;
             blackboard = brain.Blackboard;
 
-            nextPageCheck = Time.time + pageCheckInterval;
+            nextPageCheck = Now + pageCheckInterval;
         }
 
         public void UpdateModule()
@@ -113,9 +115,9 @@ namespace CrabSystem
             if (!IsEnabled) return;
 
             FireHeldPress();
-            if (Time.time < nextPageCheck) return;
+            if (Now < nextPageCheck) return;
 
-            nextPageCheck = Time.time + pageCheckInterval;
+            nextPageCheck = Now + pageCheckInterval;
             RefreshActivePage();
         }
 
@@ -272,7 +274,7 @@ namespace CrabSystem
                 if (def == null) continue;
                 if (def.IsDefault) continue;
                 if (def.priority <= bestPriority) continue;
-                if (!blackboard.GetBool(def.activationFact.GetHashCode())) continue;
+                if (!blackboard.GetBool(BlackboardKey.Hash(def.activationFact))) continue;
 
                 best = def;
                 bestPriority = def.priority;

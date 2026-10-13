@@ -1,14 +1,5 @@
 using UnityEngine;
 
-// ========================================
-// ENUMS
-// ========================================
-
-/// <summary>
-/// Ability Source - Determines where an ability came from
-/// Used for proper cleanup and lifecycle management
-/// </summary>
-
 namespace CrabSystem
 {
     public enum AbilitySource
@@ -20,339 +11,94 @@ namespace CrabSystem
         Talent          // Granted by a learned talent (removed on refund, respec or tree swap)
     }
 
-    // ========================================
-    // ABILITY INSTANCE
-    // ========================================
-
-    /// <summary>
-    /// AbilityInstance - Runtime wrapper for ability state
-    /// 
-    /// Architecture:
-    /// - Every active ability has an instance (even permanent ones)
-    /// - Stable instance ID for save/load
-    /// - Source tracking enables proper cleanup
-    /// - Usage tracking for consumables
-    /// - Expiration tracking for temporary buffs
-    /// 
-    /// Lifecycle:
-    /// 1. AddAbility() creates instance
-    /// 2. UseAbility() decrements remainingUses
-    /// 3. Update() checks expiration
-    /// 4. RemoveAbility() cleans up
-    /// 
-    /// Examples:
-    /// - Sword Attack: source=Permanent, maxUses=-1, expirationTime=-1
-    /// - Bow Shot: source=Equipment, sourceId="longbow_item", maxUses=-1
-    /// - Health Potion: source=Consumable, sourceId="health_potion", maxUses=3
-    /// - Speed Buff: source=Temporary, sourceId="haste_buff", expirationTime=10.0
-    /// </summary>
+    // Runtime wrapper for one granted ability: where it came from (so the source can take it back), uses left and
+    // when it expires. Times are on the owner's EntityClock, passed in as now. Cooldowns live on AbilitySystem only.
     [System.Serializable]
     public class AbilityInstance
     {
-        // ========================================
-        // IDENTITY
-        // ========================================
-
-        /// <summary>
-        /// Stable instance ID for save/load and tracking
-        /// Format: "{definitionId}_{source}_{sourceId}_{guid}"
-        /// Example: "fireball_equipment_staff_abc123"
-        /// </summary>
+        // "{definitionId}_{source}_{sourceId}_{guid}", stable for save/load.
         public string instanceId;
-
-        /// <summary>
-        /// The ability definition (ScriptableObject)
-        /// Contains all static data (costs, effects, etc.)
-        /// </summary>
         public AbilityDefinition definition;
-
-        // ========================================
-        // SOURCE TRACKING
-        // ========================================
-
-        /// <summary>
-        /// Where this ability came from (determines lifecycle)
-        /// </summary>
         public AbilitySource source;
 
-        /// <summary>
-        /// Source identifier for cleanup
-        /// - Equipment: Item ID ("longbow_item")
-        /// - Consumable: Item ID ("health_potion")
-        /// - Temporary: Buff ID ("haste_buff")
-        /// - Permanent: Empty string
-        /// </summary>
+        // The item or buff id that granted it; empty for permanent abilities.
         public string sourceId;
 
-        // ========================================
-        // USAGE TRACKING (Consumables)
-        // ========================================
-
-        /// <summary>
-        /// Maximum uses for consumables (-1 = infinite)
-        /// Example: Health potion with 3 uses
-        /// </summary>
+        // -1 is infinite.
         public int maxUses = -1;
-
-        /// <summary>
-        /// Remaining uses for consumables (-1 = infinite)
-        /// Decrements on each use, removed when reaches 0
-        /// </summary>
         public int remainingUses = -1;
 
-        // ========================================
-        // EXPIRATION TRACKING (Temporary)
-        // ========================================
-
-        /// <summary>
-        /// Absolute time when ability expires (-1 = permanent)
-        /// Uses Time.time for deterministic expiration
-        /// Example: Time.time + 30f = expires in 30 seconds
-        /// </summary>
+        // Clock time it expires, -1 is never.
         public float expirationTime = -1f;
 
-        // ========================================
-        // COOLDOWN STATE
-        // ========================================
-
-        /// <summary>
-        /// Absolute time when ability cooldown completes (-1 = ready)
-        /// Uses Time.time for deterministic cooldown tracking
-        /// Example: Time.time + 5f = ready in 5 seconds
-        /// Benefits: No per-frame ticking, deterministic after load, cheaper multiplayer sync
-        /// </summary>
-        public float cooldownReadyTime = -1f;
-
-        // ========================================
-        // RUNTIME STATE
-        // ========================================
-
-        /// <summary>
-        /// Is this instance currently active?
-        /// False = pending removal
-        /// </summary>
+        // False marks it for removal.
         public bool isActive = true;
 
-        /// <summary>
-        /// Time this instance was created (for debugging/analytics)
-        /// </summary>
-        public float creationTime;
-
-        // ========================================
-        // CONSTRUCTORS
-        // ========================================
-
-        /// <summary>
-        /// Create a new ability instance
-        /// </summary>
-        public AbilityInstance(
-            AbilityDefinition definition,
-            AbilitySource source,
-            string sourceId = "",
-            int maxUses = -1,
-            float durationSeconds = -1f)
+        public AbilityInstance(AbilityDefinition definition, AbilitySource source, float now, string sourceId = "",
+            int maxUses = -1, float durationSeconds = -1f)
         {
-            // Guard clause
-            if (definition == null)
-            {
-                Debug.LogError("[AbilityInstance] Cannot create instance with null definition!");
-                return;
-            }
+            if (definition == null) { Debug.LogError("[AbilityInstance] null definition"); return; }
 
-            // Generate stable instance ID
             string guid = System.Guid.NewGuid().ToString().Substring(0, 8);
-            this.instanceId = $"{definition.abilityId}_{source}_{sourceId}_{guid}";
+            instanceId = $"{definition.abilityId}_{source}_{sourceId}_{guid}";
 
-            // Set core data
             this.definition = definition;
             this.source = source;
             this.sourceId = sourceId ?? "";
-
-            // Usage tracking
             this.maxUses = maxUses;
-            this.remainingUses = maxUses;
-
-            // Expiration tracking
-            if (durationSeconds > 0f)
-            {
-                this.expirationTime = Time.time + durationSeconds;
-            }
-            else
-            {
-                this.expirationTime = -1f;
-            }
-
-            // Runtime state
-            this.isActive = true;
-            this.creationTime = Time.time;
-            this.cooldownReadyTime = -1f;  // Ready immediately
+            remainingUses = maxUses;
+            expirationTime = durationSeconds > 0f ? now + durationSeconds : -1f;
         }
 
-        // ========================================
-        // QUERY METHODS
-        // ========================================
+        bool OutOfUses => maxUses >= 0 && remainingUses <= 0;
 
-        /// <summary>
-        /// Is this ability usable right now?
-        /// Checks: active, has uses remaining, not expired
-        /// </summary>
-        public bool IsUsable()
-        {
-            // Guard clauses
-            if (!isActive) return false;
-            if (definition == null) return false;
+        public bool IsExpired(float now) => expirationTime >= 0f && now >= expirationTime;
 
-            // Check uses remaining (consumables)
-            if (maxUses >= 0 && remainingUses <= 0) return false;
+        public bool IsUsable(float now) => isActive && definition != null && !OutOfUses && !IsExpired(now);
 
-            // Check expiration (temporary)
-            if (expirationTime >= 0f && Time.time >= expirationTime) return false;
+        public bool ShouldRemove(float now) => !isActive || OutOfUses || IsExpired(now);
 
-            // Check cooldown (absolute time comparison)
-            if (cooldownReadyTime >= 0f && Time.time < cooldownReadyTime) return false;
+        public bool IsConsumable() => source == AbilitySource.Consumable && maxUses >= 0;
 
-            return true;
-        }
+        public bool IsTemporary() => source == AbilitySource.Temporary && expirationTime >= 0f;
 
-        /// <summary>
-        /// Should this instance be removed?
-        /// Checks: deactivated, out of uses, expired
-        /// </summary>
-        public bool ShouldRemove()
-        {
-            // Deactivated
-            if (!isActive) return true;
+        // Seconds left, -1 when it never expires.
+        public float GetRemainingDuration(float now) => expirationTime < 0f ? -1f : Mathf.Max(0f, expirationTime - now);
 
-            // Out of uses (consumables)
-            if (maxUses >= 0 && remainingUses <= 0) return true;
-
-            // Expired (temporary)
-            if (expirationTime >= 0f && Time.time >= expirationTime) return true;
-
-            return false;
-        }
-
-        /// <summary>
-        /// Is this a consumable with limited uses?
-        /// </summary>
-        public bool IsConsumable()
-        {
-            return source == AbilitySource.Consumable && maxUses >= 0;
-        }
-
-        /// <summary>
-        /// Is this a temporary ability with expiration?
-        /// </summary>
-        public bool IsTemporary()
-        {
-            return source == AbilitySource.Temporary && expirationTime >= 0f;
-        }
-
-        /// <summary>
-        /// Get remaining duration for temporary abilities (seconds)
-        /// Returns -1 if not temporary or permanent
-        /// </summary>
-        public float GetRemainingDuration()
-        {
-            if (expirationTime < 0f) return -1f;
-
-            float remaining = expirationTime - Time.time;
-            return Mathf.Max(0f, remaining);
-        }
-
-        /// <summary>
-        /// Get remaining uses as percentage (0-1)
-        /// Returns 1.0 if infinite uses
-        /// </summary>
         public float GetUsesPercent()
         {
             if (maxUses < 0) return 1f;
             if (maxUses == 0) return 0f;
-
             return (float)remainingUses / maxUses;
         }
 
-        /// <summary>
-        /// Is this instance expired? (Explicit runtime flag)
-        /// </summary>
-        public bool IsExpired => expirationTime >= 0f && Time.time >= expirationTime;
-
-        /// <summary>
-        /// Is this instance on cooldown? (Explicit runtime flag)
-        /// </summary>
-        public bool IsOnCooldown => cooldownReadyTime >= 0f && Time.time < cooldownReadyTime;
-
-        /// <summary>
-        /// Get remaining cooldown time (seconds)
-        /// Returns 0 if ready
-        /// </summary>
-        public float GetRemainingCooldown()
-        {
-            if (cooldownReadyTime < 0f) return 0f;
-        
-            float remaining = cooldownReadyTime - Time.time;
-            return Mathf.Max(0f, remaining);
-        }
-
-        // ========================================
-        // MODIFICATION METHODS
-        // ========================================
-
-        /// <summary>
-        /// Consume one use (for consumables)
-        /// Returns: true if consumed, false if no uses left
-        /// </summary>
         public bool ConsumeUse()
         {
-            // Infinite uses
             if (maxUses < 0) return true;
-
-            // No uses left
             if (remainingUses <= 0) return false;
-
-            // Consume
             remainingUses--;
             return true;
         }
 
-        /// <summary>
-        /// Restore uses (for refills, etc.)
-        /// </summary>
         public void RestoreUses(int amount)
         {
-            if (maxUses < 0) return;  // Infinite, no restore needed
-
+            if (maxUses < 0) return;
             remainingUses = Mathf.Min(remainingUses + amount, maxUses);
         }
 
-        /// <summary>
-        /// Extend expiration time (for temporary buffs)
-        /// </summary>
         public void ExtendDuration(float additionalSeconds)
         {
-            if (expirationTime < 0f) return;  // Permanent
-
+            if (expirationTime < 0f) return;
             expirationTime += additionalSeconds;
         }
 
-        /// <summary>
-        /// Mark for removal
-        /// </summary>
-        public void Deactivate()
-        {
-            isActive = false;
-        }
-
-        // ========================================
-        // DEBUG
-        // ========================================
+        public void Deactivate() => isActive = false;
 
         public override string ToString()
         {
-            string usesStr = maxUses >= 0 ? $"{remainingUses}/{maxUses}" : "∞";
-            string expireStr = expirationTime >= 0f ? $"{GetRemainingDuration():F1}s" : "∞";
-
-            return $"[{definition?.abilityName}] Source:{source} Uses:{usesStr} Expires:{expireStr} Active:{isActive}";
+            string uses = maxUses >= 0 ? $"{remainingUses}/{maxUses}" : "∞";
+            string expires = expirationTime >= 0f ? $"{expirationTime:F1}" : "∞";
+            return $"[{definition?.abilityName}] Source:{source} Uses:{uses} Expires:{expires} Active:{isActive}";
         }
     }
 }

@@ -54,7 +54,7 @@ namespace CrabSystem
             if (!GoalSteer.TryUse(ctx, control.AbilityFor(AIRole.Lunge))) return;
 
             control.GoalPhase = 1;
-            control.GoalUntil = Time.time + strikeWindow;
+            control.GoalUntil = ctx.Now + strikeWindow;
         }
 
         // In the air: keep pressing toward the target, and swing the moment it's in reach. Without a Melee
@@ -64,7 +64,7 @@ namespace CrabSystem
             AIControlSource control = ctx.aiControl;
             AbilityDefinition melee = control.AbilityFor(AIRole.Melee);
 
-            if (melee == null || Time.time >= control.GoalUntil)
+            if (melee == null || ctx.Now >= control.GoalUntil)
             {
                 control.GoalPhase = 2;
                 return;

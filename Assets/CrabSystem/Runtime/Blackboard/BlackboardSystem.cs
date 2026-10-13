@@ -127,7 +127,7 @@ namespace CrabSystem
 
             foreach (var keyDef in schema.keys)
             {
-                int hash = keyDef.keyName.GetHashCode();
+                int hash = BlackboardKey.Hash(keyDef.keyName);
 
                 switch (keyDef.type)
                 {

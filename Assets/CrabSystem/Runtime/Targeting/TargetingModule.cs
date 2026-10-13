@@ -33,6 +33,8 @@ namespace CrabSystem
         public ControllerBrain CurrentTarget { get; private set; }
 
         private ControllerBrain brain;
+
+        private float Now => brain.Clock.Now;
         private CameraModule cameraModule;
         private MovementSystem movement;
         private AbilitySystem abilities;
@@ -55,9 +57,9 @@ namespace CrabSystem
         {
             if (!IsEnabled) return;
 
-            if (Time.time >= nextScanAt)
+            if (Now >= nextScanAt)
             {
-                nextScanAt = Time.time + scanInterval;
+                nextScanAt = Now + scanInterval;
                 CurrentTarget = FindTarget();
             }
 

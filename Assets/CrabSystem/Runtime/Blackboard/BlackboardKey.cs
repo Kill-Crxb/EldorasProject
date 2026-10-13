@@ -33,17 +33,18 @@ namespace CrabSystem
         public BlackboardKey(string name)
         {
             debugName = name;
-            hash = GenerateHash(name);
+            hash = Hash(name);
         }
 
-        /// <summary>
-        /// Generate deterministic hash from string key
-        /// Uses .NET's GetHashCode (stable within session)
-        /// </summary>
-        private static int GenerateHash(string name)
+        // FNV-1a over the UTF-16 chars. string.GetHashCode is randomised per process on modern .NET, so a key hashed
+        // here matches across runs, saves and machines. Every string key goes through this.
+        public static int Hash(string name)
         {
             if (string.IsNullOrEmpty(name)) return 0;
-            return name.GetHashCode();
+            uint hash = 2166136261;
+            foreach (char c in name)
+                hash = (hash ^ c) * 16777619;
+            return (int)hash;
         }
 
         public override string ToString() => debugName ?? $"Hash_{hash}";
@@ -62,11 +63,11 @@ namespace CrabSystem
 
         // Well-known key hashes — use these instead of raw string hashes.
         // Add new keys here as facts are introduced; name must match the condition's OutputFactKey exactly.
-        public static readonly int IsExecutingAbility = "IsExecutingAbility".GetHashCode();
-        public static readonly int IsInvincible       = "IsInvincible".GetHashCode();
-        public static readonly int IsBlocking         = "IsBlocking".GetHashCode();
-        public static readonly int IsInConversation   = "IsInConversation".GetHashCode();
-        public static readonly int IsUnarmed          = "IsUnarmed".GetHashCode();
+        public static readonly int IsExecutingAbility = BlackboardKey.Hash("IsExecutingAbility");
+        public static readonly int IsInvincible       = BlackboardKey.Hash("IsInvincible");
+        public static readonly int IsBlocking         = BlackboardKey.Hash("IsBlocking");
+        public static readonly int IsInConversation   = BlackboardKey.Hash("IsInConversation");
+        public static readonly int IsUnarmed          = BlackboardKey.Hash("IsUnarmed");
 
         // Published directly by MovementSystem, not by a BlackboardCondition — see
         // MovementSystem.UpdateSpeedState. Do NOT author conditions with these OutputFactKeys or
@@ -75,11 +76,11 @@ namespace CrabSystem
         // IsRunning / IsSprinting are GAIT facts (2026-09-27): the run or sprint gait AND moving. A
         // momentum burst at walk gait is not running; no sprint grant, no sprinting. Only a handler
         // with no gait (Gait.None) falls back to speed hysteresis. SpeedBlend stays measured speed.
-        public static readonly int IsRunning          = "IsRunning".GetHashCode();
-        public static readonly int IsSprinting        = "IsSprinting".GetHashCode();
+        public static readonly int IsRunning          = BlackboardKey.Hash("IsRunning");
+        public static readonly int IsSprinting        = BlackboardKey.Hash("IsSprinting");
 
         /// <summary>Float, 0 at the run threshold and 1 at the sprint threshold.</summary>
-        public static readonly int SpeedBlend         = "SpeedBlend".GetHashCode();
+        public static readonly int SpeedBlend         = BlackboardKey.Hash("SpeedBlend");
 
         /// <summary>
         /// Sprint GRANTED — a tag any system may raise: an ability, a status, a stat gate. While it is
@@ -93,7 +94,7 @@ namespace CrabSystem
         ///
         /// Single writer, like the keys above: whatever raises it also lowers it.
         /// </summary>
-        public static readonly int SprintGranted      = "SprintGranted".GetHashCode();
+        public static readonly int SprintGranted      = BlackboardKey.Hash("SprintGranted");
 
         /// <summary>
         /// Double jump GRANTED — read by ParkourLocomotionHandler.TryAirJump, which adds one to the
@@ -105,7 +106,7 @@ namespace CrabSystem
         /// nothing outside movement reads it and the register's own test is "name the system that
         /// reads it".
         /// </summary>
-        public static readonly int DoubleJumpGranted  = "DoubleJumpGranted".GetHashCode();
+        public static readonly int DoubleJumpGranted  = BlackboardKey.Hash("DoubleJumpGranted");
 
         // Capability denials (2026-09-28). Facts default to false, so "not denied" is the right state
         // for a character with nothing on them. Each one names what it stops, not what caused it:
@@ -120,32 +121,32 @@ namespace CrabSystem
         //   CannotCast    Spell abilities and element drawing (a drawn element fizzles)
         //   CannotBlock   Defense abilities
         //   CannotDodge   Movement abilities
-        public static readonly int CannotAct          = "CannotAct".GetHashCode();
+        public static readonly int CannotAct          = BlackboardKey.Hash("CannotAct");
         // Written by DamageSystem only: true from death until Revive.
-        public static readonly int IsDead             = "IsDead".GetHashCode();
-        public static readonly int CannotMove         = "CannotMove".GetHashCode();
-        public static readonly int CannotJump         = "CannotJump".GetHashCode();
-        public static readonly int CannotSprint       = "CannotSprint".GetHashCode();
-        public static readonly int CannotAttack       = "CannotAttack".GetHashCode();
-        public static readonly int CannotCast         = "CannotCast".GetHashCode();
-        public static readonly int CannotBlock        = "CannotBlock".GetHashCode();
-        public static readonly int CannotDodge        = "CannotDodge".GetHashCode();
+        public static readonly int IsDead             = BlackboardKey.Hash("IsDead");
+        public static readonly int CannotMove         = BlackboardKey.Hash("CannotMove");
+        public static readonly int CannotJump         = BlackboardKey.Hash("CannotJump");
+        public static readonly int CannotSprint       = BlackboardKey.Hash("CannotSprint");
+        public static readonly int CannotAttack       = BlackboardKey.Hash("CannotAttack");
+        public static readonly int CannotCast         = BlackboardKey.Hash("CannotCast");
+        public static readonly int CannotBlock        = BlackboardKey.Hash("CannotBlock");
+        public static readonly int CannotDodge        = BlackboardKey.Hash("CannotDodge");
 
         // AbilitySystem only, while an ability with castWhileMoving off plays. Kept apart from
         // CannotMove so the ability and the statuses never share a key — MovementSystem ORs them.
-        public static readonly int MoveRooted         = "MoveRooted".GetHashCode();
+        public static readonly int MoveRooted         = BlackboardKey.Hash("MoveRooted");
 
         // AbilitySystem only, while an ability with useRootMotion on plays. The movement handler takes the
         // clip's travel (RootMotionRelay) only while it is up; the rest of the time root motion is dropped.
-        public static readonly int RootMotionDriven   = "RootMotionDriven".GetHashCode();
+        public static readonly int RootMotionDriven   = BlackboardKey.Hash("RootMotionDriven");
 
         // AbilitySystem only, as a root-motion move starts: the share of the clip's travel it keeps (a float).
-        public static readonly int RootMotionScale    = "RootMotionScale".GetHashCode();
+        public static readonly int RootMotionScale    = BlackboardKey.Hash("RootMotionScale");
 
         /// <summary>
         /// SpellcraftSystem only: a sequence is being entered, so the hands hold the sign pose between
         /// signs. Mirrored to the animator's IsDrawing bool by AnimatorFactBridge.
         /// </summary>
-        public static readonly int IsDrawingSigns     = "IsDrawingSigns".GetHashCode();
+        public static readonly int IsDrawingSigns     = BlackboardKey.Hash("IsDrawingSigns");
     }
 }

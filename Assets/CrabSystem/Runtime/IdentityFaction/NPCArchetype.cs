@@ -147,6 +147,6 @@ namespace CrabSystem
         public float GetReactionTime() => Mathf.Lerp(0.8f, 0.2f, reflexes / 10f);
         public float GetVisionRange() => Mathf.Lerp(10f, 25f, perception / 10f);
         public float GetFlankingChance() => intelligence / 10f;
-        public bool WillFightWhenOutnumbered() => UnityEngine.Random.value < (courage / 10f);
+        public bool WillFightWhenOutnumbered() => DiceRoll.Value() < (courage / 10f);
     }
 }

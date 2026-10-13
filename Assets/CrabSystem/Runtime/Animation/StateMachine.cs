@@ -18,6 +18,7 @@ namespace CrabSystem
 
         // Timing
         private float stateEnterTime;
+        private readonly EntityClock clock;
 
         // Events
         public event Action<T, T> OnStateChanged; // (previousState, newState)
@@ -27,16 +28,17 @@ namespace CrabSystem
         // Properties
         public T Current => currentState;
         public T Previous => previousState;
-        public float TimeInState => Time.time - stateEnterTime;
+        public float TimeInState => clock.Now - stateEnterTime;
 
         /// <summary>
         /// Constructor - initialize with starting state
         /// </summary>
-        public StateMachine(T initialState)
+        public StateMachine(T initialState, EntityClock clock)
         {
             currentState = initialState;
             previousState = initialState;
-            stateEnterTime = Time.time;
+            this.clock = clock;
+            stateEnterTime = clock.Now;
         }
 
         /// <summary>
@@ -56,7 +58,7 @@ namespace CrabSystem
 
             // Change state
             currentState = newState;
-            stateEnterTime = Time.time;
+            stateEnterTime = clock.Now;
 
             // Fire enter event
             OnStateEntered?.Invoke(currentState);
@@ -93,7 +95,7 @@ namespace CrabSystem
         {
             currentState = state;
             previousState = state;
-            stateEnterTime = Time.time;
+            stateEnterTime = clock.Now;
         }
 
         /// <summary>

@@ -64,13 +64,13 @@ namespace CrabSystem
             if (abilities != null && abilities.IsCasting) return;
 
             ctx.aiControl.GoalPhase = 2;
-            ctx.aiControl.GoalUntil = Time.time + rushTime;
+            ctx.aiControl.GoalUntil = ctx.Now + rushTime;
         }
 
         void Rush(GOAPContext ctx)
         {
             AIControlSource control = ctx.aiControl;
-            if (Time.time >= control.GoalUntil)
+            if (ctx.Now >= control.GoalUntil)
             {
                 control.GoalPhase = 3;
                 return;

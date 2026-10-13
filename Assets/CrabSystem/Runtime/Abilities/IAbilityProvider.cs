@@ -6,7 +6,7 @@ namespace CrabSystem
     {
         bool CanUseAbility(string abilityId);
         void UseAbility(string abilityId);
-        float GetAbilityCooldown(string abilityId);
+        float GetAbilityCooldownRemaining(string abilityId);
         float GetAbilityMaxCooldown(string abilityId);
         bool IsAbilityOnCooldown(string abilityId);
 

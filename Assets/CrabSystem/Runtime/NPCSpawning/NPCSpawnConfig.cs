@@ -65,7 +65,7 @@ namespace CrabSystem
             if (!useRandomVariant || variants == null || variants.Length == 0)
                 return this;
 
-            return variants[Random.Range(0, variants.Length)];
+            return variants[DiceRoll.Range(0, variants.Length)];
         }
 
         // ── Debug ─────────────────────────────────────────────────────────────
