@@ -22,9 +22,6 @@ namespace CrabSystem
         [Header("Loot Container")]
         [SerializeField] private GameObject lootContainerPrefab;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLoot = false;
-
         private ControllerBrain brain;
         private EquipmentSystem equipmentSystem;
         private InventorySystem inventorySystem; // May be null
@@ -123,9 +120,6 @@ namespace CrabSystem
             //     }
             //     
             //     lootedItems.Add(item);
-            //
-            //     if (debugLoot)
-            //         Debug.Log($"[LootSystem] Pool dropped: {item.Definition.displayName}");
             // }
         }
 
