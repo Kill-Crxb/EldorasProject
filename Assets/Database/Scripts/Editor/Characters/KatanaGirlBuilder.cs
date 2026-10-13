@@ -38,7 +38,7 @@ public static class KatanaGirlBuilder
     const string OverridesPath = Out + "/KatanaGirl_Overrides.overrideController";
     const string ItemsOut = "Assets/Database/Resources/ItemDatabase/Weapons/Bladed";
     const string SteelKatanaPath = ItemsOut + "/Item_SteelKatana.asset";
-    const string RowPrefabPath = "Assets/CrabSystem/Menu/AppearanceRow.prefab";
+    const string RowPrefabPath = "Assets/CrabSystem/Runtime/Menu/AppearanceRow.prefab";
 
     const string ControllerPath = "Assets/Database/Animation/Humanoid/HumanoidAnimator_v2.controller";
     const string ModelDatabasePath = "Assets/Database/Characters/EldoraModelDatabase.asset";

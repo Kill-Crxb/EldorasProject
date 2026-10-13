@@ -69,11 +69,7 @@ picking a die is the one thing you do on every single weapon.
 `Assets/Database/Resources/ItemDatabase/<subfolder>` — default `Weapons/Bladed`, to match what is
 already there.
 
-⚠ **The existing bulk generator writes somewhere else.** `CrabSystem/Editor/ItemDefinitionGenerator.cs`
-has `OutputRoot = "Assets/CrabSystem/ItemInventoryEquipment/Inventory/Items/Resources/ItemDatabase"`,
-and that folder **does not exist in the project**. Running it would create a second database root.
-It still works — `Resources.LoadAll` matches on the last path segment, so both would load — but the
-items would be split across two trees. Worth fixing that constant to the real root.
+`CrabSystem/Editor/Items/ItemDefinitionGenerator.cs` writes to the same root.
 
 ## The asset report
 

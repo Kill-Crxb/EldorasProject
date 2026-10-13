@@ -14,8 +14,7 @@ using UnityEngine;
 // such thing — a weapon is dice, a reach and a mesh. See the dev insight note on that cleanup.
 public class WeaponWizard : EditorWindow
 {
-    // The real database root. The bulk generator in CrabSystem/Editor still points at
-    // Assets/CrabSystem/.../Resources/ItemDatabase, a folder that does not exist — see the README.
+    // Same root as Editor/Items/ItemDefinitionGenerator.
     const string DatabaseRoot = "Assets/Database/Resources/ItemDatabase";
 
     string displayName = "";

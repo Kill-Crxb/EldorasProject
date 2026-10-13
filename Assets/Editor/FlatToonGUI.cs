@@ -1,4 +1,4 @@
-// Editor-only. Lives in Assets/CrabSystem/Editor.
+// Editor-only. Lives in Assets/Editor.
 //
 // Material inspector for Crab/FlatToon. The shader has around sixty properties; without
 // this you scroll past fifty that do not apply to find the four that do.
