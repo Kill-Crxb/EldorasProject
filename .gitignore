@@ -38,14 +38,15 @@ Thumbs.db
 # Ambience recordings over 100 MB, kept locally, backed up outside git
 /Assets/Database/Audio/185 Soundscape_mountain forest_thunderstorm_close_birds distant_summer.WAV*
 /Assets/Database/Audio/SBAb_5 Meters From Shore Early Morning 005.wav*
-Assets/ImportedAssets/Kevin Iglesias/
-Assets/CombatGirlsCharacterPack/
-Assets/CombatGirlsCharacterPack.meta
-Assets/CombatGirlsAnimations/
-Assets/CombatGirlsAnimations.meta
+/Assets/ThirdParty/Kevin Iglesias/
+/Assets/ThirdParty/Kevin Iglesias.meta
+/Assets/ThirdParty/CombatGirlsCharacterPack/
+/Assets/ThirdParty/CombatGirlsCharacterPack.meta
+/Assets/ThirdParty/CombatGirlsAnimations/
+/Assets/ThirdParty/CombatGirlsAnimations.meta
 
 # Free VFX packs, kept locally (8 Oct)
-Assets/Matthew Guz/
-Assets/Matthew Guz.meta
-Assets/Travis Game Assets/
-Assets/Travis Game Assets.meta
+/Assets/ThirdParty/Matthew Guz/
+/Assets/ThirdParty/Matthew Guz.meta
+/Assets/ThirdParty/Travis Game Assets/
+/Assets/ThirdParty/Travis Game Assets.meta

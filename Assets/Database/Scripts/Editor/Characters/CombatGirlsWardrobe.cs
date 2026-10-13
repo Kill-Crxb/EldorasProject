@@ -70,7 +70,7 @@ public static class CombatGirlsWardrobe
     {
         id = "kg",
         hairName = "Katana",
-        sourcePrefab = "Assets/CombatGirlsCharacterPack/Katana_Girl/Prefab/KatanaGirl_FullBody.prefab",
+        sourcePrefab = "Assets/ThirdParty/CombatGirlsCharacterPack/Katana_Girl/Prefab/KatanaGirl_FullBody.prefab",
         hairObject = "Katana_Hair",
         hairFormat = "Katana_Hair {0}",
         shownFace = "Face_02",
@@ -98,7 +98,7 @@ public static class CombatGirlsWardrobe
     {
         id = "ss",
         hairName = "Knight",
-        sourcePrefab = "Assets/CombatGirlsCharacterPack/CombatGirl_Shield/Prefab/SwordShieldGirl_FullBody.prefab",
+        sourcePrefab = "Assets/ThirdParty/CombatGirlsCharacterPack/CombatGirl_Shield/Prefab/SwordShieldGirl_FullBody.prefab",
         hairObject = "SwordAndShiled_Hair",
         hairFormat = "Shield_Sword_Hair_{0:00}",
         shownFace = "Face_04",

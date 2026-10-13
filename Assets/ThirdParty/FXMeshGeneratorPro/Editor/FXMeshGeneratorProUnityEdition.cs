@@ -21,7 +21,7 @@ namespace FXMeshGeneratorPro.UnityEdition
         private const string PreviewObjectName = "FXM_UnityEdition_Preview";
         private const string PreviewShaderName = "FX Mesh Generator Pro/Preview/Vertex Alpha Checker";
 
-        private const string PackageRoot = "Assets/FXMeshGeneratorPro";
+        private const string PackageRoot = "Assets/ThirdParty/FXMeshGeneratorPro";
         private const string GeneratedRoot = PackageRoot + "/Generated";
         private const string GeneratedMeshesFolder = GeneratedRoot + "/Meshes";
         private const string GeneratedMaterialFolder = GeneratedRoot + "/Materials";

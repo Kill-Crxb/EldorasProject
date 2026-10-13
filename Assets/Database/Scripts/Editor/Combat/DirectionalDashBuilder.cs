@@ -9,7 +9,7 @@ public static class DirectionalDashBuilder
 {
     const string Tag = "DirectionalDashBuilder";
     const string DashPath = "Assets/Database/Resources/AbilityDatabase/Movement/Dash.asset";
-    const string ClipFolder = "Assets/CombatGirlsAnimations/Katana_Girl/Special/";
+    const string ClipFolder = "Assets/ThirdParty/CombatGirlsAnimations/Katana_Girl/Special/";
     const string Layer = "Movement Actions";
     const float CueTime = 0.125f;
 

@@ -11,7 +11,7 @@ using UnityEngine.UI;
 // Tools → Characters → Build Katana Girl
 //
 // Puts the CombatGirls Katana Girl in as a playable model (Katana_Girl_Build.md). The pack lives in
-// Assets/CombatGirlsCharacterPack, local only (git ignores it). From it this makes, in
+// Assets/ThirdParty/CombatGirlsCharacterPack, local only (git ignores it). From it this makes, in
 // Database/Characters/KatanaGirl: FlatToon materials, the model prefab (sockets, socket relay,
 // appearance groups) and her locomotion override controller; and the Blade A / B items. It writes the
 // clip events into her FBX importers, puts her attacks and reactions into HumanoidAnimator_v2,
@@ -26,7 +26,7 @@ using UnityEngine.UI;
 // (Shield_Girl_Build.md). The internal helpers here are shared with ShieldGirlBuilder.
 public static class KatanaGirlBuilder
 {
-    const string Pack = "Assets/CombatGirlsCharacterPack/Katana_Girl";
+    const string Pack = "Assets/ThirdParty/CombatGirlsCharacterPack/Katana_Girl";
     const string SourcePrefab = Pack + "/Prefab/KatanaGirl_FullBody.prefab";
     const string WeaponPrefab = Pack + "/Prefab/Prefab_Parts/Weapon_Katana.prefab";
     const string PackMaterials = Pack + "/Materials";

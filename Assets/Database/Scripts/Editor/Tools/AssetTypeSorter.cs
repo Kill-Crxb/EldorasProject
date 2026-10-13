@@ -47,13 +47,11 @@ public class AssetTypeSorter : EditorWindow
     // Folders that are never read from. Anything under these is left alone.
     static readonly string[] BlockedFolders =
     {
-        "Assets/ImportedAssets",   // downloaded / third party
+        "Assets/ThirdParty",       // downloaded packs, TextMesh Pro essentials, ProBuilder data
         "Assets/Database",         // destination + the ScriptableObject databases
-        "Assets/Text and Fonts",   // TextMesh Pro essentials, resolves partly by path
         "Assets/Plugins",
         "Assets/StreamingAssets",
-        "Assets/Editor Default Resources",
-        "Assets/ProBuilder Data"
+        "Assets/Editor Default Resources"
     };
 
     // Filename prefixes that are generated bake data. Moving them just makes Unity

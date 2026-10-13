@@ -25,8 +25,8 @@ public static class ReadingLayerBuilder
 
     static readonly (string label, string folder)[] Packs =
     {
-        ("KG", "Assets/CombatGirlsCharacterPack/Katana_Girl/Animations"),
-        ("SS", "Assets/CombatGirlsCharacterPack/CombatGirl_Shield/Animations"),
+        ("KG", "Assets/ThirdParty/CombatGirlsCharacterPack/Katana_Girl/Animations"),
+        ("SS", "Assets/ThirdParty/CombatGirlsCharacterPack/CombatGirl_Shield/Animations"),
     };
 
     [MenuItem("Tools/Characters/Fill Reading Layer")]

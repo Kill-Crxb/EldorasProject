@@ -9,7 +9,7 @@ using UnityEngine.UI;
 // rows moved beside it. Safe to run again: it finds what it made last time and only re-wires.
 public static class CreationPreviewBuilder
 {
-    const string ScenePath = "Assets/- Scenes/MenuScene.unity";
+    const string ScenePath = "Assets/Database/Scenes/MenuScene.unity";
     const string StageName = "CreationPreviewStage";
     const string PreviewName = "Preview";
 

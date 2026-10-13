@@ -17,8 +17,8 @@ using UnityEngine;
 public static class MonsterBuilder
 {
     const string Root = "Assets/Database/Characters/Monsters";
-    const string PackModels = "Assets/Level 1 Monster Pack/Models/";
-    const string PackPrefabs = "Assets/Level 1 Monster Pack/Prefabs/";
+    const string PackModels = "Assets/ThirdParty/Level 1 Monster Pack/Models/";
+    const string PackPrefabs = "Assets/ThirdParty/Level 1 Monster Pack/Prefabs/";
     const string HumanoidController = "Assets/Database/Animation/Humanoid/HumanoidAnimator_v2.controller";
     const string ModelDatabasePath = "Assets/Database/Characters/EldoraModelDatabase.asset";
     const string BakeSettingsPath = "Assets/Database/Config/Combat/MoveBakeSettings.asset";

@@ -84,7 +84,7 @@ public static class IdValidator
 
     // Asset-store packs and their demo content; reported apart so our own list stays readable.
     private static readonly string[] ThirdPartyRoots =
-        { "Assets/Feel/", "Assets/MagicaCloth2/", "Assets/Farland Skies/", "Assets/ImportedAssets/", "Assets/ProBuilder Data/", "Assets/Text and Fonts/" };
+        { "Assets/ThirdParty/" };
 
     private static bool IsThirdParty(string path) => ThirdPartyRoots.Any(root => path.StartsWith(root));
 

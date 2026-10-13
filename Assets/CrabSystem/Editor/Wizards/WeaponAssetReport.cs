@@ -213,7 +213,7 @@ public class WeaponAssetReport : EditorWindow
         foreach (string path in AssetDatabase.GetAllAssetPaths())
         {
             if (!path.StartsWith("Assets/")) continue;
-            if (path.StartsWith("Assets/ImportedAssets/") || path.StartsWith("Assets/MagicaCloth2/")) continue;
+            if (path.StartsWith("Assets/ThirdParty/")) continue;
 
             string extension = Path.GetExtension(path).ToLowerInvariant();
             if (extension != ".asset" && extension != ".prefab" && extension != ".unity" && extension != ".controller") continue;

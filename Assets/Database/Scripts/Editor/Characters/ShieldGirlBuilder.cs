@@ -17,7 +17,7 @@ using UnityEngine;
 // Rerunnable; weapon prefabs and items are made once, then left alone apart from id, name and visual.
 public static class ShieldGirlBuilder
 {
-    const string Pack = "Assets/CombatGirlsCharacterPack/CombatGirl_Shield";
+    const string Pack = "Assets/ThirdParty/CombatGirlsCharacterPack/CombatGirl_Shield";
     const string SourcePrefab = Pack + "/Prefab/SwordShieldGirl_FullBody.prefab";
     const string SwordPrefab = Pack + "/Prefab/Weapon/Weapon_SS_Sword.prefab";
     const string ShieldPrefab = Pack + "/Prefab/Weapon/Weapon_SS_Shiled.prefab";

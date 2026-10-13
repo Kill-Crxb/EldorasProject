@@ -7,14 +7,14 @@ using UnityEngine;
 // Tools → Characters → Extract CombatGirls Clips
 //
 // Copies the clip out of every CombatGirls animation FBX into its own editable .anim
-// (Assets/CombatGirlsAnimations/<girl>/<Emotion|Normal|Special>/<file>.anim), then points everything that used an FBX
+// (Assets/ThirdParty/CombatGirlsAnimations/<girl>/<Emotion|Normal|Special>/<file>.anim), then points everything that used an FBX
 // clip at the copy: controller states, blend trees, synced-layer overrides, override controllers, abilities' baked
 // clips. The copies are yours: a rerun never overwrites one, so events added to them stay. The folder is pack content
 // and is git-ignored like the pack.
 public static class CombatGirlsClips
 {
-    public const string Root = "Assets/CombatGirlsAnimations";
-    const string PackRoot = "Assets/CombatGirlsCharacterPack";
+    public const string Root = "Assets/ThirdParty/CombatGirlsAnimations";
+    const string PackRoot = "Assets/ThirdParty/CombatGirlsCharacterPack";
     static readonly string[] Girls = { "Katana_Girl", "CombatGirl_Shield" };
     static readonly string[] ReferencingExtensions = { ".controller", ".overrideController", ".asset", ".prefab", ".playable", ".mask" };
 
@@ -54,7 +54,7 @@ public static class CombatGirlsClips
         return null;
     }
 
-    // ".../Katana_Girl/Animations/Normal/K_Attack_1.fbx" → "Assets/CombatGirlsAnimations/Katana_Girl/Normal/K_Attack_1.anim"
+    // ".../Katana_Girl/Animations/Normal/K_Attack_1.fbx" → "Assets/ThirdParty/CombatGirlsAnimations/Katana_Girl/Normal/K_Attack_1.anim"
     static string TargetPath(string fbxPath)
     {
         string inPack = fbxPath.Substring(PackRoot.Length).Replace("/Animations/", "/");

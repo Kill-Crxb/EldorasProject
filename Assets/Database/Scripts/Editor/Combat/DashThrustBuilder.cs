@@ -8,7 +8,7 @@ using UnityEngine;
 public static class DashThrustBuilder
 {
     const string Tag = "DashThrustBuilder";
-    const string ClipPath = "Assets/CombatGirlsAnimations/Katana_Girl/Special/DashThrust.anim";
+    const string ClipPath = "Assets/ThirdParty/CombatGirlsAnimations/Katana_Girl/Special/DashThrust.anim";
     const string TemplatePath = "Assets/Database/Resources/AbilityDatabase/KatanaAbilities/BasicAttack3.asset";
     const string AbilityPath = "Assets/Database/Resources/AbilityDatabase/KatanaAbilities/DashThrust.asset";
     const string Trigger = "DashThrust";
