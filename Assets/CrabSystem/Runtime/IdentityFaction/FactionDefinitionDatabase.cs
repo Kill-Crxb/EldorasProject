@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace RPG.Factions
+namespace CrabSystem.Factions
 {
     [CreateAssetMenu(menuName = "RPG/Factions/Faction Definition Database")]
     public class FactionDefinitionDatabase : ScriptableObject

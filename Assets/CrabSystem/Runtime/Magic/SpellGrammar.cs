@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NinjaGame.Magic
+namespace CrabSystem.Magic
 {
     /// <summary>
     /// What an Effect does on arrival, and — the part that matters — WHO IT SEEKS.

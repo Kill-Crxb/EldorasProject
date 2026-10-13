@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     /// <summary>
     /// An amount per point of whatever drives it. "+0.5 Initiative per Spirit" — at Spirit 5

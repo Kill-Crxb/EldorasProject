@@ -1,23 +1,26 @@
-public enum InteractionAction
+namespace CrabSystem
 {
-    None,
-    Open,
-    Talk,
-    Use,
-    Loot,
-    Shop,
-    Quest,
-    Craft,
-    Rest,
-    Examine,
-    Pickup,
-    Activate,
-    Read,
-    Sit,
-    Sleep,
-    Cook,
-    Mine,
-    Harvest,
-    RespawnLoot,
-    TestInteraction
+    public enum InteractionAction
+    {
+        None,
+        Open,
+        Talk,
+        Use,
+        Loot,
+        Shop,
+        Quest,
+        Craft,
+        Rest,
+        Examine,
+        Pickup,
+        Activate,
+        Read,
+        Sit,
+        Sleep,
+        Cook,
+        Mine,
+        Harvest,
+        RespawnLoot,
+        TestInteraction
+    }
 }

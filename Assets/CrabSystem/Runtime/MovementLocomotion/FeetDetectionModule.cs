@@ -1,97 +1,100 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public enum FeetContactType { Ground, Wall, Ceiling, Unknown }
-
-public class FeetDetectionModule : MonoBehaviour, IBrainModule
+namespace CrabSystem
 {
-    [Header("Detection Settings")]
-    [SerializeField] private LayerMask groundLayers = 256; // Layer 8 (Ground) = 2^8 = 256
-    [SerializeField] private LayerMask wallLayers = 0;     // Set if you want wall detection
-    [SerializeField] private LayerMask ceilingLayers = 0;  // Set if you want ceiling detection
+    public enum FeetContactType { Ground, Wall, Ceiling, Unknown }
 
-    private ControllerBrain brain;
-    private HashSet<Collider> groundContacts = new HashSet<Collider>();
-
-    public bool IsEnabled { get; set; } = true;
-    public bool IsGrounded => groundContacts.Count > 0;
-    public int GroundContactCount => groundContacts.Count;
-
-    public void Initialize(ControllerBrain brain)
+    public class FeetDetectionModule : MonoBehaviour, IBrainModule
     {
-        this.brain = brain;
+        [Header("Detection Settings")]
+        [SerializeField] private LayerMask groundLayers = 256; // Layer 8 (Ground) = 2^8 = 256
+        [SerializeField] private LayerMask wallLayers = 0;     // Set if you want wall detection
+        [SerializeField] private LayerMask ceilingLayers = 0;  // Set if you want ceiling detection
 
-        if (brain == null)
+        private ControllerBrain brain;
+        private HashSet<Collider> groundContacts = new HashSet<Collider>();
+
+        public bool IsEnabled { get; set; } = true;
+        public bool IsGrounded => groundContacts.Count > 0;
+        public int GroundContactCount => groundContacts.Count;
+
+        public void Initialize(ControllerBrain brain)
         {
-            Debug.LogError("FeetDetectionModule: Brain reference is null!");
-            return;
+            this.brain = brain;
+
+            if (brain == null)
+            {
+                Debug.LogError("FeetDetectionModule: Brain reference is null!");
+                return;
+            }
+
+            // Validate setup
+            var triggerCollider = GetComponent<BoxCollider>();
+            if (triggerCollider == null)
+            {
+                Debug.LogError($"{gameObject.name}: Missing BoxCollider component!");
+                return;
+            }
+
+            if (!triggerCollider.isTrigger)
+            {
+                Debug.LogError($"{gameObject.name}: BoxCollider must be set as Trigger!");
+                return;
+            }
         }
 
-        // Validate setup
-        var triggerCollider = GetComponent<BoxCollider>();
-        if (triggerCollider == null)
-        {
-            Debug.LogError($"{gameObject.name}: Missing BoxCollider component!");
-            return;
-        }
-
-        if (!triggerCollider.isTrigger)
-        {
-            Debug.LogError($"{gameObject.name}: BoxCollider must be set as Trigger!");
-            return;
-        }
-    }
-
-    public void UpdateModule() { }
+        public void UpdateModule() { }
 
     #region Collision Detection
 
-    void OnTriggerEnter(Collider other)
-    {
-        if (brain == null) return;
-        if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Add(other);
-    }
+        void OnTriggerEnter(Collider other)
+        {
+            if (brain == null) return;
+            if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Add(other);
+        }
 
-    void OnTriggerStay(Collider other)
-    {
-        if (brain == null) return;
-        if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Add(other);
-    }
+        void OnTriggerStay(Collider other)
+        {
+            if (brain == null) return;
+            if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Add(other);
+        }
 
-    void OnTriggerExit(Collider other)
-    {
-        if (brain == null) return;
-        if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Remove(other);
-    }
+        void OnTriggerExit(Collider other)
+        {
+            if (brain == null) return;
+            if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Remove(other);
+        }
 
     #endregion
 
     #region Layer-Based Classification
 
-    private FeetContactType GetContactTypeByLayer(Collider other)
-    {
-        int objectLayer = other.gameObject.layer;
+        private FeetContactType GetContactTypeByLayer(Collider other)
+        {
+            int objectLayer = other.gameObject.layer;
 
-        // Check ground layers first (most common)
-        if (IsLayerInMask(objectLayer, groundLayers))
-            return FeetContactType.Ground;
+            // Check ground layers first (most common)
+            if (IsLayerInMask(objectLayer, groundLayers))
+                return FeetContactType.Ground;
 
-        // Check wall layers
-        if (wallLayers.value != 0 && IsLayerInMask(objectLayer, wallLayers))
-            return FeetContactType.Wall;
+            // Check wall layers
+            if (wallLayers.value != 0 && IsLayerInMask(objectLayer, wallLayers))
+                return FeetContactType.Wall;
 
-        // Check ceiling layers  
-        if (ceilingLayers.value != 0 && IsLayerInMask(objectLayer, ceilingLayers))
-            return FeetContactType.Ceiling;
+            // Check ceiling layers  
+            if (ceilingLayers.value != 0 && IsLayerInMask(objectLayer, ceilingLayers))
+                return FeetContactType.Ceiling;
 
-        // Not a recognized layer
-        return FeetContactType.Unknown;
-    }
+            // Not a recognized layer
+            return FeetContactType.Unknown;
+        }
 
-    private bool IsLayerInMask(int layer, LayerMask mask)
-    {
-        return ((1 << layer) & mask) != 0;
-    }
+        private bool IsLayerInMask(int layer, LayerMask mask)
+        {
+            return ((1 << layer) & mask) != 0;
+        }
 
     #endregion
+    }
 }

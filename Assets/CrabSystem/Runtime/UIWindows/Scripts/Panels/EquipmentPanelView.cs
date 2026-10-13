@@ -4,62 +4,66 @@ using UnityEngine;
 /// Binds every authored equipment socket beneath this view to the player's equipment.
 /// Sockets carry their own slot id, so adding or moving one needs no code change.
 /// </summary>
-public class EquipmentPanelView : UIPanelView
+
+namespace CrabSystem
 {
-    [Header("Source")]
-    [Tooltip("Leave empty to bind the player found at runtime.")]
-    [SerializeField] private ControllerBrain sourceBrain;
-
-    private EquipmentSocket[] sockets;
-
-    protected override void OnShown()
+    public class EquipmentPanelView : UIPanelView
     {
-        if (sourceBrain == null) sourceBrain = PlayerBrainAccess.Find();
+        [Header("Source")]
+        [Tooltip("Leave empty to bind the player found at runtime.")]
+        [SerializeField] private ControllerBrain sourceBrain;
 
-        if (sourceBrain == null)
+        private EquipmentSocket[] sockets;
+
+        protected override void OnShown()
         {
-            Debug.LogWarning($"[EquipmentPanelView] no player brain for {name}");
-            return;
+            if (sourceBrain == null) sourceBrain = PlayerBrainAccess.Find();
+
+            if (sourceBrain == null)
+            {
+                Debug.LogWarning($"[EquipmentPanelView] no player brain for {name}");
+                return;
+            }
+
+            if (!sourceBrain.IsInitialized)
+            {
+                sourceBrain.OnInitialized += HandleBrainReady;
+                return;
+            }
+
+            Bind(sourceBrain);
         }
 
-        if (!sourceBrain.IsInitialized)
+        protected override void OnHidden()
         {
-            sourceBrain.OnInitialized += HandleBrainReady;
-            return;
+            if (sourceBrain != null) sourceBrain.OnInitialized -= HandleBrainReady;
+
+            if (sockets == null) return;
+
+            for (int i = 0; i < sockets.Length; i++)
+                sockets[i].Unbind();
         }
 
-        Bind(sourceBrain);
-    }
-
-    protected override void OnHidden()
-    {
-        if (sourceBrain != null) sourceBrain.OnInitialized -= HandleBrainReady;
-
-        if (sockets == null) return;
-
-        for (int i = 0; i < sockets.Length; i++)
-            sockets[i].Unbind();
-    }
-
-    private void HandleBrainReady(ControllerBrain ready)
-    {
-        ready.OnInitialized -= HandleBrainReady;
-        Bind(ready);
-    }
-
-    private void Bind(ControllerBrain owner)
-    {
-        var system = owner.GetModule<EquipmentSystem>();
-
-        if (system == null)
+        private void HandleBrainReady(ControllerBrain ready)
         {
-            Debug.LogWarning($"[EquipmentPanelView] {owner.name} has no EquipmentSystem");
-            return;
+            ready.OnInitialized -= HandleBrainReady;
+            Bind(ready);
         }
 
-        sockets = GetComponentsInChildren<EquipmentSocket>(true);
+        private void Bind(ControllerBrain owner)
+        {
+            var system = owner.GetModule<EquipmentSystem>();
 
-        for (int i = 0; i < sockets.Length; i++)
-            sockets[i].Bind(system);
+            if (system == null)
+            {
+                Debug.LogWarning($"[EquipmentPanelView] {owner.name} has no EquipmentSystem");
+                return;
+            }
+
+            sockets = GetComponentsInChildren<EquipmentSocket>(true);
+
+            for (int i = 0; i < sockets.Length; i++)
+                sockets[i].Bind(system);
+        }
     }
 }

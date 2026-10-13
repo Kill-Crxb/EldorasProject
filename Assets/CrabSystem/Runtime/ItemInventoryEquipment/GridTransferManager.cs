@@ -1,241 +1,244 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class GridTransferManager : MonoBehaviour
+namespace CrabSystem
 {
-    private static GridTransferManager instance;
-    public static GridTransferManager Instance
+    public class GridTransferManager : MonoBehaviour
     {
-        get
+        private static GridTransferManager instance;
+        public static GridTransferManager Instance
         {
-            if (instance != null) return instance;
-            instance = FindAnyObjectByType<GridTransferManager>();
-            if (instance != null) return instance;
-            var go = new GameObject("GridTransferManager");
-            instance = go.AddComponent<GridTransferManager>();
-            DontDestroyOnLoad(go);
-            return instance;
-        }
-    }
-
-    [Header("Transfer Rules")]
-    [SerializeField] private bool allowContainerToContainer = true;
-
-    private readonly List<UniversalGrid> registeredGrids = new List<UniversalGrid>();
-
-    private bool isDragging = false;
-    private UniversalGrid sourceGrid;
-    private string draggedItemId;
-    private ItemInstance draggedItem;
-    private GridArea draggedItemArea;
-
-    public bool IsDragging => isDragging;
-    public ItemInstance DraggedItem => draggedItem;
-    public UniversalGrid SourceGrid => sourceGrid;
-
-    void Awake()
-    {
-        if (instance != null && instance != this) { Destroy(gameObject); return; }
-        instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
-
-    public void RegisterGrid(UniversalGrid grid)
-    {
-        if (grid == null || registeredGrids.Contains(grid)) return;
-        registeredGrids.Add(grid);
-    }
-
-    public void UnregisterGrid(UniversalGrid grid)
-    {
-        if (grid == null) return;
-        registeredGrids.Remove(grid);
-    }
-
-    public UniversalGrid GetGridAtScreenPosition(Vector2 screenPos)
-    {
-        foreach (var grid in registeredGrids)
-        {
-            if (grid != null && grid.IsPointOverGrid(screenPos)) return grid;
-        }
-        return null;
-    }
-
-    public void BeginDrag(UniversalGrid grid, string itemId, ItemInstance item, GridArea area)
-    {
-        // A drag that never got closed out would otherwise poison every drag after it.
-        if (isDragging) CancelDrag();
-
-        sourceGrid = grid;
-        draggedItemId = itemId;
-        draggedItem = item;
-        draggedItemArea = area;
-        isDragging = true;
-
-        sourceGrid.OnItemDragStarted(itemId, area);
-
-        foreach (var g in registeredGrids)
-            g?.ShowAllDragHighlights(item, itemId);
-    }
-
-    public void UpdateDrag(Vector2 screenPos)
-    {
-        if (!isDragging) return;
-
-        var targetGrid = GetGridAtScreenPosition(screenPos);
-        if (targetGrid != null)
-            targetGrid.ShowPlacementPreview(targetGrid.ScreenToGridPosition(screenPos), draggedItem, draggedItemId);
-        else
-            ClearAllPreviews();
-    }
-
-    public void EndDrag(Vector2 screenPos)
-    {
-        if (!isDragging) { Debug.LogWarning("[GridTransferManager] EndDrag called but not dragging!"); return; }
-
-        ClearAllPreviews();
-        ClearAllDragHighlights();
-
-        var targetGrid = GetGridAtScreenPosition(screenPos);
-        if (targetGrid == null)
-        {
-            sourceGrid.OnItemDragCancelled(draggedItemId);
-            ResetDragState();
-            return;
+            get
+            {
+                if (instance != null) return instance;
+                instance = FindAnyObjectByType<GridTransferManager>();
+                if (instance != null) return instance;
+                var go = new GameObject("GridTransferManager");
+                instance = go.AddComponent<GridTransferManager>();
+                DontDestroyOnLoad(go);
+                return instance;
+            }
         }
 
-        bool success = AttemptTransfer(sourceGrid, targetGrid, draggedItemId, draggedItem, targetGrid.ScreenToGridPosition(screenPos));
-        if (!success) sourceGrid.OnItemDragCancelled(draggedItemId);
+        [Header("Transfer Rules")]
+        [SerializeField] private bool allowContainerToContainer = true;
 
-        ResetDragState();
-    }
+        private readonly List<UniversalGrid> registeredGrids = new List<UniversalGrid>();
 
-    public void CancelDrag()
-    {
-        if (!isDragging) return;
-        ClearAllPreviews();
-        ClearAllDragHighlights();
-        sourceGrid?.OnItemDragCancelled(draggedItemId);
-        ResetDragState();
-    }
+        private bool isDragging = false;
+        private UniversalGrid sourceGrid;
+        private string draggedItemId;
+        private ItemInstance draggedItem;
+        private GridArea draggedItemArea;
 
-    // Shift-click: move item to the best available target grid without dragging.
-    public bool QuickTransfer(UniversalGrid source, ItemInstance item)
-    {
-        // Prefer player inventory when coming from a container, and vice-versa.
-        bool wantPlayer = !source.IsPlayerInventory;
-        UniversalGrid target = null;
+        public bool IsDragging => isDragging;
+        public ItemInstance DraggedItem => draggedItem;
+        public UniversalGrid SourceGrid => sourceGrid;
 
-        foreach (var grid in registeredGrids)
+        void Awake()
         {
-            if (grid == null || grid == source) continue;
-            if (grid.IsPlayerInventory == wantPlayer) { target = grid; break; }
+            if (instance != null && instance != this) { Destroy(gameObject); return; }
+            instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
-        // Fallback: any other registered grid.
-        if (target == null)
+        public void RegisterGrid(UniversalGrid grid)
+        {
+            if (grid == null || registeredGrids.Contains(grid)) return;
+            registeredGrids.Add(grid);
+        }
+
+        public void UnregisterGrid(UniversalGrid grid)
+        {
+            if (grid == null) return;
+            registeredGrids.Remove(grid);
+        }
+
+        public UniversalGrid GetGridAtScreenPosition(Vector2 screenPos)
         {
             foreach (var grid in registeredGrids)
-                if (grid != null && grid != source) { target = grid; break; }
+            {
+                if (grid != null && grid.IsPointOverGrid(screenPos)) return grid;
+            }
+            return null;
         }
 
-        if (target == null) return false;
-
-        // Scan top-left to bottom-right for the first free position.
-        int slots = target.GridWidth * target.GridHeight;
-        for (int i = 0; i < slots; i++)
+        public void BeginDrag(UniversalGrid grid, string itemId, ItemInstance item, GridArea area)
         {
-            var pos = new GridPosition(i % target.GridWidth, i / target.GridWidth);
-            if (!target.CanPlaceItemAt(item, pos)) continue;
-            return HandleCrossGridTransfer(source, target, item.instanceId, item, pos);
+            // A drag that never got closed out would otherwise poison every drag after it.
+            if (isDragging) CancelDrag();
+
+            sourceGrid = grid;
+            draggedItemId = itemId;
+            draggedItem = item;
+            draggedItemArea = area;
+            isDragging = true;
+
+            sourceGrid.OnItemDragStarted(itemId, area);
+
+            foreach (var g in registeredGrids)
+                g?.ShowAllDragHighlights(item, itemId);
         }
 
-        return false; // No space in target
-    }
-
-    private void ResetDragState()
-    {
-        isDragging = false;
-        sourceGrid = null;
-        draggedItemId = null;
-        draggedItem = null;
-        draggedItemArea = default;
-    }
-
-    private void ClearAllPreviews()
-    {
-        foreach (var grid in registeredGrids)
-            grid?.ClearPlacementPreview();
-    }
-
-    private void ClearAllDragHighlights()
-    {
-        foreach (var grid in registeredGrids)
-            grid?.ClearAllDragHighlights();
-    }
-
-    private bool AttemptTransfer(UniversalGrid source, UniversalGrid target, string itemId, ItemInstance item, GridPosition targetPos)
-    {
-        if (source == target) return HandleSameGridMove(source, itemId, item, targetPos);
-        return HandleCrossGridTransfer(source, target, itemId, item, targetPos);
-    }
-
-    private bool HandleSameGridMove(UniversalGrid grid, string itemId, ItemInstance item, GridPosition targetPos)
-    {
-        if (!grid.CanPlaceItemAt(item, targetPos, itemId)) return false;
-        return grid.MoveItem(itemId, targetPos);
-    }
-
-    // Shelf → bag is a purchase and bag → shelf a sale when either grid belongs to a vendor.
-    private bool HandleCrossGridTransfer(UniversalGrid source, UniversalGrid target, string itemId, ItemInstance item, GridPosition targetPos)
-    {
-        if (!allowContainerToContainer && !source.IsPlayerInventory && !target.IsPlayerInventory) return false;
-        if (!target.CanPlaceItemAt(item, targetPos, itemId)) return false;
-
-        VendorSystem vendor = TradingVendor(source, target);
-        bool fromShelf = vendor != null && vendor.IsShelf(source);
-        InventorySystem customer = InventoryOf(fromShelf ? target : source);
-        if (vendor != null && !vendor.Allows(item, fromShelf, customer)) return false;
-
-        // RemoveItem clears the item's grid position, so keep it for the way back.
-        var from = new GridPosition(item.gridX, item.gridY);
-
-        if (!source.RemoveItem(itemId))
+        public void UpdateDrag(Vector2 screenPos)
         {
-            Debug.LogError("[GridTransferManager] Failed to remove item from source grid!");
-            return false;
+            if (!isDragging) return;
+
+            var targetGrid = GetGridAtScreenPosition(screenPos);
+            if (targetGrid != null)
+                targetGrid.ShowPlacementPreview(targetGrid.ScreenToGridPosition(screenPos), draggedItem, draggedItemId);
+            else
+                ClearAllPreviews();
         }
 
-        if (!target.AddItem(item, targetPos))
+        public void EndDrag(Vector2 screenPos)
         {
-            Debug.LogError("[GridTransferManager] Failed to add item to target grid - returning to source!");
-            source.AddItem(item, from);
-            return false;
+            if (!isDragging) { Debug.LogWarning("[GridTransferManager] EndDrag called but not dragging!"); return; }
+
+            ClearAllPreviews();
+            ClearAllDragHighlights();
+
+            var targetGrid = GetGridAtScreenPosition(screenPos);
+            if (targetGrid == null)
+            {
+                sourceGrid.OnItemDragCancelled(draggedItemId);
+                ResetDragState();
+                return;
+            }
+
+            bool success = AttemptTransfer(sourceGrid, targetGrid, draggedItemId, draggedItem, targetGrid.ScreenToGridPosition(screenPos));
+            if (!success) sourceGrid.OnItemDragCancelled(draggedItemId);
+
+            ResetDragState();
         }
 
-        if (vendor != null) vendor.Settle(item, fromShelf, customer, from);
-        return true;
-    }
+        public void CancelDrag()
+        {
+            if (!isDragging) return;
+            ClearAllPreviews();
+            ClearAllDragHighlights();
+            sourceGrid?.OnItemDragCancelled(draggedItemId);
+            ResetDragState();
+        }
 
-    private static VendorSystem TradingVendor(UniversalGrid source, UniversalGrid target)
-    {
-        VendorSystem vendor = VendorSystem.Of(source);
-        if (vendor != null) return vendor;
-        return VendorSystem.Of(target);
-    }
+        // Shift-click: move item to the best available target grid without dragging.
+        public bool QuickTransfer(UniversalGrid source, ItemInstance item)
+        {
+            // Prefer player inventory when coming from a container, and vice-versa.
+            bool wantPlayer = !source.IsPlayerInventory;
+            UniversalGrid target = null;
 
-    private static InventorySystem InventoryOf(UniversalGrid grid)
-    {
-        var inventoryGrid = grid as UniversalInventoryGrid;
-        return inventoryGrid != null ? inventoryGrid.InventorySystem : null;
-    }
+            foreach (var grid in registeredGrids)
+            {
+                if (grid == null || grid == source) continue;
+                if (grid.IsPlayerInventory == wantPlayer) { target = grid; break; }
+            }
 
-    [ContextMenu("Debug: Print Registered Grids")]
-    private void PrintRegisteredGrids()
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"[GridTransferManager] Registered grids ({registeredGrids.Count}):");
-        foreach (var grid in registeredGrids)
-            if (grid != null) sb.AppendLine($"  {grid.GridName} ({grid.GridWidth}x{grid.GridHeight})");
+            // Fallback: any other registered grid.
+            if (target == null)
+            {
+                foreach (var grid in registeredGrids)
+                    if (grid != null && grid != source) { target = grid; break; }
+            }
+
+            if (target == null) return false;
+
+            // Scan top-left to bottom-right for the first free position.
+            int slots = target.GridWidth * target.GridHeight;
+            for (int i = 0; i < slots; i++)
+            {
+                var pos = new GridPosition(i % target.GridWidth, i / target.GridWidth);
+                if (!target.CanPlaceItemAt(item, pos)) continue;
+                return HandleCrossGridTransfer(source, target, item.instanceId, item, pos);
+            }
+
+            return false; // No space in target
+        }
+
+        private void ResetDragState()
+        {
+            isDragging = false;
+            sourceGrid = null;
+            draggedItemId = null;
+            draggedItem = null;
+            draggedItemArea = default;
+        }
+
+        private void ClearAllPreviews()
+        {
+            foreach (var grid in registeredGrids)
+                grid?.ClearPlacementPreview();
+        }
+
+        private void ClearAllDragHighlights()
+        {
+            foreach (var grid in registeredGrids)
+                grid?.ClearAllDragHighlights();
+        }
+
+        private bool AttemptTransfer(UniversalGrid source, UniversalGrid target, string itemId, ItemInstance item, GridPosition targetPos)
+        {
+            if (source == target) return HandleSameGridMove(source, itemId, item, targetPos);
+            return HandleCrossGridTransfer(source, target, itemId, item, targetPos);
+        }
+
+        private bool HandleSameGridMove(UniversalGrid grid, string itemId, ItemInstance item, GridPosition targetPos)
+        {
+            if (!grid.CanPlaceItemAt(item, targetPos, itemId)) return false;
+            return grid.MoveItem(itemId, targetPos);
+        }
+
+        // Shelf → bag is a purchase and bag → shelf a sale when either grid belongs to a vendor.
+        private bool HandleCrossGridTransfer(UniversalGrid source, UniversalGrid target, string itemId, ItemInstance item, GridPosition targetPos)
+        {
+            if (!allowContainerToContainer && !source.IsPlayerInventory && !target.IsPlayerInventory) return false;
+            if (!target.CanPlaceItemAt(item, targetPos, itemId)) return false;
+
+            VendorSystem vendor = TradingVendor(source, target);
+            bool fromShelf = vendor != null && vendor.IsShelf(source);
+            InventorySystem customer = InventoryOf(fromShelf ? target : source);
+            if (vendor != null && !vendor.Allows(item, fromShelf, customer)) return false;
+
+            // RemoveItem clears the item's grid position, so keep it for the way back.
+            var from = new GridPosition(item.gridX, item.gridY);
+
+            if (!source.RemoveItem(itemId))
+            {
+                Debug.LogError("[GridTransferManager] Failed to remove item from source grid!");
+                return false;
+            }
+
+            if (!target.AddItem(item, targetPos))
+            {
+                Debug.LogError("[GridTransferManager] Failed to add item to target grid - returning to source!");
+                source.AddItem(item, from);
+                return false;
+            }
+
+            if (vendor != null) vendor.Settle(item, fromShelf, customer, from);
+            return true;
+        }
+
+        private static VendorSystem TradingVendor(UniversalGrid source, UniversalGrid target)
+        {
+            VendorSystem vendor = VendorSystem.Of(source);
+            if (vendor != null) return vendor;
+            return VendorSystem.Of(target);
+        }
+
+        private static InventorySystem InventoryOf(UniversalGrid grid)
+        {
+            var inventoryGrid = grid as UniversalInventoryGrid;
+            return inventoryGrid != null ? inventoryGrid.InventorySystem : null;
+        }
+
+        [ContextMenu("Debug: Print Registered Grids")]
+        private void PrintRegisteredGrids()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"[GridTransferManager] Registered grids ({registeredGrids.Count}):");
+            foreach (var grid in registeredGrids)
+                if (grid != null) sb.AppendLine($"  {grid.GridName} ({grid.GridWidth}x{grid.GridHeight})");
+        }
     }
 }

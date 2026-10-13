@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using CrabSystem;
 
 // This character's screen-space effects. Juice.md §7.
 //

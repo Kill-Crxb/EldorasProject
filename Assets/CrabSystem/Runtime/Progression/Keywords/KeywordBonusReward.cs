@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // "Ambushing gains 1d4", "Sinister hits apply Sundered": adds to a keyword while held — to-hit, bonus dice, flat
     // damage, a status to inflict. Scaled by the talent's rank when perRank is on (the status isn't).

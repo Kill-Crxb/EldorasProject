@@ -2,7 +2,8 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
-using RPG.Factions;
+using CrabSystem.Factions;
+using CrabSystem;
 
 public class NPCArchetypeCreator : EditorWindow
 {

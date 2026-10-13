@@ -1,6 +1,7 @@
-using NinjaGame.Progression;
+using CrabSystem.Progression;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → Crab → Talents → Create Test Trees (10 Oct). Two small trees to play the system with before real ones
 // are authored: Test Ninja (stats, Sprint and Double Jump grants, all seven rows, a capstone pair, a Sinister

@@ -12,491 +12,495 @@ using UnityEngine;
 /// the source into amountPerSourcePoint of the target over secondsPerSourcePoint. Run the
 /// source dry and the pool stops refilling until the source itself comes back.
 /// </summary>
-public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider, IBrainModule, ISaveable
+
+namespace CrabSystem
 {
-    public int InitOrder => 100;
-
-    private const float DEFAULT_MAX_VALUE = 100f;
-    private const float EPSILON = 0.001f;
-
-    /// <summary>
-    /// One pool. Serialized so the live numbers are visible in the inspector during play —
-    /// this is the only readout of current values that does not go through the HUD.
-    /// </summary>
-    [Serializable]
-    public class ResourceState
+    public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider, IBrainModule, ISaveable
     {
-        public ResourceDefinition definition;
-        public float current;
-        public float max;
+        public int InitOrder => 100;
 
-        [NonSerialized] public float regenReadyAt;
-        // The part-built unit of a refillWholeUnits pool.
-        [NonSerialized] public float unitProgress;
-    }
+        private const float DEFAULT_MAX_VALUE = 100f;
+        private const float EPSILON = 0.001f;
 
-    [SerializeField] private bool isEnabled = true;
+        /// <summary>
+        /// One pool. Serialized so the live numbers are visible in the inspector during play —
+        /// this is the only readout of current values that does not go through the HUD.
+        /// </summary>
+        [Serializable]
+        public class ResourceState
+        {
+            public ResourceDefinition definition;
+            public float current;
+            public float max;
 
-    [Header("Live State")]
-    [Tooltip("Populated at runtime. Read-only in practice — editing these in play mode " +
-             "writes straight to the pool without firing the change events the HUD listens to.")]
-    [SerializeField] private List<ResourceState> states = new();
+            [NonSerialized] public float regenReadyAt;
+            // The part-built unit of a refillWholeUnits pool.
+            [NonSerialized] public float unitProgress;
+        }
 
-    private ControllerBrain brain;
+        [SerializeField] private bool isEnabled = true;
 
-    // Gameplay time (EntityClock).
-    private float Now => brain.Clock.Now;
-    private float Delta => brain.Clock.Delta;
-    private IStatProvider stats;
-    private DamageSystem damage;
-    private readonly Dictionary<string, ResourceState> resources = new();
-    private ResourceState healthResource;
+        [Header("Live State")]
+        [Tooltip("Populated at runtime. Read-only in practice — editing these in play mode " +
+                 "writes straight to the pool without firing the change events the HUD listens to.")]
+        [SerializeField] private List<ResourceState> states = new();
 
-    public bool IsEnabled
-    {
-        get => isEnabled;
-        set => isEnabled = value;
-    }
+        private ControllerBrain brain;
 
-    public event Action<ResourceDefinition, float> OnResourceChanged;
-    public event Action<float> OnHealthChanged;
-    public event Action OnDeath;
+        // Gameplay time (EntityClock).
+        private float Now => brain.Clock.Now;
+        private float Delta => brain.Clock.Delta;
+        private IStatProvider stats;
+        private DamageSystem damage;
+        private readonly Dictionary<string, ResourceState> resources = new();
+        private ResourceState healthResource;
+
+        public bool IsEnabled
+        {
+            get => isEnabled;
+            set => isEnabled = value;
+        }
+
+        public event Action<ResourceDefinition, float> OnResourceChanged;
+        public event Action<float> OnHealthChanged;
+        public event Action OnDeath;
 
     #region IBrainModule
 
-    public void Initialize(ControllerBrain controllerBrain)
-    {
-        brain = controllerBrain;
-        stats = brain.Stats;
-        damage = brain.GetModule<DamageSystem>();
-
-        if (stats == null)
+        public void Initialize(ControllerBrain controllerBrain)
         {
-            Debug.LogError($"[ResourceSystem] No stat provider found on {brain.EntityName}");
-            return;
+            brain = controllerBrain;
+            stats = brain.Stats;
+            damage = brain.GetModule<DamageSystem>();
+
+            if (stats == null)
+            {
+                Debug.LogError($"[ResourceSystem] No stat provider found on {brain.EntityName}");
+                return;
+            }
+
+            InitializeResources();
+
+            if (healthResource == null)
+                Debug.LogError("[ResourceSystem] No health resource defined (triggerDeathOnDepletion = true)");
         }
 
-        InitializeResources();
+        /// <summary>
+        /// Ceilings are resolved a second time here, after StatDerivationSystem has applied what
+        /// the core stats are worth. Reading them in Initialize alone would snapshot the value
+        /// before Body had contributed anything, and every pool would sit at its authored base.
+        /// </summary>
+        public void LateInitialize()
+        {
+            if (stats == null) return;
 
-        if (healthResource == null)
-            Debug.LogError("[ResourceSystem] No health resource defined (triggerDeathOnDepletion = true)");
-    }
+            RefreshAllMaxValues();
+            stats.OnStatChanged += HandleStatChanged;
+        }
 
-    /// <summary>
-    /// Ceilings are resolved a second time here, after StatDerivationSystem has applied what
-    /// the core stats are worth. Reading them in Initialize alone would snapshot the value
-    /// before Body had contributed anything, and every pool would sit at its authored base.
-    /// </summary>
-    public void LateInitialize()
-    {
-        if (stats == null) return;
+        public void UpdateModule()
+        {
+            if (!isEnabled) return;
 
-        RefreshAllMaxValues();
-        stats.OnStatChanged += HandleStatChanged;
-    }
+            // The dead don't regenerate. DamageSystem.IsDead is the one death flag (Audit 4 S4).
+            if (damage != null && damage.IsDead) return;
 
-    public void UpdateModule()
-    {
-        if (!isEnabled) return;
+            float delta = Delta;
 
-        // The dead don't regenerate. DamageSystem.IsDead is the one death flag (Audit 4 S4).
-        if (damage != null && damage.IsDead) return;
-
-        float delta = Delta;
-
-        for (int i = 0; i < states.Count; i++) TickRegen(states[i], delta);
-    }
+            for (int i = 0; i < states.Count; i++) TickRegen(states[i], delta);
+        }
 
     #endregion
 
     #region Setup
 
-    private void InitializeResources()
-    {
-        if (ResourceManager.Instance == null)
+        private void InitializeResources()
         {
-            Debug.LogError($"[ResourceSystem] ResourceManager.Instance is null on {brain.EntityName}");
-            return;
-        }
-
-        states.Clear();
-        resources.Clear();
-
-        foreach (var def in ResourceManager.Instance.GetAll())
-        {
-            if (def == null) continue;
-            if (string.IsNullOrEmpty(def.resourceId)) continue;
-
-            float maxValue = CalculateMaxValue(def);
-
-            var state = new ResourceState
+            if (ResourceManager.Instance == null)
             {
-                definition = def,
-                current = maxValue,
-                max = maxValue
-            };
+                Debug.LogError($"[ResourceSystem] ResourceManager.Instance is null on {brain.EntityName}");
+                return;
+            }
 
-            resources[def.resourceId] = state;
-            states.Add(state);
+            states.Clear();
+            resources.Clear();
 
-            if (def.triggerDeathOnDepletion) healthResource = state;
+            foreach (var def in ResourceManager.Instance.GetAll())
+            {
+                if (def == null) continue;
+                if (string.IsNullOrEmpty(def.resourceId)) continue;
+
+                float maxValue = CalculateMaxValue(def);
+
+                var state = new ResourceState
+                {
+                    definition = def,
+                    current = maxValue,
+                    max = maxValue
+                };
+
+                resources[def.resourceId] = state;
+                states.Add(state);
+
+                if (def.triggerDeathOnDepletion) healthResource = state;
+            }
         }
-    }
 
-    private float CalculateMaxValue(ResourceDefinition def)
-    {
-        if (string.IsNullOrEmpty(def.maxStatId)) return DEFAULT_MAX_VALUE;
-
-        // A stat missing on this entity used to fall back to 100 quietly, hiding a missing schema.
-        if (stats.GetValue(def.maxStatId, -1f) < 0f)
+        private float CalculateMaxValue(ResourceDefinition def)
         {
-            Debug.LogError($"[ResourceSystem] '{def.resourceId}' max stat '{def.maxStatId}' is not loaded on {brain.EntityName}", this);
-            return DEFAULT_MAX_VALUE;
-        }
+            if (string.IsNullOrEmpty(def.maxStatId)) return DEFAULT_MAX_VALUE;
 
-        float statValue = stats.GetValue(def.maxStatId);
-        return statValue > 0f ? statValue : DEFAULT_MAX_VALUE;
-    }
+            // A stat missing on this entity used to fall back to 100 quietly, hiding a missing schema.
+            if (stats.GetValue(def.maxStatId, -1f) < 0f)
+            {
+                Debug.LogError($"[ResourceSystem] '{def.resourceId}' max stat '{def.maxStatId}' is not loaded on {brain.EntityName}", this);
+                return DEFAULT_MAX_VALUE;
+            }
+
+            float statValue = stats.GetValue(def.maxStatId);
+            return statValue > 0f ? statValue : DEFAULT_MAX_VALUE;
+        }
 
     #endregion
 
     #region Max Values
 
-    private void HandleStatChanged(string statId, float oldValue, float newValue)
-    {
-        for (int i = 0; i < states.Count; i++)
+        private void HandleStatChanged(string statId, float oldValue, float newValue)
         {
-            var state = states[i];
-            if (state.definition == null) continue;
-            if (state.definition.maxStatId != statId) continue;
+            for (int i = 0; i < states.Count; i++)
+            {
+                var state = states[i];
+                if (state.definition == null) continue;
+                if (state.definition.maxStatId != statId) continue;
 
-            ApplyMaxValue(state, newValue);
+                ApplyMaxValue(state, newValue);
+            }
         }
-    }
 
-    private void RefreshAllMaxValues()
-    {
-        for (int i = 0; i < states.Count; i++)
+        private void RefreshAllMaxValues()
         {
-            var state = states[i];
-            if (state.definition == null) continue;
+            for (int i = 0; i < states.Count; i++)
+            {
+                var state = states[i];
+                if (state.definition == null) continue;
 
-            ApplyMaxValue(state, CalculateMaxValue(state.definition));
+                ApplyMaxValue(state, CalculateMaxValue(state.definition));
+            }
         }
-    }
 
-    /// <summary>
-    /// Moves the ceiling and decides what happens to what is already in the pool. A pool
-    /// that was full stays full, so a fresh character spawns topped up and a level-up is a
-    /// clean gain. A partly spent pool keeps its absolute value, so swapping a +health item
-    /// in and out is never a heal and taking it off can never kill you.
-    /// </summary>
-    private void ApplyMaxValue(ResourceState state, float newMax)
-    {
-        if (newMax <= 0f) newMax = DEFAULT_MAX_VALUE;
-        if (Mathf.Approximately(newMax, state.max)) return;
+        /// <summary>
+        /// Moves the ceiling and decides what happens to what is already in the pool. A pool
+        /// that was full stays full, so a fresh character spawns topped up and a level-up is a
+        /// clean gain. A partly spent pool keeps its absolute value, so swapping a +health item
+        /// in and out is never a heal and taking it off can never kill you.
+        /// </summary>
+        private void ApplyMaxValue(ResourceState state, float newMax)
+        {
+            if (newMax <= 0f) newMax = DEFAULT_MAX_VALUE;
+            if (Mathf.Approximately(newMax, state.max)) return;
 
-        bool wasFull = state.current >= state.max - EPSILON;
+            bool wasFull = state.current >= state.max - EPSILON;
 
-        state.max = newMax;
-        state.current = Mathf.Clamp(wasFull ? newMax : state.current, 0f, newMax);
+            state.max = newMax;
+            state.current = Mathf.Clamp(wasFull ? newMax : state.current, 0f, newMax);
 
-        // Fired even when current did not move: a ceiling that rose under a partly spent
-        // pool leaves the value alone, and the HUD still needs to redraw the ratio.
-        OnResourceChanged?.Invoke(state.definition, state.current);
+            // Fired even when current did not move: a ceiling that rose under a partly spent
+            // pool leaves the value alone, and the HUD still needs to redraw the ratio.
+            OnResourceChanged?.Invoke(state.definition, state.current);
 
-        if (state.definition.triggerDeathOnDepletion) OnHealthChanged?.Invoke(state.current);
-    }
+            if (state.definition.triggerDeathOnDepletion) OnHealthChanged?.Invoke(state.current);
+        }
 
     #endregion
 
     #region Regeneration
 
-    private void TickRegen(ResourceState state, float delta)
-    {
-        var def = state.definition;
-        if (def == null) return;
-        if (state.current >= state.max - EPSILON) return;
-        if (Now < state.regenReadyAt) return;
-
-        if (def.regenSource == null) TickFlatRegen(state, def, delta);
-        else TickBudgetedRegen(state, def, delta);
-    }
-
-    /// <summary>How a source pool comes back: a flat trickle, or nothing at all.</summary>
-    private void TickFlatRegen(ResourceState state, ResourceDefinition def, float delta)
-    {
-        float rate = def.regenPerSecond + Dial(def.regenStatId);
-        if (rate <= 0f) return;
-        if (def.refillWholeUnits)
+        private void TickRegen(ResourceState state, float delta)
         {
-            TickWholeUnit(state, rate, delta);
-            return;
+            var def = state.definition;
+            if (def == null) return;
+            if (state.current >= state.max - EPSILON) return;
+            if (Now < state.regenReadyAt) return;
+
+            if (def.regenSource == null) TickFlatRegen(state, def, delta);
+            else TickBudgetedRegen(state, def, delta);
         }
 
-        float headroom = state.max - state.current;
-        float granted = Mathf.Min(rate * delta, headroom);
-
-        SetResourceValue(state, state.current + granted);
-    }
-
-    // The definition's regen stat ids are tuning dials: a stat added to the authored number (0 when unset).
-    private float Dial(string statId) => string.IsNullOrEmpty(statId) ? 0f : DialIds.Read(stats, statId);
-
-    private void TickWholeUnit(ResourceState state, float rate, float delta)
-    {
-        state.unitProgress += rate * delta;
-        if (state.unitProgress < 1f) return;
-
-        state.unitProgress -= 1f;
-        SetResourceValue(state, Mathf.Min(state.current + 1f, state.max));
-    }
-
-    /// <summary>
-    /// Spends the source pool to refill this one. The cost is charged against what was
-    /// actually granted, so topping off mid-payout wastes no part of a source point.
-    /// </summary>
-    private void TickBudgetedRegen(ResourceState state, ResourceDefinition def, float delta)
-    {
-        if (def.amountPerSourcePoint <= 0f) return;
-        if (def.secondsPerSourcePoint <= 0f) return;
-
-        if (!resources.TryGetValue(def.regenSource.resourceId, out var source)) return;
-        if (source.current <= 0f) return;
-
-        float headroom = state.max - state.current;
-        float perSecond = def.amountPerSourcePoint / def.secondsPerSourcePoint + Dial(def.regenStatId);
-        if (perSecond <= 0f) return;
-        float granted = Mathf.Min(perSecond * delta, headroom);
-        float cost = granted / def.amountPerSourcePoint;
-
-        if (cost > source.current)
+        /// <summary>How a source pool comes back: a flat trickle, or nothing at all.</summary>
+        private void TickFlatRegen(ResourceState state, ResourceDefinition def, float delta)
         {
-            cost = source.current;
-            granted = cost * def.amountPerSourcePoint;
+            float rate = def.regenPerSecond + Dial(def.regenStatId);
+            if (rate <= 0f) return;
+            if (def.refillWholeUnits)
+            {
+                TickWholeUnit(state, rate, delta);
+                return;
+            }
+
+            float headroom = state.max - state.current;
+            float granted = Mathf.Min(rate * delta, headroom);
+
+            SetResourceValue(state, state.current + granted);
         }
 
-        SetResourceValue(source, source.current - cost);
-        SetResourceValue(state, state.current + granted);
-    }
+        // The definition's regen stat ids are tuning dials: a stat added to the authored number (0 when unset).
+        private float Dial(string statId) => string.IsNullOrEmpty(statId) ? 0f : DialIds.Read(stats, statId);
 
-    /// <summary>
-    /// Holds regen off after a spend or a hit. Paying for regen out of a source pool does
-    /// not call this — a pool being drained to heal you should not also stall its own refill.
-    /// </summary>
-    private void BlockRegen(ResourceState state)
-    {
-        if (state?.definition == null) return;
+        private void TickWholeUnit(ResourceState state, float rate, float delta)
+        {
+            state.unitProgress += rate * delta;
+            if (state.unitProgress < 1f) return;
 
-        float delay = state.definition.regenDelay + Dial(state.definition.regenDelayStatId);
-        if (delay <= 0f) return;
+            state.unitProgress -= 1f;
+            SetResourceValue(state, Mathf.Min(state.current + 1f, state.max));
+        }
 
-        state.regenReadyAt = Now + delay;
-    }
+        /// <summary>
+        /// Spends the source pool to refill this one. The cost is charged against what was
+        /// actually granted, so topping off mid-payout wastes no part of a source point.
+        /// </summary>
+        private void TickBudgetedRegen(ResourceState state, ResourceDefinition def, float delta)
+        {
+            if (def.amountPerSourcePoint <= 0f) return;
+            if (def.secondsPerSourcePoint <= 0f) return;
+
+            if (!resources.TryGetValue(def.regenSource.resourceId, out var source)) return;
+            if (source.current <= 0f) return;
+
+            float headroom = state.max - state.current;
+            float perSecond = def.amountPerSourcePoint / def.secondsPerSourcePoint + Dial(def.regenStatId);
+            if (perSecond <= 0f) return;
+            float granted = Mathf.Min(perSecond * delta, headroom);
+            float cost = granted / def.amountPerSourcePoint;
+
+            if (cost > source.current)
+            {
+                cost = source.current;
+                granted = cost * def.amountPerSourcePoint;
+            }
+
+            SetResourceValue(source, source.current - cost);
+            SetResourceValue(state, state.current + granted);
+        }
+
+        /// <summary>
+        /// Holds regen off after a spend or a hit. Paying for regen out of a source pool does
+        /// not call this — a pool being drained to heal you should not also stall its own refill.
+        /// </summary>
+        private void BlockRegen(ResourceState state)
+        {
+            if (state?.definition == null) return;
+
+            float delay = state.definition.regenDelay + Dial(state.definition.regenDelayStatId);
+            if (delay <= 0f) return;
+
+            state.regenReadyAt = Now + delay;
+        }
 
     #endregion
 
     #region ISaveable
 
-    public string GetSaveId() => "resources";
-    public int GetSaveVersion() => 1;
-    public int LoadOrder => 70;
+        public string GetSaveId() => "resources";
+        public int GetSaveVersion() => 1;
+        public int LoadOrder => 70;
 
-    public string GetSaveData()
-    {
-        var saveData = new ResourceSaveData
+        public string GetSaveData()
         {
-            version = GetSaveVersion(),
-            resources = new List<ResourceEntry>()
-        };
-
-        foreach (var kvp in resources)
-        {
-            if (kvp.Value == null) continue;
-
-            float pct = kvp.Value.max > EPSILON
-                ? kvp.Value.current / kvp.Value.max
-                : 1f;
-
-            saveData.resources.Add(new ResourceEntry
+            var saveData = new ResourceSaveData
             {
-                resourceId = kvp.Key,
-                percentage = pct
-            });
+                version = GetSaveVersion(),
+                resources = new List<ResourceEntry>()
+            };
+
+            foreach (var kvp in resources)
+            {
+                if (kvp.Value == null) continue;
+
+                float pct = kvp.Value.max > EPSILON
+                    ? kvp.Value.current / kvp.Value.max
+                    : 1f;
+
+                saveData.resources.Add(new ResourceEntry
+                {
+                    resourceId = kvp.Key,
+                    percentage = pct
+                });
+            }
+
+            return JsonUtility.ToJson(saveData);
         }
 
-        return JsonUtility.ToJson(saveData);
-    }
-
-    public void LoadSaveData(string json)
-    {
-        if (string.IsNullOrEmpty(json)) return;
-
-        var saveData = JsonUtility.FromJson<ResourceSaveData>(json);
-        if (saveData?.resources == null) return;
-
-        foreach (var entry in saveData.resources)
+        public void LoadSaveData(string json)
         {
-            if (!resources.TryGetValue(entry.resourceId, out var state)) continue;
+            if (string.IsNullOrEmpty(json)) return;
 
-            float restored = Mathf.Clamp01(entry.percentage) * state.max;
-            SetResourceValue(state, restored);
+            var saveData = JsonUtility.FromJson<ResourceSaveData>(json);
+            if (saveData?.resources == null) return;
+
+            foreach (var entry in saveData.resources)
+            {
+                if (!resources.TryGetValue(entry.resourceId, out var state)) continue;
+
+                float restored = Mathf.Clamp01(entry.percentage) * state.max;
+                SetResourceValue(state, restored);
+            }
         }
-    }
 
-    [Serializable]
-    private class ResourceSaveData
-    {
-        public int version;
-        public List<ResourceEntry> resources;
-    }
+        [Serializable]
+        private class ResourceSaveData
+        {
+            public int version;
+            public List<ResourceEntry> resources;
+        }
 
-    [Serializable]
-    private class ResourceEntry
-    {
-        public string resourceId;
-        public float percentage;
-    }
+        [Serializable]
+        private class ResourceEntry
+        {
+            public string resourceId;
+            public float percentage;
+        }
 
     #endregion
 
     #region IResourceProvider
 
-    public float GetResource(ResourceDefinition def)
-    {
-        if (!resources.TryGetValue(def.resourceId, out var state)) return 0f;
-        return state.current;
-    }
-
-    public float GetMaxResource(ResourceDefinition def)
-    {
-        if (!resources.TryGetValue(def.resourceId, out var state)) return 0f;
-        return state.max;
-    }
-
-    public float GetResourcePercentage(ResourceDefinition def)
-    {
-        if (!resources.TryGetValue(def.resourceId, out var state)) return 0f;
-        if (state.max <= EPSILON) return 0f;
-        return state.current / state.max;
-    }
-
-    public bool HasResource(ResourceDefinition def, float amount)
-        => GetResource(def) >= amount;
-
-    public bool ConsumeResource(ResourceDefinition def, float amount)
-    {
-        if (!HasResource(def, amount)) return false;
-
-        if (!resources.TryGetValue(def.resourceId, out var state)) return false;
-
-        ModifyResourceDirect(state, -amount);
-        BlockRegen(state);
-        state.unitProgress = 0f;
-        return true;
-    }
-
-    public void RestoreResource(ResourceDefinition def, float amount)
-        => ModifyResource(def, amount);
-
-    public ResourceDefinition FindDefinition(string resourceId)
-        => resources.TryGetValue(resourceId, out var state) ? state.definition : null;
-
-    public void SetResourceToMax(ResourceDefinition def)
-    {
-        if (!resources.TryGetValue(def.resourceId, out var state)) return;
-        SetResourceValue(state, state.max);
-    }
-
-    // Respawn: every pool to its ceiling, regen delays cleared.
-    public void RefillAll()
-    {
-        foreach (var state in states)
+        public float GetResource(ResourceDefinition def)
         {
-            state.regenReadyAt = 0f;
+            if (!resources.TryGetValue(def.resourceId, out var state)) return 0f;
+            return state.current;
+        }
+
+        public float GetMaxResource(ResourceDefinition def)
+        {
+            if (!resources.TryGetValue(def.resourceId, out var state)) return 0f;
+            return state.max;
+        }
+
+        public float GetResourcePercentage(ResourceDefinition def)
+        {
+            if (!resources.TryGetValue(def.resourceId, out var state)) return 0f;
+            if (state.max <= EPSILON) return 0f;
+            return state.current / state.max;
+        }
+
+        public bool HasResource(ResourceDefinition def, float amount)
+            => GetResource(def) >= amount;
+
+        public bool ConsumeResource(ResourceDefinition def, float amount)
+        {
+            if (!HasResource(def, amount)) return false;
+
+            if (!resources.TryGetValue(def.resourceId, out var state)) return false;
+
+            ModifyResourceDirect(state, -amount);
+            BlockRegen(state);
             state.unitProgress = 0f;
+            return true;
+        }
+
+        public void RestoreResource(ResourceDefinition def, float amount)
+            => ModifyResource(def, amount);
+
+        public ResourceDefinition FindDefinition(string resourceId)
+            => resources.TryGetValue(resourceId, out var state) ? state.definition : null;
+
+        public void SetResourceToMax(ResourceDefinition def)
+        {
+            if (!resources.TryGetValue(def.resourceId, out var state)) return;
             SetResourceValue(state, state.max);
         }
-    }
 
-    public IReadOnlyDictionary<ResourceDefinition, float> GetAllResources()
-    {
-        var result = new Dictionary<ResourceDefinition, float>(resources.Count);
-        foreach (var kvp in resources)
-            result[kvp.Value.definition] = kvp.Value.current;
-        return result;
-    }
+        // Respawn: every pool to its ceiling, regen delays cleared.
+        public void RefillAll()
+        {
+            foreach (var state in states)
+            {
+                state.regenReadyAt = 0f;
+                state.unitProgress = 0f;
+                SetResourceValue(state, state.max);
+            }
+        }
+
+        public IReadOnlyDictionary<ResourceDefinition, float> GetAllResources()
+        {
+            var result = new Dictionary<ResourceDefinition, float>(resources.Count);
+            foreach (var kvp in resources)
+                result[kvp.Value.definition] = kvp.Value.current;
+            return result;
+        }
 
     #endregion
 
     #region IHealthProvider
 
-    public float GetCurrentHealth() => healthResource?.current ?? 0f;
-    public float GetMaxHealth() => healthResource?.max ?? 0f;
+        public float GetCurrentHealth() => healthResource?.current ?? 0f;
+        public float GetMaxHealth() => healthResource?.max ?? 0f;
 
-    public float GetHealthPercentage()
-    {
-        if (healthResource == null) return 0f;
-        if (healthResource.max <= EPSILON) return 0f;
-        return healthResource.current / healthResource.max;
-    }
+        public float GetHealthPercentage()
+        {
+            if (healthResource == null) return 0f;
+            if (healthResource.max <= EPSILON) return 0f;
+            return healthResource.current / healthResource.max;
+        }
 
-    public bool IsAlive() => GetCurrentHealth() > 0f;
+        public bool IsAlive() => GetCurrentHealth() > 0f;
 
-    public void ApplyDamage(float amount)
-    {
-        if (!isEnabled) return;
-        if (healthResource == null) return;
+        public void ApplyDamage(float amount)
+        {
+            if (!isEnabled) return;
+            if (healthResource == null) return;
 
-        ModifyResourceDirect(healthResource, -Mathf.Abs(amount));
-        BlockRegen(healthResource);
-    }
+            ModifyResourceDirect(healthResource, -Mathf.Abs(amount));
+            BlockRegen(healthResource);
+        }
 
-    public void ApplyHealing(float amount)
-    {
-        if (!isEnabled) return;
-        if (healthResource == null) return;
+        public void ApplyHealing(float amount)
+        {
+            if (!isEnabled) return;
+            if (healthResource == null) return;
 
-        ModifyResourceDirect(healthResource, Mathf.Abs(amount));
-    }
+            ModifyResourceDirect(healthResource, Mathf.Abs(amount));
+        }
 
     #endregion
 
     #region Mutation
 
-    private void ModifyResource(ResourceDefinition def, float delta)
-    {
-        if (!resources.TryGetValue(def.resourceId, out var state)) return;
-        ModifyResourceDirect(state, delta);
-    }
+        private void ModifyResource(ResourceDefinition def, float delta)
+        {
+            if (!resources.TryGetValue(def.resourceId, out var state)) return;
+            ModifyResourceDirect(state, delta);
+        }
 
-    private void ModifyResourceDirect(ResourceState state, float delta)
-        => SetResourceValue(state, state.current + delta);
+        private void ModifyResourceDirect(ResourceState state, float delta)
+            => SetResourceValue(state, state.current + delta);
 
-    private void SetResourceValue(ResourceState state, float value)
-    {
-        float clamped = Mathf.Clamp(value, 0f, state.max);
-        if (Mathf.Approximately(clamped, state.current)) return;
+        private void SetResourceValue(ResourceState state, float value)
+        {
+            float clamped = Mathf.Clamp(value, 0f, state.max);
+            if (Mathf.Approximately(clamped, state.current)) return;
 
-        state.current = clamped;
+            state.current = clamped;
 
-        OnResourceChanged?.Invoke(state.definition, clamped);
+            OnResourceChanged?.Invoke(state.definition, clamped);
 
-        if (!state.definition.triggerDeathOnDepletion) return;
+            if (!state.definition.triggerDeathOnDepletion) return;
 
-        OnHealthChanged?.Invoke(clamped);
+            OnHealthChanged?.Invoke(clamped);
 
-        if (clamped <= 0f) OnDeath?.Invoke();
-    }
+            if (clamped <= 0f) OnDeath?.Invoke();
+        }
 
     #endregion
 
-    private void OnDestroy()
-    {
-        if (stats != null) stats.OnStatChanged -= HandleStatChanged;
+        private void OnDestroy()
+        {
+            if (stats != null) stats.OnStatChanged -= HandleStatChanged;
 
-        OnResourceChanged = null;
-        OnHealthChanged = null;
-        OnDeath = null;
+            OnResourceChanged = null;
+            OnHealthChanged = null;
+            OnDeath = null;
+        }
     }
 }

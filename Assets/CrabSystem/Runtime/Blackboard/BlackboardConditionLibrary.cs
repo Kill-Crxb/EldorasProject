@@ -45,175 +45,179 @@ using System.Collections.Generic;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 20, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "ConditionLibrary", menuName = "CrabSystem/Blackboard/Condition Library")]
-public class BlackboardConditionLibrary : ScriptableObject
+
+namespace CrabSystem
 {
-    [Header("Universal Condition Library")]
-    [Tooltip("Every semantic condition in the game - entities ignore conditions that don't apply")]
-    public List<BlackboardCondition> conditions = new List<BlackboardCondition>();
+    [CreateAssetMenu(fileName = "ConditionLibrary", menuName = "CrabSystem/Blackboard/Condition Library")]
+    public class BlackboardConditionLibrary : ScriptableObject
+    {
+        [Header("Universal Condition Library")]
+        [Tooltip("Every semantic condition in the game - entities ignore conditions that don't apply")]
+        public List<BlackboardCondition> conditions = new List<BlackboardCondition>();
 
-    [Header("Debug")]
-    [SerializeField] private bool debugLogging = false;
+        [Header("Debug")]
+        [SerializeField] private bool debugLogging = false;
 
-    // Properties
-    public int ConditionCount => conditions?.Count ?? 0;
+        // Properties
+        public int ConditionCount => conditions?.Count ?? 0;
 
     #region Validation
 
-    /// <summary>
-    /// Validate all conditions in the library
-    /// </summary>
-    public bool Validate(out string error)
-    {
-        // Guard clauses
-        if (conditions == null || conditions.Count == 0)
+        /// <summary>
+        /// Validate all conditions in the library
+        /// </summary>
+        public bool Validate(out string error)
         {
-            error = "No conditions defined in library";
-            return false;
-        }
-
-        int validCount = 0;
-        int invalidCount = 0;
-        List<string> errors = new List<string>();
-
-        // Validate each condition
-        foreach (var condition in conditions)
-        {
-            if (condition == null)
+            // Guard clauses
+            if (conditions == null || conditions.Count == 0)
             {
-                invalidCount++;
-                errors.Add("Null condition in library");
-                continue;
+                error = "No conditions defined in library";
+                return false;
             }
 
-            if (!condition.Validate(out string conditionError))
+            int validCount = 0;
+            int invalidCount = 0;
+            List<string> errors = new List<string>();
+
+            // Validate each condition
+            foreach (var condition in conditions)
             {
-                invalidCount++;
-                errors.Add($"{condition.name}: {conditionError}");
-                continue;
+                if (condition == null)
+                {
+                    invalidCount++;
+                    errors.Add("Null condition in library");
+                    continue;
+                }
+
+                if (!condition.Validate(out string conditionError))
+                {
+                    invalidCount++;
+                    errors.Add($"{condition.name}: {conditionError}");
+                    continue;
+                }
+
+                validCount++;
             }
 
-            validCount++;
+            // Build error message if any failures
+            if (invalidCount > 0)
+            {
+                error = $"{invalidCount} invalid conditions:\n" + string.Join("\n", errors);
+                return false;
+            }
+
+            error = "";
+            return true;
         }
 
-        // Build error message if any failures
-        if (invalidCount > 0)
+        /// <summary>
+        /// Validate on asset save (Editor only)
+        /// </summary>
+        private void OnValidate()
         {
-            error = $"{invalidCount} invalid conditions:\n" + string.Join("\n", errors);
-            return false;
-        }
+            if (conditions == null || conditions.Count == 0)
+            {
+                if (debugLogging)
+                    Debug.LogWarning($"[ConditionLibrary:{name}] No conditions defined", this);
+                return;
+            }
 
-        error = "";
-        return true;
-    }
-
-    /// <summary>
-    /// Validate on asset save (Editor only)
-    /// </summary>
-    private void OnValidate()
-    {
-        if (conditions == null || conditions.Count == 0)
-        {
-            if (debugLogging)
-                Debug.LogWarning($"[ConditionLibrary:{name}] No conditions defined", this);
-            return;
+            // Quick validation check
+            if (!Validate(out string error))
+            {
+                Debug.LogWarning($"[ConditionLibrary:{name}] Validation failed:\n{error}", this);
+            }
+            else if (debugLogging)
+            {
+                Debug.Log($"[ConditionLibrary:{name}] Validated {ConditionCount} conditions");
+            }
         }
-
-        // Quick validation check
-        if (!Validate(out string error))
-        {
-            Debug.LogWarning($"[ConditionLibrary:{name}] Validation failed:\n{error}", this);
-        }
-        else if (debugLogging)
-        {
-            Debug.Log($"[ConditionLibrary:{name}] Validated {ConditionCount} conditions");
-        }
-    }
 
     #endregion
 
     #region Context Menu Helpers
 
-    /// <summary>
-    /// Print all conditions in the library (debug)
-    /// </summary>
-    [ContextMenu("Print All Conditions")]
-    private void PrintAllConditions()
-    {
-        if (conditions == null || conditions.Count == 0)
+        /// <summary>
+        /// Print all conditions in the library (debug)
+        /// </summary>
+        [ContextMenu("Print All Conditions")]
+        private void PrintAllConditions()
         {
-            Debug.Log($"[ConditionLibrary:{name}] No conditions defined");
-            return;
-        }
-
-        Debug.Log($"=== Condition Library: {name} ({ConditionCount} conditions) ===");
-
-        foreach (var condition in conditions)
-        {
-            if (condition == null)
+            if (conditions == null || conditions.Count == 0)
             {
-                Debug.Log("  ✗ NULL CONDITION");
-                continue;
+                Debug.Log($"[ConditionLibrary:{name}] No conditions defined");
+                return;
             }
 
-            string status = condition.IsEnabled ? "✓" : "✗";
-            string desc = condition.GetReadableDescription();
-            Debug.Log($"  {status} {condition.name}: {desc}");
-        }
-    }
+            Debug.Log($"=== Condition Library: {name} ({ConditionCount} conditions) ===");
 
-    /// <summary>
-    /// Validate all conditions (debug)
-    /// </summary>
-    [ContextMenu("Validate All Conditions")]
-    private void ValidateAllConditions()
-    {
-        if (Validate(out string error))
-        {
-            Debug.Log($"[ConditionLibrary:{name}] ✓ All {ConditionCount} conditions valid");
-        }
-        else
-        {
-            Debug.LogError($"[ConditionLibrary:{name}] ✗ Validation failed:\n{error}", this);
-        }
-    }
-
-    /// <summary>
-    /// Count conditions by type (debug)
-    /// </summary>
-    [ContextMenu("Print Statistics")]
-    private void PrintStatistics()
-    {
-        if (conditions == null || conditions.Count == 0)
-        {
-            Debug.Log($"[ConditionLibrary:{name}] No conditions defined");
-            return;
-        }
-
-        int enabledCount = 0;
-        int disabledCount = 0;
-        int nullCount = 0;
-
-        foreach (var condition in conditions)
-        {
-            if (condition == null)
+            foreach (var condition in conditions)
             {
-                nullCount++;
-                continue;
-            }
+                if (condition == null)
+                {
+                    Debug.Log("  ✗ NULL CONDITION");
+                    continue;
+                }
 
-            if (condition.IsEnabled)
-                enabledCount++;
+                string status = condition.IsEnabled ? "✓" : "✗";
+                string desc = condition.GetReadableDescription();
+                Debug.Log($"  {status} {condition.name}: {desc}");
+            }
+        }
+
+        /// <summary>
+        /// Validate all conditions (debug)
+        /// </summary>
+        [ContextMenu("Validate All Conditions")]
+        private void ValidateAllConditions()
+        {
+            if (Validate(out string error))
+            {
+                Debug.Log($"[ConditionLibrary:{name}] ✓ All {ConditionCount} conditions valid");
+            }
             else
-                disabledCount++;
+            {
+                Debug.LogError($"[ConditionLibrary:{name}] ✗ Validation failed:\n{error}", this);
+            }
         }
 
-        Debug.Log($"=== Condition Library Statistics: {name} ===\n" +
-                  $"  Total: {ConditionCount}\n" +
-                  $"  Enabled: {enabledCount}\n" +
-                  $"  Disabled: {disabledCount}\n" +
-                  $"  Null: {nullCount}");
-    }
+        /// <summary>
+        /// Count conditions by type (debug)
+        /// </summary>
+        [ContextMenu("Print Statistics")]
+        private void PrintStatistics()
+        {
+            if (conditions == null || conditions.Count == 0)
+            {
+                Debug.Log($"[ConditionLibrary:{name}] No conditions defined");
+                return;
+            }
+
+            int enabledCount = 0;
+            int disabledCount = 0;
+            int nullCount = 0;
+
+            foreach (var condition in conditions)
+            {
+                if (condition == null)
+                {
+                    nullCount++;
+                    continue;
+                }
+
+                if (condition.IsEnabled)
+                    enabledCount++;
+                else
+                    disabledCount++;
+            }
+
+            Debug.Log($"=== Condition Library Statistics: {name} ===\n" +
+                      $"  Total: {ConditionCount}\n" +
+                      $"  Enabled: {enabledCount}\n" +
+                      $"  Disabled: {disabledCount}\n" +
+                      $"  Null: {nullCount}");
+        }
 
     #endregion
+    }
 }

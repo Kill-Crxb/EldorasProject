@@ -1,5 +1,6 @@
 using MoreMountains.Feedbacks;
 using UnityEngine;
+using CrabSystem;
 
 // Presentation for this entity's own combat and movement events. Juice.md is the design.
 //

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NinjaGame.Magic
+namespace CrabSystem.Magic
 {
     /// <summary>
     /// Save payload. JsonUtility needs a concrete class and a plain array.

@@ -4,73 +4,77 @@ using UnityEngine;
 // the scene — the spawn point PlayerSpawner placed them at — with every pool full and their gear kept (nothing
 // drops). A character saved dead loads the same way instead of standing at 0 health (Known Issues B26).
 // Player-only: an NPC brain declines it, so NPCs stay dead until they have a respawn rule of their own.
-public class RespawnModule : MonoBehaviour, IBrainModule
+
+namespace CrabSystem
 {
-    [SerializeField] private bool isEnabled = true;
-
-    [Tooltip("Seconds from death to respawn.")]
-    [SerializeField] private float respawnDelay = 3f;
-
-    private ControllerBrain brain;
-
-    // Gameplay time (EntityClock).
-    private float Now => brain.Clock.Now;
-    private float Delta => brain.Clock.Delta;
-    private DamageSystem damage;
-    private ResourceSystem resources;
-    private Vector3 spawnPosition;
-    private float respawnAt = -1f;
-
-    public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
-    public bool PlayerOnly => true;
-
-    // Initialize runs in the brain's Awake, right after PlayerSpawner instantiated the player at the spawn point.
-    public void Initialize(ControllerBrain controllerBrain)
+    public class RespawnModule : MonoBehaviour, IBrainModule
     {
-        brain = controllerBrain;
-        spawnPosition = brain.EntityRoot.position;
-    }
+        [SerializeField] private bool isEnabled = true;
 
-    public void LateInitialize()
-    {
-        damage = brain.Damage;
-        resources = brain.GetModule<ResourceSystem>();
-        if (damage == null || resources == null)
+        [Tooltip("Seconds from death to respawn.")]
+        [SerializeField] private float respawnDelay = 3f;
+
+        private ControllerBrain brain;
+
+        // Gameplay time (EntityClock).
+        private float Now => brain.Clock.Now;
+        private float Delta => brain.Clock.Delta;
+        private DamageSystem damage;
+        private ResourceSystem resources;
+        private Vector3 spawnPosition;
+        private float respawnAt = -1f;
+
+        public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
+        public bool PlayerOnly => true;
+
+        // Initialize runs in the brain's Awake, right after PlayerSpawner instantiated the player at the spawn point.
+        public void Initialize(ControllerBrain controllerBrain)
         {
-            Debug.LogError($"[RespawnModule] {brain.EntityName} needs a DamageSystem and a ResourceSystem.", this);
-            isEnabled = false;
-            return;
+            brain = controllerBrain;
+            spawnPosition = brain.EntityRoot.position;
         }
 
-        damage.OnDeath += HandleDeath;
-        brain.OnLoaded += HandleLoaded;
-    }
+        public void LateInitialize()
+        {
+            damage = brain.Damage;
+            resources = brain.GetModule<ResourceSystem>();
+            if (damage == null || resources == null)
+            {
+                Debug.LogError($"[RespawnModule] {brain.EntityName} needs a DamageSystem and a ResourceSystem.", this);
+                isEnabled = false;
+                return;
+            }
 
-    private void OnDestroy()
-    {
-        if (damage != null) damage.OnDeath -= HandleDeath;
-        if (brain != null) brain.OnLoaded -= HandleLoaded;
-    }
+            damage.OnDeath += HandleDeath;
+            brain.OnLoaded += HandleLoaded;
+        }
 
-    public void UpdateModule()
-    {
-        if (respawnAt < 0f || Now < respawnAt) return;
-        respawnAt = -1f;
-        Respawn();
-    }
+        private void OnDestroy()
+        {
+            if (damage != null) damage.OnDeath -= HandleDeath;
+            if (brain != null) brain.OnLoaded -= HandleLoaded;
+        }
 
-    private void HandleDeath() => respawnAt = Now + respawnDelay;
+        public void UpdateModule()
+        {
+            if (respawnAt < 0f || Now < respawnAt) return;
+            respawnAt = -1f;
+            Respawn();
+        }
 
-    private void HandleLoaded()
-    {
-        if (resources.GetCurrentHealth() > 0f) return;
-        Respawn();
-    }
+        private void HandleDeath() => respawnAt = Now + respawnDelay;
 
-    private void Respawn()
-    {
-        brain.Movement?.Locomotion?.TeleportTo(spawnPosition);
-        resources.RefillAll();
-        damage.Revive();
+        private void HandleLoaded()
+        {
+            if (resources.GetCurrentHealth() > 0f) return;
+            Respawn();
+        }
+
+        private void Respawn()
+        {
+            brain.Movement?.Locomotion?.TeleportTo(spawnPosition);
+            resources.RefillAll();
+            damage.Revive();
+        }
     }
 }

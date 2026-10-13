@@ -6,7 +6,7 @@
 
 using UnityEngine;
 
-namespace RPG.Factions
+namespace CrabSystem.Factions
 {
     /// <summary>
     /// Defines the relationship between two factions.

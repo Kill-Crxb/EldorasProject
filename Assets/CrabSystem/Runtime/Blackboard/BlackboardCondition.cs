@@ -43,156 +43,160 @@ using UnityEngine;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 18, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "Condition", menuName = "CrabSystem/Blackboard/Condition")]
-public class BlackboardCondition : ScriptableObject
+
+namespace CrabSystem
 {
-    [Header("Value Source")]
-    [Tooltip("Where to get the value to evaluate")]
-    [SerializeField] private ValueSourceDefinition valueSource;
-
-    [Header("Comparison")]
-    [Tooltip("How to compare value against threshold")]
-    [SerializeField] private ComparisonOp comparison = ComparisonOp.LessThan;
-
-    [Tooltip("Threshold value to compare against")]
-    [SerializeField] private float threshold = 0.5f;
-
-    [Header("Output")]
-    [Tooltip("Blackboard fact key to write result to (e.g., 'IsWounded', 'CanDodge')")]
-    [SerializeField] private string outputFactKey;
-
-    [Header("Optional")]
-    [Tooltip("Enable/disable this condition")]
-    [SerializeField] private bool isEnabled = true;
-
-    [Tooltip("Description for designers")]
-    [TextArea(2, 4)]
-    [SerializeField] private string description;
-
-    // Properties
-    public ValueSourceDefinition ValueSource => valueSource;
-    public string OutputFactKey => outputFactKey;
-    public bool IsEnabled => isEnabled;
-
-    /// <summary>
-    /// Evaluate this condition for the given entity.
-    /// Returns true if value passes comparison against threshold.
-    /// </summary>
-    public bool Evaluate(ControllerBrain brain)
+    [CreateAssetMenu(fileName = "Condition", menuName = "CrabSystem/Blackboard/Condition")]
+    public class BlackboardCondition : ScriptableObject
     {
-        // Guard clauses (flat logic - no nesting!)
-        if (!isEnabled) return false;
-        if (brain == null) return false;
-        if (valueSource == null) return false;
+        [Header("Value Source")]
+        [Tooltip("Where to get the value to evaluate")]
+        [SerializeField] private ValueSourceDefinition valueSource;
 
-        // Get value from source
-        float value = valueSource.GetValue(brain);
+        [Header("Comparison")]
+        [Tooltip("How to compare value against threshold")]
+        [SerializeField] private ComparisonOp comparison = ComparisonOp.LessThan;
 
-        // Compare against threshold
-        return CompareValue(value, threshold, comparison);
-    }
+        [Tooltip("Threshold value to compare against")]
+        [SerializeField] private float threshold = 0.5f;
 
-    /// <summary>
-    /// Perform comparison operation
-    /// </summary>
-    private bool CompareValue(float value, float threshold, ComparisonOp op)
-    {
-        const float epsilon = 0.001f;
+        [Header("Output")]
+        [Tooltip("Blackboard fact key to write result to (e.g., 'IsWounded', 'CanDodge')")]
+        [SerializeField] private string outputFactKey;
 
-        switch (op)
+        [Header("Optional")]
+        [Tooltip("Enable/disable this condition")]
+        [SerializeField] private bool isEnabled = true;
+
+        [Tooltip("Description for designers")]
+        [TextArea(2, 4)]
+        [SerializeField] private string description;
+
+        // Properties
+        public ValueSourceDefinition ValueSource => valueSource;
+        public string OutputFactKey => outputFactKey;
+        public bool IsEnabled => isEnabled;
+
+        /// <summary>
+        /// Evaluate this condition for the given entity.
+        /// Returns true if value passes comparison against threshold.
+        /// </summary>
+        public bool Evaluate(ControllerBrain brain)
         {
-            case ComparisonOp.LessThan:
-                return value < threshold;
+            // Guard clauses (flat logic - no nesting!)
+            if (!isEnabled) return false;
+            if (brain == null) return false;
+            if (valueSource == null) return false;
 
-            case ComparisonOp.LessThanOrEqual:
-                return value <= threshold;
+            // Get value from source
+            float value = valueSource.GetValue(brain);
 
-            case ComparisonOp.GreaterThan:
-                return value > threshold;
+            // Compare against threshold
+            return CompareValue(value, threshold, comparison);
+        }
 
-            case ComparisonOp.GreaterThanOrEqual:
-                return value >= threshold;
+        /// <summary>
+        /// Perform comparison operation
+        /// </summary>
+        private bool CompareValue(float value, float threshold, ComparisonOp op)
+        {
+            const float epsilon = 0.001f;
 
-            case ComparisonOp.Equals:
-                return Mathf.Abs(value - threshold) < epsilon;
+            switch (op)
+            {
+                case ComparisonOp.LessThan:
+                    return value < threshold;
 
-            case ComparisonOp.NotEquals:
-                return Mathf.Abs(value - threshold) >= epsilon;
+                case ComparisonOp.LessThanOrEqual:
+                    return value <= threshold;
 
-            default:
+                case ComparisonOp.GreaterThan:
+                    return value > threshold;
+
+                case ComparisonOp.GreaterThanOrEqual:
+                    return value >= threshold;
+
+                case ComparisonOp.Equals:
+                    return Mathf.Abs(value - threshold) < epsilon;
+
+                case ComparisonOp.NotEquals:
+                    return Mathf.Abs(value - threshold) >= epsilon;
+
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Validate condition configuration
+        /// </summary>
+        public bool Validate(out string error)
+        {
+            if (valueSource == null)
+            {
+                error = "Value source not assigned";
                 return false;
-        }
-    }
+            }
 
-    /// <summary>
-    /// Validate condition configuration
-    /// </summary>
-    public bool Validate(out string error)
-    {
-        if (valueSource == null)
-        {
-            error = "Value source not assigned";
-            return false;
-        }
+            if (string.IsNullOrEmpty(outputFactKey))
+            {
+                error = "Output fact key cannot be empty";
+                return false;
+            }
 
-        if (string.IsNullOrEmpty(outputFactKey))
-        {
-            error = "Output fact key cannot be empty";
-            return false;
-        }
+            // Validate value source
+            if (!valueSource.Validate(out string sourceError))
+            {
+                error = $"Value source invalid: {sourceError}";
+                return false;
+            }
 
-        // Validate value source
-        if (!valueSource.Validate(out string sourceError))
-        {
-            error = $"Value source invalid: {sourceError}";
-            return false;
+            error = null;
+            return true;
         }
 
-        error = null;
-        return true;
-    }
-
-    /// <summary>
-    /// Get human-readable description of this condition
-    /// </summary>
-    public string GetReadableDescription()
-    {
-        if (valueSource == null) return "Invalid (no source)";
-
-        string comparisonStr = comparison switch
+        /// <summary>
+        /// Get human-readable description of this condition
+        /// </summary>
+        public string GetReadableDescription()
         {
-            ComparisonOp.LessThan => "<",
-            ComparisonOp.LessThanOrEqual => "≤",
-            ComparisonOp.GreaterThan => ">",
-            ComparisonOp.GreaterThanOrEqual => "≥",
-            ComparisonOp.Equals => "=",
-            ComparisonOp.NotEquals => "≠",
-            _ => "?"
-        };
+            if (valueSource == null) return "Invalid (no source)";
 
-        return $"{valueSource.GetDisplayName()} {comparisonStr} {threshold} → {outputFactKey}";
-    }
+            string comparisonStr = comparison switch
+            {
+                ComparisonOp.LessThan => "<",
+                ComparisonOp.LessThanOrEqual => "≤",
+                ComparisonOp.GreaterThan => ">",
+                ComparisonOp.GreaterThanOrEqual => "≥",
+                ComparisonOp.Equals => "=",
+                ComparisonOp.NotEquals => "≠",
+                _ => "?"
+            };
+
+            return $"{valueSource.GetDisplayName()} {comparisonStr} {threshold} → {outputFactKey}";
+        }
 
 #if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (!Validate(out string error))
+        private void OnValidate()
         {
-            Debug.LogWarning($"[BlackboardCondition] Validation failed: {error}", this);
+            if (!Validate(out string error))
+            {
+                Debug.LogWarning($"[BlackboardCondition] Validation failed: {error}", this);
+            }
         }
-    }
 #endif
-}
+    }
 
-/// <summary>
-/// Comparison operations for condition evaluation
-/// </summary>
-public enum ComparisonOp
-{
-    LessThan,
-    LessThanOrEqual,
-    GreaterThan,
-    GreaterThanOrEqual,
-    Equals,
-    NotEquals
+    /// <summary>
+    /// Comparison operations for condition evaluation
+    /// </summary>
+    public enum ComparisonOp
+    {
+        LessThan,
+        LessThanOrEqual,
+        GreaterThan,
+        GreaterThanOrEqual,
+        Equals,
+        NotEquals
+    }
 }

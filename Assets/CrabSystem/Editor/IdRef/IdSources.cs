@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using NinjaGame.Stats;
-using RPG.Factions;
+using CrabSystem.Stats;
+using CrabSystem.Factions;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
@@ -12,96 +12,100 @@ using UnityEngine;
 // Where each kind of id comes from. The asset that defines an id is its only source, so this is
 // the one place that knows which asset type and field that is. Results are cached until the
 // project changes.
-public static class IdSources
+
+namespace CrabSystem
 {
-    private static readonly Dictionary<IdKind, string[]> cache = new();
-    private static Dictionary<string, string> statRenames;
-
-    static IdSources()
+    public static class IdSources
     {
-        EditorApplication.projectChanged += cache.Clear;
-        EditorApplication.projectChanged += ClearRenames;
-    }
+        private static readonly Dictionary<IdKind, string[]> cache = new();
+        private static Dictionary<string, string> statRenames;
 
-    private static void ClearRenames() => statRenames = null;
-
-    // A stat's former id -> its current id (StatEntry.formerIds); null when the id was never a stat's.
-    public static string RenamedStat(string id)
-    {
-        statRenames ??= Assets<StatSchema>().SelectMany(s => s.Entries)
-            .Where(e => e?.formerIds != null)
-            .SelectMany(e => e.formerIds.Where(f => !string.IsNullOrEmpty(f)).Select(f => (former: f, current: e.id)))
-            .GroupBy(p => p.former)
-            .ToDictionary(g => g.Key, g => g.First().current);
-        return statRenames.GetValueOrDefault(id);
-    }
-
-    public static string[] Get(IdKind kind)
-    {
-        if (cache.TryGetValue(kind, out var ids)) return ids;
-
-        ids = Gather(kind).Where(id => !string.IsNullOrEmpty(id)).Distinct().OrderBy(id => id, StringComparer.Ordinal).ToArray();
-        cache[kind] = ids;
-        return ids;
-    }
-
-    // Sorted and searched with the same ordinal comparer; a culture sort here made BinarySearch
-    // miss ids that exist (StrafeX, Stagger reported missing).
-    public static bool Exists(IdKind kind, string id) => Array.BinarySearch(Get(kind), id, StringComparer.Ordinal) >= 0;
-
-    private static IEnumerable<string> Gather(IdKind kind)
-    {
-        switch (kind)
+        static IdSources()
         {
-            case IdKind.Fact: return Facts();
-            case IdKind.Stat: return Assets<StatSchema>().SelectMany(s => s.Entries).Select(e => e?.id);
-            case IdKind.Ability: return Assets<AbilityDefinition>().Select(a => a.abilityId);
-            case IdKind.Item: return Assets<ItemDefinition>().Select(i => i.itemId);
-            case IdKind.Resource: return Assets<ResourceDefinition>().Select(r => r.resourceId);
-            case IdKind.Status: return Assets<StatusDefinition>().Select(s => s.id);
-            case IdKind.Faction: return Assets<FactionDefinition>().Select(f => f.FactionId);
-            case IdKind.EquipmentSlot: return Assets<EquipmentSlotDefinition>().Select(s => s.slotId);
-            case IdKind.Archetype: return Assets<NPCArchetype>().Select(a => a.archetypeId);
-            case IdKind.Model: return Assets<ModelDatabase>().SelectMany(d => d.AllModels ?? Array.Empty<ModelDatabase.ModelVariant>()).Select(m => m?.modelId);
-            case IdKind.Scene: return EditorBuildSettings.scenes.Select(s => Path.GetFileNameWithoutExtension(s.path));
-            case IdKind.AnimatorParam: return AnimatorParameters();
-            case IdKind.Layer: return UnityEditorInternal.InternalEditorUtility.layers;
+            EditorApplication.projectChanged += cache.Clear;
+            EditorApplication.projectChanged += ClearRenames;
         }
 
-        Debug.LogError($"[IdSources] No source for id kind {kind}.");
-        return Array.Empty<string>();
-    }
+        private static void ClearRenames() => statRenames = null;
 
-    // The schema is meant to be the one fact register (Audit 3 F2). Until every fact is in it, the
-    // code-written facts (BlackboardKey's constants, named after their key) and the condition
-    // outputs count too, so the dropdown offers every fact that can actually be raised.
-    private static IEnumerable<string> Facts()
-    {
-        var schema = Assets<BlackboardSchema>().SelectMany(s => s.keys).Select(k => k?.keyName);
-        var conditions = Assets<BlackboardCondition>().Select(c => c.OutputFactKey);
-        var constants = typeof(BlackboardKey).GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(f => f.FieldType == typeof(int)).Select(f => f.Name);
-        return schema.Concat(conditions).Concat(constants);
-    }
-
-    // Our controllers live under Database/; the imported animation packs bring their own, which
-    // would bury the real parameters in the dropdown.
-    private static IEnumerable<string> AnimatorParameters()
-    {
-        foreach (string guid in AssetDatabase.FindAssets("t:AnimatorController", new[] { "Assets/Database" }))
+        // A stat's former id -> its current id (StatEntry.formerIds); null when the id was never a stat's.
+        public static string RenamedStat(string id)
         {
-            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(AssetDatabase.GUIDToAssetPath(guid));
-            if (controller == null) continue;
-            foreach (var parameter in controller.parameters) yield return parameter.name;
+            statRenames ??= Assets<StatSchema>().SelectMany(s => s.Entries)
+                .Where(e => e?.formerIds != null)
+                .SelectMany(e => e.formerIds.Where(f => !string.IsNullOrEmpty(f)).Select(f => (former: f, current: e.id)))
+                .GroupBy(p => p.former)
+                .ToDictionary(g => g.Key, g => g.First().current);
+            return statRenames.GetValueOrDefault(id);
         }
-    }
 
-    private static IEnumerable<T> Assets<T>() where T : ScriptableObject
-    {
-        foreach (string guid in AssetDatabase.FindAssets("t:" + typeof(T).Name))
+        public static string[] Get(IdKind kind)
         {
-            var asset = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guid));
-            if (asset != null) yield return asset;
+            if (cache.TryGetValue(kind, out var ids)) return ids;
+
+            ids = Gather(kind).Where(id => !string.IsNullOrEmpty(id)).Distinct().OrderBy(id => id, StringComparer.Ordinal).ToArray();
+            cache[kind] = ids;
+            return ids;
+        }
+
+        // Sorted and searched with the same ordinal comparer; a culture sort here made BinarySearch
+        // miss ids that exist (StrafeX, Stagger reported missing).
+        public static bool Exists(IdKind kind, string id) => Array.BinarySearch(Get(kind), id, StringComparer.Ordinal) >= 0;
+
+        private static IEnumerable<string> Gather(IdKind kind)
+        {
+            switch (kind)
+            {
+                case IdKind.Fact: return Facts();
+                case IdKind.Stat: return Assets<StatSchema>().SelectMany(s => s.Entries).Select(e => e?.id);
+                case IdKind.Ability: return Assets<AbilityDefinition>().Select(a => a.abilityId);
+                case IdKind.Item: return Assets<ItemDefinition>().Select(i => i.itemId);
+                case IdKind.Resource: return Assets<ResourceDefinition>().Select(r => r.resourceId);
+                case IdKind.Status: return Assets<StatusDefinition>().Select(s => s.id);
+                case IdKind.Faction: return Assets<FactionDefinition>().Select(f => f.FactionId);
+                case IdKind.EquipmentSlot: return Assets<EquipmentSlotDefinition>().Select(s => s.slotId);
+                case IdKind.Archetype: return Assets<NPCArchetype>().Select(a => a.archetypeId);
+                case IdKind.Model: return Assets<ModelDatabase>().SelectMany(d => d.AllModels ?? Array.Empty<ModelDatabase.ModelVariant>()).Select(m => m?.modelId);
+                case IdKind.Scene: return EditorBuildSettings.scenes.Select(s => Path.GetFileNameWithoutExtension(s.path));
+                case IdKind.AnimatorParam: return AnimatorParameters();
+                case IdKind.Layer: return UnityEditorInternal.InternalEditorUtility.layers;
+            }
+
+            Debug.LogError($"[IdSources] No source for id kind {kind}.");
+            return Array.Empty<string>();
+        }
+
+        // The schema is meant to be the one fact register (Audit 3 F2). Until every fact is in it, the
+        // code-written facts (BlackboardKey's constants, named after their key) and the condition
+        // outputs count too, so the dropdown offers every fact that can actually be raised.
+        private static IEnumerable<string> Facts()
+        {
+            var schema = Assets<BlackboardSchema>().SelectMany(s => s.keys).Select(k => k?.keyName);
+            var conditions = Assets<BlackboardCondition>().Select(c => c.OutputFactKey);
+            var constants = typeof(BlackboardKey).GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(f => f.FieldType == typeof(int)).Select(f => f.Name);
+            return schema.Concat(conditions).Concat(constants);
+        }
+
+        // Our controllers live under Database/; the imported animation packs bring their own, which
+        // would bury the real parameters in the dropdown.
+        private static IEnumerable<string> AnimatorParameters()
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:AnimatorController", new[] { "Assets/Database" }))
+            {
+                var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(AssetDatabase.GUIDToAssetPath(guid));
+                if (controller == null) continue;
+                foreach (var parameter in controller.parameters) yield return parameter.name;
+            }
+        }
+
+        private static IEnumerable<T> Assets<T>() where T : ScriptableObject
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:" + typeof(T).Name))
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<T>(AssetDatabase.GUIDToAssetPath(guid));
+                if (asset != null) yield return asset;
+            }
         }
     }
 }

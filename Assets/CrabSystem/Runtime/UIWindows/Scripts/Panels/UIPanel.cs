@@ -2,136 +2,139 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PanelSide { Left, Right }
-
-/// <summary>
-/// One side of the screen. Owns its slots and whether the side is showing at all.
-/// Left is opened by the player, right is opened by the world.
-/// </summary>
-public class UIPanel : MonoBehaviour
+namespace CrabSystem
 {
-    [Header("Identity")]
-    [SerializeField] private PanelSide side = PanelSide.Left;
+    public enum PanelSide { Left, Right }
 
-    [Header("Content")]
-    [Tooltip("Object shown and hidden with the panel. Defaults to this object.")]
-    [SerializeField] private GameObject content;
-    [SerializeField] private List<UIPanelSlot> slots = new();
-
-    public PanelSide Side => side;
-    public bool IsOpen { get; private set; }
-    public IReadOnlyList<UIPanelSlot> Slots => slots;
-
-    public event Action<UIPanel> OpenChanged;
-
-    private GameObject Root => content != null ? content : gameObject;
-
-    private void Awake()
+    /// <summary>
+    /// One side of the screen. Owns its slots and whether the side is showing at all.
+    /// Left is opened by the player, right is opened by the world.
+    /// </summary>
+    public class UIPanel : MonoBehaviour
     {
-        UIPanelRegistry.Register(this);
-        Root.SetActive(false);
-    }
+        [Header("Identity")]
+        [SerializeField] private PanelSide side = PanelSide.Left;
 
-    private void OnDestroy() => UIPanelRegistry.Unregister(this);
+        [Header("Content")]
+        [Tooltip("Object shown and hidden with the panel. Defaults to this object.")]
+        [SerializeField] private GameObject content;
+        [SerializeField] private List<UIPanelSlot> slots = new();
 
-    public void Toggle() => SetOpen(!IsOpen);
+        public PanelSide Side => side;
+        public bool IsOpen { get; private set; }
+        public IReadOnlyList<UIPanelSlot> Slots => slots;
 
-    public void Open() => SetOpen(true);
+        public event Action<UIPanel> OpenChanged;
 
-    public void Close() => SetOpen(false);
+        private GameObject Root => content != null ? content : gameObject;
 
-    public void SetOpen(bool open)
-    {
-        if (IsOpen == open) return;
-
-        IsOpen = open;
-        Root.SetActive(open);
-
-        if (open) ShowDefaults();
-        else HideAll();
-
-        OpenChanged?.Invoke(this);
-        UIInputRouter.Instance?.ApplyMode();
-    }
-
-    /// <summary>Shows a view in whichever slot owns it, opening the panel if needed.</summary>
-    public bool Show(string viewId)
-    {
-        var slot = SlotOwning(viewId);
-        if (slot == null) return false;
-
-        Open();
-        slot.Show(viewId);
-        ApplySpan();
-        return true;
-    }
-
-    public bool Show(string slotId, string viewId)
-    {
-        var slot = FindSlot(slotId);
-        if (slot == null || !slot.Show(viewId)) return false;
-
-        Open();
-        ApplySpan();
-        return true;
-    }
-
-    public UIPanelSlot FindSlot(string slotId)
-    {
-        for (int i = 0; i < slots.Count; i++)
+        private void Awake()
         {
-            if (slots[i] != null && slots[i].SlotId == slotId) return slots[i];
+            UIPanelRegistry.Register(this);
+            Root.SetActive(false);
         }
 
-        return null;
-    }
+        private void OnDestroy() => UIPanelRegistry.Unregister(this);
 
-    private UIPanelSlot SlotOwning(string viewId)
-    {
-        for (int i = 0; i < slots.Count; i++)
+        public void Toggle() => SetOpen(!IsOpen);
+
+        public void Open() => SetOpen(true);
+
+        public void Close() => SetOpen(false);
+
+        public void SetOpen(bool open)
         {
-            if (slots[i] != null && slots[i].Find(viewId) != null) return slots[i];
+            if (IsOpen == open) return;
+
+            IsOpen = open;
+            Root.SetActive(open);
+
+            if (open) ShowDefaults();
+            else HideAll();
+
+            OpenChanged?.Invoke(this);
+            UIInputRouter.Instance?.ApplyMode();
         }
 
-        return null;
-    }
-
-    private void ShowDefaults()
-    {
-        for (int i = 0; i < slots.Count; i++)
+        /// <summary>Shows a view in whichever slot owns it, opening the panel if needed.</summary>
+        public bool Show(string viewId)
         {
-            if (slots[i] != null) slots[i].ShowDefault();
+            var slot = SlotOwning(viewId);
+            if (slot == null) return false;
+
+            Open();
+            slot.Show(viewId);
+            ApplySpan();
+            return true;
         }
 
-        ApplySpan();
-    }
-
-    private void HideAll()
-    {
-        for (int i = 0; i < slots.Count; i++)
+        public bool Show(string slotId, string viewId)
         {
-            if (slots[i] != null) slots[i].HideAll();
-        }
-    }
+            var slot = FindSlot(slotId);
+            if (slot == null || !slot.Show(viewId)) return false;
 
-    /// <summary>A Full view takes the panel to itself; the other slots step aside.</summary>
-    private void ApplySpan()
-    {
-        UIPanelSlot expanded = null;
-
-        for (int i = 0; i < slots.Count; i++)
-        {
-            if (slots[i]?.Current == null) continue;
-            if (slots[i].Current.Span != ViewSpan.Full) continue;
-
-            expanded = slots[i];
-            break;
+            Open();
+            ApplySpan();
+            return true;
         }
 
-        for (int i = 0; i < slots.Count; i++)
+        public UIPanelSlot FindSlot(string slotId)
         {
-            if (slots[i] == null) continue;
-            slots[i].gameObject.SetActive(expanded == null || slots[i] == expanded);
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] != null && slots[i].SlotId == slotId) return slots[i];
+            }
+
+            return null;
+        }
+
+        private UIPanelSlot SlotOwning(string viewId)
+        {
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] != null && slots[i].Find(viewId) != null) return slots[i];
+            }
+
+            return null;
+        }
+
+        private void ShowDefaults()
+        {
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] != null) slots[i].ShowDefault();
+            }
+
+            ApplySpan();
+        }
+
+        private void HideAll()
+        {
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] != null) slots[i].HideAll();
+            }
+        }
+
+        /// <summary>A Full view takes the panel to itself; the other slots step aside.</summary>
+        private void ApplySpan()
+        {
+            UIPanelSlot expanded = null;
+
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i]?.Current == null) continue;
+                if (slots[i].Current.Span != ViewSpan.Full) continue;
+
+                expanded = slots[i];
+                break;
+            }
+
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] == null) continue;
+                slots[i].gameObject.SetActive(expanded == null || slots[i] == expanded);
+            }
         }
     }
 }

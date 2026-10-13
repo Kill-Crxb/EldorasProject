@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using CrabSystem;
 
 // One-shot builder for the Guard sub-state machine in Upper Body Combat (Combat_Framework §3).
 //

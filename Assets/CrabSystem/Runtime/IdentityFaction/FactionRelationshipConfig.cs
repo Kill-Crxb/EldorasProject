@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RPG.Factions
+namespace CrabSystem.Factions
 {
     /// <summary>
     /// Asset-keyed faction relationship matrix.

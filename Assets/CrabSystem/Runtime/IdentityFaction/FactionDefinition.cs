@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace RPG.Factions
+namespace CrabSystem.Factions
 {
     [CreateAssetMenu(menuName = "RPG/Factions/Faction Definition")]
     public class FactionDefinition : ScriptableObject

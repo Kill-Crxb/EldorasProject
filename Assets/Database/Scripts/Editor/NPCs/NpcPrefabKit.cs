@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using CrabSystem;
 
 // What every NPC builder shares: the two base prefab paths, turning a Base_PC copy into an NPC, and the AI_System
 // child that holds its control source, perception and goals. MirrorNpcBuilder, MonsterBuilder and BaseNpcBuilder

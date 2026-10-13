@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Magic
+namespace CrabSystem.Magic
 {
     /// <summary>
     /// Everything slot 2 (Form) decides: how the spell is delivered, and HOW BIG THE DIE IS.

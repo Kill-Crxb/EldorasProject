@@ -39,206 +39,210 @@ using System.Collections.Generic;
 /// 
 /// Created: February 9, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "New Container Contents", menuName = "Items/Container Contents")]
-public class ContainerContents : ScriptableObject
+
+namespace CrabSystem
 {
-    [Header("Container Info")]
-    [Tooltip("Unique identifier (auto-generated or set manually)")]
-    public string containerId;
+    [CreateAssetMenu(fileName = "New Container Contents", menuName = "Items/Container Contents")]
+    public class ContainerContents : ScriptableObject
+    {
+        [Header("Container Info")]
+        [Tooltip("Unique identifier (auto-generated or set manually)")]
+        public string containerId;
 
-    [Tooltip("Display name for UI")]
-    public string displayName = "Container";
+        [Tooltip("Display name for UI")]
+        public string displayName = "Container";
 
-    [Header("Grid Configuration")]
-    [Tooltip("Grid width in cells")]
-    [Range(1, 20)]
-    public int gridWidth = 8;
+        [Header("Grid Configuration")]
+        [Tooltip("Grid width in cells")]
+        [Range(1, 20)]
+        public int gridWidth = 8;
 
-    [Tooltip("Grid height in cells")]
-    [Range(1, 20)]
-    public int gridHeight = 10;
+        [Tooltip("Grid height in cells")]
+        [Range(1, 20)]
+        public int gridHeight = 10;
 
-    [Header("Items")]
-    [Tooltip("Items currently in this container (editable in inspector)")]
-    public List<ItemRecord> items = new List<ItemRecord>();
+        [Header("Items")]
+        [Tooltip("Items currently in this container (editable in inspector)")]
+        public List<ItemRecord> items = new List<ItemRecord>();
 
-    [Header("Metadata")]
-    [Tooltip("Last modified timestamp (runtime updated)")]
-    public long lastModified;
+        [Header("Metadata")]
+        [Tooltip("Last modified timestamp (runtime updated)")]
+        public long lastModified;
 
-    [Tooltip("Original creator (for player-placed containers)")]
-    public string creatorId;
+        [Tooltip("Original creator (for player-placed containers)")]
+        public string creatorId;
 
     #region Runtime API
 
-    /// <summary>
-    /// Remove an item by index
-    /// </summary>
-    public bool RemoveItem(int index)
-    {
-        if (index < 0 || index >= items.Count)
-            return false;
-
-        items.RemoveAt(index);
-        UpdateTimestamp();
-        return true;
-    }
-
-    /// <summary>
-    /// Remove specific item by item ID
-    /// </summary>
-    public bool RemoveItem(string itemId)
-    {
-        int index = items.FindIndex(i => i.definitionId == itemId);
-        if (index >= 0)
+        /// <summary>
+        /// Remove an item by index
+        /// </summary>
+        public bool RemoveItem(int index)
         {
+            if (index < 0 || index >= items.Count)
+                return false;
+
             items.RemoveAt(index);
             UpdateTimestamp();
             return true;
         }
-        return false;
-    }
 
-    /// <summary>
-    /// Clear all items
-    /// </summary>
-    public void ClearAll()
-    {
-        items.Clear();
-        UpdateTimestamp();
-    }
+        /// <summary>
+        /// Remove specific item by item ID
+        /// </summary>
+        public bool RemoveItem(string itemId)
+        {
+            int index = items.FindIndex(i => i.definitionId == itemId);
+            if (index >= 0)
+            {
+                items.RemoveAt(index);
+                UpdateTimestamp();
+                return true;
+            }
+            return false;
+        }
 
-    /// <summary>
-    /// Get item count
-    /// </summary>
-    public int ItemCount => items.Count;
+        /// <summary>
+        /// Clear all items
+        /// </summary>
+        public void ClearAll()
+        {
+            items.Clear();
+            UpdateTimestamp();
+        }
 
-    /// <summary>
-    /// Update last modified timestamp
-    /// </summary>
-    public void UpdateTimestamp()
-    {
-        lastModified = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-    }
+        /// <summary>
+        /// Get item count
+        /// </summary>
+        public int ItemCount => items.Count;
+
+        /// <summary>
+        /// Update last modified timestamp
+        /// </summary>
+        public void UpdateTimestamp()
+        {
+            lastModified = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        }
 
     #endregion
 
     #region Serialization
 
-    /// <summary>
-    /// Convert to ContainerData for network/save serialization
-    /// </summary>
-    public ContainerData ToContainerData()
-    {
-        var itemInstances = new List<ItemInstance>();
-
-        foreach (var record in items)
+        /// <summary>
+        /// Convert to ContainerData for network/save serialization
+        /// </summary>
+        public ContainerData ToContainerData()
         {
-            ItemInstance instance = record.ToInstance();
-            if (instance != null) itemInstances.Add(instance);
+            var itemInstances = new List<ItemInstance>();
+
+            foreach (var record in items)
+            {
+                ItemInstance instance = record.ToInstance();
+                if (instance != null) itemInstances.Add(instance);
+            }
+
+            return new ContainerData
+            {
+                containerId = containerId,
+                type = ContainerType.Chest,
+                gridWidth = gridWidth,
+                gridHeight = gridHeight,
+                items = itemInstances.ToArray(),
+                lastModified = lastModified
+            };
         }
 
-        return new ContainerData
+        /// <summary>
+        /// Create ContainerContents from ContainerData
+        /// </summary>
+        public static ContainerContents FromContainerData(ContainerData data)
         {
-            containerId = containerId,
-            type = ContainerType.Chest,
-            gridWidth = gridWidth,
-            gridHeight = gridHeight,
-            items = itemInstances.ToArray(),
-            lastModified = lastModified
-        };
-    }
+            var contents = CreateInstance<ContainerContents>();
+            contents.containerId = data.containerId;
+            contents.gridWidth = data.gridWidth;
+            contents.gridHeight = data.gridHeight;
+            contents.lastModified = data.lastModified;
+            contents.items = new List<ItemRecord>();
 
-    /// <summary>
-    /// Create ContainerContents from ContainerData
-    /// </summary>
-    public static ContainerContents FromContainerData(ContainerData data)
-    {
-        var contents = CreateInstance<ContainerContents>();
-        contents.containerId = data.containerId;
-        contents.gridWidth = data.gridWidth;
-        contents.gridHeight = data.gridHeight;
-        contents.lastModified = data.lastModified;
-        contents.items = new List<ItemRecord>();
+            if (data.items != null)
+                foreach (var instance in data.items) contents.items.Add(ItemRecord.From(instance));
 
-        if (data.items != null)
-            foreach (var instance in data.items) contents.items.Add(ItemRecord.From(instance));
+            return contents;
+        }
 
-        return contents;
-    }
+        /// <summary>
+        /// Save this container contents to disk as JSON
+        /// </summary>
+        public void SaveToDisk(string path)
+        {
+            var wrapper = new ContainerContentsWrapper { contents = this };
+            string json = JsonUtility.ToJson(wrapper, true);
+            System.IO.File.WriteAllText(path, json);
+        }
 
-    /// <summary>
-    /// Save this container contents to disk as JSON
-    /// </summary>
-    public void SaveToDisk(string path)
-    {
-        var wrapper = new ContainerContentsWrapper { contents = this };
-        string json = JsonUtility.ToJson(wrapper, true);
-        System.IO.File.WriteAllText(path, json);
-    }
+        /// <summary>
+        /// Load container contents from disk
+        /// </summary>
+        public static ContainerContents LoadFromDisk(string path)
+        {
+            if (!System.IO.File.Exists(path))
+                return null;
 
-    /// <summary>
-    /// Load container contents from disk
-    /// </summary>
-    public static ContainerContents LoadFromDisk(string path)
-    {
-        if (!System.IO.File.Exists(path))
-            return null;
-
-        string json = System.IO.File.ReadAllText(path);
-        var wrapper = JsonUtility.FromJson<ContainerContentsWrapper>(json);
-        return wrapper.contents;
-    }
+            string json = System.IO.File.ReadAllText(path);
+            var wrapper = JsonUtility.FromJson<ContainerContentsWrapper>(json);
+            return wrapper.contents;
+        }
 
     #endregion
 
     #region Validation
 
-    private void OnValidate()
-    {
-        // Auto-generate containerId if empty
-        if (string.IsNullOrEmpty(containerId))
+        private void OnValidate()
         {
-            containerId = $"container_{System.Guid.NewGuid().ToString().Substring(0, 8)}";
-        }
+            // Auto-generate containerId if empty
+            if (string.IsNullOrEmpty(containerId))
+            {
+                containerId = $"container_{System.Guid.NewGuid().ToString().Substring(0, 8)}";
+            }
 
-        // Ensure grid is valid
-        gridWidth = Mathf.Max(1, gridWidth);
-        gridHeight = Mathf.Max(1, gridHeight);
-    }
+            // Ensure grid is valid
+            gridWidth = Mathf.Max(1, gridWidth);
+            gridHeight = Mathf.Max(1, gridHeight);
+        }
 
     #endregion
 
     #region Debug
 
-    [ContextMenu("Clear All Items")]
-    private void DebugClearAll()
-    {
-        ClearAll();
-        Debug.Log($"[ContainerContents] Cleared all items from {containerId}");
-    }
-
-    [ContextMenu("Print Items")]
-    private void DebugPrintItems()
-    {
-        Debug.Log($"=== {displayName} ({containerId}) ===");
-        Debug.Log($"Grid: {gridWidth}x{gridHeight}");
-        Debug.Log($"Items: {items.Count}");
-        foreach (var item in items)
+        [ContextMenu("Clear All Items")]
+        private void DebugClearAll()
         {
-            Debug.Log($"  - {item.definitionId} ({item.rarity}) x{item.stackCount} at ({item.gridX}, {item.gridY})");
+            ClearAll();
+            Debug.Log($"[ContainerContents] Cleared all items from {containerId}");
         }
-    }
+
+        [ContextMenu("Print Items")]
+        private void DebugPrintItems()
+        {
+            Debug.Log($"=== {displayName} ({containerId}) ===");
+            Debug.Log($"Grid: {gridWidth}x{gridHeight}");
+            Debug.Log($"Items: {items.Count}");
+            foreach (var item in items)
+            {
+                Debug.Log($"  - {item.definitionId} ({item.rarity}) x{item.stackCount} at ({item.gridX}, {item.gridY})");
+            }
+        }
 
     #endregion
-}
+    }
 
 
-/// <summary>
-/// Wrapper for JSON serialization
-/// </summary>
-[System.Serializable]
-public class ContainerContentsWrapper
-{
-    public ContainerContents contents;
+    /// <summary>
+    /// Wrapper for JSON serialization
+    /// </summary>
+    [System.Serializable]
+    public class ContainerContentsWrapper
+    {
+        public ContainerContents contents;
+    }
 }

@@ -5,19 +5,23 @@
 // Stat 90, Resource 100, Blackboard 110, Damage 120, Inventory 130, RPG 140, Interaction 150,
 // Dialogue 160, Hotbar 170, SlotTransformation 180). Anything that doesn't depend on start order
 // keeps the default and runs after them.
-public interface IBrainModule
+
+namespace CrabSystem
 {
-    bool IsEnabled { get; set; }
+    public interface IBrainModule
+    {
+        bool IsEnabled { get; set; }
 
-    int InitOrder => 1000;
+        int InitOrder => 1000;
 
-    // Declined on every entity this machine does not drive (ControllerBrain.IsLocal): switched off, never initialized.
-    bool PlayerOnly => false;
+        // Declined on every entity this machine does not drive (ControllerBrain.IsLocal): switched off, never initialized.
+        bool PlayerOnly => false;
 
-    void Initialize(ControllerBrain brain);
+        void Initialize(ControllerBrain brain);
 
-    void UpdateModule();
+        void UpdateModule();
 
-    // After every module has run Initialize, for wiring that needs the others ready.
-    void LateInitialize() { }
+        // After every module has run Initialize, for wiring that needs the others ready.
+        void LateInitialize() { }
+    }
 }

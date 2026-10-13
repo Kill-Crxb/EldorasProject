@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // Every talent number in one place, read by TalentModule at runtime and by the validator and wizard in the
     // editor, so the tool and the game can't disagree (Talent_Wizard §1). Also the catalogue of trees, so a

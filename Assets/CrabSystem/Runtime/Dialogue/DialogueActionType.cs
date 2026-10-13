@@ -1,6 +1,9 @@
-public enum DialogueActionType
+namespace CrabSystem
 {
-    None,
-    GiveItem,
-    OpenShop
+    public enum DialogueActionType
+    {
+        None,
+        GiveItem,
+        OpenShop
+    }
 }

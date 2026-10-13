@@ -30,273 +30,277 @@ using UnityEngine;
 /// AbilitySystem.ExecuteAbility applies effects directly, no Cue arrives, and nothing spawns —
 /// silently.
 /// </summary>
-public class ProjectileLauncher : MonoBehaviour, IBrainModule
+
+namespace CrabSystem
 {
-    [Header("Module Settings")]
-    [SerializeField] private bool isEnabled = true;
-
-    private ControllerBrain brain;
-    private AbilitySystem abilitySystem;
-    private VFXSystem vfxSystem;
-    private PerceptionModule perception;
-    private TargetLockModule targetLock;
-    private TargetingModule targeting;
-    // Empty rather than null: Fire loops it unconditionally, and an entity whose LateInitialize
-    // bailed should fire an unmodified projectile, not throw.
-    private IProjectileLaunchModifier[] modifiers = System.Array.Empty<IProjectileLaunchModifier>();
-    private IProjectileArrivalHandler arrival;
-    private bool subscribed;
-
-    public bool IsEnabled
+    public class ProjectileLauncher : MonoBehaviour, IBrainModule
     {
-        get => isEnabled;
-        set => isEnabled = value;
-    }
+        [Header("Module Settings")]
+        [SerializeField] private bool isEnabled = true;
 
-    public void Initialize(ControllerBrain controllerBrain)
-    {
-        brain = controllerBrain;
-    }
+        private ControllerBrain brain;
+        private AbilitySystem abilitySystem;
+        private VFXSystem vfxSystem;
+        private PerceptionModule perception;
+        private TargetLockModule targetLock;
+        private TargetingModule targeting;
+        // Empty rather than null: Fire loops it unconditionally, and an entity whose LateInitialize
+        // bailed should fire an unmodified projectile, not throw.
+        private IProjectileLaunchModifier[] modifiers = System.Array.Empty<IProjectileLaunchModifier>();
+        private IProjectileArrivalHandler arrival;
+        private bool subscribed;
 
-    public void LateInitialize()
-    {
-        abilitySystem = brain.GetModule<AbilitySystem>();
-        vfxSystem = brain.GetModule<VFXSystem>();
-
-        // Anything on the brain that wants a say in what gets fired. Collected once, in
-        // discovery order. Empty on most entities, which costs a zero-length loop per shot.
-        modifiers = brain.GetComponentsInChildren<IProjectileLaunchModifier>(true);
-
-        // Resolved here, once, and carried on every launch. An interface can never be in
-        // ControllerBrain's provider cache, so GetModule for one is always a hierarchy walk —
-        // and the payload would otherwise pay that walk on every single contact.
-        arrival = brain.GetComponentInChildren<IProjectileArrivalHandler>(true);
-
-        // PerceptionModule is deliberately NOT cached here. On NPCs it is added at runtime
-        // by the archetype config, which can land after LateInitialize — caching now would
-        // leave every NPC permanently aimless. Resolved lazily in ResolveLockedTarget instead.
-
-        if (abilitySystem == null)
+        public bool IsEnabled
         {
-            isEnabled = false;
-            Debug.LogError($"[ProjectileLauncher] No AbilitySystem on {brain.EntityName} — projectiles cannot fire.", this);
-            return;
+            get => isEnabled;
+            set => isEnabled = value;
         }
 
-        abilitySystem.OnMoveEvent += HandleMoveEvent;
-        subscribed = true;
-    }
-
-    public void UpdateModule() { }
-
-    private void OnDestroy()
-    {
-        if (!subscribed) return;
-        if (abilitySystem == null) return;
-
-        abilitySystem.OnMoveEvent -= HandleMoveEvent;
-        subscribed = false;
-    }
-
-    // ── Trigger ───────────────────────────────────────────────────────────
-
-    private void HandleMoveEvent(MoveEvent evt, int value)
-    {
-        if (!isEnabled) return;
-        if (evt != MoveEvent.Cue) return;
-
-        AbilityDefinition ability = abilitySystem.CurrentAbility;
-        if (ability == null) return;
-        if (ability.projectileData == null) return;
-        if (value != ability.effectCue) return;
-
-        Fire(ability);
-    }
-
-    // ── Firing ────────────────────────────────────────────────────────────
-
-    private void Fire(AbilityDefinition ability)
-    {
-        // THE SEAM. The plan starts as an unmodified copy of what the ability named, then
-        // every modifier on the brain gets a turn — talents, weapon upgrades, buffs, spells.
-        // All of them resolve once, here, into flat values. Nothing inside the projectile
-        // changes, and nothing here knows what any of those systems are.
-        ProjectileLaunchPlan plan;
-        plan.data = ability.projectileData;
-        plan.runtime = ProjectileRuntime.FromData(plan.data);
-        plan.dice = plan.data.weaponData;
-        plan.count = 1;
-        plan.spreadDegrees = 0f;
-
-        for (int i = 0; i < modifiers.Length; i++)
-            modifiers[i].ModifyLaunch(ability, ref plan);
-
-        // The ability names the DATA; the data names its archetype prefab. That indirection is
-        // what lets Shuriken, Kunai and Fireball all come off one Base_Projectile and share
-        // one pool — the prefab is structure, the data is the projectile. A modifier may have
-        // swapped the data by now, which is how a spell's Form chooses its delivery.
-        ProjectileData data = plan.data;
-
-        if (data == null)
+        public void Initialize(ControllerBrain controllerBrain)
         {
-            Debug.LogError($"[ProjectileLauncher] '{ability.abilityName}' ended up with no " +
-                           $"ProjectileData — a launch modifier cleared it.", this);
-            return;
+            brain = controllerBrain;
         }
 
-        GameObject prefab = data.archetypePrefab;
-
-        if (prefab == null)
+        public void LateInitialize()
         {
-            Debug.LogError($"[ProjectileLauncher] '{data.name}' has no Archetype Prefab assigned — " +
-                           $"'{ability.abilityName}' cannot fire.", this);
-            return;
+            abilitySystem = brain.GetModule<AbilitySystem>();
+            vfxSystem = brain.GetModule<VFXSystem>();
+
+            // Anything on the brain that wants a say in what gets fired. Collected once, in
+            // discovery order. Empty on most entities, which costs a zero-length loop per shot.
+            modifiers = brain.GetComponentsInChildren<IProjectileLaunchModifier>(true);
+
+            // Resolved here, once, and carried on every launch. An interface can never be in
+            // ControllerBrain's provider cache, so GetModule for one is always a hierarchy walk —
+            // and the payload would otherwise pay that walk on every single contact.
+            arrival = brain.GetComponentInChildren<IProjectileArrivalHandler>(true);
+
+            // PerceptionModule is deliberately NOT cached here. On NPCs it is added at runtime
+            // by the archetype config, which can land after LateInitialize — caching now would
+            // leave every NPC permanently aimless. Resolved lazily in ResolveLockedTarget instead.
+
+            if (abilitySystem == null)
+            {
+                isEnabled = false;
+                Debug.LogError($"[ProjectileLauncher] No AbilitySystem on {brain.EntityName} — projectiles cannot fire.", this);
+                return;
+            }
+
+            abilitySystem.OnMoveEvent += HandleMoveEvent;
+            subscribed = true;
         }
 
-        // No-ops after the first call for a given prefab, and when prewarmCount is 0.
-        ProjectilePool.Prewarm(prefab, data.prewarmCount);
+        public void UpdateModule() { }
 
-        // Aim resolves ONCE for the whole volley, after the modifiers, because the probe needs
-        // the final stance — a healing bolt has to look for allies — and because every
-        // instance of one cast should agree about what it was aimed at.
-        ProjectileLaunch launch = ResolveLaunch(data, ability, plan.runtime.targetStance);
-        launch.dice = plan.dice;
-        launch.arrival = arrival;
-
-        int count = plan.count > 0 ? plan.count : 1;
-
-        for (int i = 0; i < count; i++)
-            Spawn(prefab, data, plan, launch, Fan(launch.direction, plan.spreadDegrees, i, count));
-    }
-
-    /// <summary>One instance. Everything it needs is already resolved; this only pulls and launches.</summary>
-    private void Spawn(GameObject prefab, ProjectileData data, ProjectileLaunchPlan plan,
-                       ProjectileLaunch launch, Vector3 direction)
-    {
-        GameObject instance = ProjectilePool.Get(prefab);
-        if (instance == null) return;
-
-        var projectile = instance.GetComponent<ProjectileBrain>();
-
-        if (projectile == null)
+        private void OnDestroy()
         {
-            Debug.LogError($"[ProjectileLauncher] Pooled '{prefab.name}' lost its ProjectileBrain.", this);
-            return;
+            if (!subscribed) return;
+            if (abilitySystem == null) return;
+
+            abilitySystem.OnMoveEvent -= HandleMoveEvent;
+            subscribed = false;
         }
 
-        // launch is a struct, so this is this instance's copy — the volley's shared aim with
-        // one direction changed.
-        launch.direction = direction;
+        // ── Trigger ───────────────────────────────────────────────────────────
 
-        projectile.Launch(data, plan.runtime, launch);
-    }
-
-    /// <summary>
-    /// Spreads a volley evenly across the fan, around world up. Two instances sit at the
-    /// edges, three put one dead centre. A single projectile, or a spread of zero, is
-    /// untouched — which is every non-split shot in the game.
-    /// </summary>
-    private static Vector3 Fan(Vector3 direction, float spreadDegrees, int index, int count)
-    {
-        if (count <= 1) return direction;
-        if (spreadDegrees <= 0f) return direction;
-
-        float t = index / (float)(count - 1);
-        float angle = Mathf.Lerp(-spreadDegrees * 0.5f, spreadDegrees * 0.5f, t);
-
-        return Quaternion.AngleAxis(angle, Vector3.up) * direction;
-    }
-
-    // ── Aim ───────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Where it starts, which way it points, and what it may track.
-    ///
-    /// The order is not obvious and matters. Two would-be circular dependencies: the aim
-    /// probe needs an origin but an AboveTarget origin needs the target, and TowardTarget
-    /// needs a target but the probe needs a direction. Both dissolve by probing from the
-    /// ANCHOR rather than the eventual spawn point — a probe comes from the caster's chest
-    /// regardless of where the projectile appears. Sky-dropped meteors are still aimed by
-    /// the person casting them.
-    /// </summary>
-    private ProjectileLaunch ResolveLaunch(ProjectileData data, AbilityDefinition ability,
-                                           TargetStance stance)
-    {
-        ProjectileSpawn spawn = data.spawn;
-        ProjectileAim aim = data.aim;
-
-        Vector3 anchorOrigin = spawn.ResolveAnchor(brain, vfxSystem);
-        Vector3 baseDirection = aim.BaseDirection(brain, anchorOrigin);
-
-        Transform target = aim.UsesLockedTarget ? ResolveLockedTarget() : null;
-
-        if (target == null && aim.UsesProbe)
-            target = aim.Probe(brain, anchorOrigin, baseDirection, data.hitMask, stance);
-
-        Transform assisted = target == null && aim.UsesProbe ? SoftAssist(aim, anchorOrigin, baseDirection) : null;
-        if (assisted != null)
+        private void HandleMoveEvent(MoveEvent evt, int value)
         {
-            target = assisted;
-            baseDirection = (aim.TargetPoint(assisted) - anchorOrigin).normalized;
+            if (!isEnabled) return;
+            if (evt != MoveEvent.Cue) return;
+
+            AbilityDefinition ability = abilitySystem.CurrentAbility;
+            if (ability == null) return;
+            if (ability.projectileData == null) return;
+            if (value != ability.effectCue) return;
+
+            Fire(ability);
         }
 
-        Vector3 origin = spawn.ResolveOrigin(brain, anchorOrigin, baseDirection, target);
+        // ── Firing ────────────────────────────────────────────────────────────
 
-        Vector3 direction = spawn.OverridesDirection
-            ? spawn.ResolveDirection(origin, baseDirection, target, anchorOrigin)
-            : aim.FinalDirection(origin, baseDirection, target);
-
-        return new ProjectileLaunch
+        private void Fire(AbilityDefinition ability)
         {
-            source = brain,
-            ability = ability,
-            origin = origin,
-            direction = direction,
-            target = target,
-        };
-    }
+            // THE SEAM. The plan starts as an unmodified copy of what the ability named, then
+            // every modifier on the brain gets a turn — talents, weapon upgrades, buffs, spells.
+            // All of them resolve once, here, into flat values. Nothing inside the projectile
+            // changes, and nothing here knows what any of those systems are.
+            ProjectileLaunchPlan plan;
+            plan.data = ability.projectileData;
+            plan.runtime = ProjectileRuntime.FromData(plan.data);
+            plan.dice = plan.data.weaponData;
+            plan.count = 1;
+            plan.spreadDegrees = 0f;
 
-    // Aim assist: the player's soft target, when it sits within the aim's assist angle of where they aimed.
-    private Transform SoftAssist(ProjectileAim aim, Vector3 origin, Vector3 direction)
-    {
-        if (aim.softAssistDegrees <= 0f) return null;
-        if (targeting == null) targeting = brain.GetModule<TargetingModule>();
+            for (int i = 0; i < modifiers.Length; i++)
+                modifiers[i].ModifyLaunch(ability, ref plan);
 
-        ControllerBrain soft = targeting != null ? targeting.CurrentTarget : null;
-        if (soft == null) return null;
+            // The ability names the DATA; the data names its archetype prefab. That indirection is
+            // what lets Shuriken, Kunai and Fireball all come off one Base_Projectile and share
+            // one pool — the prefab is structure, the data is the projectile. A modifier may have
+            // swapped the data by now, which is how a spell's Form chooses its delivery.
+            ProjectileData data = plan.data;
 
-        Transform root = soft.EntityRoot != null ? soft.EntityRoot : soft.transform;
-        return Vector3.Angle(direction, aim.TargetPoint(root) - origin) <= aim.softAssistDegrees ? root : null;
-    }
+            if (data == null)
+            {
+                Debug.LogError($"[ProjectileLauncher] '{ability.abilityName}' ended up with no " +
+                               $"ProjectileData — a launch modifier cleared it.", this);
+                return;
+            }
 
-    /// <summary>
-    /// The entity's DELIBERATE target — its explicit choice, as opposed to whatever the aim
-    /// probe happens to find. Only consulted when ProjectileAim ticks Locked Target.
-    ///
-    /// ==== THIS IS THE SEAM FOR REAL TARGETING ====
-    /// TargetLockModule is the legacy module and is off by default in ProjectileAim. When a
-    /// proper targeting system exists, this ONE METHOD is the only thing that changes — the
-    /// aim block, the launcher and every projectile stay as they are.
-    ///
-    /// No IsPlayer branch needed: TargetLock is null on NPCs and PerceptionModule is null on
-    /// the player, so each entity falls through to whatever it actually has.
-    /// </summary>
-    private Transform ResolveLockedTarget()
-    {
-        // Resolved through GetModule, not a brain property — ControllerBrain no longer exposes
-        // target lock at all. Returns null when the module is absent, which is the common case.
-        if (targetLock == null)
-            targetLock = brain.GetModule<TargetLockModule>();
+            GameObject prefab = data.archetypePrefab;
 
-        if (targetLock != null && targetLock.IsLockedOn && targetLock.LockedTarget != null)
-            return targetLock.LockedTarget;
+            if (prefab == null)
+            {
+                Debug.LogError($"[ProjectileLauncher] '{data.name}' has no Archetype Prefab assigned — " +
+                               $"'{ability.abilityName}' cannot fire.", this);
+                return;
+            }
 
-        if (perception == null)
-            perception = brain.GetModule<PerceptionModule>();
+            // No-ops after the first call for a given prefab, and when prewarmCount is 0.
+            ProjectilePool.Prewarm(prefab, data.prewarmCount);
 
-        if (perception != null && perception.HasTarget)
-            return perception.CurrentTarget;
+            // Aim resolves ONCE for the whole volley, after the modifiers, because the probe needs
+            // the final stance — a healing bolt has to look for allies — and because every
+            // instance of one cast should agree about what it was aimed at.
+            ProjectileLaunch launch = ResolveLaunch(data, ability, plan.runtime.targetStance);
+            launch.dice = plan.dice;
+            launch.arrival = arrival;
 
-        return null;
+            int count = plan.count > 0 ? plan.count : 1;
+
+            for (int i = 0; i < count; i++)
+                Spawn(prefab, data, plan, launch, Fan(launch.direction, plan.spreadDegrees, i, count));
+        }
+
+        /// <summary>One instance. Everything it needs is already resolved; this only pulls and launches.</summary>
+        private void Spawn(GameObject prefab, ProjectileData data, ProjectileLaunchPlan plan,
+                           ProjectileLaunch launch, Vector3 direction)
+        {
+            GameObject instance = ProjectilePool.Get(prefab);
+            if (instance == null) return;
+
+            var projectile = instance.GetComponent<ProjectileBrain>();
+
+            if (projectile == null)
+            {
+                Debug.LogError($"[ProjectileLauncher] Pooled '{prefab.name}' lost its ProjectileBrain.", this);
+                return;
+            }
+
+            // launch is a struct, so this is this instance's copy — the volley's shared aim with
+            // one direction changed.
+            launch.direction = direction;
+
+            projectile.Launch(data, plan.runtime, launch);
+        }
+
+        /// <summary>
+        /// Spreads a volley evenly across the fan, around world up. Two instances sit at the
+        /// edges, three put one dead centre. A single projectile, or a spread of zero, is
+        /// untouched — which is every non-split shot in the game.
+        /// </summary>
+        private static Vector3 Fan(Vector3 direction, float spreadDegrees, int index, int count)
+        {
+            if (count <= 1) return direction;
+            if (spreadDegrees <= 0f) return direction;
+
+            float t = index / (float)(count - 1);
+            float angle = Mathf.Lerp(-spreadDegrees * 0.5f, spreadDegrees * 0.5f, t);
+
+            return Quaternion.AngleAxis(angle, Vector3.up) * direction;
+        }
+
+        // ── Aim ───────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Where it starts, which way it points, and what it may track.
+        ///
+        /// The order is not obvious and matters. Two would-be circular dependencies: the aim
+        /// probe needs an origin but an AboveTarget origin needs the target, and TowardTarget
+        /// needs a target but the probe needs a direction. Both dissolve by probing from the
+        /// ANCHOR rather than the eventual spawn point — a probe comes from the caster's chest
+        /// regardless of where the projectile appears. Sky-dropped meteors are still aimed by
+        /// the person casting them.
+        /// </summary>
+        private ProjectileLaunch ResolveLaunch(ProjectileData data, AbilityDefinition ability,
+                                               TargetStance stance)
+        {
+            ProjectileSpawn spawn = data.spawn;
+            ProjectileAim aim = data.aim;
+
+            Vector3 anchorOrigin = spawn.ResolveAnchor(brain, vfxSystem);
+            Vector3 baseDirection = aim.BaseDirection(brain, anchorOrigin);
+
+            Transform target = aim.UsesLockedTarget ? ResolveLockedTarget() : null;
+
+            if (target == null && aim.UsesProbe)
+                target = aim.Probe(brain, anchorOrigin, baseDirection, data.hitMask, stance);
+
+            Transform assisted = target == null && aim.UsesProbe ? SoftAssist(aim, anchorOrigin, baseDirection) : null;
+            if (assisted != null)
+            {
+                target = assisted;
+                baseDirection = (aim.TargetPoint(assisted) - anchorOrigin).normalized;
+            }
+
+            Vector3 origin = spawn.ResolveOrigin(brain, anchorOrigin, baseDirection, target);
+
+            Vector3 direction = spawn.OverridesDirection
+                ? spawn.ResolveDirection(origin, baseDirection, target, anchorOrigin)
+                : aim.FinalDirection(origin, baseDirection, target);
+
+            return new ProjectileLaunch
+            {
+                source = brain,
+                ability = ability,
+                origin = origin,
+                direction = direction,
+                target = target,
+            };
+        }
+
+        // Aim assist: the player's soft target, when it sits within the aim's assist angle of where they aimed.
+        private Transform SoftAssist(ProjectileAim aim, Vector3 origin, Vector3 direction)
+        {
+            if (aim.softAssistDegrees <= 0f) return null;
+            if (targeting == null) targeting = brain.GetModule<TargetingModule>();
+
+            ControllerBrain soft = targeting != null ? targeting.CurrentTarget : null;
+            if (soft == null) return null;
+
+            Transform root = soft.EntityRoot != null ? soft.EntityRoot : soft.transform;
+            return Vector3.Angle(direction, aim.TargetPoint(root) - origin) <= aim.softAssistDegrees ? root : null;
+        }
+
+        /// <summary>
+        /// The entity's DELIBERATE target — its explicit choice, as opposed to whatever the aim
+        /// probe happens to find. Only consulted when ProjectileAim ticks Locked Target.
+        ///
+        /// ==== THIS IS THE SEAM FOR REAL TARGETING ====
+        /// TargetLockModule is the legacy module and is off by default in ProjectileAim. When a
+        /// proper targeting system exists, this ONE METHOD is the only thing that changes — the
+        /// aim block, the launcher and every projectile stay as they are.
+        ///
+        /// No IsPlayer branch needed: TargetLock is null on NPCs and PerceptionModule is null on
+        /// the player, so each entity falls through to whatever it actually has.
+        /// </summary>
+        private Transform ResolveLockedTarget()
+        {
+            // Resolved through GetModule, not a brain property — ControllerBrain no longer exposes
+            // target lock at all. Returns null when the module is absent, which is the common case.
+            if (targetLock == null)
+                targetLock = brain.GetModule<TargetLockModule>();
+
+            if (targetLock != null && targetLock.IsLockedOn && targetLock.LockedTarget != null)
+                return targetLock.LockedTarget;
+
+            if (perception == null)
+                perception = brain.GetModule<PerceptionModule>();
+
+            if (perception != null && perception.HasTarget)
+                return perception.CurrentTarget;
+
+            return null;
+        }
     }
 }

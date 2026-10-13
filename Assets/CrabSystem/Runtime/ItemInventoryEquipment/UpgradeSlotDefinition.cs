@@ -23,115 +23,119 @@ using System.Collections.Generic;
 /// - Flexible filtering (by category, subtype, or tags)
 /// - Visual customization per slot type
 /// </summary>
-[CreateAssetMenu(fileName = "New Upgrade Slot", menuName = "Items/Upgrade Slot Definition")]
-public class UpgradeSlotDefinition : ScriptableObject
+
+namespace CrabSystem
 {
-    [Header("Identification")]
-    [Tooltip("Unique identifier (e.g., 'reinforcement', 'underlay', 'trinket')")]
-    public string slotId;
-
-    [Tooltip("Display name shown in UI")]
-    public string displayName;
-
-    [Header("Accepted Upgrades")]
-    [Tooltip("Item categories that can be inserted (e.g., 'Upgrade' category)")]
-    public List<ItemCategory> acceptedCategories = new List<ItemCategory>();
-
-    [Tooltip("Specific item subtypes that can be inserted (if empty, allows all from categories)")]
-    public List<ItemSubType> acceptedSubTypes = new List<ItemSubType>();
-
-    [Tooltip("Tag-based filtering (e.g., 'offensive_gem', 'defensive_rune')")]
-    public List<string> acceptedTags = new List<string>();
-
-    [Header("Visual")]
-    [Tooltip("Icon representing this slot type in UI")]
-    public Sprite slotIcon;
-
-    [Tooltip("Background sprite for slot")]
-    public Sprite slotBackground;
-
-    [Tooltip("Color tint for slot in UI")]
-    public Color slotColor = Color.white;
-
-    [Header("Behavior")]
-    [Tooltip("Can this slot be left empty?")]
-    public bool isOptional = true;
-
-    [Tooltip("Is this slot locked by default? (requires unlock item/progression)")]
-    public bool isLockedByDefault = false;
-
-    [Header("Description")]
-    [TextArea(2, 4)]
-    public string description;
-
-    /// <summary>
-    /// Check if an item can be inserted into this slot type
-    /// </summary>
-    public bool CanAccept(ItemDefinition item)
+    [CreateAssetMenu(fileName = "New Upgrade Slot", menuName = "Items/Upgrade Slot Definition")]
+    public class UpgradeSlotDefinition : ScriptableObject
     {
-        // Guard clause - null check
-        if (item == null) return false;
+        [Header("Identification")]
+        [Tooltip("Unique identifier (e.g., 'reinforcement', 'underlay', 'trinket')")]
+        public string slotId;
 
-        // Check category restrictions
-        if (acceptedCategories != null && acceptedCategories.Count > 0)
-        {
-            bool categoryMatch = false;
-            foreach (var category in acceptedCategories)
-            {
-                if (item.category == category)
-                {
-                    categoryMatch = true;
-                    break;
-                }
-            }
-            if (!categoryMatch) return false;
-        }
+        [Tooltip("Display name shown in UI")]
+        public string displayName;
 
-        // Check subtype restrictions
-        if (acceptedSubTypes != null && acceptedSubTypes.Count > 0)
-        {
-            bool subtypeMatch = false;
-            foreach (var subtype in acceptedSubTypes)
-            {
-                if (item.subType == subtype)
-                {
-                    subtypeMatch = true;
-                    break;
-                }
-            }
-            if (!subtypeMatch) return false;
-        }
+        [Header("Accepted Upgrades")]
+        [Tooltip("Item categories that can be inserted (e.g., 'Upgrade' category)")]
+        public List<ItemCategory> acceptedCategories = new List<ItemCategory>();
 
-        // Check tag restrictions
-        if (acceptedTags != null && acceptedTags.Count > 0)
+        [Tooltip("Specific item subtypes that can be inserted (if empty, allows all from categories)")]
+        public List<ItemSubType> acceptedSubTypes = new List<ItemSubType>();
+
+        [Tooltip("Tag-based filtering (e.g., 'offensive_gem', 'defensive_rune')")]
+        public List<string> acceptedTags = new List<string>();
+
+        [Header("Visual")]
+        [Tooltip("Icon representing this slot type in UI")]
+        public Sprite slotIcon;
+
+        [Tooltip("Background sprite for slot")]
+        public Sprite slotBackground;
+
+        [Tooltip("Color tint for slot in UI")]
+        public Color slotColor = Color.white;
+
+        [Header("Behavior")]
+        [Tooltip("Can this slot be left empty?")]
+        public bool isOptional = true;
+
+        [Tooltip("Is this slot locked by default? (requires unlock item/progression)")]
+        public bool isLockedByDefault = false;
+
+        [Header("Description")]
+        [TextArea(2, 4)]
+        public string description;
+
+        /// <summary>
+        /// Check if an item can be inserted into this slot type
+        /// </summary>
+        public bool CanAccept(ItemDefinition item)
         {
-            bool tagMatch = false;
-            if (item.tags != null)
+            // Guard clause - null check
+            if (item == null) return false;
+
+            // Check category restrictions
+            if (acceptedCategories != null && acceptedCategories.Count > 0)
             {
-                foreach (var requiredTag in acceptedTags)
+                bool categoryMatch = false;
+                foreach (var category in acceptedCategories)
                 {
-                    foreach (var itemTag in item.tags)
+                    if (item.category == category)
                     {
-                        if (requiredTag == itemTag)
-                        {
-                            tagMatch = true;
-                            break;
-                        }
+                        categoryMatch = true;
+                        break;
                     }
-                    if (tagMatch) break;
                 }
+                if (!categoryMatch) return false;
             }
-            if (!tagMatch) return false;
+
+            // Check subtype restrictions
+            if (acceptedSubTypes != null && acceptedSubTypes.Count > 0)
+            {
+                bool subtypeMatch = false;
+                foreach (var subtype in acceptedSubTypes)
+                {
+                    if (item.subType == subtype)
+                    {
+                        subtypeMatch = true;
+                        break;
+                    }
+                }
+                if (!subtypeMatch) return false;
+            }
+
+            // Check tag restrictions
+            if (acceptedTags != null && acceptedTags.Count > 0)
+            {
+                bool tagMatch = false;
+                if (item.tags != null)
+                {
+                    foreach (var requiredTag in acceptedTags)
+                    {
+                        foreach (var itemTag in item.tags)
+                        {
+                            if (requiredTag == itemTag)
+                            {
+                                tagMatch = true;
+                                break;
+                            }
+                        }
+                        if (tagMatch) break;
+                    }
+                }
+                if (!tagMatch) return false;
+            }
+
+            return true;
         }
 
-        return true;
-    }
-
-    /// <summary>
-    /// Validation helper
-    /// </summary>
-    public bool IsValid()
-    {
-        return !string.IsNullOrEmpty(slotId) && !string.IsNullOrEmpty(displayName);
+        /// <summary>
+        /// Validation helper
+        /// </summary>
+        public bool IsValid()
+        {
+            return !string.IsNullOrEmpty(slotId) && !string.IsNullOrEmpty(displayName);
+        }
     }
 }

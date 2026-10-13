@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NinjaGame.Stats
+namespace CrabSystem.Stats
 {
     /// <summary>
     /// A named set of stat definitions. Entities load one or more schemas by asset name.

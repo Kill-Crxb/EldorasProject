@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using NinjaGame.Progression;
+using CrabSystem.Progression;
 using UnityEngine;
 
-namespace NinjaGame.Stats
+namespace CrabSystem.Stats
 {
     /// <summary>
     /// What each core stat gives you as it rises. One entry per core stat, holding the

@@ -1,5 +1,6 @@
 using MoreMountains.Feedbacks;
 using UnityEngine;
+using CrabSystem;
 
 // Adapter from FootstepEmitter.onStep to an MMF_Player. A persistent UnityEvent binding needs an
 // exact signature match, so onStep's (point, normal) cannot target PlayFeedbacks directly.

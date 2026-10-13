@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // One of a character's tree slots and what has been learned in it. Runtime state owned by TalentModule.
     public class TalentSlot

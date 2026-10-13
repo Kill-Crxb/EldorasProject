@@ -1,7 +1,10 @@
 using UnityEngine;
 
-public interface IInputHandler
+namespace CrabSystem
 {
-    void SubscribeToInputs(PlayerInputControls inputControls);
-    void UnsubscribeFromInputs(PlayerInputControls inputControls);
+    public interface IInputHandler
+    {
+        void SubscribeToInputs(PlayerInputControls inputControls);
+        void UnsubscribeFromInputs(PlayerInputControls inputControls);
+    }
 }

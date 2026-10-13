@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using MagicaCloth2;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // One-shot setup for the Porphi breast bones using Magica Cloth 2 BoneSpring.
 // Idempotent: running it again reconfigures the existing component rather than stacking a second.

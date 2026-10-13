@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // One wardrobe for both CombatGirls (Shield_Girl_Build.md). Each girl's model carries her own outfits and
 // hair and the other girl's, grafted onto her skeleton by bone name; bones she lacks (the school uniform's

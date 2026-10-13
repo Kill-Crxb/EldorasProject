@@ -4,20 +4,24 @@
 //
 // Today it advances by Time.deltaTime at scale 1 from Time.time, so Now tracks Time.time and code still reading Time
 // stays comparable with code reading the clock.
-public class EntityClock
+
+namespace CrabSystem
 {
-    public float Now { get; private set; }
-    public float Delta { get; private set; }
-    public float Scale { get; set; } = 1f;
-
-    public EntityClock(float start)
+    public class EntityClock
     {
-        Now = start;
-    }
+        public float Now { get; private set; }
+        public float Delta { get; private set; }
+        public float Scale { get; set; } = 1f;
 
-    public void Advance(float realDelta)
-    {
-        Delta = realDelta * Scale;
-        Now += Delta;
+        public EntityClock(float start)
+        {
+            Now = start;
+        }
+
+        public void Advance(float realDelta)
+        {
+            Delta = realDelta * Scale;
+            Now += Delta;
+        }
     }
 }

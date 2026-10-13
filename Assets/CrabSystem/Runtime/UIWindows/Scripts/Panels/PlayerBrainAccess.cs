@@ -4,18 +4,22 @@ using UnityEngine;
 /// Single way for UI to reach the player. SaveManager knows first; the scene search
 /// is the fallback for scenes that start without going through character select.
 /// </summary>
-public static class PlayerBrainAccess
+
+namespace CrabSystem
 {
-    public static ControllerBrain Find()
+    public static class PlayerBrainAccess
     {
-        var saved = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
-        if (saved != null) return saved;
-
-        foreach (var brain in Object.FindObjectsByType<ControllerBrain>())
+        public static ControllerBrain Find()
         {
-            if (brain.IsPlayer) return brain;
-        }
+            var saved = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
+            if (saved != null) return saved;
 
-        return null;
+            foreach (var brain in Object.FindObjectsByType<ControllerBrain>())
+            {
+                if (brain.IsPlayer) return brain;
+            }
+
+            return null;
+        }
     }
 }

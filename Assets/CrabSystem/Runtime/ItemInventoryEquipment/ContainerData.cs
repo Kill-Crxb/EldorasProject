@@ -1,46 +1,50 @@
 using UnityEngine;
 
 // ContainerData.cs - For chest/inventory persistence (Online-game friendly)
-[System.Serializable]
-public class ContainerData
+
+namespace CrabSystem
 {
-    public string containerId;
-    public ContainerType type;
-    public int gridWidth;
-    public int gridHeight;
-    public long lastModified;
-    public ItemInstance[] items;
-
-    // For network serialization
-    public string ToJson()
+    [System.Serializable]
+    public class ContainerData
     {
-        return JsonUtility.ToJson(this, true);
+        public string containerId;
+        public ContainerType type;
+        public int gridWidth;
+        public int gridHeight;
+        public long lastModified;
+        public ItemInstance[] items;
+
+        // For network serialization
+        public string ToJson()
+        {
+            return JsonUtility.ToJson(this, true);
+        }
+
+        public static ContainerData FromJson(string json)
+        {
+            return JsonUtility.FromJson<ContainerData>(json);
+        }
+
+        // For database storage
+        public byte[] ToBinary()
+        {
+            string json = ToJson();
+            return System.Text.Encoding.UTF8.GetBytes(json);
+        }
+
+        public static ContainerData FromBinary(byte[] data)
+        {
+            string json = System.Text.Encoding.UTF8.GetString(data);
+            return FromJson(json);
+        }
     }
 
-    public static ContainerData FromJson(string json)
+    public enum ContainerType
     {
-        return JsonUtility.FromJson<ContainerData>(json);
+        PlayerInventory,
+        Chest,
+        Bank,
+        Vendor,
+        Mailbox
     }
-
-    // For database storage
-    public byte[] ToBinary()
-    {
-        string json = ToJson();
-        return System.Text.Encoding.UTF8.GetBytes(json);
-    }
-
-    public static ContainerData FromBinary(byte[] data)
-    {
-        string json = System.Text.Encoding.UTF8.GetString(data);
-        return FromJson(json);
-    }
-}
-
-public enum ContainerType
-{
-    PlayerInventory,
-    Chest,
-    Bank,
-    Vendor,
-    Mailbox
 }

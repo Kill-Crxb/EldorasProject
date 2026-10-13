@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace NinjaGame.Magic
+namespace CrabSystem.Magic
 {
     /// <summary>
     /// Magnitude. ORDINAL on purpose — Split steps down and Amplify steps up, so the tier has to

@@ -1,4 +1,4 @@
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     /// <summary>
     /// A store of talent points, split by tree. Implement this on the talent module when

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Animations;
 using System.Collections.Generic;
+using CrabSystem;
 
 /// <summary>
 /// Editor script to automatically build a clean, layered Animator Controller

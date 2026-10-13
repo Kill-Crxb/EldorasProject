@@ -7,18 +7,22 @@
 // A saveable whose state changes between autosaves (an item picked up, a slot equipped) raises
 // Dirty, and SaveManager writes it on its next flush. The default does nothing, so a saveable that
 // never raises it is written on the autosave timer and on quit, as before.
-public interface ISaveable
+
+namespace CrabSystem
 {
-    string GetSaveId();
-    string GetSaveData();
-    void LoadSaveData(string json);
+    public interface ISaveable
+    {
+        string GetSaveId();
+        string GetSaveData();
+        void LoadSaveData(string json);
 
-    // Increment when the serialised fields change, and write it as a top-level "version" field. SaveManager skips
-    // (and never overwrites) a file whose version is higher than this: it came from a newer build.
-    int GetSaveVersion();
+        // Increment when the serialised fields change, and write it as a top-level "version" field. SaveManager skips
+        // (and never overwrites) a file whose version is higher than this: it came from a newer build.
+        int GetSaveVersion();
 
-    // Lower loads first: stats before anything derived from them, inventory before equipment.
-    int LoadOrder => 1000;
+        // Lower loads first: stats before anything derived from them, inventory before equipment.
+        int LoadOrder => 1000;
 
-    event Action<ISaveable> Dirty { add { } remove { } }
+        event Action<ISaveable> Dirty { add { } remove { } }
+    }
 }

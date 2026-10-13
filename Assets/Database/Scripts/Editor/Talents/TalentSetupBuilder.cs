@@ -1,10 +1,11 @@
 using System.Collections.Generic;
-using NinjaGame.Progression;
+using CrabSystem.Progression;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using CrabSystem;
 
 // Tools → Crab → Talents → Set Up (10 Oct). Makes the TalentRules asset, puts a TalentModule on Base_PC (so the
 // Mirror too) with the XP level cap matching the rules, and adds a Talents page to the player menu of the open

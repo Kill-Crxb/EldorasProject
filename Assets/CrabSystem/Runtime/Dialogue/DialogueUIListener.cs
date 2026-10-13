@@ -7,29 +7,33 @@ using UnityEngine;
 ///
 /// Scene-level, not per-brain — place once alongside UniversalWindowManager.
 /// </summary>
-public class DialogueUIListener : MonoBehaviour
+
+namespace CrabSystem
 {
-    private void OnEnable()
+    public class DialogueUIListener : MonoBehaviour
     {
-        GameEvents.OnDialogueStarted += HandleDialogueStarted;
-        GameEvents.OnDialogueEnded += HandleDialogueEnded;
-    }
+        private void OnEnable()
+        {
+            GameEvents.OnDialogueStarted += HandleDialogueStarted;
+            GameEvents.OnDialogueEnded += HandleDialogueEnded;
+        }
 
-    private void OnDisable()
-    {
-        GameEvents.OnDialogueStarted -= HandleDialogueStarted;
-        GameEvents.OnDialogueEnded -= HandleDialogueEnded;
-    }
+        private void OnDisable()
+        {
+            GameEvents.OnDialogueStarted -= HandleDialogueStarted;
+            GameEvents.OnDialogueEnded -= HandleDialogueEnded;
+        }
 
-    private void HandleDialogueStarted(ControllerBrain npc, ControllerBrain actor)
-    {
-        if (UniversalWindowManager.Instance == null) return;
-        UniversalWindowManager.Instance.OpenDialogueWindow(actor, npc);
-    }
+        private void HandleDialogueStarted(ControllerBrain npc, ControllerBrain actor)
+        {
+            if (UniversalWindowManager.Instance == null) return;
+            UniversalWindowManager.Instance.OpenDialogueWindow(actor, npc);
+        }
 
-    private void HandleDialogueEnded(ControllerBrain npc)
-    {
-        if (UniversalWindowManager.Instance == null) return;
-        UniversalWindowManager.Instance.CloseDialogueWindow();
+        private void HandleDialogueEnded(ControllerBrain npc)
+        {
+            if (UniversalWindowManager.Instance == null) return;
+            UniversalWindowManager.Instance.CloseDialogueWindow();
+        }
     }
 }

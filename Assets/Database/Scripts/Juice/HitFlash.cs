@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using CrabSystem;
 
 // Drives FlatToon's _HitFlash on every renderer under the model root. Juice.md §4.2.
 //

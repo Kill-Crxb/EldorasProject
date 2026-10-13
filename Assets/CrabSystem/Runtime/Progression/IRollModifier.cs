@@ -1,4 +1,4 @@
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     /// <summary>
     /// Collects additions to named rolls — weapon damage, crit, initiative. Implement this

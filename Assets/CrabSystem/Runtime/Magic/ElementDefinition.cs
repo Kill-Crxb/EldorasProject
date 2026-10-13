@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Magic
+namespace CrabSystem.Magic
 {
     /// <summary>
     /// Everything slot 1 (School) decides: what damage type the spell deals, what it looks like,

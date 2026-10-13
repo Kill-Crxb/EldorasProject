@@ -1,5 +1,6 @@
 using MagicaCloth2;
 using UnityEngine;
+using CrabSystem;
 
 // Runs Magica Cloth simulations in slow motion without touching their physics.
 //

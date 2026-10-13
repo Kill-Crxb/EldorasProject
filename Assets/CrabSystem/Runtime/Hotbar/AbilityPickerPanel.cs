@@ -12,109 +12,113 @@ using TMPro;
 /// No transient ScriptableObjects are created — AbilityPickerEntry carries
 /// SlotData (nullable) or AbilityDef directly.
 /// </summary>
-public class AbilityPickerPanel : MonoBehaviour
+
+namespace CrabSystem
 {
-    [Header("References")]
-    [SerializeField] private RectTransform entryContainer;
-    [SerializeField] private GameObject entryPrefab;
-    [SerializeField] private ScrollRect scrollRect;
-
-    [Header("Static Slot List")]
-    [Tooltip("Drag AbilitySlotData SOs here. Supplemented at runtime by RuntimeAbilityManager.")]
-    [SerializeField] private List<AbilitySlotData> staticSlotList = new List<AbilitySlotData>();
-
-    private HotbarSystem hotbarSystem;
-    private string targetBarId;
-    private bool isOpen;
-
-    private readonly List<AbilityPickerEntry> spawnedEntries = new List<AbilityPickerEntry>();
-
-    void Awake() => gameObject.SetActive(false);
-
-    // ── API ──────────────────────────────────────────────────────────────
-
-    public void Toggle(HotbarSystem hotbar, string barId)
+    public class AbilityPickerPanel : MonoBehaviour
     {
-        if (isOpen) Close(); else Open(hotbar, barId);
-    }
+        [Header("References")]
+        [SerializeField] private RectTransform entryContainer;
+        [SerializeField] private GameObject entryPrefab;
+        [SerializeField] private ScrollRect scrollRect;
 
-    public void Open(HotbarSystem hotbar, string barId)
-    {
-        hotbarSystem = hotbar;
-        targetBarId = barId;
-        isOpen = true;
-        gameObject.SetActive(true);
-        Refresh();
-    }
+        [Header("Static Slot List")]
+        [Tooltip("Drag AbilitySlotData SOs here. Supplemented at runtime by RuntimeAbilityManager.")]
+        [SerializeField] private List<AbilitySlotData> staticSlotList = new List<AbilitySlotData>();
 
-    public void Close()
-    {
-        isOpen = false;
-        gameObject.SetActive(false);
-    }
+        private HotbarSystem hotbarSystem;
+        private string targetBarId;
+        private bool isOpen;
 
-    // ── Build ─────────────────────────────────────────────────────────────
+        private readonly List<AbilityPickerEntry> spawnedEntries = new List<AbilityPickerEntry>();
 
-    private void Refresh()
-    {
-        ClearEntries();
+        void Awake() => gameObject.SetActive(false);
 
-        // SO-backed slots from the static list
-        foreach (var slot in staticSlotList)
+        // ── API ──────────────────────────────────────────────────────────────
+
+        public void Toggle(HotbarSystem hotbar, string barId)
         {
-            if (slot == null) continue;
-            SpawnEntry(slot, null);
+            if (isOpen) Close(); else Open(hotbar, barId);
         }
 
-        // Raw abilities from RuntimeAbilityManager not covered by any static slot
-        var playerBrain = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
-        var ram = playerBrain?.GetModule<RuntimeAbilityManager>();
-
-        if (ram != null)
+        public void Open(HotbarSystem hotbar, string barId)
         {
-            foreach (var instance in ram.GetAllInstances())
+            hotbarSystem = hotbar;
+            targetBarId = barId;
+            isOpen = true;
+            gameObject.SetActive(true);
+            Refresh();
+        }
+
+        public void Close()
+        {
+            isOpen = false;
+            gameObject.SetActive(false);
+        }
+
+        // ── Build ─────────────────────────────────────────────────────────────
+
+        private void Refresh()
+        {
+            ClearEntries();
+
+            // SO-backed slots from the static list
+            foreach (var slot in staticSlotList)
             {
-                if (instance?.definition == null) continue;
+                if (slot == null) continue;
+                SpawnEntry(slot, null);
+            }
 
-                bool alreadyCovered = staticSlotList.Exists(s =>
-                    s != null &&
-                    s.abilityChain != null &&
-                    s.abilityChain.Length == 1 &&
-                    s.abilityChain[0] == instance.definition);
+            // Raw abilities from RuntimeAbilityManager not covered by any static slot
+            var playerBrain = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
+            var ram = playerBrain?.GetModule<RuntimeAbilityManager>();
 
-                if (!alreadyCovered)
-                    SpawnEntry(null, instance.definition);
+            if (ram != null)
+            {
+                foreach (var instance in ram.GetAllInstances())
+                {
+                    if (instance?.definition == null) continue;
+
+                    bool alreadyCovered = staticSlotList.Exists(s =>
+                        s != null &&
+                        s.abilityChain != null &&
+                        s.abilityChain.Length == 1 &&
+                        s.abilityChain[0] == instance.definition);
+
+                    if (!alreadyCovered)
+                        SpawnEntry(null, instance.definition);
+                }
             }
         }
-    }
 
-    private void SpawnEntry(AbilitySlotData slotData, AbilityDefinition abilityDef)
-    {
-        if (entryContainer == null) return;
-
-        GameObject go;
-        if (entryPrefab != null)
+        private void SpawnEntry(AbilitySlotData slotData, AbilityDefinition abilityDef)
         {
-            go = Instantiate(entryPrefab, entryContainer);
+            if (entryContainer == null) return;
+
+            GameObject go;
+            if (entryPrefab != null)
+            {
+                go = Instantiate(entryPrefab, entryContainer);
+            }
+            else
+            {
+                go = new GameObject("PickerEntry");
+                go.transform.SetParent(entryContainer, false);
+                var rt = go.AddComponent<RectTransform>();
+                rt.sizeDelta = new Vector2(60, 60);
+                go.AddComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.9f);
+            }
+
+            var entry = go.GetComponent<AbilityPickerEntry>() ?? go.AddComponent<AbilityPickerEntry>();
+            entry.Initialize(slotData, abilityDef);
+            spawnedEntries.Add(entry);
         }
-        else
+
+        private void ClearEntries()
         {
-            go = new GameObject("PickerEntry");
-            go.transform.SetParent(entryContainer, false);
-            var rt = go.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(60, 60);
-            go.AddComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.9f);
+            foreach (var e in spawnedEntries)
+                if (e != null) Destroy(e.gameObject);
+            spawnedEntries.Clear();
         }
-
-        var entry = go.GetComponent<AbilityPickerEntry>() ?? go.AddComponent<AbilityPickerEntry>();
-        entry.Initialize(slotData, abilityDef);
-        spawnedEntries.Add(entry);
-    }
-
-    private void ClearEntries()
-    {
-        foreach (var e in spawnedEntries)
-            if (e != null) Destroy(e.gameObject);
-        spawnedEntries.Clear();
     }
 }

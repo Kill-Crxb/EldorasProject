@@ -8,158 +8,162 @@ using UnityEngine;
 /// Entities still hold their own AbilityDefinition references — this registry is for the
 /// places that only have an id: saved hotbar slots, granted abilities, debug tools.
 /// </summary>
-public class AbilityManager : MonoBehaviour, IGameManager
+
+namespace CrabSystem
 {
-    // Any folder named "Resources" anywhere under Assets is a resources root, so the
-    // database folder is found by this name alone, wherever it sits in the project.
-    private const string DatabaseFolder = CrabResources.Abilities;
+    public class AbilityManager : MonoBehaviour, IGameManager
+    {
+        // Any folder named "Resources" anywhere under Assets is a resources root, so the
+        // database folder is found by this name alone, wherever it sits in the project.
+        private const string DatabaseFolder = CrabResources.Abilities;
 
-    private static AbilityManager instance;
-    public static AbilityManager Instance => instance;
+        private static AbilityManager instance;
+        public static AbilityManager Instance => instance;
 
-    [Header("Ability Definitions")]
-    [Tooltip("Optional. Everything in Resources/AbilityDatabase is registered regardless.")]
-    [SerializeField] private AbilityDefinition[] abilityDefinitions;
+        [Header("Ability Definitions")]
+        [Tooltip("Optional. Everything in Resources/AbilityDatabase is registered regardless.")]
+        [SerializeField] private AbilityDefinition[] abilityDefinitions;
 
-    private readonly Dictionary<string, AbilityDefinition> definitionLookup = new();
+        private readonly Dictionary<string, AbilityDefinition> definitionLookup = new();
 
     #region IGameManager
 
-    public string ManagerName => "Ability Manager";
-    public int InitializationPriority => 7; // After Items (5), before Resources (10)
-    public bool IsEnabled => enabled;
-    public bool IsInitialized { get; private set; }
+        public string ManagerName => "Ability Manager";
+        public int InitializationPriority => 7; // After Items (5), before Resources (10)
+        public bool IsEnabled => enabled;
+        public bool IsInitialized { get; private set; }
 
-    public void Initialize()
-    {
-        if (IsInitialized) return;
-
-        instance = this;
-        LoadAbilities();
-        IsInitialized = true;
-    }
-
-    public void LateInitialize() { }
-
-    public void Shutdown() { }
-
-    public ValidationResult Validate()
-    {
-        var result = ValidationResult.Success();
-
-        if (!IsInitialized) return result;
-
-        if (definitionLookup.Count == 0)
+        public void Initialize()
         {
-            result.Warnings.Add($"No abilities loaded — inspector array is empty and Resources/{DatabaseFolder} found nothing");
-            return result;
+            if (IsInitialized) return;
+
+            instance = this;
+            LoadAbilities();
+            IsInitialized = true;
         }
 
-        result.Info.Add($"{definitionLookup.Count} abilities registered");
-        return result;
-    }
+        public void LateInitialize() { }
+
+        public void Shutdown() { }
+
+        public ValidationResult Validate()
+        {
+            var result = ValidationResult.Success();
+
+            if (!IsInitialized) return result;
+
+            if (definitionLookup.Count == 0)
+            {
+                result.Warnings.Add($"No abilities loaded — inspector array is empty and Resources/{DatabaseFolder} found nothing");
+                return result;
+            }
+
+            result.Info.Add($"{definitionLookup.Count} abilities registered");
+            return result;
+        }
 
     #endregion
 
     #region Loading
 
-    private void LoadAbilities()
-    {
-        definitionLookup.Clear();
-
-        int count = Register(abilityDefinitions);
-        count += Register(Resources.LoadAll<AbilityDefinition>(DatabaseFolder));
-
-        if (count == 0)
+        private void LoadAbilities()
         {
-            Debug.LogWarning($"[AbilityManager] No abilities loaded. Assign definitions in the inspector, " +
-                             $"or drop them in a Resources/{DatabaseFolder} folder.");
-        }
-    }
+            definitionLookup.Clear();
 
-    /// <summary>
-    /// Adds definitions to the lookup, skipping anything unusable. Returns how many landed.
-    /// Called once for the inspector array and once for the database folder, so an asset
-    /// listed in both is silently ignored the second time rather than reported as a clash.
-    /// </summary>
-    private int Register(AbilityDefinition[] definitions)
-    {
-        if (definitions == null) return 0;
+            int count = Register(abilityDefinitions);
+            count += Register(Resources.LoadAll<AbilityDefinition>(DatabaseFolder));
 
-        int count = 0;
-
-        foreach (var definition in definitions)
-        {
-            if (definition == null) continue;
-
-            if (string.IsNullOrEmpty(definition.abilityId))
+            if (count == 0)
             {
-                Debug.LogWarning($"[AbilityManager] '{definition.name}' has no abilityId, skipping.");
-                continue;
+                Debug.LogWarning($"[AbilityManager] No abilities loaded. Assign definitions in the inspector, " +
+                                 $"or drop them in a Resources/{DatabaseFolder} folder.");
             }
-
-            if (definitionLookup.TryGetValue(definition.abilityId, out var existing))
-            {
-                if (existing != definition)
-                    Debug.LogError($"[AbilityManager] Duplicate abilityId '{definition.abilityId}' on " +
-                                   $"'{definition.name}' and '{existing.name}'. Ids must be unique.");
-                continue;
-            }
-
-            definitionLookup[definition.abilityId] = definition;
-            count++;
         }
 
-        return count;
-    }
+        /// <summary>
+        /// Adds definitions to the lookup, skipping anything unusable. Returns how many landed.
+        /// Called once for the inspector array and once for the database folder, so an asset
+        /// listed in both is silently ignored the second time rather than reported as a clash.
+        /// </summary>
+        private int Register(AbilityDefinition[] definitions)
+        {
+            if (definitions == null) return 0;
+
+            int count = 0;
+
+            foreach (var definition in definitions)
+            {
+                if (definition == null) continue;
+
+                if (string.IsNullOrEmpty(definition.abilityId))
+                {
+                    Debug.LogWarning($"[AbilityManager] '{definition.name}' has no abilityId, skipping.");
+                    continue;
+                }
+
+                if (definitionLookup.TryGetValue(definition.abilityId, out var existing))
+                {
+                    if (existing != definition)
+                        Debug.LogError($"[AbilityManager] Duplicate abilityId '{definition.abilityId}' on " +
+                                       $"'{definition.name}' and '{existing.name}'. Ids must be unique.");
+                    continue;
+                }
+
+                definitionLookup[definition.abilityId] = definition;
+                count++;
+            }
+
+            return count;
+        }
 
     #endregion
 
     #region Public API
 
-    public static AbilityDefinition GetDefinition(string abilityId)
-    {
-        if (instance == null || !instance.IsInitialized)
+        public static AbilityDefinition GetDefinition(string abilityId)
         {
-            Debug.LogError("[AbilityManager] Not initialized — ManagerBrain should own this manager.");
+            if (instance == null || !instance.IsInitialized)
+            {
+                Debug.LogError("[AbilityManager] Not initialized — ManagerBrain should own this manager.");
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(abilityId)) return null;
+
+            if (instance.definitionLookup.TryGetValue(abilityId, out var definition)) return definition;
+
+            Debug.LogWarning($"[AbilityManager] Ability not found: {abilityId}");
             return null;
         }
 
-        if (string.IsNullOrEmpty(abilityId)) return null;
+        public static bool HasAbility(string abilityId)
+        {
+            if (instance == null || !instance.IsInitialized) return false;
+            if (string.IsNullOrEmpty(abilityId)) return false;
 
-        if (instance.definitionLookup.TryGetValue(abilityId, out var definition)) return definition;
+            return instance.definitionLookup.ContainsKey(abilityId);
+        }
 
-        Debug.LogWarning($"[AbilityManager] Ability not found: {abilityId}");
-        return null;
-    }
+        public static AbilityDefinition[] GetAllAbilities()
+        {
+            if (instance == null || !instance.IsInitialized) return new AbilityDefinition[0];
 
-    public static bool HasAbility(string abilityId)
-    {
-        if (instance == null || !instance.IsInitialized) return false;
-        if (string.IsNullOrEmpty(abilityId)) return false;
+            var all = new AbilityDefinition[instance.definitionLookup.Count];
+            instance.definitionLookup.Values.CopyTo(all, 0);
+            return all;
+        }
 
-        return instance.definitionLookup.ContainsKey(abilityId);
-    }
+        public static string[] GetAllAbilityIds()
+        {
+            if (instance == null || !instance.IsInitialized) return new string[0];
 
-    public static AbilityDefinition[] GetAllAbilities()
-    {
-        if (instance == null || !instance.IsInitialized) return new AbilityDefinition[0];
+            var ids = new string[instance.definitionLookup.Count];
+            instance.definitionLookup.Keys.CopyTo(ids, 0);
+            return ids;
+        }
 
-        var all = new AbilityDefinition[instance.definitionLookup.Count];
-        instance.definitionLookup.Values.CopyTo(all, 0);
-        return all;
-    }
-
-    public static string[] GetAllAbilityIds()
-    {
-        if (instance == null || !instance.IsInitialized) return new string[0];
-
-        var ids = new string[instance.definitionLookup.Count];
-        instance.definitionLookup.Keys.CopyTo(ids, 0);
-        return ids;
-    }
-
-    public static int GetAbilityCount() => instance != null ? instance.definitionLookup.Count : 0;
+        public static int GetAbilityCount() => instance != null ? instance.definitionLookup.Count : 0;
 
     #endregion
+    }
 }

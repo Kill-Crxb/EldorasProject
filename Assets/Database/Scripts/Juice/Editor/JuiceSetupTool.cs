@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using CrabSystem;
 
 // One-shot authoring for Juice.md §6. Tools → Juice → Build FX And Fill Players.
 //

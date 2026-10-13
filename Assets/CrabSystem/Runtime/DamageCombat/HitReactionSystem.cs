@@ -12,196 +12,200 @@ using UnityEngine;
 // Death still comes from DamageSystem.
 //
 // Place on a "HitReaction_System" child of Component_Brain, alongside Damage_System.
-public class HitReactionSystem : MonoBehaviour, IBrainModule
+
+namespace CrabSystem
 {
-    const string RestState = "Rest";
-
-    [Header("System State")]
-    [SerializeField] private bool isEnabled = true;
-
-    [Header("Rate Limit")]
-    [Tooltip("Minimum seconds between reactions, so a multi-hit combo doesn't retrigger every frame.")]
-    [SerializeField] private float minTimeBetweenReactions = 0.2f;
-
-    [Header("Reaction Blend")]
-    [Tooltip("Seconds the Reactions layer takes to blend home when the hit state ends.")]
-    [SerializeField] private float restFadeSeconds = 0.1f;
-
-    [Header("Animator Parameters")]
-    [Tooltip("Played for a Flinch.")]
-    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitLightParam = "HitLight";
-    [Tooltip("Played for Stagger, Guard Break, Knockdown and Launch until those have their own clips.")]
-    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string staggerParam = "Stagger";
-    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string deathParam = "Death";
-    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string isDeadParam = "IsDead";
-    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitDirXParam = "HitDirX";
-    [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitDirZParam = "HitDirZ";
-
-    public bool IsEnabled
+    public class HitReactionSystem : MonoBehaviour, IBrainModule
     {
-        get => isEnabled;
-        set => isEnabled = value;
-    }
+        const string RestState = "Rest";
 
-    private ControllerBrain brain;
+        [Header("System State")]
+        [SerializeField] private bool isEnabled = true;
 
-    // Gameplay time (EntityClock).
-    private float Now => brain.Clock.Now;
-    private float Delta => brain.Clock.Delta;
-    private AnimationSystem anim;
-    private DamageSystem damage;
-    private StatusSystem statuses;
-    private Blackboard blackboard;
-    private Transform facing;
+        [Header("Rate Limit")]
+        [Tooltip("Minimum seconds between reactions, so a multi-hit combo doesn't retrigger every frame.")]
+        [SerializeField] private float minTimeBetweenReactions = 0.2f;
 
-    private readonly Dictionary<StatusDefinition, string> reactionByStatus = new();
+        [Header("Reaction Blend")]
+        [Tooltip("Seconds the Reactions layer takes to blend home when the hit state ends.")]
+        [SerializeField] private float restFadeSeconds = 0.1f;
 
-    private float lastReactionTime = -999f;
-    private bool isDead;
+        [Header("Animator Parameters")]
+        [Tooltip("Played for a Flinch.")]
+        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitLightParam = "HitLight";
+        [Tooltip("Played for Stagger, Guard Break, Knockdown and Launch until those have their own clips.")]
+        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string staggerParam = "Stagger";
+        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string deathParam = "Death";
+        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string isDeadParam = "IsDead";
+        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitDirXParam = "HitDirX";
+        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitDirZParam = "HitDirZ";
 
-    // Fired with the trigger name that was played. VFX/SFX can hang off this.
-    public event Action<string> OnReactionPlayed;
-
-    public void Initialize(ControllerBrain controllerBrain)
-    {
-        brain = controllerBrain;
-    }
-
-    public void LateInitialize()
-    {
-        anim = brain.Animation;
-        damage = brain.Damage;
-        statuses = brain.GetModule<StatusSystem>();
-        blackboard = brain.Blackboard;
-        facing = brain.EntityRoot != null ? brain.EntityRoot : transform;
-
-        if (damage == null)
+        public bool IsEnabled
         {
-            isEnabled = false;
-            Debug.LogError($"[HitReactionSystem] No DamageSystem on {brain.EntityName} — nothing to react to.", this);
-            return;
+            get => isEnabled;
+            set => isEnabled = value;
         }
 
-        if (anim == null)
+        private ControllerBrain brain;
+
+        // Gameplay time (EntityClock).
+        private float Now => brain.Clock.Now;
+        private float Delta => brain.Clock.Delta;
+        private AnimationSystem anim;
+        private DamageSystem damage;
+        private StatusSystem statuses;
+        private Blackboard blackboard;
+        private Transform facing;
+
+        private readonly Dictionary<StatusDefinition, string> reactionByStatus = new();
+
+        private float lastReactionTime = -999f;
+        private bool isDead;
+
+        // Fired with the trigger name that was played. VFX/SFX can hang off this.
+        public event Action<string> OnReactionPlayed;
+
+        public void Initialize(ControllerBrain controllerBrain)
         {
-            isEnabled = false;
-            Debug.LogError($"[HitReactionSystem] No AnimationSystem on {brain.EntityName} — nothing to drive.", this);
-            return;
+            brain = controllerBrain;
         }
 
-        MapReactions();
-
-        damage.OnDamageApplied += HandleDamageApplied;
-        damage.OnDeath += HandleDeath;
-        damage.OnRevived += ResetReactions;
-
-        if (statuses != null)
+        public void LateInitialize()
         {
-            statuses.OnStatusApplied += HandleStatus;
-            statuses.OnStatusReapplied += HandleStatus;
+            anim = brain.Animation;
+            damage = brain.Damage;
+            statuses = brain.GetModule<StatusSystem>();
+            blackboard = brain.Blackboard;
+            facing = brain.EntityRoot != null ? brain.EntityRoot : transform;
+
+            if (damage == null)
+            {
+                isEnabled = false;
+                Debug.LogError($"[HitReactionSystem] No DamageSystem on {brain.EntityName} — nothing to react to.", this);
+                return;
+            }
+
+            if (anim == null)
+            {
+                isEnabled = false;
+                Debug.LogError($"[HitReactionSystem] No AnimationSystem on {brain.EntityName} — nothing to drive.", this);
+                return;
+            }
+
+            MapReactions();
+
+            damage.OnDamageApplied += HandleDamageApplied;
+            damage.OnDeath += HandleDeath;
+            damage.OnRevived += ResetReactions;
+
+            if (statuses != null)
+            {
+                statuses.OnStatusApplied += HandleStatus;
+                statuses.OnStatusReapplied += HandleStatus;
+            }
+
+            if (blackboard != null) blackboard.OnBoolChanged += HandleFactChanged;
         }
 
-        if (blackboard != null) blackboard.OnBoolChanged += HandleFactChanged;
-    }
-
-    private void OnDestroy()
-    {
-        if (damage != null)
+        private void OnDestroy()
         {
-            damage.OnDamageApplied -= HandleDamageApplied;
-            damage.OnDeath -= HandleDeath;
-            damage.OnRevived -= ResetReactions;
+            if (damage != null)
+            {
+                damage.OnDamageApplied -= HandleDamageApplied;
+                damage.OnDeath -= HandleDeath;
+                damage.OnRevived -= ResetReactions;
+            }
+
+            if (statuses != null)
+            {
+                statuses.OnStatusApplied -= HandleStatus;
+                statuses.OnStatusReapplied -= HandleStatus;
+            }
+
+            if (blackboard != null) blackboard.OnBoolChanged -= HandleFactChanged;
         }
 
-        if (statuses != null)
+        // The Reactions layer shows itself while a reaction plays and rests at 0 otherwise
+        // (AnimationLayerController's rest rule), so there is no weight to manage here.
+        public void UpdateModule() { }
+
+        private void MapReactions()
         {
-            statuses.OnStatusApplied -= HandleStatus;
-            statuses.OnStatusReapplied -= HandleStatus;
+            AddReaction(HitState.Flinch, hitLightParam);
+            AddReaction(HitState.Stagger, staggerParam);
+            AddReaction(HitState.GuardBreak, staggerParam);
+            AddReaction(HitState.Knockdown, staggerParam);
+            AddReaction(HitState.Launch, staggerParam);
         }
 
-        if (blackboard != null) blackboard.OnBoolChanged -= HandleFactChanged;
-    }
+        private void AddReaction(HitState state, string trigger)
+        {
+            StatusDefinition status = AbilityDefinition.LoadHitState(state);
+            if (status != null) reactionByStatus[status] = trigger;
+        }
 
-    // The Reactions layer shows itself while a reaction plays and rests at 0 otherwise
-    // (AnimationLayerController's rest rule), so there is no weight to manage here.
-    public void UpdateModule() { }
+        // ── Hit state → animation ─────────────────────────────────────────────
 
-    private void MapReactions()
-    {
-        AddReaction(HitState.Flinch, hitLightParam);
-        AddReaction(HitState.Stagger, staggerParam);
-        AddReaction(HitState.GuardBreak, staggerParam);
-        AddReaction(HitState.Knockdown, staggerParam);
-        AddReaction(HitState.Launch, staggerParam);
-    }
+        private void HandleStatus(StatusInstance instance)
+        {
+            if (!isEnabled || isDead) return;
+            if (!reactionByStatus.TryGetValue(instance.Definition, out string trigger)) return;
+            if (Now - lastReactionTime < minTimeBetweenReactions) return;
 
-    private void AddReaction(HitState state, string trigger)
-    {
-        StatusDefinition status = AbilityDefinition.LoadHitState(state);
-        if (status != null) reactionByStatus[status] = trigger;
-    }
+            lastReactionTime = Now;
+            anim.SetTrigger(trigger);
+            OnReactionPlayed?.Invoke(trigger);
+        }
 
-    // ── Hit state → animation ─────────────────────────────────────────────
+        // The hit state is over: whatever the clip still has to play would hide the fighter's next move.
+        // The layer is looked up here, not cached: a spawned fighter's model (and animator) arrives after
+        // LateInitialize, when the lookup still returns -1 (Known Issues B10).
+        private void HandleFactChanged(int key, bool value)
+        {
+            if (key != BlackboardKey.CannotAct || value || isDead) return;
 
-    private void HandleStatus(StatusInstance instance)
-    {
-        if (!isEnabled || isDead) return;
-        if (!reactionByStatus.TryGetValue(instance.Definition, out string trigger)) return;
-        if (Now - lastReactionTime < minTimeBetweenReactions) return;
+            int layer = anim.GetLayerIndex(AnimationLayerNames.Reactions);
+            if (layer < 0) return;
 
-        lastReactionTime = Now;
-        anim.SetTrigger(trigger);
-        OnReactionPlayed?.Invoke(trigger);
-    }
+            anim.CrossFade(RestState, restFadeSeconds, layer);
+        }
 
-    // The hit state is over: whatever the clip still has to play would hide the fighter's next move.
-    // The layer is looked up here, not cached: a spawned fighter's model (and animator) arrives after
-    // LateInitialize, when the lookup still returns -1 (Known Issues B10).
-    private void HandleFactChanged(int key, bool value)
-    {
-        if (key != BlackboardKey.CannotAct || value || isDead) return;
+        // Direction only, for when the directional reactions land (Known Issues B28).
+        private void HandleDamageApplied(CombatDamagePacket packet, float applied)
+        {
+            if (!isEnabled || isDead) return;
+            if (packet.source == DamageSource.Tick || applied <= 0f) return;
 
-        int layer = anim.GetLayerIndex(AnimationLayerNames.Reactions);
-        if (layer < 0) return;
+            SetHitDirection(packet.attackDirection);
+        }
 
-        anim.CrossFade(RestState, restFadeSeconds, layer);
-    }
+        private void HandleDeath()
+        {
+            if (isDead) return;
+            isDead = true;
 
-    // Direction only, for when the directional reactions land (Known Issues B28).
-    private void HandleDamageApplied(CombatDamagePacket packet, float applied)
-    {
-        if (!isEnabled || isDead) return;
-        if (packet.source == DamageSource.Tick || applied <= 0f) return;
+            anim.SetBool(isDeadParam, true);
+            anim.SetTrigger(deathParam);
+        }
 
-        SetHitDirection(packet.attackDirection);
-    }
+        private void SetHitDirection(Vector3 worldDirection)
+        {
+            if (worldDirection.sqrMagnitude < 0.0001f) return;
 
-    private void HandleDeath()
-    {
-        if (isDead) return;
-        isDead = true;
+            Vector3 local = facing.InverseTransformDirection(worldDirection.normalized);
+            anim.SetFloat(hitDirXParam, local.x);
+            anim.SetFloat(hitDirZParam, local.z);
+        }
 
-        anim.SetBool(isDeadParam, true);
-        anim.SetTrigger(deathParam);
-    }
+        // ── Respawn ───────────────────────────────────────────────────────────
 
-    private void SetHitDirection(Vector3 worldDirection)
-    {
-        if (worldDirection.sqrMagnitude < 0.0001f) return;
-
-        Vector3 local = facing.InverseTransformDirection(worldDirection.normalized);
-        anim.SetFloat(hitDirXParam, local.x);
-        anim.SetFloat(hitDirZParam, local.z);
-    }
-
-    // ── Respawn ───────────────────────────────────────────────────────────
-
-    // Brought back (DamageSystem.OnRevived): clears the death pose and the rate limit. AnimationSystem skips
-    // parameters the controller lacks, so these writes need no guard.
-    public void ResetReactions()
-    {
-        isDead = false;
-        lastReactionTime = -999f;
-        anim.SetBool(isDeadParam, false);
+        // Brought back (DamageSystem.OnRevived): clears the death pose and the rate limit. AnimationSystem skips
+        // parameters the controller lacks, so these writes need no guard.
+        public void ResetReactions()
+        {
+            isDead = false;
+            lastReactionTime = -999f;
+            anim.SetBool(isDeadParam, false);
+        }
     }
 }

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // A class: a grid of placed talents the player spends points into (Talent_Trees §6–§8). The resource budget
     // and level track were dropped on 10 Oct (Crxb) — trees are their talents.

@@ -6,51 +6,55 @@ using UnityEngine;
 // out to its reach (the attacker's hurtbox edge plus the weapon's reach plus the strike's bonus). Green when
 // it landed on someone, yellow when it didn't. Turn on Gizmos in the Game view to see it there too.
 // Sits on the Debugtools prefab: off in the CrabSystem base, on in the game's variant.
-public class StrikeTrace : MonoBehaviour
+
+namespace CrabSystem
 {
-    [SerializeField] private float rescanInterval = 1f;
-    [SerializeField] private float showFor = 1f;
-    [SerializeField] private int segments = 16;
-
-    private readonly HashSet<AbilitySystem> tracked = new();
-    private float nextScan;
-
-    private void Update()
+    public class StrikeTrace : MonoBehaviour
     {
-        if (Time.unscaledTime < nextScan) return;
-        nextScan = Time.unscaledTime + rescanInterval;
+        [SerializeField] private float rescanInterval = 1f;
+        [SerializeField] private float showFor = 1f;
+        [SerializeField] private int segments = 16;
 
-        foreach (AbilitySystem abilities in FindObjectsByType<AbilitySystem>())
+        private readonly HashSet<AbilitySystem> tracked = new();
+        private float nextScan;
+
+        private void Update()
         {
-            if (abilities.Strikes == null || !tracked.Add(abilities)) continue;
-            abilities.Strikes.OnStrike += Draw;
-        }
-    }
+            if (Time.unscaledTime < nextScan) return;
+            nextScan = Time.unscaledTime + rescanInterval;
 
-    private void Draw(StrikeArea area)
-    {
-        if (this == null) return;
-
-        Color color = area.hits > 0 ? Color.green : Color.yellow;
-        DrawFan(area, area.bottom, color);
-        DrawFan(area, area.top, color);
-    }
-
-    private void DrawFan(StrikeArea area, float height, Color color)
-    {
-        Vector3 centre = new Vector3(area.centre.x, height, area.centre.z);
-        float half = area.arc * 0.5f;
-        Vector3 previous = centre;
-
-        for (int i = 0; i <= segments; i++)
-        {
-            float angle = Mathf.Lerp(-half, half, (float)i / segments);
-            Vector3 point = centre + Quaternion.Euler(0f, angle, 0f) * area.forward * area.radius;
-            Debug.DrawLine(previous, point, color, showFor);
-            previous = point;
+            foreach (AbilitySystem abilities in FindObjectsByType<AbilitySystem>())
+            {
+                if (abilities.Strikes == null || !tracked.Add(abilities)) continue;
+                abilities.Strikes.OnStrike += Draw;
+            }
         }
 
-        Debug.DrawLine(previous, centre, color, showFor);
+        private void Draw(StrikeArea area)
+        {
+            if (this == null) return;
+
+            Color color = area.hits > 0 ? Color.green : Color.yellow;
+            DrawFan(area, area.bottom, color);
+            DrawFan(area, area.top, color);
+        }
+
+        private void DrawFan(StrikeArea area, float height, Color color)
+        {
+            Vector3 centre = new Vector3(area.centre.x, height, area.centre.z);
+            float half = area.arc * 0.5f;
+            Vector3 previous = centre;
+
+            for (int i = 0; i <= segments; i++)
+            {
+                float angle = Mathf.Lerp(-half, half, (float)i / segments);
+                Vector3 point = centre + Quaternion.Euler(0f, angle, 0f) * area.forward * area.radius;
+                Debug.DrawLine(previous, point, color, showFor);
+                previous = point;
+            }
+
+            Debug.DrawLine(previous, centre, color, showFor);
+        }
     }
 }
 #endif

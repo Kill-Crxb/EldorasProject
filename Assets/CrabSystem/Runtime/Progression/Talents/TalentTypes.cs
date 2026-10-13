@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // Talent_Trees.md §7–§8 and Talent_Wizard.md §1. A node is *what* (TalentNode), a placement is *where in
     // this tree* (TalentPlacement), a tree is the grid (TalentTree).

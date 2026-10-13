@@ -19,69 +19,73 @@ using UnityEngine.SceneManagement;
 ///   - Attach to a GameObject in the MainMenu scene (or ManagerBrain)
 ///   - Set gameSceneName to match your Game scene name in Build Settings
 /// </summary>
-public class SceneLoader : MonoBehaviour
+
+namespace CrabSystem
 {
-    public static SceneLoader Instance { get; private set; }
-
-    [Header("Scene Names")]
-    [IdRef(IdKind.Scene)] [SerializeField] private string gameSceneName = "Game";
-    [IdRef(IdKind.Scene)] [SerializeField] private string mainMenuSceneName = "MainMenu";
-
-    [Header("Debug")]
-    [SerializeField] private bool debugLogging = false;
-
-    void Awake()
+    public class SceneLoader : MonoBehaviour
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
-    }
+        public static SceneLoader Instance { get; private set; }
 
-    /// <summary>
-    /// Called by CharacterSelectScreen when the player confirms a character.
-    /// </summary>
-    public void LoadGameScene(string characterId)
-    {
-        if (string.IsNullOrEmpty(characterId))
+        [Header("Scene Names")]
+        [IdRef(IdKind.Scene)] [SerializeField] private string gameSceneName = "Game";
+        [IdRef(IdKind.Scene)] [SerializeField] private string mainMenuSceneName = "MainMenu";
+
+        [Header("Debug")]
+        [SerializeField] private bool debugLogging = false;
+
+        void Awake()
         {
-            Debug.LogError("[SceneLoader] LoadGameScene called with empty characterId!");
-            return;
+            if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+            Instance = this;
         }
 
-        if (debugLogging)
-            Debug.Log($"[SceneLoader] Loading game scene for character: {characterId}");
+        /// <summary>
+        /// Called by CharacterSelectScreen when the player confirms a character.
+        /// </summary>
+        public void LoadGameScene(string characterId)
+        {
+            if (string.IsNullOrEmpty(characterId))
+            {
+                Debug.LogError("[SceneLoader] LoadGameScene called with empty characterId!");
+                return;
+            }
 
-        // Broadcast selection — SaveManager stores it before scene unloads
-        GameEvents.CharacterSelected(characterId);
+            if (debugLogging)
+                Debug.Log($"[SceneLoader] Loading game scene for character: {characterId}");
 
-        StartCoroutine(LoadSceneAsync(gameSceneName));
-    }
+            // Broadcast selection — SaveManager stores it before scene unloads
+            GameEvents.CharacterSelected(characterId);
 
-    /// <summary>
-    /// Return to the main menu from the game scene (e.g. logout or quit to menu).
-    /// Saves first, then transitions.
-    /// </summary>
-    public void LoadMainMenu()
-    {
-        GameEvents.SaveRequested();
-        StartCoroutine(LoadSceneAsync(mainMenuSceneName));
-    }
+            StartCoroutine(LoadSceneAsync(gameSceneName));
+        }
 
-    private IEnumerator LoadSceneAsync(string sceneName)
-    {
-        AsyncOperation op = SceneManager.LoadSceneAsync(sceneName);
-        op.allowSceneActivation = false;
+        /// <summary>
+        /// Return to the main menu from the game scene (e.g. logout or quit to menu).
+        /// Saves first, then transitions.
+        /// </summary>
+        public void LoadMainMenu()
+        {
+            GameEvents.SaveRequested();
+            StartCoroutine(LoadSceneAsync(mainMenuSceneName));
+        }
 
-        // Wait until nearly ready
-        while (op.progress < 0.9f)
+        private IEnumerator LoadSceneAsync(string sceneName)
+        {
+            AsyncOperation op = SceneManager.LoadSceneAsync(sceneName);
+            op.allowSceneActivation = false;
+
+            // Wait until nearly ready
+            while (op.progress < 0.9f)
+                yield return null;
+
+            // Activate the scene
+            op.allowSceneActivation = true;
+
+            // Wait one frame for the scene to fully initialise
             yield return null;
 
-        // Activate the scene
-        op.allowSceneActivation = true;
-
-        // Wait one frame for the scene to fully initialise
-        yield return null;
-
-        // GameSceneReady is fired by GameSceneBootstrapper in the game scene's Start(),
-        // not here — SceneLoader is destroyed with the menu scene before this point.
+            // GameSceneReady is fired by GameSceneBootstrapper in the game scene's Start(),
+            // not here — SceneLoader is destroyed with the menu scene before this point.
+        }
     }
 }

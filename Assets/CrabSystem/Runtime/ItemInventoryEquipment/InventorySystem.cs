@@ -7,339 +7,343 @@ using System.Linq;
 /// Grid-based inventory system for containers.
 /// Optional module - not all entities need inventory (e.g., wolves).
 /// </summary>
-public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, ISaveable
+
+namespace CrabSystem
 {
-    public int InitOrder => 130;
+    public class InventorySystem : MonoBehaviour, IBrainModule, IInventoryProvider, ISaveable
+    {
+        public int InitOrder => 130;
 
-    [Header("Container Configuration")]
-    [SerializeField] private ContainerData[] containers;
+        [Header("Container Configuration")]
+        [SerializeField] private ContainerData[] containers;
 
-    [Header("Container Contents")]
-    [Tooltip("Optional: Pre-configured contents to load on initialization (inspector or runtime)")]
-    [SerializeField] private ContainerContents initialContents;
+        [Header("Container Contents")]
+        [Tooltip("Optional: Pre-configured contents to load on initialization (inspector or runtime)")]
+        [SerializeField] private ContainerContents initialContents;
 
-    [Header("Capacity")]
-    [SerializeField] private int maxItems = 100;
+        [Header("Capacity")]
+        [SerializeField] private int maxItems = 100;
 
-    private ControllerBrain brain;
-    private List<ItemInstance> inventoryItems = new List<ItemInstance>();
-    private ContainerContents currentContents;
-    private bool isInitialized = false;
+        private ControllerBrain brain;
+        private List<ItemInstance> inventoryItems = new List<ItemInstance>();
+        private ContainerContents currentContents;
+        private bool isInitialized = false;
 
-    public event Action OnInventoryChanged;
-    public event Action<ISaveable> Dirty;
-    public event Action<ItemInstance> OnItemAdded;
+        public event Action OnInventoryChanged;
+        public event Action<ISaveable> Dirty;
+        public event Action<ItemInstance> OnItemAdded;
 
-    // True while a save or a container's contents are being put back. OnItemAdded means "this
-    // character just got an item" (pickups, quest Find objectives), so restoring must not raise it;
-    // listeners get one OnInventoryChanged when the restore ends instead (B18).
-    private bool restoring;
-    public event Action<ItemInstance> OnItemRemoved;
+        // True while a save or a container's contents are being put back. OnItemAdded means "this
+        // character just got an item" (pickups, quest Find objectives), so restoring must not raise it;
+        // listeners get one OnInventoryChanged when the restore ends instead (B18).
+        private bool restoring;
+        public event Action<ItemInstance> OnItemRemoved;
 
     #region IBrainModule
 
-    public bool IsEnabled
-    {
-        get => enabled;
-        set => enabled = value;
-    }
+        public bool IsEnabled
+        {
+            get => enabled;
+            set => enabled = value;
+        }
 
-    public void Initialize(ControllerBrain brain)
-    {
-        if (isInitialized) return;
+        public void Initialize(ControllerBrain brain)
+        {
+            if (isInitialized) return;
 
-        this.brain = brain;
-        isInitialized = true;
-    }
+            this.brain = brain;
+            isInitialized = true;
+        }
 
-    public void LateInitialize()
-    {
-        // Load initial contents if assigned (non-player entities / pre-configured chests)
-        // Players skip this — SaveManager loads their state via LoadSaveData()
-        if (initialContents != null)
-            LoadFromContents(initialContents);
-        else
-            CreateDefaultContents();
-    }
+        public void LateInitialize()
+        {
+            // Load initial contents if assigned (non-player entities / pre-configured chests)
+            // Players skip this — SaveManager loads their state via LoadSaveData()
+            if (initialContents != null)
+                LoadFromContents(initialContents);
+            else
+                CreateDefaultContents();
+        }
 
-    public void UpdateModule() { }
+        public void UpdateModule() { }
 
-    public void Shutdown() { }
+        public void Shutdown() { }
 
     #endregion
 
     #region ISaveable
 
-    public string GetSaveId() => "inventory";
-    public int GetSaveVersion() => 1;
-    public int LoadOrder => 40;
+        public string GetSaveId() => "inventory";
+        public int GetSaveVersion() => 1;
+        public int LoadOrder => 40;
 
-    private void RaiseChanged()
-    {
-        OnInventoryChanged?.Invoke();
-        Dirty?.Invoke(this);
-    }
-
-    public string GetSaveData()
-    {
-        var saveData = new InventorySaveData
+        private void RaiseChanged()
         {
-            version = GetSaveVersion(),
-            items = new List<ItemRecord>()
-        };
+            OnInventoryChanged?.Invoke();
+            Dirty?.Invoke(this);
+        }
 
-        foreach (var item in inventoryItems)
-            if (item != null) saveData.items.Add(ItemRecord.From(item));
+        public string GetSaveData()
+        {
+            var saveData = new InventorySaveData
+            {
+                version = GetSaveVersion(),
+                items = new List<ItemRecord>()
+            };
 
-        return JsonUtility.ToJson(saveData);
-    }
+            foreach (var item in inventoryItems)
+                if (item != null) saveData.items.Add(ItemRecord.From(item));
 
-    public void LoadSaveData(string json)
-    {
-        if (string.IsNullOrEmpty(json)) return;
+            return JsonUtility.ToJson(saveData);
+        }
 
-        var saveData = JsonUtility.FromJson<InventorySaveData>(json);
-        if (saveData?.items == null) return;
+        public void LoadSaveData(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
 
-        ClearInventory();
-        restoring = true;
-        foreach (var record in saveData.items) Restore(record);
-        EndRestore();
-    }
+            var saveData = JsonUtility.FromJson<InventorySaveData>(json);
+            if (saveData?.items == null) return;
 
-    private void Restore(ItemRecord record)
-    {
-        ItemInstance item = record.ToInstance();
-        if (item == null) return;
-        if (!AddItem(item))
-            Debug.LogWarning($"[InventorySystem] Failed to restore item {record.definitionId} at ({record.gridX},{record.gridY})", this);
-    }
+            ClearInventory();
+            restoring = true;
+            foreach (var record in saveData.items) Restore(record);
+            EndRestore();
+        }
 
-    private void EndRestore()
-    {
-        restoring = false;
-        RaiseChanged();
-    }
+        private void Restore(ItemRecord record)
+        {
+            ItemInstance item = record.ToInstance();
+            if (item == null) return;
+            if (!AddItem(item))
+                Debug.LogWarning($"[InventorySystem] Failed to restore item {record.definitionId} at ({record.gridX},{record.gridY})", this);
+        }
 
-    // ── Save Data Structures ──────────────────────────────────────────────
+        private void EndRestore()
+        {
+            restoring = false;
+            RaiseChanged();
+        }
 
-    [Serializable]
-    private class InventorySaveData
-    {
-        public int version;
-        public List<ItemRecord> items;
-    }
+        // ── Save Data Structures ──────────────────────────────────────────────
+
+        [Serializable]
+        private class InventorySaveData
+        {
+            public int version;
+            public List<ItemRecord> items;
+        }
 
     #endregion
 
     #region Item Management
 
-    public bool AddItem(ItemInstance item)
-    {
-        if (item == null) return false;
-        if (item.Definition == null) return false;
-        if (inventoryItems.Count >= maxItems) return false;
-
-        if (!TryPlaceInAnyContainer(item))
+        public bool AddItem(ItemInstance item)
         {
-            Debug.LogWarning($"[InventorySystem] No space for {item.Definition.displayName}");
-            return false;
+            if (item == null) return false;
+            if (item.Definition == null) return false;
+            if (inventoryItems.Count >= maxItems) return false;
+
+            if (!TryPlaceInAnyContainer(item))
+            {
+                Debug.LogWarning($"[InventorySystem] No space for {item.Definition.displayName}");
+                return false;
+            }
+
+            inventoryItems.Add(item);
+            if (restoring) return true;
+
+            OnItemAdded?.Invoke(item);
+            RaiseChanged();
+
+            return true;
         }
 
-        inventoryItems.Add(item);
-        if (restoring) return true;
+        public bool RemoveItem(string instanceId)
+        {
+            if (string.IsNullOrEmpty(instanceId)) return false;
 
-        OnItemAdded?.Invoke(item);
-        RaiseChanged();
+            var item = inventoryItems.FirstOrDefault(i => i.instanceId == instanceId);
+            if (item == null) return false;
 
-        return true;
-    }
+            item.RemoveFromGrid();
+            inventoryItems.Remove(item);
+            OnItemRemoved?.Invoke(item);
+            RaiseChanged();
 
-    public bool RemoveItem(string instanceId)
-    {
-        if (string.IsNullOrEmpty(instanceId)) return false;
+            return true;
+        }
 
-        var item = inventoryItems.FirstOrDefault(i => i.instanceId == instanceId);
-        if (item == null) return false;
+        public ItemInstance GetItemInstance(string instanceId)
+        {
+            if (string.IsNullOrEmpty(instanceId)) return null;
+            return inventoryItems.FirstOrDefault(i => i.instanceId == instanceId);
+        }
 
-        item.RemoveFromGrid();
-        inventoryItems.Remove(item);
-        OnItemRemoved?.Invoke(item);
-        RaiseChanged();
+        public ItemInstance[] GetAllItems() => inventoryItems.ToArray();
 
-        return true;
-    }
+        public bool HasItem(string instanceId)
+        {
+            if (string.IsNullOrEmpty(instanceId)) return false;
+            return inventoryItems.Any(i => i.instanceId == instanceId);
+        }
 
-    public ItemInstance GetItemInstance(string instanceId)
-    {
-        if (string.IsNullOrEmpty(instanceId)) return null;
-        return inventoryItems.FirstOrDefault(i => i.instanceId == instanceId);
-    }
+        public int GetItemCount() => inventoryItems.Count;
 
-    public ItemInstance[] GetAllItems() => inventoryItems.ToArray();
+        public void ClearInventory()
+        {
+            foreach (var item in inventoryItems)
+                item?.RemoveFromGrid();
 
-    public bool HasItem(string instanceId)
-    {
-        if (string.IsNullOrEmpty(instanceId)) return false;
-        return inventoryItems.Any(i => i.instanceId == instanceId);
-    }
-
-    public int GetItemCount() => inventoryItems.Count;
-
-    public void ClearInventory()
-    {
-        foreach (var item in inventoryItems)
-            item?.RemoveFromGrid();
-
-        inventoryItems.Clear();
-        RaiseChanged();
-    }
+            inventoryItems.Clear();
+            RaiseChanged();
+        }
 
     #endregion
 
     #region Grid Placement
 
-    private bool TryPlaceInAnyContainer(ItemInstance item)
-    {
-        // If item already has a valid position, honour it
-        if (item.IsPlaced && IsPositionValid(item, item.gridX, item.gridY))
-            return true;
-
-        // Otherwise find the first open slot
-        if (currentContents == null) return false;
-
-        int gridW = currentContents.gridWidth;
-        int gridH = currentContents.gridHeight;
-
-        for (int y = 0; y <= gridH - item.itemHeight; y++)
+        private bool TryPlaceInAnyContainer(ItemInstance item)
         {
-            for (int x = 0; x <= gridW - item.itemWidth; x++)
+            // If item already has a valid position, honour it
+            if (item.IsPlaced && IsPositionValid(item, item.gridX, item.gridY))
+                return true;
+
+            // Otherwise find the first open slot
+            if (currentContents == null) return false;
+
+            int gridW = currentContents.gridWidth;
+            int gridH = currentContents.gridHeight;
+
+            for (int y = 0; y <= gridH - item.itemHeight; y++)
             {
-                if (IsPositionValid(item, x, y))
+                for (int x = 0; x <= gridW - item.itemWidth; x++)
                 {
-                    item.PlaceAtPosition(x, y);
-                    return true;
+                    if (IsPositionValid(item, x, y))
+                    {
+                        item.PlaceAtPosition(x, y);
+                        return true;
+                    }
                 }
             }
+
+            return false;
         }
 
-        return false;
-    }
-
-    private bool IsPositionValid(ItemInstance newItem, int x, int y)
-    {
-        if (currentContents == null) return false;
-
-        int gridW = currentContents.gridWidth;
-        int gridH = currentContents.gridHeight;
-
-        // Bounds check
-        if (x < 0 || y < 0) return false;
-        if (x + newItem.itemWidth > gridW) return false;
-        if (y + newItem.itemHeight > gridH) return false;
-
-        // Overlap check
-        foreach (var existing in inventoryItems)
+        private bool IsPositionValid(ItemInstance newItem, int x, int y)
         {
-            if (existing == null || !existing.IsPlaced) continue;
-            if (existing == newItem) continue;
+            if (currentContents == null) return false;
 
-            bool overlapX = x < existing.gridX + existing.itemWidth && x + newItem.itemWidth > existing.gridX;
-            bool overlapY = y < existing.gridY + existing.itemHeight && y + newItem.itemHeight > existing.gridY;
+            int gridW = currentContents.gridWidth;
+            int gridH = currentContents.gridHeight;
 
-            if (overlapX && overlapY) return false;
+            // Bounds check
+            if (x < 0 || y < 0) return false;
+            if (x + newItem.itemWidth > gridW) return false;
+            if (y + newItem.itemHeight > gridH) return false;
+
+            // Overlap check
+            foreach (var existing in inventoryItems)
+            {
+                if (existing == null || !existing.IsPlaced) continue;
+                if (existing == newItem) continue;
+
+                bool overlapX = x < existing.gridX + existing.itemWidth && x + newItem.itemWidth > existing.gridX;
+                bool overlapY = y < existing.gridY + existing.itemHeight && y + newItem.itemHeight > existing.gridY;
+
+                if (overlapX && overlapY) return false;
+            }
+
+            return true;
         }
-
-        return true;
-    }
 
     #endregion
 
     #region Contents Management
 
-    public void LoadFromContents(ContainerContents contents)
-    {
-        if (contents == null)
+        public void LoadFromContents(ContainerContents contents)
         {
-            Debug.LogWarning("[InventorySystem] Tried to load null ContainerContents");
-            return;
+            if (contents == null)
+            {
+                Debug.LogWarning("[InventorySystem] Tried to load null ContainerContents");
+                return;
+            }
+
+            ClearInventory();
+            currentContents = contents;
+            restoring = true;
+            foreach (var record in contents.items) Restore(record);
+            EndRestore();
         }
 
-        ClearInventory();
-        currentContents = contents;
-        restoring = true;
-        foreach (var record in contents.items) Restore(record);
-        EndRestore();
-    }
+        private void CreateDefaultContents()
+        {
+            if (containers == null || containers.Length == 0) return;
 
-    private void CreateDefaultContents()
-    {
-        if (containers == null || containers.Length == 0) return;
+            currentContents = ScriptableObject.CreateInstance<ContainerContents>();
+            currentContents.gridWidth = containers[0].gridWidth;
+            currentContents.gridHeight = containers[0].gridHeight;
+            currentContents.containerId = brain?.name ?? "unknown";
+            currentContents.displayName = "Inventory";
+            currentContents.items = new List<ItemRecord>();
+        }
 
-        currentContents = ScriptableObject.CreateInstance<ContainerContents>();
-        currentContents.gridWidth = containers[0].gridWidth;
-        currentContents.gridHeight = containers[0].gridHeight;
-        currentContents.containerId = brain?.name ?? "unknown";
-        currentContents.displayName = "Inventory";
-        currentContents.items = new List<ItemRecord>();
-    }
+        public ContainerContents SaveToContents()
+        {
+            if (currentContents == null) return null;
 
-    public ContainerContents SaveToContents()
-    {
-        if (currentContents == null) return null;
+            currentContents.items.Clear();
 
-        currentContents.items.Clear();
+            foreach (var item in inventoryItems)
+                if (item != null && item.IsPlaced) currentContents.items.Add(ItemRecord.From(item));
+            currentContents.UpdateTimestamp();
 
-        foreach (var item in inventoryItems)
-            if (item != null && item.IsPlaced) currentContents.items.Add(ItemRecord.From(item));
-        currentContents.UpdateTimestamp();
+            return currentContents;
+        }
 
-        return currentContents;
-    }
+        public ContainerContents GetCurrentContents() => currentContents;
 
-    public ContainerContents GetCurrentContents() => currentContents;
+        /// <summary>Whose inventory this is — a vendor's shelf is found through it.</summary>
+        public ControllerBrain Brain => brain;
 
-    /// <summary>Whose inventory this is — a vendor's shelf is found through it.</summary>
-    public ControllerBrain Brain => brain;
+        /// <summary>Authored layout used before any contents exist. Grids read their size from it.</summary>
+        public ContainerData DefaultContainer => containers != null && containers.Length > 0 ? containers[0] : null;
 
-    /// <summary>Authored layout used before any contents exist. Grids read their size from it.</summary>
-    public ContainerData DefaultContainer => containers != null && containers.Length > 0 ? containers[0] : null;
-
-    public void SetContents(ContainerContents contents) { currentContents = contents; }
+        public void SetContents(ContainerContents contents) { currentContents = contents; }
 
     #endregion
 
     #region IInventoryProvider
 
-    bool IInventoryProvider.HasItem(string itemId)
-        => inventoryItems.Any(i => i.definitionId == itemId);
+        bool IInventoryProvider.HasItem(string itemId)
+            => inventoryItems.Any(i => i.definitionId == itemId);
 
-    int IInventoryProvider.GetItemCount(string itemId)
-        => inventoryItems.Count(i => i.definitionId == itemId);
+        int IInventoryProvider.GetItemCount(string itemId)
+            => inventoryItems.Count(i => i.definitionId == itemId);
 
-    bool IInventoryProvider.AddItem(string itemId, int quantity)
-    {
-        for (int i = 0; i < quantity; i++)
+        bool IInventoryProvider.AddItem(string itemId, int quantity)
         {
-            var instance = new ItemInstance(itemId, ItemRarity.Common);
-            if (!AddItem(instance)) return false;
+            for (int i = 0; i < quantity; i++)
+            {
+                var instance = new ItemInstance(itemId, ItemRarity.Common);
+                if (!AddItem(instance)) return false;
+            }
+            return true;
         }
-        return true;
-    }
 
-    bool IInventoryProvider.RemoveItem(string itemId, int quantity)
-    {
-        int removed = 0;
-        for (int i = inventoryItems.Count - 1; i >= 0 && removed < quantity; i--)
+        bool IInventoryProvider.RemoveItem(string itemId, int quantity)
         {
-            if (inventoryItems[i].definitionId != itemId) continue;
-            RemoveItem(inventoryItems[i].instanceId);
-            removed++;
+            int removed = 0;
+            for (int i = inventoryItems.Count - 1; i >= 0 && removed < quantity; i--)
+            {
+                if (inventoryItems[i].definitionId != itemId) continue;
+                RemoveItem(inventoryItems[i].instanceId);
+                removed++;
+            }
+            return removed == quantity;
         }
-        return removed == quantity;
-    }
 
-    void IInventoryProvider.ClearInventory() => ClearInventory();
+        void IInventoryProvider.ClearInventory() => ClearInventory();
 
     #endregion
+    }
 }

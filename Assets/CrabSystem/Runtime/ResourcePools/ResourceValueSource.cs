@@ -29,67 +29,71 @@ using UnityEngine;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 18, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "ResourceValue", menuName = "CrabSystem/Blackboard/Value Sources/Resource")]
-public class ResourceValueSource : ValueSourceDefinition
+
+namespace CrabSystem
 {
-    [Header("Resource Query")]
-    [Tooltip("Resource to query (drag ResourceDefinition asset)")]
-    [SerializeField] private ResourceDefinition resource;
-
-    [Tooltip("Which property to read")]
-    [SerializeField] private ResourceValueProperty property = ResourceValueProperty.Percentage;
-
-    public override float GetValue(ControllerBrain brain)
+    [CreateAssetMenu(fileName = "ResourceValue", menuName = "CrabSystem/Blackboard/Value Sources/Resource")]
+    public class ResourceValueSource : ValueSourceDefinition
     {
-        // Guard clauses (flat logic)
-        if (brain == null) return 0f;
-        if (resource == null) return 0f;
+        [Header("Resource Query")]
+        [Tooltip("Resource to query (drag ResourceDefinition asset)")]
+        [SerializeField] private ResourceDefinition resource;
 
-        var resources = brain.Resources;
-        if (resources == null) return 0f;
+        [Tooltip("Which property to read")]
+        [SerializeField] private ResourceValueProperty property = ResourceValueProperty.Percentage;
 
-        // Query appropriate property
-        switch (property)
+        public override float GetValue(ControllerBrain brain)
         {
-            case ResourceValueProperty.Current:
-                return resources.GetResource(resource);
+            // Guard clauses (flat logic)
+            if (brain == null) return 0f;
+            if (resource == null) return 0f;
 
-            case ResourceValueProperty.Max:
-                return resources.GetMaxResource(resource);
+            var resources = brain.Resources;
+            if (resources == null) return 0f;
 
-            case ResourceValueProperty.Percentage:
-                return resources.GetResourcePercentage(resource);
+            // Query appropriate property
+            switch (property)
+            {
+                case ResourceValueProperty.Current:
+                    return resources.GetResource(resource);
 
-            default:
-                return 0f;
+                case ResourceValueProperty.Max:
+                    return resources.GetMaxResource(resource);
+
+                case ResourceValueProperty.Percentage:
+                    return resources.GetResourcePercentage(resource);
+
+                default:
+                    return 0f;
+            }
+        }
+
+        public override string GetDisplayName()
+        {
+            if (resource == null) return "None";
+            return $"{resource.displayName} ({property})";
+        }
+
+        public override bool Validate(out string error)
+        {
+            if (resource == null)
+            {
+                error = "Resource not assigned";
+                return false;
+            }
+
+            error = null;
+            return true;
         }
     }
 
-    public override string GetDisplayName()
+    /// <summary>
+    /// Which resource property to query
+    /// </summary>
+    public enum ResourceValueProperty
     {
-        if (resource == null) return "None";
-        return $"{resource.displayName} ({property})";
+        Current,    // Raw current value (75 health)
+        Max,        // Maximum capacity (100 health)
+        Percentage  // Ratio 0-1 (0.75 = 75%)
     }
-
-    public override bool Validate(out string error)
-    {
-        if (resource == null)
-        {
-            error = "Resource not assigned";
-            return false;
-        }
-
-        error = null;
-        return true;
-    }
-}
-
-/// <summary>
-/// Which resource property to query
-/// </summary>
-public enum ResourceValueProperty
-{
-    Current,    // Raw current value (75 health)
-    Max,        // Maximum capacity (100 health)
-    Percentage  // Ratio 0-1 (0.75 = 75%)
 }

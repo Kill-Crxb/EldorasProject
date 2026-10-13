@@ -5,32 +5,36 @@ using UnityEngine;
 /// call GameEvents.CameraModeChangeRequested("Dialogue") without needing a direct reference to the
 /// camera; this listener forwards the request to the CameraModule on the same brain.
 /// </summary>
-public class CameraEventListener : MonoBehaviour
+
+namespace CrabSystem
 {
-    [SerializeField] private CameraModule cameraModule;
-
-    private void Awake()
+    public class CameraEventListener : MonoBehaviour
     {
-        if (cameraModule == null)
-            cameraModule = GetComponentInParent<CameraModule>();
+        [SerializeField] private CameraModule cameraModule;
 
-        if (cameraModule == null)
-            Debug.LogError("[CameraEventListener] No CameraModule assigned or found in parents.", this);
-    }
+        private void Awake()
+        {
+            if (cameraModule == null)
+                cameraModule = GetComponentInParent<CameraModule>();
 
-    private void OnEnable()
-    {
-        GameEvents.OnCameraModeChangeRequested += HandleModeChangeRequested;
-    }
+            if (cameraModule == null)
+                Debug.LogError("[CameraEventListener] No CameraModule assigned or found in parents.", this);
+        }
 
-    private void OnDisable()
-    {
-        GameEvents.OnCameraModeChangeRequested -= HandleModeChangeRequested;
-    }
+        private void OnEnable()
+        {
+            GameEvents.OnCameraModeChangeRequested += HandleModeChangeRequested;
+        }
 
-    private void HandleModeChangeRequested(string modeName)
-    {
-        if (cameraModule == null) return;
-        cameraModule.SetMode(modeName);
+        private void OnDisable()
+        {
+            GameEvents.OnCameraModeChangeRequested -= HandleModeChangeRequested;
+        }
+
+        private void HandleModeChangeRequested(string modeName)
+        {
+            if (cameraModule == null) return;
+            cameraModule.SetMode(modeName);
+        }
     }
 }

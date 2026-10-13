@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → AI → Build Mirror NPC
 //

@@ -10,55 +10,59 @@ using UnityEngine;
 /// enum member, caught at compile time, instead of a log at runtime. Adding an anchor costs one
 /// line here.
 /// </summary>
-public enum HotbarAnchorId
+
+namespace CrabSystem
 {
-    BottomCentre,
-    BottomLeft,
-    BottomRight,
-    LeftEdge,
-    RightEdge,
-    TopLeft,
-    TopRight,
-}
-
-/// <summary>
-/// Lookup for the live anchors. Mirrors UIPanelRegistry — register on enable, drop on disable,
-/// so nothing has to walk the hierarchy or hunt for a singleton.
-/// </summary>
-public static class HotbarAnchorRegistry
-{
-    private static readonly Dictionary<HotbarAnchorId, HotbarAnchor> anchors = new();
-
-    public static HotbarAnchor Get(HotbarAnchorId id) => anchors.GetValueOrDefault(id);
-
-    public static void Register(HotbarAnchor anchor)
+    public enum HotbarAnchorId
     {
-        if (anchor == null) return;
+        BottomCentre,
+        BottomLeft,
+        BottomRight,
+        LeftEdge,
+        RightEdge,
+        TopLeft,
+        TopRight,
+    }
 
-        if (anchors.TryGetValue(anchor.Id, out var existing) && existing != null && existing != anchor)
+    /// <summary>
+    /// Lookup for the live anchors. Mirrors UIPanelRegistry — register on enable, drop on disable,
+    /// so nothing has to walk the hierarchy or hunt for a singleton.
+    /// </summary>
+    public static class HotbarAnchorRegistry
+    {
+        private static readonly Dictionary<HotbarAnchorId, HotbarAnchor> anchors = new();
+
+        public static HotbarAnchor Get(HotbarAnchorId id) => anchors.GetValueOrDefault(id);
+
+        public static void Register(HotbarAnchor anchor)
         {
-            Debug.LogError($"[HotbarAnchor] Two anchors claim '{anchor.Id}': '{existing.name}' and " +
-                           $"'{anchor.name}'. The second one wins and the first will never be used.");
+            if (anchor == null) return;
+
+            if (anchors.TryGetValue(anchor.Id, out var existing) && existing != null && existing != anchor)
+            {
+                Debug.LogError($"[HotbarAnchor] Two anchors claim '{anchor.Id}': '{existing.name}' and " +
+                               $"'{anchor.name}'. The second one wins and the first will never be used.");
+            }
+
+            anchors[anchor.Id] = anchor;
         }
 
-        anchors[anchor.Id] = anchor;
+        public static void Unregister(HotbarAnchor anchor)
+        {
+            if (anchor == null) return;
+            if (anchors.TryGetValue(anchor.Id, out var found) && found == anchor)
+                anchors.Remove(anchor.Id);
+        }
     }
 
-    public static void Unregister(HotbarAnchor anchor)
+    public class HotbarAnchor : MonoBehaviour
     {
-        if (anchor == null) return;
-        if (anchors.TryGetValue(anchor.Id, out var found) && found == anchor)
-            anchors.Remove(anchor.Id);
+        [Tooltip("Bars whose ActionBarDefinition names this id spawn here.")]
+        [SerializeField] private HotbarAnchorId anchorId = HotbarAnchorId.BottomCentre;
+
+        public HotbarAnchorId Id => anchorId;
+
+        void OnEnable() => HotbarAnchorRegistry.Register(this);
+        void OnDisable() => HotbarAnchorRegistry.Unregister(this);
     }
-}
-
-public class HotbarAnchor : MonoBehaviour
-{
-    [Tooltip("Bars whose ActionBarDefinition names this id spawn here.")]
-    [SerializeField] private HotbarAnchorId anchorId = HotbarAnchorId.BottomCentre;
-
-    public HotbarAnchorId Id => anchorId;
-
-    void OnEnable() => HotbarAnchorRegistry.Register(this);
-    void OnDisable() => HotbarAnchorRegistry.Unregister(this);
 }

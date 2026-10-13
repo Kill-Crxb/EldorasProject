@@ -5,29 +5,33 @@ using UnityEngine;
 // Engaged clears when the creature loses its target, so it can lie in wait again.
 // Give it a higher base weight than the fighting goals so it wins while the target is far, and leave
 // Wander out of the pool, or the creature strolls instead of hiding.
-[CreateAssetMenu(fileName = "Goal_Ambush", menuName = "AI/GOAP/Goals/Ambush")]
-public class AmbushGoal : GOAPGoal
+
+namespace CrabSystem
 {
-    [Tooltip("Spring when the target comes inside this distance.")]
-    public float springRange = 5f;
-
-    [Tooltip("Turn to watch the target while waiting. Off reads as unaware.")]
-    public bool watchTarget;
-
-    public override bool CanExecute(GOAPContext ctx) => ctx.target != null && ctx.aiControl != null && !ctx.aiControl.Engaged;
-
-    public override float CalculateWeight(GOAPContext ctx) => 1f;
-
-    public override bool IsComplete(GOAPContext ctx) => ctx.target == null || ctx.aiControl.Engaged;
-
-    public override void Execute(GOAPContext ctx)
+    [CreateAssetMenu(fileName = "Goal_Ambush", menuName = "AI/GOAP/Goals/Ambush")]
+    public class AmbushGoal : GOAPGoal
     {
-        ctx.aiControl.Stop();
-        if (watchTarget) ctx.aiControl.Face(ctx.toTarget);
+        [Tooltip("Spring when the target comes inside this distance.")]
+        public float springRange = 5f;
 
-        if (ctx.distanceToTarget > springRange) return;
+        [Tooltip("Turn to watch the target while waiting. Off reads as unaware.")]
+        public bool watchTarget;
 
-        ctx.aiControl.Face(ctx.toTarget);
-        ctx.aiControl.Engaged = true;
+        public override bool CanExecute(GOAPContext ctx) => ctx.target != null && ctx.aiControl != null && !ctx.aiControl.Engaged;
+
+        public override float CalculateWeight(GOAPContext ctx) => 1f;
+
+        public override bool IsComplete(GOAPContext ctx) => ctx.target == null || ctx.aiControl.Engaged;
+
+        public override void Execute(GOAPContext ctx)
+        {
+            ctx.aiControl.Stop();
+            if (watchTarget) ctx.aiControl.Face(ctx.toTarget);
+
+            if (ctx.distanceToTarget > springRange) return;
+
+            ctx.aiControl.Face(ctx.toTarget);
+            ctx.aiControl.Engaged = true;
+        }
     }
 }

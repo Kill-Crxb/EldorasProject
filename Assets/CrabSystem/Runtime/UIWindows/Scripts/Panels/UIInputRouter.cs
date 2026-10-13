@@ -6,98 +6,102 @@ using UnityEngine.InputSystem;
 /// Owns its own copy of the UI action map so it works before the player spawns,
 /// and borrows the player's controls only to suspend gameplay while a panel is open.
 /// </summary>
-public class UIInputRouter : MonoBehaviour
+
+namespace CrabSystem
 {
-    [Header("Behaviour")]
-    [Tooltip("Release the cursor while a panel is open.")]
-    [SerializeField] private bool controlCursor = true;
-
-    [Tooltip("Disable the Player action map while a panel is open.")]
-    [SerializeField] private bool suspendGameplayInput = true;
-
-    public static UIInputRouter Instance { get; private set; }
-
-    /// <summary>True while the UI owns the cursor and keyboard.</summary>
-    public static bool InterfaceMode { get; private set; }
-
-    private PlayerInputControls uiControls;
-    private ControllerBrain player;
-
-    private void Awake()
+    public class UIInputRouter : MonoBehaviour
     {
-        Instance = this;
+        [Header("Behaviour")]
+        [Tooltip("Release the cursor while a panel is open.")]
+        [SerializeField] private bool controlCursor = true;
 
-        uiControls = new PlayerInputControls();
-        uiControls.UI.PlayerMenu.performed += HandlePlayerMenu;
-        uiControls.UI.ToggleCursor.performed += HandleCancel;
-    }
+        [Tooltip("Disable the Player action map while a panel is open.")]
+        [SerializeField] private bool suspendGameplayInput = true;
 
-    private void OnEnable() => uiControls.UI.Enable();
+        public static UIInputRouter Instance { get; private set; }
 
-    private void OnDisable() => uiControls.UI.Disable();
+        /// <summary>True while the UI owns the cursor and keyboard.</summary>
+        public static bool InterfaceMode { get; private set; }
 
-    private void OnDestroy()
-    {
-        uiControls.UI.PlayerMenu.performed -= HandlePlayerMenu;
-        uiControls.UI.ToggleCursor.performed -= HandleCancel;
-        uiControls.Dispose();
+        private PlayerInputControls uiControls;
+        private ControllerBrain player;
 
-        if (Instance == this) Instance = null;
-    }
-
-    private void HandlePlayerMenu(InputAction.CallbackContext _)
-    {
-        var left = UIPanelRegistry.Left;
-
-        if (left == null)
+        private void Awake()
         {
-            Debug.LogWarning("[UIInputRouter] No left panel registered");
-            return;
+            Instance = this;
+
+            uiControls = new PlayerInputControls();
+            uiControls.UI.PlayerMenu.performed += HandlePlayerMenu;
+            uiControls.UI.ToggleCursor.performed += HandleCancel;
         }
 
-        left.Toggle();
-    }
+        private void OnEnable() => uiControls.UI.Enable();
 
-    /// <summary>Escape closes the world panel first, then the player panel.</summary>
-    private void HandleCancel(InputAction.CallbackContext _)
-    {
-        var right = UIPanelRegistry.Right;
+        private void OnDisable() => uiControls.UI.Disable();
 
-        if (right != null && right.IsOpen) right.Close();
-        else UIPanelRegistry.Left?.Close();
-    }
-
-    /// <summary>Called by UIPanel whenever a panel opens or closes.</summary>
-    public void ApplyMode()
-    {
-        bool wanted = UIPanelRegistry.AnyOpen;
-        if (wanted == InterfaceMode) return;
-
-        InterfaceMode = wanted;
-
-        if (controlCursor)
+        private void OnDestroy()
         {
-            Cursor.lockState = wanted ? CursorLockMode.None : CursorLockMode.Locked;
-            Cursor.visible = wanted;
+            uiControls.UI.PlayerMenu.performed -= HandlePlayerMenu;
+            uiControls.UI.ToggleCursor.performed -= HandleCancel;
+            uiControls.Dispose();
+
+            if (Instance == this) Instance = null;
         }
 
-        SuspendGameplay(wanted);
-    }
+        private void HandlePlayerMenu(InputAction.CallbackContext _)
+        {
+            var left = UIPanelRegistry.Left;
 
-    /// <summary>
-    /// The player spawns after this object, so the lookup is deferred until first use
-    /// and re-resolved if the previous player was destroyed.
-    /// </summary>
-    private void SuspendGameplay(bool suspend)
-    {
-        if (!suspendGameplayInput) return;
+            if (left == null)
+            {
+                Debug.LogWarning("[UIInputRouter] No left panel registered");
+                return;
+            }
 
-        if (player == null) player = PlayerBrainAccess.Find();
+            left.Toggle();
+        }
 
-        var controls = player?.GetInputControls();
-        if (controls == null) return;
+        /// <summary>Escape closes the world panel first, then the player panel.</summary>
+        private void HandleCancel(InputAction.CallbackContext _)
+        {
+            var right = UIPanelRegistry.Right;
 
-        if (suspend) controls.Player.Disable();
-        else controls.Player.Enable();
+            if (right != null && right.IsOpen) right.Close();
+            else UIPanelRegistry.Left?.Close();
+        }
+
+        /// <summary>Called by UIPanel whenever a panel opens or closes.</summary>
+        public void ApplyMode()
+        {
+            bool wanted = UIPanelRegistry.AnyOpen;
+            if (wanted == InterfaceMode) return;
+
+            InterfaceMode = wanted;
+
+            if (controlCursor)
+            {
+                Cursor.lockState = wanted ? CursorLockMode.None : CursorLockMode.Locked;
+                Cursor.visible = wanted;
+            }
+
+            SuspendGameplay(wanted);
+        }
+
+        /// <summary>
+        /// The player spawns after this object, so the lookup is deferred until first use
+        /// and re-resolved if the previous player was destroyed.
+        /// </summary>
+        private void SuspendGameplay(bool suspend)
+        {
+            if (!suspendGameplayInput) return;
+
+            if (player == null) player = PlayerBrainAccess.Find();
+
+            var controls = player?.GetInputControls();
+            if (controls == null) return;
+
+            if (suspend) controls.Player.Disable();
+            else controls.Player.Enable();
+        }
     }
 }

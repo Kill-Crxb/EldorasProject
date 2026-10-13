@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → Characters → Make Nature Spirit a Vendor.
 // Everything her dialogue used to hand out goes on a free vendor shelf, the dialogue drops to one

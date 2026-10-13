@@ -21,81 +21,85 @@ using UnityEngine;
 /// - Supports locked/unlockable slots
 /// - UI display order via slotIndex
 /// </summary>
-[System.Serializable]
-public class ItemUpgradeSlot
+
+namespace CrabSystem
 {
-    [Header("Slot Configuration")]
-    [Tooltip("What types of upgrades this slot accepts")]
-    public UpgradeSlotDefinition slotDefinition;
-
-    [Tooltip("Display order in UI (lower = higher priority)")]
-    public int slotIndex;
-
-    [Header("Slot State")]
-    [Tooltip("Is this slot locked by default? (requires unlock progression)")]
-    public bool isLockedByDefault;
-
-    [Tooltip("Custom unlock requirement description (e.g., 'Complete Quest: Blacksmith Master')")]
-    [TextArea(1, 2)]
-    public string unlockRequirement;
-
-    [Header("Visual Override")]
-    [Tooltip("Override slot icon (uses slotDefinition.slotIcon if null)")]
-    public Sprite customSlotIcon;
-
-    [Tooltip("Override slot color (uses slotDefinition.slotColor if default)")]
-    public Color customSlotColor = Color.white;
-
-    /// <summary>
-    /// Check if this slot can accept an upgrade item
-    /// </summary>
-    public bool CanAcceptUpgrade(ItemDefinition upgradeItem)
+    [System.Serializable]
+    public class ItemUpgradeSlot
     {
-        // Guard clause - no definition
-        if (slotDefinition == null) return false;
+        [Header("Slot Configuration")]
+        [Tooltip("What types of upgrades this slot accepts")]
+        public UpgradeSlotDefinition slotDefinition;
 
-        // Guard clause - locked
-        if (isLockedByDefault) return false;
+        [Tooltip("Display order in UI (lower = higher priority)")]
+        public int slotIndex;
 
-        // Delegate to slot definition for acceptance logic
-        return slotDefinition.CanAccept(upgradeItem);
-    }
+        [Header("Slot State")]
+        [Tooltip("Is this slot locked by default? (requires unlock progression)")]
+        public bool isLockedByDefault;
 
-    /// <summary>
-    /// Get the icon to display for this slot
-    /// </summary>
-    public Sprite GetDisplayIcon()
-    {
-        // Use custom icon if provided
-        if (customSlotIcon != null) return customSlotIcon;
+        [Tooltip("Custom unlock requirement description (e.g., 'Complete Quest: Blacksmith Master')")]
+        [TextArea(1, 2)]
+        public string unlockRequirement;
 
-        // Fall back to slot definition icon
-        if (slotDefinition != null) return slotDefinition.slotIcon;
+        [Header("Visual Override")]
+        [Tooltip("Override slot icon (uses slotDefinition.slotIcon if null)")]
+        public Sprite customSlotIcon;
 
-        // No icon available
-        return null;
-    }
+        [Tooltip("Override slot color (uses slotDefinition.slotColor if default)")]
+        public Color customSlotColor = Color.white;
 
-    /// <summary>
-    /// Get the color to display for this slot
-    /// </summary>
-    public Color GetDisplayColor()
-    {
-        // Use custom color if not default white
-        if (customSlotColor != Color.white) return customSlotColor;
+        /// <summary>
+        /// Check if this slot can accept an upgrade item
+        /// </summary>
+        public bool CanAcceptUpgrade(ItemDefinition upgradeItem)
+        {
+            // Guard clause - no definition
+            if (slotDefinition == null) return false;
 
-        // Fall back to slot definition color
-        if (slotDefinition != null) return slotDefinition.slotColor;
+            // Guard clause - locked
+            if (isLockedByDefault) return false;
 
-        // Default white
-        return Color.white;
-    }
+            // Delegate to slot definition for acceptance logic
+            return slotDefinition.CanAccept(upgradeItem);
+        }
 
-    /// <summary>
-    /// Validation helper
-    /// </summary>
-    public bool IsValid()
-    {
-        return slotDefinition != null && slotDefinition.IsValid();
+        /// <summary>
+        /// Get the icon to display for this slot
+        /// </summary>
+        public Sprite GetDisplayIcon()
+        {
+            // Use custom icon if provided
+            if (customSlotIcon != null) return customSlotIcon;
+
+            // Fall back to slot definition icon
+            if (slotDefinition != null) return slotDefinition.slotIcon;
+
+            // No icon available
+            return null;
+        }
+
+        /// <summary>
+        /// Get the color to display for this slot
+        /// </summary>
+        public Color GetDisplayColor()
+        {
+            // Use custom color if not default white
+            if (customSlotColor != Color.white) return customSlotColor;
+
+            // Fall back to slot definition color
+            if (slotDefinition != null) return slotDefinition.slotColor;
+
+            // Default white
+            return Color.white;
+        }
+
+        /// <summary>
+        /// Validation helper
+        /// </summary>
+        public bool IsValid()
+        {
+            return slotDefinition != null && slotDefinition.IsValid();
+        }
     }
 }

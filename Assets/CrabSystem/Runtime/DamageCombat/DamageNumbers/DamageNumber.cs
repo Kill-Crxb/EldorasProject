@@ -10,59 +10,63 @@ using TMPro;
 ///   3. Save as DamageNumber.prefab.
 ///   4. Assign the prefab to DamageNumberManager in the scene.
 /// </summary>
-public class DamageNumber : MonoBehaviour
+
+namespace CrabSystem
 {
-    [SerializeField] private TextMeshPro text;
-
-    [Header("Behaviour")]
-    [SerializeField] private float floatSpeed = 2f;
-    [SerializeField] private float lifetime = 1f;
-    [SerializeField] private float randomSpread = 0.5f;
-
-    private float elapsed;
-    private float startAlpha = 1f;
-    private Camera cam;
-
-    public void Init(string label, Vector3 worldPos, float scale, Color color)
+    public class DamageNumber : MonoBehaviour
     {
-        Vector3 offset = new Vector3(
-            Random.Range(-randomSpread, randomSpread),
-            0f,
-            Random.Range(-randomSpread, randomSpread)
-        );
+        [SerializeField] private TextMeshPro text;
 
-        transform.position = worldPos + offset;
-        text.text = label;
-        text.fontSize *= scale;
-        text.color = color;
-        startAlpha = color.a;
-        cam = Camera.main;
+        [Header("Behaviour")]
+        [SerializeField] private float floatSpeed = 2f;
+        [SerializeField] private float lifetime = 1f;
+        [SerializeField] private float randomSpread = 0.5f;
 
-        // Set correct facing immediately on spawn so there's no one-frame pop
-        if (cam != null)
-            BillboardToCamera();
-    }
+        private float elapsed;
+        private float startAlpha = 1f;
+        private Camera cam;
 
-    void Update()
-    {
-        elapsed += Time.deltaTime;
+        public void Init(string label, Vector3 worldPos, float scale, Color color)
+        {
+            Vector3 offset = new Vector3(
+                Random.Range(-randomSpread, randomSpread),
+                0f,
+                Random.Range(-randomSpread, randomSpread)
+            );
 
-        transform.position += Vector3.up * floatSpeed * Time.deltaTime;
+            transform.position = worldPos + offset;
+            text.text = label;
+            text.fontSize *= scale;
+            text.color = color;
+            startAlpha = color.a;
+            cam = Camera.main;
 
-        if (cam != null)
-            BillboardToCamera();
+            // Set correct facing immediately on spawn so there's no one-frame pop
+            if (cam != null)
+                BillboardToCamera();
+        }
 
-        text.alpha = startAlpha * (1f - elapsed / lifetime);
+        void Update()
+        {
+            elapsed += Time.deltaTime;
 
-        if (elapsed >= lifetime)
-            Destroy(gameObject);
-    }
+            transform.position += Vector3.up * floatSpeed * Time.deltaTime;
 
-    private void BillboardToCamera()
-    {
-        transform.LookAt(
-            transform.position + cam.transform.rotation * Vector3.forward,
-            cam.transform.rotation * Vector3.up
-        );
+            if (cam != null)
+                BillboardToCamera();
+
+            text.alpha = startAlpha * (1f - elapsed / lifetime);
+
+            if (elapsed >= lifetime)
+                Destroy(gameObject);
+        }
+
+        private void BillboardToCamera()
+        {
+            transform.LookAt(
+                transform.position + cam.transform.rotation * Vector3.forward,
+                cam.transform.rotation * Vector3.up
+            );
+        }
     }
 }

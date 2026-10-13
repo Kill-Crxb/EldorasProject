@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → Characters → Extract CombatGirls Clips
 //

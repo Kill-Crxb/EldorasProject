@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using NinjaGame.Stats;
+using CrabSystem.Stats;
 using UnityEngine;
 
 /// <summary>
@@ -14,278 +14,282 @@ using UnityEngine;
 /// This module never asks who its contributors are — sources push, StatSystem sums. That
 /// keeps it ignorant of equipment, talents and everything else that might feed a stat.
 /// </summary>
-public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
+
+namespace CrabSystem
 {
-    public int InitOrder => 90;
+    public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
+    {
+        public int InitOrder => 90;
 
     #region Inspector
 
-    [Header("Schemas")]
-    [Tooltip("Schema asset names to load from StatsManager, e.g. 'CoreStats'.")]
-    [SerializeField] private List<string> schemaIds = new();
+        [Header("Schemas")]
+        [Tooltip("Schema asset names to load from StatsManager, e.g. 'CoreStats'.")]
+        [SerializeField] private List<string> schemaIds = new();
 
     #endregion
 
     #region State
 
-    // What the character owns. This is what gets saved.
-    private readonly Dictionary<string, float> baseValues = new();
+        // What the character owns. This is what gets saved.
+        private readonly Dictionary<string, float> baseValues = new();
 
-    // base + contributions, clamped. This is what everything reads.
-    private readonly Dictionary<string, float> values = new();
+        // base + contributions, clamped. This is what everything reads.
+        private readonly Dictionary<string, float> values = new();
 
-    // statId -> sourceKey -> amount
-    private readonly Dictionary<string, Dictionary<string, float>> contributions = new();
+        // statId -> sourceKey -> amount
+        private readonly Dictionary<string, Dictionary<string, float>> contributions = new();
 
-    // Ids from schemas marked derived. Excluded from the save on both sides.
-    private readonly HashSet<string> derivedIds = new();
+        // Ids from schemas marked derived. Excluded from the save on both sides.
+        private readonly HashSet<string> derivedIds = new();
 
-    private ControllerBrain brain;
+        private ControllerBrain brain;
 
-    public bool IsEnabled { get; set; } = true;
+        public bool IsEnabled { get; set; } = true;
 
-    public event Action<string, float, float> OnStatChanged;
+        public event Action<string, float, float> OnStatChanged;
 
     #endregion
 
     #region IBrainModule
 
-    public void Initialize(ControllerBrain controllerBrain)
-    {
-        brain = controllerBrain;
-        LoadSchemas();
-    }
+        public void Initialize(ControllerBrain controllerBrain)
+        {
+            brain = controllerBrain;
+            LoadSchemas();
+        }
 
-    public void LateInitialize() { }
+        public void LateInitialize() { }
 
-    public void UpdateModule() { }
+        public void UpdateModule() { }
 
     #endregion
 
     #region Schema Loading
 
-    private void LoadSchemas()
-    {
-        values.Clear();
-        baseValues.Clear();
-        contributions.Clear();
-        derivedIds.Clear();
-
-        if (StatsManager.Instance == null)
+        private void LoadSchemas()
         {
-            Debug.LogError($"[StatSystem] No StatsManager in scene. {name} has no stats.");
-            return;
-        }
+            values.Clear();
+            baseValues.Clear();
+            contributions.Clear();
+            derivedIds.Clear();
 
-        foreach (var schemaId in schemaIds)
-        {
-            if (string.IsNullOrEmpty(schemaId)) continue;
-
-            var schema = StatsManager.Instance.GetSchema(schemaId);
-            if (schema == null)
+            if (StatsManager.Instance == null)
             {
-                Debug.LogWarning($"[StatSystem] Schema '{schemaId}' not found for {name}");
-                continue;
+                Debug.LogError($"[StatSystem] No StatsManager in scene. {name} has no stats.");
+                return;
             }
 
-            foreach (var entry in schema.Entries)
+            foreach (var schemaId in schemaIds)
             {
-                if (entry == null || string.IsNullOrEmpty(entry.id)) continue;
+                if (string.IsNullOrEmpty(schemaId)) continue;
 
-                baseValues[entry.id] = entry.defaultValue;
-                values[entry.id] = entry.Clamp(entry.defaultValue);
+                var schema = StatsManager.Instance.GetSchema(schemaId);
+                if (schema == null)
+                {
+                    Debug.LogWarning($"[StatSystem] Schema '{schemaId}' not found for {name}");
+                    continue;
+                }
 
-                if (schema.Derived) derivedIds.Add(entry.id);
+                foreach (var entry in schema.Entries)
+                {
+                    if (entry == null || string.IsNullOrEmpty(entry.id)) continue;
+
+                    baseValues[entry.id] = entry.defaultValue;
+                    values[entry.id] = entry.Clamp(entry.defaultValue);
+
+                    if (schema.Derived) derivedIds.Add(entry.id);
+                }
             }
         }
-    }
 
     #endregion
 
     #region IStatProvider
 
-    public float GetValue(string statId, float defaultValue = 0f)
-    {
-        if (string.IsNullOrEmpty(statId)) return defaultValue;
-        return values.TryGetValue(Live(statId), out float value) ? value : defaultValue;
-    }
-
-    // Every id that comes in passes here: a stat renamed in its schema still answers to its former ids, so saves and
-    // assets naming the old one keep working (StatEntry.formerIds). The loaded id is the fast path.
-    private string Live(string statId)
-    {
-        if (values.ContainsKey(statId) || StatsManager.Instance == null) return statId;
-        return StatsManager.Instance.Resolve(statId);
-    }
-
-    /// <summary>
-    /// Sets what the character owns. Contributions still stack on top, so this is the
-    /// wrong call for gear or a buff — use AddContribution for anything temporary.
-    /// </summary>
-    public void SetValue(string statId, float value)
-    {
-        if (string.IsNullOrEmpty(statId)) return;
-        statId = Live(statId);
-
-        if (!baseValues.ContainsKey(statId))
+        public float GetValue(string statId, float defaultValue = 0f)
         {
-            Debug.LogWarning($"[StatSystem] '{statId}' is not loaded on {name}");
-            return;
+            if (string.IsNullOrEmpty(statId)) return defaultValue;
+            return values.TryGetValue(Live(statId), out float value) ? value : defaultValue;
         }
 
-        if (derivedIds.Contains(statId))
+        // Every id that comes in passes here: a stat renamed in its schema still answers to its former ids, so saves and
+        // assets naming the old one keep working (StatEntry.formerIds). The loaded id is the fast path.
+        private string Live(string statId)
         {
-            Debug.LogWarning($"[StatSystem] '{statId}' is derived — write it with AddContribution, not SetValue");
-            return;
+            if (values.ContainsKey(statId) || StatsManager.Instance == null) return statId;
+            return StatsManager.Instance.Resolve(statId);
         }
 
-        baseValues[statId] = value;
-        Recalculate(statId);
-    }
+        /// <summary>
+        /// Sets what the character owns. Contributions still stack on top, so this is the
+        /// wrong call for gear or a buff — use AddContribution for anything temporary.
+        /// </summary>
+        public void SetValue(string statId, float value)
+        {
+            if (string.IsNullOrEmpty(statId)) return;
+            statId = Live(statId);
 
-    public bool HasStat(string statId) => !string.IsNullOrEmpty(statId) && values.ContainsKey(Live(statId));
+            if (!baseValues.ContainsKey(statId))
+            {
+                Debug.LogWarning($"[StatSystem] '{statId}' is not loaded on {name}");
+                return;
+            }
 
-    public IEnumerable<string> GetStatIds() => values.Keys;
+            if (derivedIds.Contains(statId))
+            {
+                Debug.LogWarning($"[StatSystem] '{statId}' is derived — write it with AddContribution, not SetValue");
+                return;
+            }
 
-    /// <summary>True when this stat comes from elsewhere and is not part of the save.</summary>
-    public bool IsDerived(string statId) => !string.IsNullOrEmpty(statId) && derivedIds.Contains(Live(statId));
+            baseValues[statId] = value;
+            Recalculate(statId);
+        }
+
+        public bool HasStat(string statId) => !string.IsNullOrEmpty(statId) && values.ContainsKey(Live(statId));
+
+        public IEnumerable<string> GetStatIds() => values.Keys;
+
+        /// <summary>True when this stat comes from elsewhere and is not part of the save.</summary>
+        public bool IsDerived(string statId) => !string.IsNullOrEmpty(statId) && derivedIds.Contains(Live(statId));
 
     #endregion
 
     #region Contributions
 
-    /// <summary>
-    /// Adds or replaces one source's contribution to a stat. The key identifies the source
-    /// — "item:{instanceId}", "talent:{id}", "core" — and re-adding under the same key
-    /// replaces the previous amount rather than stacking with it.
-    /// </summary>
-    public void AddContribution(string statId, string sourceKey, float amount)
-    {
-        if (string.IsNullOrEmpty(statId) || string.IsNullOrEmpty(sourceKey)) return;
-        statId = Live(statId);
-
-        if (!values.ContainsKey(statId))
+        /// <summary>
+        /// Adds or replaces one source's contribution to a stat. The key identifies the source
+        /// — "item:{instanceId}", "talent:{id}", "core" — and re-adding under the same key
+        /// replaces the previous amount rather than stacking with it.
+        /// </summary>
+        public void AddContribution(string statId, string sourceKey, float amount)
         {
-            Debug.LogWarning($"[StatSystem] '{statId}' is not loaded on {name}");
-            return;
+            if (string.IsNullOrEmpty(statId) || string.IsNullOrEmpty(sourceKey)) return;
+            statId = Live(statId);
+
+            if (!values.ContainsKey(statId))
+            {
+                Debug.LogWarning($"[StatSystem] '{statId}' is not loaded on {name}");
+                return;
+            }
+
+            if (!contributions.TryGetValue(statId, out var sources))
+            {
+                sources = new Dictionary<string, float>();
+                contributions[statId] = sources;
+            }
+
+            sources[sourceKey] = amount;
+            Recalculate(statId);
         }
 
-        if (!contributions.TryGetValue(statId, out var sources))
+        public void RemoveContribution(string statId, string sourceKey)
         {
-            sources = new Dictionary<string, float>();
-            contributions[statId] = sources;
+            if (string.IsNullOrEmpty(statId)) return;
+            statId = Live(statId);
+            if (!contributions.TryGetValue(statId, out var sources)) return;
+            if (!sources.Remove(sourceKey)) return;
+
+            Recalculate(statId);
         }
 
-        sources[sourceKey] = amount;
-        Recalculate(statId);
-    }
-
-    public void RemoveContribution(string statId, string sourceKey)
-    {
-        if (string.IsNullOrEmpty(statId)) return;
-        statId = Live(statId);
-        if (!contributions.TryGetValue(statId, out var sources)) return;
-        if (!sources.Remove(sourceKey)) return;
-
-        Recalculate(statId);
-    }
-
-    /// <summary>Drops everything one source gave, across every stat. Unequipping an item.</summary>
-    public void ClearContributions(string sourceKey)
-    {
-        if (string.IsNullOrEmpty(sourceKey)) return;
-
-        foreach (var pair in contributions)
+        /// <summary>Drops everything one source gave, across every stat. Unequipping an item.</summary>
+        public void ClearContributions(string sourceKey)
         {
-            if (pair.Value.Remove(sourceKey)) Recalculate(pair.Key);
-        }
-    }
+            if (string.IsNullOrEmpty(sourceKey)) return;
 
-    /// <summary>What the character owns, before anything is added to it.</summary>
-    public float GetBaseValue(string statId)
-    {
-        if (string.IsNullOrEmpty(statId)) return 0f;
-        return baseValues.TryGetValue(Live(statId), out float value) ? value : 0f;
-    }
-
-    private void Recalculate(string statId)
-    {
-        float total = baseValues.TryGetValue(statId, out float baseValue) ? baseValue : 0f;
-
-        if (contributions.TryGetValue(statId, out var sources))
-        {
-            foreach (var amount in sources.Values) total += amount;
+            foreach (var pair in contributions)
+            {
+                if (pair.Value.Remove(sourceKey)) Recalculate(pair.Key);
+            }
         }
 
-        var entry = StatsManager.Instance != null ? StatsManager.Instance.GetEntry(statId) : null;
-        float clamped = entry != null ? entry.Clamp(total) : total;
+        /// <summary>What the character owns, before anything is added to it.</summary>
+        public float GetBaseValue(string statId)
+        {
+            if (string.IsNullOrEmpty(statId)) return 0f;
+            return baseValues.TryGetValue(Live(statId), out float value) ? value : 0f;
+        }
 
-        float previous = values.TryGetValue(statId, out float existing) ? existing : 0f;
-        if (Mathf.Approximately(clamped, previous)) return;
+        private void Recalculate(string statId)
+        {
+            float total = baseValues.TryGetValue(statId, out float baseValue) ? baseValue : 0f;
 
-        values[statId] = clamped;
-        OnStatChanged?.Invoke(statId, previous, clamped);
-    }
+            if (contributions.TryGetValue(statId, out var sources))
+            {
+                foreach (var amount in sources.Values) total += amount;
+            }
+
+            var entry = StatsManager.Instance != null ? StatsManager.Instance.GetEntry(statId) : null;
+            float clamped = entry != null ? entry.Clamp(total) : total;
+
+            float previous = values.TryGetValue(statId, out float existing) ? existing : 0f;
+            if (Mathf.Approximately(clamped, previous)) return;
+
+            values[statId] = clamped;
+            OnStatChanged?.Invoke(statId, previous, clamped);
+        }
 
     #endregion
 
     #region ISaveable
 
-    public string GetSaveId() => "stats";
+        public string GetSaveId() => "stats";
 
-    public int GetSaveVersion() => 2;
-    public int LoadOrder => 10;
+        public int GetSaveVersion() => 2;
+        public int LoadOrder => 10;
 
-    /// <summary>
-    /// Writes base values, never effective ones — saving the total would bake a temporary
-    /// bonus into the character permanently the first time they saved while wearing gear.
-    /// </summary>
-    public string GetSaveData()
-    {
-        var data = new StatSaveData { version = GetSaveVersion() };
-
-        foreach (var pair in baseValues)
+        /// <summary>
+        /// Writes base values, never effective ones — saving the total would bake a temporary
+        /// bonus into the character permanently the first time they saved while wearing gear.
+        /// </summary>
+        public string GetSaveData()
         {
-            if (derivedIds.Contains(pair.Key)) continue;
+            var data = new StatSaveData { version = GetSaveVersion() };
 
-            data.stats.Add(new StatValuePair { id = pair.Key, value = pair.Value });
+            foreach (var pair in baseValues)
+            {
+                if (derivedIds.Contains(pair.Key)) continue;
+
+                data.stats.Add(new StatValuePair { id = pair.Key, value = pair.Value });
+            }
+
+            return JsonUtility.ToJson(data);
         }
 
-        return JsonUtility.ToJson(data);
-    }
-
-    public void LoadSaveData(string json)
-    {
-        if (string.IsNullOrEmpty(json)) return;
-
-        var data = JsonUtility.FromJson<StatSaveData>(json);
-        if (data?.stats == null) return;
-
-        // A save written before a stat became derived still lists it. Ignore those rather
-        // than restoring a number the sources are about to recalculate anyway.
-        foreach (var pair in data.stats)
+        public void LoadSaveData(string json)
         {
-            if (string.IsNullOrEmpty(pair.id)) continue;
-            string id = Live(pair.id);
-            if (derivedIds.Contains(id)) continue;
+            if (string.IsNullOrEmpty(json)) return;
 
-            SetValue(id, pair.value);
+            var data = JsonUtility.FromJson<StatSaveData>(json);
+            if (data?.stats == null) return;
+
+            // A save written before a stat became derived still lists it. Ignore those rather
+            // than restoring a number the sources are about to recalculate anyway.
+            foreach (var pair in data.stats)
+            {
+                if (string.IsNullOrEmpty(pair.id)) continue;
+                string id = Live(pair.id);
+                if (derivedIds.Contains(id)) continue;
+
+                SetValue(id, pair.value);
+            }
         }
-    }
 
-    [Serializable]
-    private class StatSaveData
-    {
-        public int version;
-        public List<StatValuePair> stats = new();
-    }
+        [Serializable]
+        private class StatSaveData
+        {
+            public int version;
+            public List<StatValuePair> stats = new();
+        }
 
-    [Serializable]
-    private class StatValuePair
-    {
-        public string id;
-        public float value;
-    }
+        [Serializable]
+        private class StatValuePair
+        {
+            public string id;
+            public float value;
+        }
 
     #endregion
+    }
 }

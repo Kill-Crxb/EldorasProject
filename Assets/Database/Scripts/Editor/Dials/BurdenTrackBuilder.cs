@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
-using NinjaGame.Progression;
-using NinjaGame.Stats;
+using CrabSystem.Progression;
+using CrabSystem.Stats;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → Crab → Dials → Build Burden Track (10 Oct; CF6d, Tracks_Plan §1). Heavy gear costs freedom: every point of
 // equip.load passed pays a penalty onto a dial, cumulatively, on CoreDerivation.asset — a stat track like any

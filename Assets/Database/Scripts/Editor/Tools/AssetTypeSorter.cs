@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Sorts loose assets into the Database/Assets category roots purely by file extension.
 // No content inspection, no heuristics. Extension in -> category root out.

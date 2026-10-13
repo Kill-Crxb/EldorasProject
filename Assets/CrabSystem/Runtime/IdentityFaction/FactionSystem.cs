@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace RPG.Factions
+namespace CrabSystem.Factions
 {
     /// <summary>
     /// Per-entity faction module. Holds a FactionDefinition asset reference —

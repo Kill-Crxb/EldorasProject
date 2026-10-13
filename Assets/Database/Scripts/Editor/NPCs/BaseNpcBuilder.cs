@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → AI → Build Base NPC (roadmap V4 / A3, tracker AU21). Rebuilds Base_NPC as a prefab variant of Base_PC, so
 // every NPC built on it carries the player's modules (parkour movement, statuses, talents, guard, moveset) and a

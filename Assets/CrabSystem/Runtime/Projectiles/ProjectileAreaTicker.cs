@@ -25,111 +25,115 @@ using UnityEngine;
 /// SETUP: add to the Base_Projectile archetype alongside ProjectilePayload. It costs one
 /// early-out per frame on projectiles that are not volumes.
 /// </summary>
-[RequireComponent(typeof(ProjectileBrain))]
-public class ProjectileAreaTicker : MonoBehaviour, IProjectileModule
+
+namespace CrabSystem
 {
-    private const int MaxOverlap = 32;
-
-    private static readonly Collider[] OverlapBuffer = new Collider[MaxOverlap];
-
-    private ProjectileBrain brain;
-    private ProjectilePayload payload;
-    private float nextTick;
-
-    // Entities already resolved THIS tick. A humanoid carries several hurtbox colliders, so an
-    // overlap returns the same person more than once and without this a wide target would take
-    // one hit per limb inside the volume.
-    private readonly HashSet<ControllerBrain> hitThisTick = new HashSet<ControllerBrain>();
-
-    public void Initialize(ProjectileBrain projectileBrain)
+    [RequireComponent(typeof(ProjectileBrain))]
+    public class ProjectileAreaTicker : MonoBehaviour, IProjectileModule
     {
-        brain = projectileBrain;
-        payload = GetComponent<ProjectilePayload>();
-    }
+        private const int MaxOverlap = 32;
 
-    public void OnLaunch()
-    {
-        // A volume that waits a full interval before its first tick looks broken — the fireball
-        // lands, sits there, and only then does something.
-        nextTick = brain.Data.tickOnSpawn ? 0f : brain.Data.tickInterval;
-    }
+        private static readonly Collider[] OverlapBuffer = new Collider[MaxOverlap];
 
-    public void UpdateModule()
-    {
-        ProjectileData data = brain.Data;
+        private ProjectileBrain brain;
+        private ProjectilePayload payload;
+        private float nextTick;
 
-        if (data == null) return;
-        if (data.tickInterval <= 0f) return;
-        if (brain.ElapsedTime < nextTick) return;
+        // Entities already resolved THIS tick. A humanoid carries several hurtbox colliders, so an
+        // overlap returns the same person more than once and without this a wide target would take
+        // one hit per limb inside the volume.
+        private readonly HashSet<ControllerBrain> hitThisTick = new HashSet<ControllerBrain>();
 
-        nextTick += data.tickInterval;
-
-        Tick(data);
-    }
-
-    public void OnRelease()
-    {
-        hitThisTick.Clear();
-    }
-
-    // ── The beat ──────────────────────────────────────────────────────────
-
-    private void Tick(ProjectileData data)
-    {
-        if (brain.Source == null) return;
-        if (payload == null) return;
-
-        hitThisTick.Clear();
-
-        Vector3 centre = transform.position;
-
-        int count = Physics.OverlapSphereNonAlloc(
-            centre, data.areaRadius, OverlapBuffer, data.hitMask, QueryTriggerInteraction.Collide);
-
-        for (int i = 0; i < count; i++)
+        public void Initialize(ProjectileBrain projectileBrain)
         {
-            Collider candidate = OverlapBuffer[i];
-            if (candidate == null) continue;
-
-            ControllerBrain target = candidate.GetComponentInParent<ControllerBrain>();
-            if (target == null) continue;
-            if (!hitThisTick.Add(target)) continue;
-            if (!InsideCone(data, centre, target)) continue;
-
-            // Everything past this point is the contact path, exactly. The payload owns the
-            // stance rule, the arrival handler and the dice — a volume must not grow its own
-            // opinion about any of them.
-            payload.ResolveOnBrain(target, target.transform.position);
+            brain = projectileBrain;
+            payload = GetComponent<ProjectilePayload>();
         }
 
-        if (count >= MaxOverlap)
-            Debug.LogWarning($"[ProjectileAreaTicker] '{data.name}' filled its {MaxOverlap}-collider " +
-                             $"buffer — some targets in the volume were missed. Narrow the radius " +
-                             $"or tighten the hit mask.", this);
-    }
+        public void OnLaunch()
+        {
+            // A volume that waits a full interval before its first tick looks broken — the fireball
+            // lands, sits there, and only then does something.
+            nextTick = brain.Data.tickOnSpawn ? 0f : brain.Data.tickInterval;
+        }
 
-    /// <summary>
-    /// Whether a target is within the wedge. A full 360 volume skips the check entirely, which
-    /// is the Field case and the common one.
-    ///
-    /// Flattened to the horizontal plane on purpose: a breath weapon that stops working because
-    /// the target is standing slightly downhill is worse than one that reaches slightly further
-    /// than it looks.
-    /// </summary>
-    private bool InsideCone(ProjectileData data, Vector3 centre, ControllerBrain target)
-    {
-        if (data.areaAngle >= 360f) return true;
+        public void UpdateModule()
+        {
+            ProjectileData data = brain.Data;
 
-        Vector3 toTarget = target.transform.position - centre;
-        toTarget.y = 0f;
+            if (data == null) return;
+            if (data.tickInterval <= 0f) return;
+            if (brain.ElapsedTime < nextTick) return;
 
-        if (toTarget.sqrMagnitude < 0.0001f) return true;
+            nextTick += data.tickInterval;
 
-        Vector3 forward = transform.forward;
-        forward.y = 0f;
+            Tick(data);
+        }
 
-        if (forward.sqrMagnitude < 0.0001f) return true;
+        public void OnRelease()
+        {
+            hitThisTick.Clear();
+        }
 
-        return Vector3.Angle(forward, toTarget) <= data.areaAngle * 0.5f;
+        // ── The beat ──────────────────────────────────────────────────────────
+
+        private void Tick(ProjectileData data)
+        {
+            if (brain.Source == null) return;
+            if (payload == null) return;
+
+            hitThisTick.Clear();
+
+            Vector3 centre = transform.position;
+
+            int count = Physics.OverlapSphereNonAlloc(
+                centre, data.areaRadius, OverlapBuffer, data.hitMask, QueryTriggerInteraction.Collide);
+
+            for (int i = 0; i < count; i++)
+            {
+                Collider candidate = OverlapBuffer[i];
+                if (candidate == null) continue;
+
+                ControllerBrain target = candidate.GetComponentInParent<ControllerBrain>();
+                if (target == null) continue;
+                if (!hitThisTick.Add(target)) continue;
+                if (!InsideCone(data, centre, target)) continue;
+
+                // Everything past this point is the contact path, exactly. The payload owns the
+                // stance rule, the arrival handler and the dice — a volume must not grow its own
+                // opinion about any of them.
+                payload.ResolveOnBrain(target, target.transform.position);
+            }
+
+            if (count >= MaxOverlap)
+                Debug.LogWarning($"[ProjectileAreaTicker] '{data.name}' filled its {MaxOverlap}-collider " +
+                                 $"buffer — some targets in the volume were missed. Narrow the radius " +
+                                 $"or tighten the hit mask.", this);
+        }
+
+        /// <summary>
+        /// Whether a target is within the wedge. A full 360 volume skips the check entirely, which
+        /// is the Field case and the common one.
+        ///
+        /// Flattened to the horizontal plane on purpose: a breath weapon that stops working because
+        /// the target is standing slightly downhill is worse than one that reaches slightly further
+        /// than it looks.
+        /// </summary>
+        private bool InsideCone(ProjectileData data, Vector3 centre, ControllerBrain target)
+        {
+            if (data.areaAngle >= 360f) return true;
+
+            Vector3 toTarget = target.transform.position - centre;
+            toTarget.y = 0f;
+
+            if (toTarget.sqrMagnitude < 0.0001f) return true;
+
+            Vector3 forward = transform.forward;
+            forward.y = 0f;
+
+            if (forward.sqrMagnitude < 0.0001f) return true;
+
+            return Vector3.Angle(forward, toTarget) <= data.areaAngle * 0.5f;
+        }
     }
 }

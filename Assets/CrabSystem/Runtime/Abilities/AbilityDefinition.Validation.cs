@@ -4,69 +4,73 @@ using UnityEngine;
 /// AbilityDefinition - Validation Partial
 /// Editor validation and configuration checking
 /// </summary>
-public partial class AbilityDefinition
+
+namespace CrabSystem
 {
-    // ========================================
-    // VALIDATION
-    // ========================================
-
-    /// <summary>
-    /// Validate ability configuration
-    /// </summary>
-    public bool Validate(out string errorMessage)
+    public partial class AbilityDefinition
     {
-        if (string.IsNullOrEmpty(abilityId))
-        {
-            errorMessage = "Ability ID required";
-            return false;
-        }
+        // ========================================
+        // VALIDATION
+        // ========================================
 
-        if (string.IsNullOrEmpty(abilityName))
+        /// <summary>
+        /// Validate ability configuration
+        /// </summary>
+        public bool Validate(out string errorMessage)
         {
-            errorMessage = "Ability Name required";
-            return false;
-        }
-
-        if (resourceCosts != null)
-        {
-            foreach (var cost in resourceCosts)
+            if (string.IsNullOrEmpty(abilityId))
             {
-                if (cost.cost < 0)
+                errorMessage = "Ability ID required";
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(abilityName))
+            {
+                errorMessage = "Ability Name required";
+                return false;
+            }
+
+            if (resourceCosts != null)
+            {
+                foreach (var cost in resourceCosts)
                 {
-                    errorMessage = "Resource cost cannot be negative";
-                    return false;
+                    if (cost.cost < 0)
+                    {
+                        errorMessage = "Resource cost cannot be negative";
+                        return false;
+                    }
                 }
             }
+
+            if (cooldown < 0)
+            {
+                errorMessage = "Cooldown cannot be negative";
+                return false;
+            }
+
+            if (castTime < 0)
+            {
+                errorMessage = "Cast time cannot be negative";
+                return false;
+            }
+
+            if (maxDuration < 0)
+            {
+                errorMessage = "Max duration cannot be negative";
+                return false;
+            }
+
+            errorMessage = "";
+            return true;
         }
 
-        if (cooldown < 0)
+        [ContextMenu("Validate Configuration")]
+        private void ValidateConfiguration()
         {
-            errorMessage = "Cooldown cannot be negative";
-            return false;
+            if (Validate(out string error))
+                Debug.Log($"[AbilityDefinition] {abilityName} is valid");
+            else
+                Debug.LogError($"[AbilityDefinition] {abilityName} validation failed: {error}");
         }
-
-        if (castTime < 0)
-        {
-            errorMessage = "Cast time cannot be negative";
-            return false;
-        }
-
-        if (maxDuration < 0)
-        {
-            errorMessage = "Max duration cannot be negative";
-            return false;
-        }
-
-        errorMessage = "";
-        return true;
-    }
-
-    [ContextMenu("Validate Configuration")]
-    private void ValidateConfiguration()
-    {
-        if (Validate(out string error))
-            Debug.Log($"[AbilityDefinition] {abilityName} is valid");
-        else
-            Debug.LogError($"[AbilityDefinition] {abilityName} validation failed: {error}");
     }
 }

@@ -13,106 +13,109 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-public static class ToonSmoothNormals
+namespace CrabSystem
 {
-    public const string Flag = "toonSmoothNormals";
-    public const int UVChannel = 3;
-
-    const float QuantizeScale = 10000f;
-
-    public static void Bake(Mesh mesh)
+    public static class ToonSmoothNormals
     {
-        if (mesh == null)
-            return;
+        public const string Flag = "toonSmoothNormals";
+        public const int UVChannel = 3;
 
-        Vector3[] vertices = mesh.vertices;
-        Vector3[] normals = mesh.normals;
+        const float QuantizeScale = 10000f;
 
-        if (normals == null || normals.Length != vertices.Length)
-            return;
-
-        Dictionary<Vector3, Vector3> sums = new Dictionary<Vector3, Vector3>(vertices.Length);
-
-        for (int i = 0; i < vertices.Length; i++)
+        public static void Bake(Mesh mesh)
         {
-            Vector3 key = Quantize(vertices[i]);
-            Vector3 current;
-            sums.TryGetValue(key, out current);
-            sums[key] = current + normals[i];
+            if (mesh == null)
+                return;
+
+            Vector3[] vertices = mesh.vertices;
+            Vector3[] normals = mesh.normals;
+
+            if (normals == null || normals.Length != vertices.Length)
+                return;
+
+            Dictionary<Vector3, Vector3> sums = new Dictionary<Vector3, Vector3>(vertices.Length);
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                Vector3 key = Quantize(vertices[i]);
+                Vector3 current;
+                sums.TryGetValue(key, out current);
+                sums[key] = current + normals[i];
+            }
+
+            List<Vector3> smoothed = new List<Vector3>(vertices.Length);
+
+            for (int i = 0; i < vertices.Length; i++)
+                smoothed.Add(sums[Quantize(vertices[i])].normalized);
+
+            mesh.SetUVs(UVChannel, smoothed);
         }
 
-        List<Vector3> smoothed = new List<Vector3>(vertices.Length);
+        static Vector3 Quantize(Vector3 v)
+        {
+            float x = Mathf.Round(v.x * QuantizeScale);
+            float y = Mathf.Round(v.y * QuantizeScale);
+            float z = Mathf.Round(v.z * QuantizeScale);
+            return new Vector3(x, y, z);
+        }
 
-        for (int i = 0; i < vertices.Length; i++)
-            smoothed.Add(sums[Quantize(vertices[i])].normalized);
+        [MenuItem("Tools/Toon/Enable Smooth Normals On Selection")]
+        static void Enable()
+        {
+            ApplyToSelection(true);
+        }
 
-        mesh.SetUVs(UVChannel, smoothed);
+        [MenuItem("Tools/Toon/Disable Smooth Normals On Selection")]
+        static void Disable()
+        {
+            ApplyToSelection(false);
+        }
+
+        static void ApplyToSelection(bool enabled)
+        {
+            Object[] selected = Selection.GetFiltered(typeof(Object), SelectionMode.Assets);
+            int changed = 0;
+
+            for (int i = 0; i < selected.Length; i++)
+                changed += SetFlag(AssetDatabase.GetAssetPath(selected[i]), enabled) ? 1 : 0;
+
+            Debug.Log("[ToonSmoothNormals] " + (enabled ? "enabled" : "disabled") + " on " + changed + " model(s).");
+        }
+
+        static bool SetFlag(string assetPath, bool enabled)
+        {
+            ModelImporter importer = AssetImporter.GetAtPath(assetPath) as ModelImporter;
+
+            if (importer == null)
+                return false;
+
+            bool already = importer.userData.Contains(Flag);
+
+            if (already == enabled)
+                return false;
+
+            importer.userData = enabled ? importer.userData + Flag : importer.userData.Replace(Flag, "");
+            importer.SaveAndReimport();
+            return true;
+        }
     }
 
-    static Vector3 Quantize(Vector3 v)
+    public class ToonSmoothNormalsPostprocessor : AssetPostprocessor
     {
-        float x = Mathf.Round(v.x * QuantizeScale);
-        float y = Mathf.Round(v.y * QuantizeScale);
-        float z = Mathf.Round(v.z * QuantizeScale);
-        return new Vector3(x, y, z);
-    }
+        void OnPostprocessModel(GameObject root)
+        {
+            if (!assetImporter.userData.Contains(ToonSmoothNormals.Flag))
+                return;
 
-    [MenuItem("Tools/Toon/Enable Smooth Normals On Selection")]
-    static void Enable()
-    {
-        ApplyToSelection(true);
-    }
+            MeshFilter[] filters = root.GetComponentsInChildren<MeshFilter>(true);
 
-    [MenuItem("Tools/Toon/Disable Smooth Normals On Selection")]
-    static void Disable()
-    {
-        ApplyToSelection(false);
-    }
+            for (int i = 0; i < filters.Length; i++)
+                ToonSmoothNormals.Bake(filters[i].sharedMesh);
 
-    static void ApplyToSelection(bool enabled)
-    {
-        Object[] selected = Selection.GetFiltered(typeof(Object), SelectionMode.Assets);
-        int changed = 0;
+            SkinnedMeshRenderer[] skinned = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
 
-        for (int i = 0; i < selected.Length; i++)
-            changed += SetFlag(AssetDatabase.GetAssetPath(selected[i]), enabled) ? 1 : 0;
-
-        Debug.Log("[ToonSmoothNormals] " + (enabled ? "enabled" : "disabled") + " on " + changed + " model(s).");
-    }
-
-    static bool SetFlag(string assetPath, bool enabled)
-    {
-        ModelImporter importer = AssetImporter.GetAtPath(assetPath) as ModelImporter;
-
-        if (importer == null)
-            return false;
-
-        bool already = importer.userData.Contains(Flag);
-
-        if (already == enabled)
-            return false;
-
-        importer.userData = enabled ? importer.userData + Flag : importer.userData.Replace(Flag, "");
-        importer.SaveAndReimport();
-        return true;
-    }
-}
-
-public class ToonSmoothNormalsPostprocessor : AssetPostprocessor
-{
-    void OnPostprocessModel(GameObject root)
-    {
-        if (!assetImporter.userData.Contains(ToonSmoothNormals.Flag))
-            return;
-
-        MeshFilter[] filters = root.GetComponentsInChildren<MeshFilter>(true);
-
-        for (int i = 0; i < filters.Length; i++)
-            ToonSmoothNormals.Bake(filters[i].sharedMesh);
-
-        SkinnedMeshRenderer[] skinned = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
-
-        for (int i = 0; i < skinned.Length; i++)
-            ToonSmoothNormals.Bake(skinned[i].sharedMesh);
+            for (int i = 0; i < skinned.Length; i++)
+                ToonSmoothNormals.Bake(skinned[i].sharedMesh);
+        }
     }
 }

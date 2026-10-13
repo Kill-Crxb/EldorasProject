@@ -12,66 +12,70 @@ using UnityEngine;
 //   [ActionTrace] 13.38  Base_PC(Clone)  parry window 8f
 //   [ActionTrace] 13.40  Base_PC(Clone)  PARRY
 //   [ActionTrace] 13.40  Mirror_NPC  parried  -4 posture  (26/30)
-public class ActionTrace : MonoBehaviour
+
+namespace CrabSystem
 {
-    [SerializeField] private float rescanInterval = 1f;
-
-    private readonly HashSet<AbilitySystem> tracked = new();
-    private readonly HashSet<GuardModule> trackedGuards = new();
-    private float nextScan;
-
-    private void Update()
+    public class ActionTrace : MonoBehaviour
     {
-        if (Time.unscaledTime < nextScan) return;
-        nextScan = Time.unscaledTime + rescanInterval;
+        [SerializeField] private float rescanInterval = 1f;
 
-        foreach (AbilitySystem abilities in FindObjectsByType<AbilitySystem>())
+        private readonly HashSet<AbilitySystem> tracked = new();
+        private readonly HashSet<GuardModule> trackedGuards = new();
+        private float nextScan;
+
+        private void Update()
         {
-            if (!tracked.Add(abilities)) continue;
+            if (Time.unscaledTime < nextScan) return;
+            nextScan = Time.unscaledTime + rescanInterval;
 
-            AbilitySystem a = abilities;
-            a.OnAbilityUsed += id => Log(a, $"used {id}");
+            foreach (AbilitySystem abilities in FindObjectsByType<AbilitySystem>())
+            {
+                if (!tracked.Add(abilities)) continue;
+
+                AbilitySystem a = abilities;
+                a.OnAbilityUsed += id => Log(a, $"used {id}");
+            }
+
+            foreach (GuardModule guard in FindObjectsByType<GuardModule>())
+            {
+                if (!trackedGuards.Add(guard)) continue;
+
+                GuardModule g = guard;
+                g.OnBlockStart += () => Log(g, "guard UP");
+                g.OnBlockEnd += () => Log(g, "guard DOWN");
+                g.OnPerfectBlock += () => Log(g, "PARRY");
+                g.OnParryWindowOpened += frames => Log(g, $"parry window {frames}f");
+                g.OnGuardedHit += (cost, posture, stun) => Log(g, $"blocked  -{cost} stamina {Stamina(g)}  +{posture:0.#} posture {Posture(g)}  blockstun {stun}f");
+                g.OnPostureDamaged += posture => Log(g, $"guarded by target  +{posture:0.#} posture {Posture(g)}");
+                g.OnGuardBreak += () => Log(g, "GUARD BROKEN");
+                g.OnGuardFlanked += angle => Log(g, $"hit OUTSIDE guard arc ({angle:0}° off facing)");
+            }
         }
 
-        foreach (GuardModule guard in FindObjectsByType<GuardModule>())
+        private static string Posture(Component who)
         {
-            if (!trackedGuards.Add(guard)) continue;
+            ControllerBrain brain = who.GetComponentInParent<ControllerBrain>();
+            PostureModule posture = brain != null ? brain.GetModule<PostureModule>() : null;
+            if (posture == null) return "(no PostureModule)";
 
-            GuardModule g = guard;
-            g.OnBlockStart += () => Log(g, "guard UP");
-            g.OnBlockEnd += () => Log(g, "guard DOWN");
-            g.OnPerfectBlock += () => Log(g, "PARRY");
-            g.OnParryWindowOpened += frames => Log(g, $"parry window {frames}f");
-            g.OnGuardedHit += (cost, posture, stun) => Log(g, $"blocked  -{cost} stamina {Stamina(g)}  +{posture:0.#} posture {Posture(g)}  blockstun {stun}f");
-            g.OnPostureDamaged += posture => Log(g, $"guarded by target  +{posture:0.#} posture {Posture(g)}");
-            g.OnGuardBreak += () => Log(g, "GUARD BROKEN");
-            g.OnGuardFlanked += angle => Log(g, $"hit OUTSIDE guard arc ({angle:0}° off facing)");
+            return $"({posture.Current:0}/{posture.Max:0})";
         }
-    }
 
-    private static string Posture(Component who)
-    {
-        ControllerBrain brain = who.GetComponentInParent<ControllerBrain>();
-        PostureModule posture = brain != null ? brain.GetModule<PostureModule>() : null;
-        if (posture == null) return "(no PostureModule)";
+        private static string Stamina(Component who)
+        {
+            ControllerBrain brain = who.GetComponentInParent<ControllerBrain>();
+            ResourceSystem resources = brain != null ? brain.Resources : null;
+            ResourceDefinition stamina = resources != null ? resources.FindDefinition("stamina") : null;
+            if (stamina == null) return "(no stamina)";
 
-        return $"({posture.Current:0}/{posture.Max:0})";
-    }
+            return $"({resources.GetResource(stamina):0}/{resources.GetMaxResource(stamina):0})";
+        }
 
-    private static string Stamina(Component who)
-    {
-        ControllerBrain brain = who.GetComponentInParent<ControllerBrain>();
-        ResourceSystem resources = brain != null ? brain.Resources : null;
-        ResourceDefinition stamina = resources != null ? resources.FindDefinition("stamina") : null;
-        if (stamina == null) return "(no stamina)";
-
-        return $"({resources.GetResource(stamina):0}/{resources.GetMaxResource(stamina):0})";
-    }
-
-    private void Log(Component who, string what)
-    {
-        if (this == null || who == null) return;
-        Debug.Log($"[ActionTrace] {Time.time:0.00}  {who.transform.root.name}  {what}");
+        private void Log(Component who, string what)
+        {
+            if (this == null || who == null) return;
+            Debug.Log($"[ActionTrace] {Time.time:0.00}  {who.transform.root.name}  {what}");
+        }
     }
 }
 #endif

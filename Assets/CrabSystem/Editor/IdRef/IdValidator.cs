@@ -13,235 +13,239 @@ using UnityEngine;
 // and reports each value that no asset defines. Also lists assets with missing scripts, since
 // loading them is the only way to find those. Writes Logs/CrabSystem_IdCheck.md; each console
 // error pings its asset when clicked.
-public static class IdValidator
+
+namespace CrabSystem
 {
-    private const string ReportPath = "Logs/CrabSystem_IdCheck.md";
-    private const int MaxDepth = 6;
-    private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-
-    private static readonly Dictionary<Type, bool> typeHasIds = new();
-
-    private struct Finding
+    public static class IdValidator
     {
-        public UnityEngine.Object Asset;
-        public string Where;
-        public IdKind Kind;
-        public string Value;
-        public string Note;
-    }
+        private const string ReportPath = "Logs/CrabSystem_IdCheck.md";
+        private const int MaxDepth = 6;
+        private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-    [MenuItem("Tools/CrabSystem/Validate Ids")]
-    public static void Run()
-    {
-        var findings = new List<Finding>();
-        var missingScripts = new List<string>();
-        int checkedFields = 0;
+        private static readonly Dictionary<Type, bool> typeHasIds = new();
 
-        foreach (string path in AssetPaths("t:Prefab"))
+        private struct Finding
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (prefab == null) continue;
-            if (HasMissingScript(path, prefab)) missingScripts.Add(path);
-
-            foreach (var component in prefab.GetComponentsInChildren<MonoBehaviour>(true))
-            {
-                if (component == null) continue;
-                string where = $"{path} > {component.gameObject.name} > {component.GetType().Name}";
-                checkedFields += Walk(component, component.GetType(), where, prefab, findings, 0);
-            }
+            public UnityEngine.Object Asset;
+            public string Where;
+            public IdKind Kind;
+            public string Value;
+            public string Note;
         }
 
-        foreach (string path in AssetPaths("t:ScriptableObject"))
+        [MenuItem("Tools/CrabSystem/Validate Ids")]
+        public static void Run()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-            if (HasMissingScript(path, null)) missingScripts.Add(path);
-            if (asset == null) continue;
+            var findings = new List<Finding>();
+            var missingScripts = new List<string>();
+            int checkedFields = 0;
 
-            checkedFields += Walk(asset, asset.GetType(), path, asset, findings, 0);
-        }
-
-        checkedFields += CheckConstants(typeof(StatIds), IdKind.Stat, findings);
-        checkedFields += CheckConstants(typeof(DialIds), IdKind.Stat, findings);
-        checkedFields += CheckConstants(typeof(CrabLayers), IdKind.Layer, findings);
-
-        WriteReport(findings, missingScripts, checkedFields);
-
-        foreach (var f in findings)
-            Debug.LogError($"[Validate Ids] {f.Kind} '{f.Value}' {f.Note}: {f.Where}", f.Asset);
-
-        Debug.Log($"[Validate Ids] {checkedFields} id fields checked, {findings.Count} missing; {missingScripts.Count} assets with missing scripts. Report: {ReportPath}");
-    }
-
-    // A missing script can sit on a child object or inside a sub-asset (a volume profile's
-    // override components, for one); the second only shows as a null in LoadAllAssetsAtPath.
-    private static bool HasMissingScript(string path, GameObject prefab)
-    {
-        if (prefab != null && prefab.GetComponentsInChildren<Transform>(true)
-                .Any(child => GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject) > 0))
-            return true;
-
-        return AssetDatabase.LoadAllAssetsAtPath(path).Any(asset => asset == null);
-    }
-
-    // Asset-store packs and their demo content; reported apart so our own list stays readable.
-    private static readonly string[] ThirdPartyRoots =
-        { "Assets/ThirdParty/" };
-
-    private static bool IsThirdParty(string path) => ThirdPartyRoots.Any(root => path.StartsWith(root));
-
-    private static IEnumerable<string> AssetPaths(string filter)
-    {
-        return AssetDatabase.FindAssets(filter, new[] { "Assets" }).Select(AssetDatabase.GUIDToAssetPath);
-    }
-
-    private static int Walk(object target, Type type, string where, UnityEngine.Object asset, List<Finding> findings, int depth)
-    {
-        if (target == null || depth > MaxDepth || !HasIds(type)) return 0;
-
-        int count = 0;
-        foreach (var field in SerializedFields(type))
-        {
-            object value = field.GetValue(target);
-            string fieldWhere = $"{where}.{field.Name}";
-            var idRef = field.GetCustomAttribute<IdRefAttribute>();
-
-            if (idRef != null)
+            foreach (string path in AssetPaths("t:Prefab"))
             {
-                count += CheckIds(value, idRef.Kind, fieldWhere, asset, findings);
-                continue;
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null) continue;
+                if (HasMissingScript(path, prefab)) missingScripts.Add(path);
+
+                foreach (var component in prefab.GetComponentsInChildren<MonoBehaviour>(true))
+                {
+                    if (component == null) continue;
+                    string where = $"{path} > {component.gameObject.name} > {component.GetType().Name}";
+                    checkedFields += Walk(component, component.GetType(), where, prefab, findings, 0);
+                }
             }
 
-            count += WalkValue(value, ElementType(field.FieldType), fieldWhere, asset, findings, depth + 1);
+            foreach (string path in AssetPaths("t:ScriptableObject"))
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
+                if (HasMissingScript(path, null)) missingScripts.Add(path);
+                if (asset == null) continue;
+
+                checkedFields += Walk(asset, asset.GetType(), path, asset, findings, 0);
+            }
+
+            checkedFields += CheckConstants(typeof(StatIds), IdKind.Stat, findings);
+            checkedFields += CheckConstants(typeof(DialIds), IdKind.Stat, findings);
+            checkedFields += CheckConstants(typeof(CrabLayers), IdKind.Layer, findings);
+
+            WriteReport(findings, missingScripts, checkedFields);
+
+            foreach (var f in findings)
+                Debug.LogError($"[Validate Ids] {f.Kind} '{f.Value}' {f.Note}: {f.Where}", f.Asset);
+
+            Debug.Log($"[Validate Ids] {checkedFields} id fields checked, {findings.Count} missing; {missingScripts.Count} assets with missing scripts. Report: {ReportPath}");
         }
 
-        return count;
-    }
-
-    private static int WalkValue(object value, Type type, string where, UnityEngine.Object asset, List<Finding> findings, int depth)
-    {
-        if (value == null || type == null || typeof(UnityEngine.Object).IsAssignableFrom(type)) return 0;
-
-        if (value is IList list)
+        // A missing script can sit on a child object or inside a sub-asset (a volume profile's
+        // override components, for one); the second only shows as a null in LoadAllAssetsAtPath.
+        private static bool HasMissingScript(string path, GameObject prefab)
         {
+            if (prefab != null && prefab.GetComponentsInChildren<Transform>(true)
+                    .Any(child => GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject) > 0))
+                return true;
+
+            return AssetDatabase.LoadAllAssetsAtPath(path).Any(asset => asset == null);
+        }
+
+        // Asset-store packs and their demo content; reported apart so our own list stays readable.
+        private static readonly string[] ThirdPartyRoots =
+            { "Assets/ThirdParty/" };
+
+        private static bool IsThirdParty(string path) => ThirdPartyRoots.Any(root => path.StartsWith(root));
+
+        private static IEnumerable<string> AssetPaths(string filter)
+        {
+            return AssetDatabase.FindAssets(filter, new[] { "Assets" }).Select(AssetDatabase.GUIDToAssetPath);
+        }
+
+        private static int Walk(object target, Type type, string where, UnityEngine.Object asset, List<Finding> findings, int depth)
+        {
+            if (target == null || depth > MaxDepth || !HasIds(type)) return 0;
+
             int count = 0;
-            for (int i = 0; i < list.Count; i++)
-                count += Walk(list[i], type, $"{where}[{i}]", asset, findings, depth);
+            foreach (var field in SerializedFields(type))
+            {
+                object value = field.GetValue(target);
+                string fieldWhere = $"{where}.{field.Name}";
+                var idRef = field.GetCustomAttribute<IdRefAttribute>();
+
+                if (idRef != null)
+                {
+                    count += CheckIds(value, idRef.Kind, fieldWhere, asset, findings);
+                    continue;
+                }
+
+                count += WalkValue(value, ElementType(field.FieldType), fieldWhere, asset, findings, depth + 1);
+            }
+
             return count;
         }
 
-        return Walk(value, type, where, asset, findings, depth);
-    }
-
-    private static int CheckIds(object value, IdKind kind, string where, UnityEngine.Object asset, List<Finding> findings)
-    {
-        var ids = value is IList list ? list.Cast<object>().Select(v => v as string) : new[] { value as string };
-
-        int count = 0;
-        foreach (string id in ids)
+        private static int WalkValue(object value, Type type, string where, UnityEngine.Object asset, List<Finding> findings, int depth)
         {
-            count++;
-            if (string.IsNullOrEmpty(id) || IdSources.Exists(kind, id)) continue;
-            findings.Add(new Finding { Asset = asset, Where = where, Kind = kind, Value = id, Note = MissingNote(kind, id) });
-        }
+            if (value == null || type == null || typeof(UnityEngine.Object).IsAssignableFrom(type)) return 0;
 
-        return count;
-    }
-
-    // A renamed stat still works through its former id, but the asset should be moved to the new one.
-    private static string MissingNote(IdKind kind, string id)
-    {
-        string current = kind == IdKind.Stat ? IdSources.RenamedStat(id) : null;
-        return current != null ? $"was renamed to '{current}'" : "doesn't exist";
-    }
-
-    // Code names stat ids only through StatIds and DialIds, and layers only through CrabLayers, so every
-    // constant there must exist.
-    private static int CheckConstants(Type holder, IdKind kind, List<Finding> findings)
-    {
-        int count = 0;
-        foreach (FieldInfo field in holder.GetFields(BindingFlags.Public | BindingFlags.Static))
-        {
-            if (!field.IsLiteral || field.FieldType != typeof(string)) continue;
-            count += CheckIds(field.GetValue(null), kind, $"{holder.Name}.{field.Name}", null, findings);
-        }
-        return count;
-    }
-
-    // A type is walked only if it, or something it holds, has an [IdRef] field. Cached per type,
-    // so third-party components cost one check each.
-    private static bool HasIds(Type type)
-    {
-        if (type == null) return false;
-        if (typeHasIds.TryGetValue(type, out bool has)) return has;
-
-        typeHasIds[type] = false; // guards recursive types while this one is being checked
-        has = SerializedFields(type).Any(f =>
-            f.IsDefined(typeof(IdRefAttribute)) ||
-            (IsWalkable(ElementType(f.FieldType)) && HasIds(ElementType(f.FieldType))));
-
-        typeHasIds[type] = has;
-        return has;
-    }
-
-    private static bool IsWalkable(Type type)
-    {
-        return type != null && !type.IsPrimitive && type != typeof(string) && !type.IsEnum &&
-               !typeof(UnityEngine.Object).IsAssignableFrom(type) && type.IsDefined(typeof(SerializableAttribute));
-    }
-
-    private static Type ElementType(Type type)
-    {
-        if (type.IsArray) return type.GetElementType();
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>)) return type.GetGenericArguments()[0];
-        return type;
-    }
-
-    private static IEnumerable<FieldInfo> SerializedFields(Type type)
-    {
-        for (var t = type; t != null && t != typeof(MonoBehaviour) && t != typeof(ScriptableObject) && t != typeof(object); t = t.BaseType)
-        {
-            foreach (var field in t.GetFields(Fields | BindingFlags.DeclaredOnly))
+            if (value is IList list)
             {
-                if (field.IsNotSerialized) continue;
-                if (!field.IsPublic && !field.IsDefined(typeof(SerializeField))) continue;
-                yield return field;
+                int count = 0;
+                for (int i = 0; i < list.Count; i++)
+                    count += Walk(list[i], type, $"{where}[{i}]", asset, findings, depth);
+                return count;
+            }
+
+            return Walk(value, type, where, asset, findings, depth);
+        }
+
+        private static int CheckIds(object value, IdKind kind, string where, UnityEngine.Object asset, List<Finding> findings)
+        {
+            var ids = value is IList list ? list.Cast<object>().Select(v => v as string) : new[] { value as string };
+
+            int count = 0;
+            foreach (string id in ids)
+            {
+                count++;
+                if (string.IsNullOrEmpty(id) || IdSources.Exists(kind, id)) continue;
+                findings.Add(new Finding { Asset = asset, Where = where, Kind = kind, Value = id, Note = MissingNote(kind, id) });
+            }
+
+            return count;
+        }
+
+        // A renamed stat still works through its former id, but the asset should be moved to the new one.
+        private static string MissingNote(IdKind kind, string id)
+        {
+            string current = kind == IdKind.Stat ? IdSources.RenamedStat(id) : null;
+            return current != null ? $"was renamed to '{current}'" : "doesn't exist";
+        }
+
+        // Code names stat ids only through StatIds and DialIds, and layers only through CrabLayers, so every
+        // constant there must exist.
+        private static int CheckConstants(Type holder, IdKind kind, List<Finding> findings)
+        {
+            int count = 0;
+            foreach (FieldInfo field in holder.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (!field.IsLiteral || field.FieldType != typeof(string)) continue;
+                count += CheckIds(field.GetValue(null), kind, $"{holder.Name}.{field.Name}", null, findings);
+            }
+            return count;
+        }
+
+        // A type is walked only if it, or something it holds, has an [IdRef] field. Cached per type,
+        // so third-party components cost one check each.
+        private static bool HasIds(Type type)
+        {
+            if (type == null) return false;
+            if (typeHasIds.TryGetValue(type, out bool has)) return has;
+
+            typeHasIds[type] = false; // guards recursive types while this one is being checked
+            has = SerializedFields(type).Any(f =>
+                f.IsDefined(typeof(IdRefAttribute)) ||
+                (IsWalkable(ElementType(f.FieldType)) && HasIds(ElementType(f.FieldType))));
+
+            typeHasIds[type] = has;
+            return has;
+        }
+
+        private static bool IsWalkable(Type type)
+        {
+            return type != null && !type.IsPrimitive && type != typeof(string) && !type.IsEnum &&
+                   !typeof(UnityEngine.Object).IsAssignableFrom(type) && type.IsDefined(typeof(SerializableAttribute));
+        }
+
+        private static Type ElementType(Type type)
+        {
+            if (type.IsArray) return type.GetElementType();
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>)) return type.GetGenericArguments()[0];
+            return type;
+        }
+
+        private static IEnumerable<FieldInfo> SerializedFields(Type type)
+        {
+            for (var t = type; t != null && t != typeof(MonoBehaviour) && t != typeof(ScriptableObject) && t != typeof(object); t = t.BaseType)
+            {
+                foreach (var field in t.GetFields(Fields | BindingFlags.DeclaredOnly))
+                {
+                    if (field.IsNotSerialized) continue;
+                    if (!field.IsPublic && !field.IsDefined(typeof(SerializeField))) continue;
+                    yield return field;
+                }
             }
         }
-    }
 
-    private static void WriteReport(List<Finding> findings, List<string> missingScripts, int checkedFields)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("# CrabSystem — id check");
-        sb.AppendLine();
-        sb.AppendLine($"{DateTime.Now:yyyy-MM-dd HH:mm}. {checkedFields} id fields checked, **{findings.Count} missing**. " +
-                      $"**{missingScripts.Count}** assets with missing scripts.");
-        sb.AppendLine();
-
-        foreach (var group in findings.GroupBy(f => f.Kind).OrderBy(g => g.Key.ToString()))
+        private static void WriteReport(List<Finding> findings, List<string> missingScripts, int checkedFields)
         {
-            sb.AppendLine($"## {group.Key} ({group.Count()})");
+            var sb = new StringBuilder();
+            sb.AppendLine("# CrabSystem — id check");
             sb.AppendLine();
-            foreach (var f in group.OrderBy(f => f.Where))
-                sb.AppendLine($"- `{f.Value}` {f.Note} — {f.Where}");
+            sb.AppendLine($"{DateTime.Now:yyyy-MM-dd HH:mm}. {checkedFields} id fields checked, **{findings.Count} missing**. " +
+                          $"**{missingScripts.Count}** assets with missing scripts.");
             sb.AppendLine();
+
+            foreach (var group in findings.GroupBy(f => f.Kind).OrderBy(g => g.Key.ToString()))
+            {
+                sb.AppendLine($"## {group.Key} ({group.Count()})");
+                sb.AppendLine();
+                foreach (var f in group.OrderBy(f => f.Where))
+                    sb.AppendLine($"- `{f.Value}` {f.Note} — {f.Where}");
+                sb.AppendLine();
+            }
+
+            AppendPaths(sb, "Missing scripts, ours", missingScripts.Where(p => !IsThirdParty(p)));
+            AppendPaths(sb, "Missing scripts, third-party packs", missingScripts.Where(IsThirdParty));
+
+            Directory.CreateDirectory(Path.GetDirectoryName(ReportPath));
+            File.WriteAllText(ReportPath, sb.ToString());
         }
 
-        AppendPaths(sb, "Missing scripts, ours", missingScripts.Where(p => !IsThirdParty(p)));
-        AppendPaths(sb, "Missing scripts, third-party packs", missingScripts.Where(IsThirdParty));
+        private static void AppendPaths(StringBuilder sb, string heading, IEnumerable<string> paths)
+        {
+            var list = paths.OrderBy(p => p, StringComparer.Ordinal).ToList();
+            if (list.Count == 0) return;
 
-        Directory.CreateDirectory(Path.GetDirectoryName(ReportPath));
-        File.WriteAllText(ReportPath, sb.ToString());
-    }
-
-    private static void AppendPaths(StringBuilder sb, string heading, IEnumerable<string> paths)
-    {
-        var list = paths.OrderBy(p => p, StringComparer.Ordinal).ToList();
-        if (list.Count == 0) return;
-
-        sb.AppendLine($"## {heading} ({list.Count})");
-        sb.AppendLine();
-        foreach (string path in list) sb.AppendLine($"- {path}");
-        sb.AppendLine();
+            sb.AppendLine($"## {heading} ({list.Count})");
+            sb.AppendLine();
+            foreach (string path in list) sb.AppendLine($"- {path}");
+            sb.AppendLine();
+        }
     }
 }

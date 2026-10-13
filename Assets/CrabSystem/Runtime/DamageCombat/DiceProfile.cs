@@ -14,28 +14,32 @@ using UnityEngine;
 /// in any form the code read — see the dev insight note on this cleanup. If weapon behaviour comes
 /// back it belongs in its own asset, not bolted onto the dice.
 /// </summary>
-[CreateAssetMenu(fileName = "New Dice Profile", menuName = "Combat/Dice Profile")]
-public class DiceProfile : ScriptableObject
+
+namespace CrabSystem
 {
-    [Header("Identity")]
-    [Tooltip("Shown in tooltips and logs — 'Katana', 'Fireball', 'Fists'.")]
-    public string weaponName = "New Dice Profile";
+    [CreateAssetMenu(fileName = "New Dice Profile", menuName = "Combat/Dice Profile")]
+    public class DiceProfile : ScriptableObject
+    {
+        [Header("Identity")]
+        [Tooltip("Shown in tooltips and logs — 'Katana', 'Fireball', 'Fists'.")]
+        public string weaponName = "New Dice Profile";
 
-    [Header("Dice Damage")]
-    [Tooltip("Dice expression rolled on each hit — e.g. 1d8 for a longsword, 1d4 for a dagger")]
-    public DiceRoll damageDice = DiceRoll.D6();
+        [Header("Dice Damage")]
+        [Tooltip("Dice expression rolled on each hit — e.g. 1d8 for a longsword, 1d4 for a dagger")]
+        public DiceRoll damageDice = DiceRoll.D6();
 
-    [Tooltip("Flat value added to every roll (can be negative for off-hand penalty)")]
-    public float flatBonus = 0f;
+        [Tooltip("Flat value added to every roll (can be negative for off-hand penalty)")]
+        public float flatBonus = 0f;
 
-    /// <summary>
-    /// Roll the damage expression and add the flat bonus.
-    /// Call once per hit — do not cache.
-    /// </summary>
-    public float RollDamage() => damageDice.Roll() + flatBonus;
+        /// <summary>
+        /// Roll the damage expression and add the flat bonus.
+        /// Call once per hit — do not cache.
+        /// </summary>
+        public float RollDamage() => damageDice.Roll() + flatBonus;
 
-    /// <summary>Human-readable label for tooltips — e.g. "1d8 + 2".</summary>
-    public string DamageLabel() => flatBonus == 0f
-        ? damageDice.Label()
-        : $"{damageDice.Label()} {(flatBonus > 0f ? "+" : "")}{flatBonus}";
+        /// <summary>Human-readable label for tooltips — e.g. "1d8 + 2".</summary>
+        public string DamageLabel() => flatBonus == 0f
+            ? damageDice.Label()
+            : $"{damageDice.Label()} {(flatBonus > 0f ? "+" : "")}{flatBonus}";
+    }
 }

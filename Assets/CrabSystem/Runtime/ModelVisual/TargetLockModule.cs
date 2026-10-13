@@ -2,208 +2,211 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class TargetLockModule : MonoBehaviour, IBrainModule, IInputHandler
+namespace CrabSystem
 {
-    [Header("Target Lock Settings")]
-    [SerializeField] private float lockOnRange = 15f;
-
-    [Header("Debug")]
-    // [SerializeField] private bool showDebugInfo = false;
-
-    // References
-    private ControllerBrain brain;
-    private Transform playerRoot;
-
-    // Targeting state
-    private Transform lockedTarget;
-    private bool isLockedOn;
-
-    // Properties for other systems to read
-    public bool IsLockedOn => isLockedOn;
-    public Transform LockedTarget => lockedTarget;
-    public Vector3 TargetPoint => lockedTarget != null ? GetTargetPoint() : Vector3.zero;
-    public float LockOnRange => lockOnRange;
-
-    // IBrainModule implementation
-    public bool IsEnabled { get; set; } = true;
-
-    public void Initialize(ControllerBrain brain)
+    public class TargetLockModule : MonoBehaviour, IBrainModule, IInputHandler
     {
-        this.brain = brain;
-        playerRoot = brain.transform.parent;
-    }
+        [Header("Target Lock Settings")]
+        [SerializeField] private float lockOnRange = 15f;
 
-    public void UpdateModule()
-    {
-        if (!IsEnabled) return;
-        CheckTargetValid();
-    }
+        [Header("Debug")]
+        // [SerializeField] private bool showDebugInfo = false;
+
+        // References
+        private ControllerBrain brain;
+        private Transform playerRoot;
+
+        // Targeting state
+        private Transform lockedTarget;
+        private bool isLockedOn;
+
+        // Properties for other systems to read
+        public bool IsLockedOn => isLockedOn;
+        public Transform LockedTarget => lockedTarget;
+        public Vector3 TargetPoint => lockedTarget != null ? GetTargetPoint() : Vector3.zero;
+        public float LockOnRange => lockOnRange;
+
+        // IBrainModule implementation
+        public bool IsEnabled { get; set; } = true;
+
+        public void Initialize(ControllerBrain brain)
+        {
+            this.brain = brain;
+            playerRoot = brain.transform.parent;
+        }
+
+        public void UpdateModule()
+        {
+            if (!IsEnabled) return;
+            CheckTargetValid();
+        }
 
     #region Input Handling
 
-    public void SubscribeToInputs(PlayerInputControls inputControls)
-    {
-        if (inputControls != null && inputControls.Player.TargetLock != null)
+        public void SubscribeToInputs(PlayerInputControls inputControls)
         {
-            inputControls.Player.TargetLock.performed += OnTargetLockInput;
+            if (inputControls != null && inputControls.Player.TargetLock != null)
+            {
+                inputControls.Player.TargetLock.performed += OnTargetLockInput;
+            }
         }
-    }
 
-    public void UnsubscribeFromInputs(PlayerInputControls inputControls)
-    {
-        if (inputControls != null && inputControls.Player.TargetLock != null)
+        public void UnsubscribeFromInputs(PlayerInputControls inputControls)
         {
-            inputControls.Player.TargetLock.performed -= OnTargetLockInput;
+            if (inputControls != null && inputControls.Player.TargetLock != null)
+            {
+                inputControls.Player.TargetLock.performed -= OnTargetLockInput;
+            }
         }
-    }
 
-    private void OnTargetLockInput(InputAction.CallbackContext context)
-    {
-        if (isLockedOn) UnlockTarget();
-        else LockOntoNearestTarget();
-    }
+        private void OnTargetLockInput(InputAction.CallbackContext context)
+        {
+            if (isLockedOn) UnlockTarget();
+            else LockOntoNearestTarget();
+        }
 
-    void OnDestroy()
-    {
-        UnsubscribeFromInputs(brain?.GetInputControls());
-    }
+        void OnDestroy()
+        {
+            UnsubscribeFromInputs(brain?.GetInputControls());
+        }
 
     #endregion
 
     #region Simple Targeting Logic
 
-    void CheckTargetValid()
-    {
-        if (!isLockedOn || lockedTarget == null) return;
-
-        // Simple range check
-        float distance = Vector3.Distance(playerRoot.position, lockedTarget.position);
-        if (distance > lockOnRange)
+        void CheckTargetValid()
         {
-            UnlockTarget();
-        }
-    }
+            if (!isLockedOn || lockedTarget == null) return;
 
-    void LockOntoNearestTarget()
-    {
-        // Find ALL colliders in range, then filter by component/tag
-        Collider[] targets = Physics.OverlapSphere(playerRoot.position, lockOnRange);
-
-        Transform nearest = null;
-        float nearestDistance = float.MaxValue;
-
-        foreach (Collider target in targets)
-        {
-            if (IsValidTarget(target))
+            // Simple range check
+            float distance = Vector3.Distance(playerRoot.position, lockedTarget.position);
+            if (distance > lockOnRange)
             {
-                float distance = Vector3.Distance(playerRoot.position, target.transform.position);
-                if (distance < nearestDistance)
-                {
-                    nearestDistance = distance;
-                    nearest = target.transform;
-                }
+                UnlockTarget();
             }
         }
 
-        if (nearest != null)
+        void LockOntoNearestTarget()
         {
-            SetTarget(nearest);
-        }
-    }
+            // Find ALL colliders in range, then filter by component/tag
+            Collider[] targets = Physics.OverlapSphere(playerRoot.position, lockOnRange);
 
-    // Only ITargetable counts; tags are a project setting the framework can't assume exist.
-    bool IsValidTarget(Collider target)
-    {
-        if (target.transform.IsChildOf(playerRoot)) return false;
+            Transform nearest = null;
+            float nearestDistance = float.MaxValue;
 
-        var targetable = target.GetComponent<ITargetable>();
-        return targetable != null && targetable.CanBeTargeted;
-    }
+            foreach (Collider target in targets)
+            {
+                if (IsValidTarget(target))
+                {
+                    float distance = Vector3.Distance(playerRoot.position, target.transform.position);
+                    if (distance < nearestDistance)
+                    {
+                        nearestDistance = distance;
+                        nearest = target.transform;
+                    }
+                }
+            }
 
-    void SetTarget(Transform target)
-    {
-        lockedTarget = target;
-        isLockedOn = true;
-
-        // Notify target
-        target.GetComponent<ITargetable>()?.OnTargeted();
-
-        // NEW MOVEMENT SYSTEM: No need to notify movement system
-        // PlayerControlSource already queries this module for lock-on state
-        // See PlayerControlSource.CalculateLookDirection() - it checks targetLock.IsLockedOn
-    }
-
-    void UnlockTarget()
-    {
-        if (lockedTarget != null)
-        {
-            lockedTarget.GetComponent<ITargetable>()?.OnTargetLost();
+            if (nearest != null)
+            {
+                SetTarget(nearest);
+            }
         }
 
-        lockedTarget = null;
-        isLockedOn = false;
+        // Only ITargetable counts; tags are a project setting the framework can't assume exist.
+        bool IsValidTarget(Collider target)
+        {
+            if (target.transform.IsChildOf(playerRoot)) return false;
 
-        // NEW MOVEMENT SYSTEM: No need to notify movement system
-        // PlayerControlSource already queries this module for lock-on state
-    }
+            var targetable = target.GetComponent<ITargetable>();
+            return targetable != null && targetable.CanBeTargeted;
+        }
 
-    Vector3 GetTargetPoint()
-    {
-        var targetable = lockedTarget.GetComponent<ITargetable>();
-        return targetable?.GetTargetPoint() ?? lockedTarget.position + Vector3.up;
-    }
+        void SetTarget(Transform target)
+        {
+            lockedTarget = target;
+            isLockedOn = true;
+
+            // Notify target
+            target.GetComponent<ITargetable>()?.OnTargeted();
+
+            // NEW MOVEMENT SYSTEM: No need to notify movement system
+            // PlayerControlSource already queries this module for lock-on state
+            // See PlayerControlSource.CalculateLookDirection() - it checks targetLock.IsLockedOn
+        }
+
+        void UnlockTarget()
+        {
+            if (lockedTarget != null)
+            {
+                lockedTarget.GetComponent<ITargetable>()?.OnTargetLost();
+            }
+
+            lockedTarget = null;
+            isLockedOn = false;
+
+            // NEW MOVEMENT SYSTEM: No need to notify movement system
+            // PlayerControlSource already queries this module for lock-on state
+        }
+
+        Vector3 GetTargetPoint()
+        {
+            var targetable = lockedTarget.GetComponent<ITargetable>();
+            return targetable?.GetTargetPoint() ?? lockedTarget.position + Vector3.up;
+        }
 
     #endregion
 
     #region Public API
 
-    /// <summary>
-    /// Get all valid targets in range
-    /// </summary>
-    public Transform[] GetTargetsInRange()
-    {
-        if (playerRoot == null) return new Transform[0];
-
-        Collider[] targets = Physics.OverlapSphere(playerRoot.position, lockOnRange);
-        var validTargets = new System.Collections.Generic.List<Transform>();
-
-        foreach (Collider target in targets)
+        /// <summary>
+        /// Get all valid targets in range
+        /// </summary>
+        public Transform[] GetTargetsInRange()
         {
-            if (IsValidTarget(target))
-            {
-                validTargets.Add(target.transform);
-            }
-        }
+            if (playerRoot == null) return new Transform[0];
 
-        return validTargets.ToArray();
-    }
+            Collider[] targets = Physics.OverlapSphere(playerRoot.position, lockOnRange);
+            var validTargets = new System.Collections.Generic.List<Transform>();
+
+            foreach (Collider target in targets)
+            {
+                if (IsValidTarget(target))
+                {
+                    validTargets.Add(target.transform);
+                }
+            }
+
+            return validTargets.ToArray();
+        }
 
     #endregion
 
     #region Debug
 
-    void OnDrawGizmosSelected()
-    {
-        if (playerRoot == null) return;
-
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(playerRoot.position, lockOnRange);
-
-        if (isLockedOn && lockedTarget != null)
+        void OnDrawGizmosSelected()
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(playerRoot.position, TargetPoint);
+            if (playerRoot == null) return;
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(playerRoot.position, lockOnRange);
+
+            if (isLockedOn && lockedTarget != null)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawLine(playerRoot.position, TargetPoint);
+            }
         }
-    }
 
     #endregion
-}
+    }
 
-// Simple targetable interface - only create if it doesn't exist
-public interface ITargetable
-{
-    bool CanBeTargeted { get; }
-    Vector3 GetTargetPoint();
-    void OnTargeted();
-    void OnTargetLost();
+    // Simple targetable interface - only create if it doesn't exist
+    public interface ITargetable
+    {
+        bool CanBeTargeted { get; }
+        Vector3 GetTargetPoint();
+        void OnTargeted();
+        void OnTargetLost();
+    }
 }

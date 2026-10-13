@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // Makes a tree known, so an empty slot can take it. A tree once slotted stays known.
     [CreateAssetMenu(fileName = "Reward_TreeUnlock", menuName = "CrabSystem/Rewards/Tree Unlock")]

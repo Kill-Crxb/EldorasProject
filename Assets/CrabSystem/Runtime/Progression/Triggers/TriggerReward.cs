@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // "On a perfect dodge, regain 3 stamina", "on kill, Dash Thrust is ready 5 s sooner", "on hit, 1 in 4: your
     // light attack becomes Shadow Riposte for 3 s, once": an event, its filters and chance, and the effects it fires.

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace RPG.Factions
+namespace CrabSystem.Factions
 {
     /// <summary>
     /// Global faction service on Manager_Brain.

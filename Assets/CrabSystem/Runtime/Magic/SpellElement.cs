@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace NinjaGame.Magic
+namespace CrabSystem.Magic
 {
     /// <summary>
     /// The six elements, and the six positions they can occupy.

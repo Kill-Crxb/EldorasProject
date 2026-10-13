@@ -41,39 +41,43 @@ using UnityEngine;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 18, 2026
 /// </summary>
-public abstract class ValueSourceDefinition : ScriptableObject
+
+namespace CrabSystem
 {
-    /// <summary>
-    /// Get current value from this source for the given entity.
-    /// Returns float for numerical comparisons (0/1 for booleans).
-    /// </summary>
-    /// <param name="brain">Entity to query value from</param>
-    /// <returns>Current value (0 if source unavailable)</returns>
-    public abstract float GetValue(ControllerBrain brain);
-
-    /// <summary>
-    /// Get display name for inspector/debugging.
-    /// Override for custom formatting.
-    /// </summary>
-    public virtual string GetDisplayName() => name;
-
-    /// <summary>
-    /// Validate this value source configuration.
-    /// Override to check source-specific requirements.
-    /// </summary>
-    public virtual bool Validate(out string error)
+    public abstract class ValueSourceDefinition : ScriptableObject
     {
-        error = null;
-        return true;
-    }
+        /// <summary>
+        /// Get current value from this source for the given entity.
+        /// Returns float for numerical comparisons (0/1 for booleans).
+        /// </summary>
+        /// <param name="brain">Entity to query value from</param>
+        /// <returns>Current value (0 if source unavailable)</returns>
+        public abstract float GetValue(ControllerBrain brain);
+
+        /// <summary>
+        /// Get display name for inspector/debugging.
+        /// Override for custom formatting.
+        /// </summary>
+        public virtual string GetDisplayName() => name;
+
+        /// <summary>
+        /// Validate this value source configuration.
+        /// Override to check source-specific requirements.
+        /// </summary>
+        public virtual bool Validate(out string error)
+        {
+            error = null;
+            return true;
+        }
 
 #if UNITY_EDITOR
-    protected virtual void OnValidate()
-    {
-        if (!Validate(out string error))
+        protected virtual void OnValidate()
         {
-            Debug.LogWarning($"[{GetType().Name}] Validation failed: {error}", this);
+            if (!Validate(out string error))
+            {
+                Debug.LogWarning($"[{GetType().Name}] Validation failed: {error}", this);
+            }
         }
-    }
 #endif
+    }
 }

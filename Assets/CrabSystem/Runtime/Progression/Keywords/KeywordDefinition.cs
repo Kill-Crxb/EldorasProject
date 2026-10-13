@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // TargetHasStatus is Exploit (+1d6 vs Prone); SelfHasStatus is Thrive (while Hasted).
     public enum KeywordCondition { Always, FromBehind, TargetHasStatus, SelfHasStatus }

@@ -11,206 +11,210 @@ using UnityEngine;
 //
 // Skins: a piece of clothing is made to sit over a skin trimmed to fit it, so a matched set shows its own
 // trimmed skin. Any mix the skins don't list shows the fallback (the whole body), so nothing has a hole.
-[Serializable]
-public class AppearanceChoice
-{
-    public string groupId;
-    public string optionId;
-}
 
-public class ModelAppearance : MonoBehaviour
+namespace CrabSystem
 {
     [Serializable]
-    public class MaterialSwap
-    {
-        public Renderer renderer;
-        public int slot;
-        public Material material;
-    }
-
-    [Serializable]
-    public class Option
-    {
-        public string optionId;
-        public string displayName;
-
-        [Tooltip("Shown when this option is picked, hidden when another option in the group is.")]
-        public GameObject[] show = new GameObject[0];
-
-        public MaterialSwap[] swaps = new MaterialSwap[0];
-    }
-
-    [Serializable]
-    public class Group
+    public class AppearanceChoice
     {
         public string groupId;
-        public string displayName;
-
-        [Tooltip("Picked once in character creation and saved with the model. Off: driven by equipment.")]
-        public bool chosenAtCreation;
-
-        [Tooltip("Equipment groups: shown while no equipped item drives the group. Empty = the first option.")]
-        public string unequippedOptionId;
-
-        public Option[] options = new Option[0];
+        public string optionId;
     }
 
-    [Serializable]
-    public class Skin
+    public class ModelAppearance : MonoBehaviour
     {
-        public GameObject show;
+        [Serializable]
+        public class MaterialSwap
+        {
+            public Renderer renderer;
+            public int slot;
+            public Material material;
+        }
 
-        [Tooltip("Shown only while every one of these groups shows this option.")]
-        public AppearanceChoice[] whenWearing = new AppearanceChoice[0];
-    }
+        [Serializable]
+        public class Option
+        {
+            public string optionId;
+            public string displayName;
 
-    [SerializeField] private Group[] groups = new Group[0];
+            [Tooltip("Shown when this option is picked, hidden when another option in the group is.")]
+            public GameObject[] show = new GameObject[0];
 
-    [Tooltip("Checked in order; the first whose options are all showing is the skin shown.")]
-    [SerializeField] private Skin[] skins = new Skin[0];
+            public MaterialSwap[] swaps = new MaterialSwap[0];
+        }
 
-    [Tooltip("Shown when no skin matches the mix being worn.")]
-    [SerializeField] private GameObject fallbackSkin;
+        [Serializable]
+        public class Group
+        {
+            public string groupId;
+            public string displayName;
 
-    private readonly Dictionary<string, string> showing = new Dictionary<string, string>();
+            [Tooltip("Picked once in character creation and saved with the model. Off: driven by equipment.")]
+            public bool chosenAtCreation;
 
-    public IReadOnlyList<Group> Groups => groups;
+            [Tooltip("Equipment groups: shown while no equipped item drives the group. Empty = the first option.")]
+            public string unequippedOptionId;
 
-    // Creation groups only; equipment groups are left as the equipment set them. A group missing from
-    // the choices, or naming an option it doesn't have, shows its first option.
-    public void Apply(IReadOnlyList<AppearanceChoice> choices)
-    {
-        foreach (var group in groups)
-            if (group.chosenAtCreation) ApplyGroup(group, IndexOf(group, ChosenOptionId(group, choices)));
-    }
+            public Option[] options = new Option[0];
+        }
 
-    // Every group at its default: creation groups at their first option, equipment groups unequipped.
-    public void ApplyDefaults()
-    {
-        foreach (var group in groups)
-            ApplyGroup(group, DefaultIndex(group));
-    }
+        [Serializable]
+        public class Skin
+        {
+            public GameObject show;
 
-    // False when the model has no such group or option, so the caller knows nothing changed.
-    public bool Show(string groupId, string optionId)
-    {
-        Group group = Find(groupId);
-        if (group == null) return false;
+            [Tooltip("Shown only while every one of these groups shows this option.")]
+            public AppearanceChoice[] whenWearing = new AppearanceChoice[0];
+        }
 
-        int index = IndexOf(group, optionId);
-        if (index < 0) return false;
+        [SerializeField] private Group[] groups = new Group[0];
 
-        ApplyGroup(group, index);
-        return true;
-    }
+        [Tooltip("Checked in order; the first whose options are all showing is the skin shown.")]
+        [SerializeField] private Skin[] skins = new Skin[0];
 
-    public void ShowDefault(string groupId)
-    {
-        Group group = Find(groupId);
-        if (group != null) ApplyGroup(group, DefaultIndex(group));
-    }
+        [Tooltip("Shown when no skin matches the mix being worn.")]
+        [SerializeField] private GameObject fallbackSkin;
 
-    public static int IndexOf(Group group, string optionId)
-    {
-        for (int i = 0; i < group.options.Length; i++)
-            if (group.options[i].optionId == optionId) return i;
+        private readonly Dictionary<string, string> showing = new Dictionary<string, string>();
 
-        return -1;
-    }
+        public IReadOnlyList<Group> Groups => groups;
 
-    private Group Find(string groupId)
-    {
-        foreach (var group in groups)
-            if (group.groupId == groupId) return group;
+        // Creation groups only; equipment groups are left as the equipment set them. A group missing from
+        // the choices, or naming an option it doesn't have, shows its first option.
+        public void Apply(IReadOnlyList<AppearanceChoice> choices)
+        {
+            foreach (var group in groups)
+                if (group.chosenAtCreation) ApplyGroup(group, IndexOf(group, ChosenOptionId(group, choices)));
+        }
 
-        return null;
-    }
+        // Every group at its default: creation groups at their first option, equipment groups unequipped.
+        public void ApplyDefaults()
+        {
+            foreach (var group in groups)
+                ApplyGroup(group, DefaultIndex(group));
+        }
 
-    private static int DefaultIndex(Group group)
-    {
-        return group.chosenAtCreation ? 0 : IndexOf(group, group.unequippedOptionId);
-    }
+        // False when the model has no such group or option, so the caller knows nothing changed.
+        public bool Show(string groupId, string optionId)
+        {
+            Group group = Find(groupId);
+            if (group == null) return false;
 
-    private static string ChosenOptionId(Group group, IReadOnlyList<AppearanceChoice> choices)
-    {
-        if (choices == null) return null;
+            int index = IndexOf(group, optionId);
+            if (index < 0) return false;
 
-        foreach (var choice in choices)
-            if (choice != null && choice.groupId == group.groupId) return choice.optionId;
+            ApplyGroup(group, index);
+            return true;
+        }
 
-        return null;
-    }
+        public void ShowDefault(string groupId)
+        {
+            Group group = Find(groupId);
+            if (group != null) ApplyGroup(group, DefaultIndex(group));
+        }
 
-    private void ApplyGroup(Group group, int index)
-    {
-        if (group.options.Length == 0) return;
-        if (index < 0) index = 0;
+        public static int IndexOf(Group group, string optionId)
+        {
+            for (int i = 0; i < group.options.Length; i++)
+                if (group.options[i].optionId == optionId) return i;
 
-        foreach (var option in group.options)
-            SetShown(option.show, false);
+            return -1;
+        }
 
-        var chosen = group.options[index];
-        SetShown(chosen.show, true);
+        private Group Find(string groupId)
+        {
+            foreach (var group in groups)
+                if (group.groupId == groupId) return group;
 
-        foreach (var swap in chosen.swaps)
-            ApplySwap(swap);
+            return null;
+        }
 
-        showing[group.groupId] = chosen.optionId;
-        ShowSkin();
-    }
+        private static int DefaultIndex(Group group)
+        {
+            return group.chosenAtCreation ? 0 : IndexOf(group, group.unequippedOptionId);
+        }
 
-    private void ShowSkin()
-    {
-        if (skins.Length == 0 && fallbackSkin == null) return;
+        private static string ChosenOptionId(Group group, IReadOnlyList<AppearanceChoice> choices)
+        {
+            if (choices == null) return null;
 
-        Skin match = Array.Find(skins, Matches);
-        foreach (var skin in skins)
-            if (skin.show != null) skin.show.SetActive(false);
+            foreach (var choice in choices)
+                if (choice != null && choice.groupId == group.groupId) return choice.optionId;
 
-        if (fallbackSkin != null) fallbackSkin.SetActive(match == null);
-        if (match != null && match.show != null) match.show.SetActive(true);
-    }
+            return null;
+        }
 
-    private bool Matches(Skin skin)
-    {
-        foreach (var worn in skin.whenWearing)
-            if (Showing(worn.groupId) != worn.optionId) return false;
+        private void ApplyGroup(Group group, int index)
+        {
+            if (group.options.Length == 0) return;
+            if (index < 0) index = 0;
 
-        return true;
-    }
+            foreach (var option in group.options)
+                SetShown(option.show, false);
 
-    // A freshly spawned model hasn't applied every group yet, so read the group off its meshes: the option
-    // whose objects are on, or else the option that shows nothing.
-    private string Showing(string groupId)
-    {
-        if (showing.TryGetValue(groupId, out string optionId)) return optionId;
+            var chosen = group.options[index];
+            SetShown(chosen.show, true);
 
-        Group group = Find(groupId);
-        if (group == null) return null;
+            foreach (var swap in chosen.swaps)
+                ApplySwap(swap);
 
-        foreach (var option in group.options)
-            if (option.show.Length > 0 && option.show[0] != null && option.show[0].activeSelf) return option.optionId;
+            showing[group.groupId] = chosen.optionId;
+            ShowSkin();
+        }
 
-        foreach (var option in group.options)
-            if (option.show.Length == 0) return option.optionId;
+        private void ShowSkin()
+        {
+            if (skins.Length == 0 && fallbackSkin == null) return;
 
-        return null;
-    }
+            Skin match = Array.Find(skins, Matches);
+            foreach (var skin in skins)
+                if (skin.show != null) skin.show.SetActive(false);
 
-    private static void SetShown(GameObject[] objects, bool shown)
-    {
-        foreach (var go in objects)
-            if (go != null) go.SetActive(shown);
-    }
+            if (fallbackSkin != null) fallbackSkin.SetActive(match == null);
+            if (match != null && match.show != null) match.show.SetActive(true);
+        }
 
-    private static void ApplySwap(MaterialSwap swap)
-    {
-        if (swap == null || swap.renderer == null || swap.material == null) return;
+        private bool Matches(Skin skin)
+        {
+            foreach (var worn in skin.whenWearing)
+                if (Showing(worn.groupId) != worn.optionId) return false;
 
-        Material[] materials = swap.renderer.sharedMaterials;
-        if (swap.slot < 0 || swap.slot >= materials.Length) return;
+            return true;
+        }
 
-        materials[swap.slot] = swap.material;
-        swap.renderer.sharedMaterials = materials;
+        // A freshly spawned model hasn't applied every group yet, so read the group off its meshes: the option
+        // whose objects are on, or else the option that shows nothing.
+        private string Showing(string groupId)
+        {
+            if (showing.TryGetValue(groupId, out string optionId)) return optionId;
+
+            Group group = Find(groupId);
+            if (group == null) return null;
+
+            foreach (var option in group.options)
+                if (option.show.Length > 0 && option.show[0] != null && option.show[0].activeSelf) return option.optionId;
+
+            foreach (var option in group.options)
+                if (option.show.Length == 0) return option.optionId;
+
+            return null;
+        }
+
+        private static void SetShown(GameObject[] objects, bool shown)
+        {
+            foreach (var go in objects)
+                if (go != null) go.SetActive(shown);
+        }
+
+        private static void ApplySwap(MaterialSwap swap)
+        {
+            if (swap == null || swap.renderer == null || swap.material == null) return;
+
+            Material[] materials = swap.renderer.sharedMaterials;
+            if (swap.slot < 0 || swap.slot >= materials.Length) return;
+
+            materials[swap.slot] = swap.material;
+            swap.renderer.sharedMaterials = materials;
+        }
     }
 }

@@ -1,39 +1,42 @@
 ﻿// Example targetable component
 using UnityEngine;
 
-public class BasicTargetable : MonoBehaviour, ITargetable
+namespace CrabSystem
 {
-    [Header("Targetable Settings")]
-    [SerializeField] private bool canBeTargeted = true;
-    [SerializeField] private Vector3 targetOffset = Vector3.up;
-    [SerializeField] private GameObject targetIndicator;
-
-    public bool CanBeTargeted => canBeTargeted && gameObject.activeInHierarchy;
-
-    public Vector3 GetTargetPoint()
+    public class BasicTargetable : MonoBehaviour, ITargetable
     {
-        return transform.position + targetOffset;
-    }
+        [Header("Targetable Settings")]
+        [SerializeField] private bool canBeTargeted = true;
+        [SerializeField] private Vector3 targetOffset = Vector3.up;
+        [SerializeField] private GameObject targetIndicator;
 
-    public void OnTargeted()
-    {
-        if (targetIndicator != null)
-            targetIndicator.SetActive(true);
+        public bool CanBeTargeted => canBeTargeted && gameObject.activeInHierarchy;
 
-        // Could trigger UI elements, sound effects, etc.
+        public Vector3 GetTargetPoint()
+        {
+            return transform.position + targetOffset;
+        }
+
+        public void OnTargeted()
+        {
+            if (targetIndicator != null)
+                targetIndicator.SetActive(true);
+
+            // Could trigger UI elements, sound effects, etc.
      
-    }
+        }
 
-    public void OnTargetLost()
-    {
-        if (targetIndicator != null)
-            targetIndicator.SetActive(false);
+        public void OnTargetLost()
+        {
+            if (targetIndicator != null)
+                targetIndicator.SetActive(false);
 
     
-    }
+        }
 
-    public void SetTargetable(bool targetable)
-    {
-        canBeTargeted = targetable;
+        public void SetTargetable(bool targetable)
+        {
+            canBeTargeted = targetable;
+        }
     }
 }

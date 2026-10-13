@@ -14,22 +14,26 @@ using UnityEngine;
 /// - ShieldModule could implement this for shield-specific defense
 /// - ArmorModule could implement this for passive armor effects
 /// </summary>
-public interface IDefenseCapability
+
+namespace CrabSystem
 {
-    /// <summary>Is this entity currently blocking?</summary>
-    bool IsBlocking { get; }
+    public interface IDefenseCapability
+    {
+        /// <summary>Is this entity currently blocking?</summary>
+        bool IsBlocking { get; }
 
-    /// <summary>Is this entity currently in parry window?</summary>
-    bool IsParrying { get; }
+        /// <summary>Is this entity currently in parry window?</summary>
+        bool IsParrying { get; }
 
-    /// <summary>Can this entity perform defensive actions right now?</summary>
-    bool CanDefend { get; }
+        /// <summary>Can this entity perform defensive actions right now?</summary>
+        bool CanDefend { get; }
 
-    /// <summary>
-    /// Process incoming damage through defensive mechanics.
-    /// Returns the damage multiplier (0.0 = full block, 1.0 = no reduction).
-    /// </summary>
-    /// <param name="attackDirection">Direction the attack is coming from</param>
-    /// <returns>Damage multiplier after defense calculations</returns>
-    float GetDefensiveMultiplier(Vector3 attackDirection);
+        /// <summary>
+        /// Process incoming damage through defensive mechanics.
+        /// Returns the damage multiplier (0.0 = full block, 1.0 = no reduction).
+        /// </summary>
+        /// <param name="attackDirection">Direction the attack is coming from</param>
+        /// <returns>Damage multiplier after defense calculations</returns>
+        float GetDefensiveMultiplier(Vector3 attackDirection);
+    }
 }

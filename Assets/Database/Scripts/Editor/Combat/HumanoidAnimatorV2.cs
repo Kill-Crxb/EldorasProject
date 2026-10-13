@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using CrabSystem;
 
 // Builds HumanoidAnimator_v2 from HumanoidAnimator and installs it (Animator_Audit.md).
 //

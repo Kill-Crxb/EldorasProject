@@ -4,101 +4,105 @@ using UnityEngine;
 // forward movement effect and the strike carries the body straight through the target.
 // After a retreat it sometimes hangs back a moment before coming round (DS1-style hesitation), so
 // the rhythm isn't a metronome. Phase 0 is the run in, 1 the retreat, 2 hanging back.
-[CreateAssetMenu(fileName = "Goal_HitAndRun", menuName = "AI/GOAP/Goals/Hit And Run")]
-public class HitAndRunGoal : GOAPGoal
+
+namespace CrabSystem
 {
-    public float strength = 1f;
-
-    [Tooltip("Keep going straight for this long after the strike before turning away.")]
-    public float carryTime = 0.4f;
-
-    [Tooltip("Turn back in once this far from the target, or when Retreat Time runs out.")]
-    public float retreatDistance = 7f;
-
-    public float retreatTime = 2.5f;
-
-    [Tooltip("How much the retreat curves to one side, so it doesn't fly straight back the same line.")]
-    public float retreatCurve = 0.6f;
-
-    public float facingTolerance = 25f;
-
-    [Tooltip("Chance after each retreat to hang back for a moment before coming round.")]
-    [Range(0, 100)] public int hangBackOdds = 40;
-    public float minHangBack = 0.4f;
-    public float maxHangBack = 1.2f;
-
-    public override bool CanExecute(GOAPContext ctx) => ctx.target != null && GoalSteer.HasRole(ctx, AIRole.Melee);
-
-    public override float CalculateWeight(GOAPContext ctx) => 1f;
-
-    public override bool IsComplete(GOAPContext ctx) => ctx.target == null;
-
-    public override void OnStart(GOAPContext ctx)
+    [CreateAssetMenu(fileName = "Goal_HitAndRun", menuName = "AI/GOAP/Goals/Hit And Run")]
+    public class HitAndRunGoal : GOAPGoal
     {
-        ctx.aiControl.GoalPhase = 0;
-    }
+        public float strength = 1f;
 
-    public override void Execute(GOAPContext ctx)
-    {
-        if (ctx.aiControl.GoalPhase == 0)
-            RunIn(ctx);
-        else if (ctx.aiControl.GoalPhase == 1)
-            Retreat(ctx);
-        else
-            HangBack(ctx);
-    }
+        [Tooltip("Keep going straight for this long after the strike before turning away.")]
+        public float carryTime = 0.4f;
 
-    void RunIn(GOAPContext ctx)
-    {
-        AbilityDefinition strike = ctx.aiControl.AbilityFor(AIRole.Melee);
+        [Tooltip("Turn back in once this far from the target, or when Retreat Time runs out.")]
+        public float retreatDistance = 7f;
 
-        ctx.aiControl.Face(ctx.toTarget);
-        GoalSteer.Approach(ctx, 0f, 0.5f, strength);
+        public float retreatTime = 2.5f;
 
-        if (ctx.distanceToTarget > strike.range) return;
-        if (!GoalSteer.Facing(ctx, facingTolerance)) return;
-        if (!GoalSteer.TryUse(ctx, strike)) return;
+        [Tooltip("How much the retreat curves to one side, so it doesn't fly straight back the same line.")]
+        public float retreatCurve = 0.6f;
 
-        ctx.aiControl.GoalPhase = 1;
-        ctx.aiControl.GoalUntil = Time.time + Random.Range(retreatTime * 0.8f, retreatTime * 1.2f);
-        ctx.aiControl.GoalSign = GoalSteer.RandomSign();
-    }
+        public float facingTolerance = 25f;
 
-    void Retreat(GOAPContext ctx)
-    {
-        AIControlSource control = ctx.aiControl;
+        [Tooltip("Chance after each retreat to hang back for a moment before coming round.")]
+        [Range(0, 100)] public int hangBackOdds = 40;
+        public float minHangBack = 0.4f;
+        public float maxHangBack = 1.2f;
 
-        if (Time.time - control.LastAttackTime < carryTime)
+        public override bool CanExecute(GOAPContext ctx) => ctx.target != null && GoalSteer.HasRole(ctx, AIRole.Melee);
+
+        public override float CalculateWeight(GOAPContext ctx) => 1f;
+
+        public override bool IsComplete(GOAPContext ctx) => ctx.target == null;
+
+        public override void OnStart(GOAPContext ctx)
         {
-            control.Steer(ctx.self.forward, strength);
-            return;
+            ctx.aiControl.GoalPhase = 0;
         }
 
-        Vector3 side = Vector3.Cross(Vector3.up, ctx.toTarget).normalized * control.GoalSign;
-        Vector3 away = -ctx.toTarget.normalized + side * retreatCurve;
-        control.Face(away);
-        control.Steer(away, strength);
-
-        if (ctx.distanceToTarget < retreatDistance && Time.time < control.GoalUntil) return;
-
-        if (GoalSteer.Roll(hangBackOdds))
+        public override void Execute(GOAPContext ctx)
         {
-            control.GoalPhase = 2;
-            control.GoalUntil = Time.time + Random.Range(minHangBack, maxHangBack);
-            return;
+            if (ctx.aiControl.GoalPhase == 0)
+                RunIn(ctx);
+            else if (ctx.aiControl.GoalPhase == 1)
+                Retreat(ctx);
+            else
+                HangBack(ctx);
         }
-        control.GoalPhase = 0;
-    }
 
-    void HangBack(GOAPContext ctx)
-    {
-        ctx.aiControl.Face(ctx.toTarget);
-        ctx.aiControl.Stop();
-        if (Time.time >= ctx.aiControl.GoalUntil) ctx.aiControl.GoalPhase = 0;
-    }
+        void RunIn(GOAPContext ctx)
+        {
+            AbilityDefinition strike = ctx.aiControl.AbilityFor(AIRole.Melee);
 
-    public override void OnEnd(GOAPContext ctx)
-    {
-        ctx.aiControl?.Release();
+            ctx.aiControl.Face(ctx.toTarget);
+            GoalSteer.Approach(ctx, 0f, 0.5f, strength);
+
+            if (ctx.distanceToTarget > strike.range) return;
+            if (!GoalSteer.Facing(ctx, facingTolerance)) return;
+            if (!GoalSteer.TryUse(ctx, strike)) return;
+
+            ctx.aiControl.GoalPhase = 1;
+            ctx.aiControl.GoalUntil = Time.time + Random.Range(retreatTime * 0.8f, retreatTime * 1.2f);
+            ctx.aiControl.GoalSign = GoalSteer.RandomSign();
+        }
+
+        void Retreat(GOAPContext ctx)
+        {
+            AIControlSource control = ctx.aiControl;
+
+            if (Time.time - control.LastAttackTime < carryTime)
+            {
+                control.Steer(ctx.self.forward, strength);
+                return;
+            }
+
+            Vector3 side = Vector3.Cross(Vector3.up, ctx.toTarget).normalized * control.GoalSign;
+            Vector3 away = -ctx.toTarget.normalized + side * retreatCurve;
+            control.Face(away);
+            control.Steer(away, strength);
+
+            if (ctx.distanceToTarget < retreatDistance && Time.time < control.GoalUntil) return;
+
+            if (GoalSteer.Roll(hangBackOdds))
+            {
+                control.GoalPhase = 2;
+                control.GoalUntil = Time.time + Random.Range(minHangBack, maxHangBack);
+                return;
+            }
+            control.GoalPhase = 0;
+        }
+
+        void HangBack(GOAPContext ctx)
+        {
+            ctx.aiControl.Face(ctx.toTarget);
+            ctx.aiControl.Stop();
+            if (Time.time >= ctx.aiControl.GoalUntil) ctx.aiControl.GoalPhase = 0;
+        }
+
+        public override void OnEnd(GOAPContext ctx)
+        {
+            ctx.aiControl?.Release();
+        }
     }
 }

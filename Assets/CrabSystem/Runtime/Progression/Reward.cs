@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     /// <summary>
     /// Something granted by reaching a threshold: a stat bonus, a talent point, a dice

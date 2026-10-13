@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // The spend and refund rules for one tree, on plain ranks (nodeId → rank), so the game (TalentModule) and the
     // wizard's Simulate tab ask the same questions. Each returns null when allowed, else the reason shown.

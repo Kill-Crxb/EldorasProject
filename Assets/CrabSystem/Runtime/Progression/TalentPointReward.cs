@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     /// <summary>
     /// Talent points for one tree. "1 talent point for spirit-aligned trees."

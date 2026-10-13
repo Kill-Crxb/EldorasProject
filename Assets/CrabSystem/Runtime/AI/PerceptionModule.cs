@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using RPG.Factions;
+using CrabSystem.Factions;
 
 /// <summary>
 /// Perception Module - Advanced target detection for AI
@@ -12,484 +12,488 @@ using RPG.Factions;
 /// - Memory (remember last known position)
 /// - Performance optimized with detection throttling
 /// </summary>
-public class PerceptionModule : MonoBehaviour, IBrainModule
+
+namespace CrabSystem
 {
-    [Header("Module Settings")]
-    [SerializeField] private bool isEnabled = true;
+    public class PerceptionModule : MonoBehaviour, IBrainModule
+    {
+        [Header("Module Settings")]
+        [SerializeField] private bool isEnabled = true;
 
-    [Header("Vision Settings")]
-    [Tooltip("How far the entity can see")]
-    [SerializeField] private float visionRange = 15f;
+        [Header("Vision Settings")]
+        [Tooltip("How far the entity can see")]
+        [SerializeField] private float visionRange = 15f;
 
-    [Tooltip("Field of view angle (degrees)")]
-    [SerializeField] private float visionAngle = 90f;
+        [Tooltip("Field of view angle (degrees)")]
+        [SerializeField] private float visionAngle = 90f;
 
-    [Tooltip("Require line of sight to detect targets")]
-    [SerializeField] private bool requireLineOfSight = true;
+        [Tooltip("Require line of sight to detect targets")]
+        [SerializeField] private bool requireLineOfSight = true;
 
-    [Tooltip("Eye height offset from transform position")]
-    [SerializeField] private float eyeHeight = 1.5f;
+        [Tooltip("Eye height offset from transform position")]
+        [SerializeField] private float eyeHeight = 1.5f;
 
-    [Header("Detection Layers")]
-    [Tooltip("Layers to detect (typically Player, Enemy)")]
-    [SerializeField] private LayerMask detectionLayers = -1;
+        [Header("Detection Layers")]
+        [Tooltip("Layers to detect (typically Player, Enemy)")]
+        [SerializeField] private LayerMask detectionLayers = -1;
 
-    [Tooltip("Layers that block line of sight (typically Default, Environment)")]
-    [SerializeField] private LayerMask obstacleLayers = -1;
+        [Tooltip("Layers that block line of sight (typically Default, Environment)")]
+        [SerializeField] private LayerMask obstacleLayers = -1;
 
-    [Header("Faction Settings")]
-    [Tooltip("Use faction-based detection (only detect hostiles)")]
-    [SerializeField] private bool useFactionDetection = true;
+        [Header("Faction Settings")]
+        [Tooltip("Use faction-based detection (only detect hostiles)")]
+        [SerializeField] private bool useFactionDetection = true;
 
-    [Tooltip("Only detect hostile targets")]
-    [SerializeField] private bool onlyDetectHostiles = true;
+        [Tooltip("Only detect hostile targets")]
+        [SerializeField] private bool onlyDetectHostiles = true;
 
-    [Header("Memory")]
-    [Tooltip("Remember last known target position")]
-    [SerializeField] private bool enableMemory = true;
+        [Header("Memory")]
+        [Tooltip("Remember last known target position")]
+        [SerializeField] private bool enableMemory = true;
 
-    [Tooltip("How long to remember last known position (seconds)")]
-    [SerializeField] private float memoryDuration = 5f;
+        [Tooltip("How long to remember last known position (seconds)")]
+        [SerializeField] private float memoryDuration = 5f;
 
-    [Header("Debug")]
-    [SerializeField] private bool debugMode = false;
-    [SerializeField] private bool drawGizmos = true;
+        [Header("Debug")]
+        [SerializeField] private bool debugMode = false;
+        [SerializeField] private bool drawGizmos = true;
 
-    // References
-    private ControllerBrain brain;
-    private FactionSystem factionSystem;
+        // References
+        private ControllerBrain brain;
+        private FactionSystem factionSystem;
 
-    // Detection state
-    private Transform currentTarget;
-    private Vector3 lastKnownPosition;
-    private float lastSeenTime;
-    private bool hasMemory;
+        // Detection state
+        private Transform currentTarget;
+        private Vector3 lastKnownPosition;
+        private float lastSeenTime;
+        private bool hasMemory;
 
-    // Performance optimization
-    private Collider[] detectionBuffer = new Collider[64];
-    private float nextDetectionTime;
-    private float detectionInterval = 0.2f; // Check every 0.2s instead of every frame
+        // Performance optimization
+        private Collider[] detectionBuffer = new Collider[64];
+        private float nextDetectionTime;
+        private float detectionInterval = 0.2f; // Check every 0.2s instead of every frame
 
     #region Properties
 
-    public bool IsEnabled
-    {
-        get => isEnabled;
-        set => isEnabled = value;
-    }
+        public bool IsEnabled
+        {
+            get => isEnabled;
+            set => isEnabled = value;
+        }
 
-    /// <summary>
-    /// Current detected target
-    /// </summary>
-    public Transform CurrentTarget => currentTarget;
+        /// <summary>
+        /// Current detected target
+        /// </summary>
+        public Transform CurrentTarget => currentTarget;
 
-    /// <summary>
-    /// Has a target in sight right now
-    /// </summary>
-    public bool HasTarget => currentTarget != null;
+        /// <summary>
+        /// Has a target in sight right now
+        /// </summary>
+        public bool HasTarget => currentTarget != null;
 
-    /// <summary>
-    /// Last known position of target (even if lost sight)
-    /// </summary>
-    public Vector3 LastKnownPosition => hasMemory ? lastKnownPosition : (currentTarget != null ? currentTarget.position : Vector3.zero);
+        /// <summary>
+        /// Last known position of target (even if lost sight)
+        /// </summary>
+        public Vector3 LastKnownPosition => hasMemory ? lastKnownPosition : (currentTarget != null ? currentTarget.position : Vector3.zero);
 
-    /// <summary>
-    /// Has a memory of where target was
-    /// </summary>
-    public bool HasMemory => hasMemory && Time.time - lastSeenTime < memoryDuration;
+        /// <summary>
+        /// Has a memory of where target was
+        /// </summary>
+        public bool HasMemory => hasMemory && Time.time - lastSeenTime < memoryDuration;
 
-    /// <summary>
-    /// Vision range
-    /// </summary>
-    public float VisionRange => visionRange;
+        /// <summary>
+        /// Vision range
+        /// </summary>
+        public float VisionRange => visionRange;
 
     #endregion
 
     #region IBrainModule Implementation
 
-    public void Initialize(ControllerBrain controllerBrain)
-    {
-        brain = controllerBrain;
-
-        // Get faction system through ControllerBrain
-        if (brain.Faction != null)
+        public void Initialize(ControllerBrain controllerBrain)
         {
-            factionSystem = brain.Faction;
+            brain = controllerBrain;
+
+            // Get faction system through ControllerBrain
+            if (brain.Faction != null)
+            {
+                factionSystem = brain.Faction;
+            }
+
+            if (useFactionDetection && factionSystem == null)
+            {
+                Debug.LogWarning($"[PerceptionModule] Faction detection enabled but no FactionSystem found on {brain.EntityName}");
+            }
+
+            if (debugMode)
+            {
+                Debug.Log($"[PerceptionModule] Initialized on {brain.EntityName}");
+                Debug.Log($"  Detection Layers: {detectionLayers.value}");
+                Debug.Log($"  Obstacle Layers: {obstacleLayers.value}");
+                Debug.Log($"  Vision Range: {visionRange}m, FOV: {visionAngle}°");
+                Debug.Log($"  Faction Detection: {useFactionDetection}");
+            }
         }
 
-        if (useFactionDetection && factionSystem == null)
+        public void UpdateModule()
         {
-            Debug.LogWarning($"[PerceptionModule] Faction detection enabled but no FactionSystem found on {brain.EntityName}");
+            if (!isEnabled) return;
+
+            // Throttle detection checks for performance
+            if (Time.time < nextDetectionTime) return;
+            nextDetectionTime = Time.time + detectionInterval;
+
+            if (debugMode)
+                Debug.Log($"[PerceptionModule] Running detection scan (interval: {detectionInterval}s)");
+
+            // Detect targets
+            DetectTargets();
         }
 
-        if (debugMode)
+        public void PhysicsUpdateModule()
         {
-            Debug.Log($"[PerceptionModule] Initialized on {brain.EntityName}");
-            Debug.Log($"  Detection Layers: {detectionLayers.value}");
-            Debug.Log($"  Obstacle Layers: {obstacleLayers.value}");
-            Debug.Log($"  Vision Range: {visionRange}m, FOV: {visionAngle}°");
-            Debug.Log($"  Faction Detection: {useFactionDetection}");
+            // Not needed for perception
         }
-    }
 
-    public void UpdateModule()
-    {
-        if (!isEnabled) return;
+        public void LateUpdateModule()
+        {
+            // Not needed for perception
+        }
 
-        // Throttle detection checks for performance
-        if (Time.time < nextDetectionTime) return;
-        nextDetectionTime = Time.time + detectionInterval;
-
-        if (debugMode)
-            Debug.Log($"[PerceptionModule] Running detection scan (interval: {detectionInterval}s)");
-
-        // Detect targets
-        DetectTargets();
-    }
-
-    public void PhysicsUpdateModule()
-    {
-        // Not needed for perception
-    }
-
-    public void LateUpdateModule()
-    {
-        // Not needed for perception
-    }
-
-    public void OnDestroyModule()
-    {
-        // Cleanup if needed
-    }
+        public void OnDestroyModule()
+        {
+            // Cleanup if needed
+        }
 
     #endregion
 
     #region Detection Logic
 
-    private void DetectTargets()
-    {
-        // Use OverlapSphereNonAlloc for performance
-        int hitCount = Physics.OverlapSphereNonAlloc(
-            transform.position,
-            visionRange,
-            detectionBuffer,
-            detectionLayers,
-            QueryTriggerInteraction.Ignore  // CharacterControllers are never triggers; hitboxes and sensors filled the buffer
-        );
-
-        if (debugMode)
-            Debug.Log($"[PerceptionModule] OverlapSphere found {hitCount} colliders");
-
-        Transform bestTarget = null;
-        float closestDistance = float.MaxValue;
-
-        // Check each detected collider
-        for (int i = 0; i < hitCount; i++)
+        private void DetectTargets()
         {
-            Collider hit = detectionBuffer[i];
+            // Use OverlapSphereNonAlloc for performance
+            int hitCount = Physics.OverlapSphereNonAlloc(
+                transform.position,
+                visionRange,
+                detectionBuffer,
+                detectionLayers,
+                QueryTriggerInteraction.Ignore  // CharacterControllers are never triggers; hitboxes and sensors filled the buffer
+            );
 
             if (debugMode)
-                Debug.Log($"[PerceptionModule] [{i}] Checking collider: {hit.name}");
+                Debug.Log($"[PerceptionModule] OverlapSphere found {hitCount} colliders");
 
-            // Only detect CharacterControllers (skip trigger colliders like hitboxes/feet detection)
-            CharacterController charController = hit.GetComponent<CharacterController>();
-            if (charController == null)
+            Transform bestTarget = null;
+            float closestDistance = float.MaxValue;
+
+            // Check each detected collider
+            for (int i = 0; i < hitCount; i++)
             {
+                Collider hit = detectionBuffer[i];
+
                 if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Not a CharacterController");
-                continue;
-            }
+                    Debug.Log($"[PerceptionModule] [{i}] Checking collider: {hit.name}");
 
-            // Skip if this is self
-            if (hit.transform == transform || hit.transform.IsChildOf(transform))
-            {
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Is self or child");
-                continue;
-            }
-
-            // Get brain (CharacterController is usually on root, brain on child)
-            ControllerBrain targetBrain = hit.GetComponentInChildren<ControllerBrain>();
-
-            if (debugMode)
-                Debug.Log($"[PerceptionModule] [{i}] Brain search result: {(targetBrain != null ? targetBrain.name : "NULL")}");
-
-            if (targetBrain == null)
-            {
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] SKIPPED - No ControllerBrain found");
-                continue;
-            }
-
-            if (targetBrain == brain)
-            {
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Is own brain");
-                continue;
-            }
-
-            if (!IsAlive(targetBrain))
-            {
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Dead");
-                continue;
-            }
-
-            // Validate faction
-            if (useFactionDetection)
-            {
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] Checking faction...");
-
-                if (!IsValidFaction(targetBrain))
+                // Only detect CharacterControllers (skip trigger colliders like hitboxes/feet detection)
+                CharacterController charController = hit.GetComponent<CharacterController>();
+                if (charController == null)
                 {
                     if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Invalid faction (not hostile)");
+                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Not a CharacterController");
+                    continue;
+                }
+
+                // Skip if this is self
+                if (hit.transform == transform || hit.transform.IsChildOf(transform))
+                {
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Is self or child");
+                    continue;
+                }
+
+                // Get brain (CharacterController is usually on root, brain on child)
+                ControllerBrain targetBrain = hit.GetComponentInChildren<ControllerBrain>();
+
+                if (debugMode)
+                    Debug.Log($"[PerceptionModule] [{i}] Brain search result: {(targetBrain != null ? targetBrain.name : "NULL")}");
+
+                if (targetBrain == null)
+                {
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - No ControllerBrain found");
+                    continue;
+                }
+
+                if (targetBrain == brain)
+                {
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Is own brain");
+                    continue;
+                }
+
+                if (!IsAlive(targetBrain))
+                {
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Dead");
+                    continue;
+                }
+
+                // Validate faction
+                if (useFactionDetection)
+                {
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] Checking faction...");
+
+                    if (!IsValidFaction(targetBrain))
+                    {
+                        if (debugMode)
+                            Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Invalid faction (not hostile)");
+                        continue;
+                    }
+
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] PASSED - Valid hostile faction");
+                }
+
+                // Check vision cone
+                if (!IsInVisionCone(hit.transform.position))
+                {
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Outside vision cone");
                     continue;
                 }
 
                 if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] PASSED - Valid hostile faction");
+                    Debug.Log($"[PerceptionModule] [{i}] PASSED - Inside vision cone");
+
+                // Check line of sight
+                if (requireLineOfSight && !HasLineOfSight(hit.transform.position))
+                {
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Line of sight blocked");
+                    continue;
+                }
+
+                if (debugMode && requireLineOfSight)
+                    Debug.Log($"[PerceptionModule] [{i}] PASSED - Line of sight clear");
+
+                // Track closest valid target
+                float distance = Vector3.Distance(transform.position, hit.transform.position);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    bestTarget = targetBrain.transform;
+
+                    if (debugMode)
+                        Debug.Log($"[PerceptionModule] [{i}] NEW BEST TARGET - Distance: {distance:F2}m");
+                }
             }
 
-            // Check vision cone
-            if (!IsInVisionCone(hit.transform.position))
+            // Keep a target that slipped out of one scan until memory runs out, so a single missed
+            // scan doesn't drop the goal and reset its movement.
+            // A dead target is dropped at once, memory or not.
+            if (bestTarget == null && currentTarget != null && enableMemory && Time.time - lastSeenTime < memoryDuration
+                && IsAlive(currentTarget.GetComponent<ControllerBrain>()))
+                return;
+
+            // Update current target
+            if (bestTarget != currentTarget)
             {
                 if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Outside vision cone");
-                continue;
+                {
+                    if (bestTarget != null)
+                        Debug.Log($"[PerceptionModule] TARGET ACQUIRED: {bestTarget.name}");
+                    else if (currentTarget != null)
+                        Debug.Log($"[PerceptionModule] TARGET LOST: {currentTarget.name}");
+                }
+
+                currentTarget = bestTarget;
             }
 
-            if (debugMode)
-                Debug.Log($"[PerceptionModule] [{i}] PASSED - Inside vision cone");
-
-            // Check line of sight
-            if (requireLineOfSight && !HasLineOfSight(hit.transform.position))
+            // Update memory
+            if (currentTarget != null)
             {
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Line of sight blocked");
-                continue;
-            }
-
-            if (debugMode && requireLineOfSight)
-                Debug.Log($"[PerceptionModule] [{i}] PASSED - Line of sight clear");
-
-            // Track closest valid target
-            float distance = Vector3.Distance(transform.position, hit.transform.position);
-            if (distance < closestDistance)
-            {
-                closestDistance = distance;
-                bestTarget = targetBrain.transform;
-
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] NEW BEST TARGET - Distance: {distance:F2}m");
+                lastKnownPosition = currentTarget.position;
+                lastSeenTime = Time.time;
+                hasMemory = enableMemory;
             }
         }
 
-        // Keep a target that slipped out of one scan until memory runs out, so a single missed
-        // scan doesn't drop the goal and reset its movement.
-        // A dead target is dropped at once, memory or not.
-        if (bestTarget == null && currentTarget != null && enableMemory && Time.time - lastSeenTime < memoryDuration
-            && IsAlive(currentTarget.GetComponent<ControllerBrain>()))
-            return;
-
-        // Update current target
-        if (bestTarget != currentTarget)
+        private static bool IsAlive(ControllerBrain targetBrain)
         {
-            if (debugMode)
+            return targetBrain != null && (targetBrain.Health == null || targetBrain.Health.IsAlive());
+        }
+
+        private bool IsValidFaction(ControllerBrain targetBrain)
+        {
+            // If no faction detection, all targets are valid
+            if (!useFactionDetection) return true;
+
+            // If no faction system, can't filter by faction
+            if (factionSystem == null)
             {
-                if (bestTarget != null)
-                    Debug.Log($"[PerceptionModule] TARGET ACQUIRED: {bestTarget.name}");
-                else if (currentTarget != null)
-                    Debug.Log($"[PerceptionModule] TARGET LOST: {currentTarget.name}");
+                if (debugMode)
+                    Debug.LogWarning($"[PerceptionModule] No faction system - cannot filter by faction");
+                return true;
             }
 
-            currentTarget = bestTarget;
-        }
+            // Get target's faction system
+            if (targetBrain.Faction == null)
+            {
+                if (debugMode)
+                    Debug.Log($"[PerceptionModule] Target {targetBrain.name} has no faction system - skipping");
+                return false;
+            }
 
-        // Update memory
-        if (currentTarget != null)
-        {
-            lastKnownPosition = currentTarget.position;
-            lastSeenTime = Time.time;
-            hasMemory = enableMemory;
-        }
-    }
+            FactionRelationship relationship = factionSystem.GetStanceTo(targetBrain);
 
-    private static bool IsAlive(ControllerBrain targetBrain)
-    {
-        return targetBrain != null && (targetBrain.Health == null || targetBrain.Health.IsAlive());
-    }
-
-    private bool IsValidFaction(ControllerBrain targetBrain)
-    {
-        // If no faction detection, all targets are valid
-        if (!useFactionDetection) return true;
-
-        // If no faction system, can't filter by faction
-        if (factionSystem == null)
-        {
             if (debugMode)
-                Debug.LogWarning($"[PerceptionModule] No faction system - cannot filter by faction");
+                Debug.Log($"[PerceptionModule] Faction check: My={factionSystem.CurrentFactionName}, Their={targetBrain.Faction.CurrentFactionName} → {relationship}");
+
+            if (debugMode)
+                Debug.Log($"[PerceptionModule] Relationship: {relationship}");
+
+            if (onlyDetectHostiles)
+            {
+                return relationship == FactionRelationship.Hostile;
+            }
+
+            // Otherwise detect any non-friendly
+            return relationship != FactionRelationship.Friendly;
+        }
+
+        private bool IsInVisionCone(Vector3 targetPosition)
+        {
+            Vector3 directionToTarget = (targetPosition - transform.position).normalized;
+            float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+            return angleToTarget < visionAngle / 2f;
+        }
+
+        private bool HasLineOfSight(Vector3 targetPosition)
+        {
+            Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
+            Vector3 directionToTarget = targetPosition - eyePosition;
+            float distanceToTarget = directionToTarget.magnitude;
+
+            // Raycast to check for obstacles
+            if (Physics.Raycast(eyePosition, directionToTarget.normalized, out RaycastHit hit, distanceToTarget, obstacleLayers, QueryTriggerInteraction.Ignore))
+            {
+                // Hit an obstacle before reaching target
+                if (debugMode)
+                    Debug.Log($"[PerceptionModule] LOS blocked by {hit.collider.name} at {hit.distance:F2}m");
+                return false;
+            }
+
             return true;
         }
-
-        // Get target's faction system
-        if (targetBrain.Faction == null)
-        {
-            if (debugMode)
-                Debug.Log($"[PerceptionModule] Target {targetBrain.name} has no faction system - skipping");
-            return false;
-        }
-
-        FactionRelationship relationship = factionSystem.GetStanceTo(targetBrain);
-
-        if (debugMode)
-            Debug.Log($"[PerceptionModule] Faction check: My={factionSystem.CurrentFactionName}, Their={targetBrain.Faction.CurrentFactionName} → {relationship}");
-
-        if (debugMode)
-            Debug.Log($"[PerceptionModule] Relationship: {relationship}");
-
-        if (onlyDetectHostiles)
-        {
-            return relationship == FactionRelationship.Hostile;
-        }
-
-        // Otherwise detect any non-friendly
-        return relationship != FactionRelationship.Friendly;
-    }
-
-    private bool IsInVisionCone(Vector3 targetPosition)
-    {
-        Vector3 directionToTarget = (targetPosition - transform.position).normalized;
-        float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-        return angleToTarget < visionAngle / 2f;
-    }
-
-    private bool HasLineOfSight(Vector3 targetPosition)
-    {
-        Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
-        Vector3 directionToTarget = targetPosition - eyePosition;
-        float distanceToTarget = directionToTarget.magnitude;
-
-        // Raycast to check for obstacles
-        if (Physics.Raycast(eyePosition, directionToTarget.normalized, out RaycastHit hit, distanceToTarget, obstacleLayers, QueryTriggerInteraction.Ignore))
-        {
-            // Hit an obstacle before reaching target
-            if (debugMode)
-                Debug.Log($"[PerceptionModule] LOS blocked by {hit.collider.name} at {hit.distance:F2}m");
-            return false;
-        }
-
-        return true;
-    }
 
     #endregion
 
     #region Public Methods
 
-    // A target this AI didn't see itself (an ally's call for help). Memory holds it for Memory Duration,
-    // long enough to close in and see it for real.
-    public void SetTarget(Transform target)
-    {
-        if (target == null) return;
-        currentTarget = target;
-        lastKnownPosition = target.position;
-        lastSeenTime = Time.time;
-        hasMemory = enableMemory;
-    }
+        // A target this AI didn't see itself (an ally's call for help). Memory holds it for Memory Duration,
+        // long enough to close in and see it for real.
+        public void SetTarget(Transform target)
+        {
+            if (target == null) return;
+            currentTarget = target;
+            lastKnownPosition = target.position;
+            lastSeenTime = Time.time;
+            hasMemory = enableMemory;
+        }
 
-    public void ClearTarget()
-    {
-        currentTarget = null;
-        hasMemory = false;
-    }
+        public void ClearTarget()
+        {
+            currentTarget = null;
+            hasMemory = false;
+        }
 
-    public void ForgetMemory()
-    {
-        hasMemory = false;
-    }
+        public void ForgetMemory()
+        {
+            hasMemory = false;
+        }
 
-    public void SetDetectionInterval(float interval)
-    {
-        detectionInterval = Mathf.Max(0.1f, interval);
-    }
+        public void SetDetectionInterval(float interval)
+        {
+            detectionInterval = Mathf.Max(0.1f, interval);
+        }
 
-    public void SetVisionRange(float range)
-    {
-        visionRange = Mathf.Max(0f, range);
-    }
+        public void SetVisionRange(float range)
+        {
+            visionRange = Mathf.Max(0f, range);
+        }
 
-    public void SetVisionAngle(float angle)
-    {
-        visionAngle = Mathf.Clamp(angle, 0f, 360f);
-    }
+        public void SetVisionAngle(float angle)
+        {
+            visionAngle = Mathf.Clamp(angle, 0f, 360f);
+        }
 
     #endregion
 
     #region Debug Visualization
 
-    private void OnDrawGizmos()
-    {
-        if (!drawGizmos || !isEnabled) return;
-
-        // Draw vision range
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, visionRange);
-
-        // Draw vision cone
-        Vector3 forward = transform.forward * visionRange;
-        Vector3 right = Quaternion.Euler(0, visionAngle / 2f, 0) * forward;
-        Vector3 left = Quaternion.Euler(0, -visionAngle / 2f, 0) * forward;
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawLine(transform.position, transform.position + right);
-        Gizmos.DrawLine(transform.position, transform.position + left);
-
-        // Draw arc
-        int segments = 20;
-        float angleStep = visionAngle / segments;
-        Vector3 prevPoint = transform.position + right;
-        for (int i = 1; i <= segments; i++)
+        private void OnDrawGizmos()
         {
-            float angle = -visionAngle / 2f + angleStep * i;
-            Vector3 point = transform.position + Quaternion.Euler(0, angle, 0) * forward;
-            Gizmos.DrawLine(prevPoint, point);
-            prevPoint = point;
+            if (!drawGizmos || !isEnabled) return;
+
+            // Draw vision range
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, visionRange);
+
+            // Draw vision cone
+            Vector3 forward = transform.forward * visionRange;
+            Vector3 right = Quaternion.Euler(0, visionAngle / 2f, 0) * forward;
+            Vector3 left = Quaternion.Euler(0, -visionAngle / 2f, 0) * forward;
+
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(transform.position, transform.position + right);
+            Gizmos.DrawLine(transform.position, transform.position + left);
+
+            // Draw arc
+            int segments = 20;
+            float angleStep = visionAngle / segments;
+            Vector3 prevPoint = transform.position + right;
+            for (int i = 1; i <= segments; i++)
+            {
+                float angle = -visionAngle / 2f + angleStep * i;
+                Vector3 point = transform.position + Quaternion.Euler(0, angle, 0) * forward;
+                Gizmos.DrawLine(prevPoint, point);
+                prevPoint = point;
+            }
+
+            // Draw current target
+            if (currentTarget != null)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawLine(transform.position, currentTarget.position);
+                Gizmos.DrawWireSphere(currentTarget.position, 0.5f);
+            }
+
+            // Draw last known position
+            if (hasMemory && currentTarget == null)
+            {
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawWireSphere(lastKnownPosition, 0.3f);
+                Gizmos.DrawLine(transform.position, lastKnownPosition);
+            }
+
+            // Draw line of sight check
+            if (currentTarget != null && requireLineOfSight)
+            {
+                Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
+                Gizmos.color = Color.green;
+                Gizmos.DrawLine(eyePosition, currentTarget.position);
+            }
         }
 
-        // Draw current target
-        if (currentTarget != null)
+        private void OnDrawGizmosSelected()
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, currentTarget.position);
-            Gizmos.DrawWireSphere(currentTarget.position, 0.5f);
+            if (!isEnabled) return;
+
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(transform.position + Vector3.up * eyeHeight, 0.2f);
         }
-
-        // Draw last known position
-        if (hasMemory && currentTarget == null)
-        {
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawWireSphere(lastKnownPosition, 0.3f);
-            Gizmos.DrawLine(transform.position, lastKnownPosition);
-        }
-
-        // Draw line of sight check
-        if (currentTarget != null && requireLineOfSight)
-        {
-            Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(eyePosition, currentTarget.position);
-        }
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (!isEnabled) return;
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position + Vector3.up * eyeHeight, 0.2f);
-    }
 
     #endregion
+    }
 }

@@ -7,113 +7,117 @@ using UnityEngine;
 /// This is the core building block - completely genre-agnostic.
 /// </summary>
 /// <typeparam name="T">Enum type representing states</typeparam>
-public class StateMachine<T> where T : struct, Enum
+
+namespace CrabSystem
 {
-    // Current and previous states
-    private T currentState;
-    private T previousState;
-
-    // Timing
-    private float stateEnterTime;
-
-    // Events
-    public event Action<T, T> OnStateChanged; // (previousState, newState)
-    public event Action<T> OnStateEntered;    // (newState)
-    public event Action<T> OnStateExited;     // (exitedState)
-
-    // Properties
-    public T Current => currentState;
-    public T Previous => previousState;
-    public float TimeInState => Time.time - stateEnterTime;
-
-    /// <summary>
-    /// Constructor - initialize with starting state
-    /// </summary>
-    public StateMachine(T initialState)
+    public class StateMachine<T> where T : struct, Enum
     {
-        currentState = initialState;
-        previousState = initialState;
-        stateEnterTime = Time.time;
-    }
+        // Current and previous states
+        private T currentState;
+        private T previousState;
 
-    /// <summary>
-    /// Transition to a new state
-    /// </summary>
-    public void TransitionTo(T newState)
-    {
-        // Check if already in this state
-        if (currentState.Equals(newState))
-            return;
+        // Timing
+        private float stateEnterTime;
 
-        // Store previous state
-        previousState = currentState;
+        // Events
+        public event Action<T, T> OnStateChanged; // (previousState, newState)
+        public event Action<T> OnStateEntered;    // (newState)
+        public event Action<T> OnStateExited;     // (exitedState)
 
-        // Fire exit event
-        OnStateExited?.Invoke(currentState);
+        // Properties
+        public T Current => currentState;
+        public T Previous => previousState;
+        public float TimeInState => Time.time - stateEnterTime;
 
-        // Change state
-        currentState = newState;
-        stateEnterTime = Time.time;
-
-        // Fire enter event
-        OnStateEntered?.Invoke(currentState);
-
-        // Fire change event
-        OnStateChanged?.Invoke(previousState, currentState);
-    }
-
-    /// <summary>
-    /// Check if currently in a specific state
-    /// </summary>
-    public bool IsInState(T state)
-    {
-        return currentState.Equals(state);
-    }
-
-    /// <summary>
-    /// Check if currently in any of the provided states
-    /// </summary>
-    public bool IsInAnyState(params T[] states)
-    {
-        foreach (T state in states)
+        /// <summary>
+        /// Constructor - initialize with starting state
+        /// </summary>
+        public StateMachine(T initialState)
         {
-            if (currentState.Equals(state))
-                return true;
+            currentState = initialState;
+            previousState = initialState;
+            stateEnterTime = Time.time;
         }
-        return false;
-    }
 
-    /// <summary>
-    /// Force set state without events (use sparingly - for initialization)
-    /// </summary>
-    public void ForceSet(T state)
-    {
-        currentState = state;
-        previousState = state;
-        stateEnterTime = Time.time;
-    }
+        /// <summary>
+        /// Transition to a new state
+        /// </summary>
+        public void TransitionTo(T newState)
+        {
+            // Check if already in this state
+            if (currentState.Equals(newState))
+                return;
 
-    /// <summary>
-    /// Return to previous state
-    /// </summary>
-    public void ReturnToPrevious()
-    {
-        TransitionTo(previousState);
-    }
+            // Store previous state
+            previousState = currentState;
 
-    /// <summary>
-    /// Get state name as string
-    /// </summary>
-    public string GetCurrentStateName()
-    {
-        return currentState.ToString();
-    }
+            // Fire exit event
+            OnStateExited?.Invoke(currentState);
 
-    /// <summary>
-    /// Get previous state name as string
-    /// </summary>
-    public string GetPreviousStateName()
-    {
-        return previousState.ToString();
+            // Change state
+            currentState = newState;
+            stateEnterTime = Time.time;
+
+            // Fire enter event
+            OnStateEntered?.Invoke(currentState);
+
+            // Fire change event
+            OnStateChanged?.Invoke(previousState, currentState);
+        }
+
+        /// <summary>
+        /// Check if currently in a specific state
+        /// </summary>
+        public bool IsInState(T state)
+        {
+            return currentState.Equals(state);
+        }
+
+        /// <summary>
+        /// Check if currently in any of the provided states
+        /// </summary>
+        public bool IsInAnyState(params T[] states)
+        {
+            foreach (T state in states)
+            {
+                if (currentState.Equals(state))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Force set state without events (use sparingly - for initialization)
+        /// </summary>
+        public void ForceSet(T state)
+        {
+            currentState = state;
+            previousState = state;
+            stateEnterTime = Time.time;
+        }
+
+        /// <summary>
+        /// Return to previous state
+        /// </summary>
+        public void ReturnToPrevious()
+        {
+            TransitionTo(previousState);
+        }
+
+        /// <summary>
+        /// Get state name as string
+        /// </summary>
+        public string GetCurrentStateName()
+        {
+            return currentState.ToString();
+        }
+
+        /// <summary>
+        /// Get previous state name as string
+        /// </summary>
+        public string GetPreviousStateName()
+        {
+            return previousState.ToString();
+        }
     }
 }

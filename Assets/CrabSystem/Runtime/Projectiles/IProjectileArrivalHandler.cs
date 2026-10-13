@@ -24,17 +24,21 @@ using UnityEngine;
 /// nothing special" and the payload applies its normal damage — which is what makes this safe
 /// to add to a brain that mostly throws shuriken.
 /// </summary>
-public interface IProjectileArrivalHandler
+
+namespace CrabSystem
 {
-    /// <param name="ability">The ability that fired. Check it first and bail if it is not yours.</param>
-    /// <param name="target">The brain that was hit. Never null when this is called.</param>
-    /// <param name="hit">Where and how it landed.</param>
-    /// <param name="dice">This shot's dice, already resolved by the launcher.</param>
-    /// <param name="damageMultiplier">ProjectileRuntime.damageMultiplier for this shot.</param>
-    /// <returns>
-    /// True when this handler fully resolved the arrival and the payload should NOT apply its
-    /// normal damage. False to fall through — including for a spell that really is just damage.
-    /// </returns>
-    bool HandleArrival(AbilityDefinition ability, ControllerBrain target, ProjectileHitInfo hit,
-                       DiceProfile dice, float damageMultiplier);
+    public interface IProjectileArrivalHandler
+    {
+        /// <param name="ability">The ability that fired. Check it first and bail if it is not yours.</param>
+        /// <param name="target">The brain that was hit. Never null when this is called.</param>
+        /// <param name="hit">Where and how it landed.</param>
+        /// <param name="dice">This shot's dice, already resolved by the launcher.</param>
+        /// <param name="damageMultiplier">ProjectileRuntime.damageMultiplier for this shot.</param>
+        /// <returns>
+        /// True when this handler fully resolved the arrival and the payload should NOT apply its
+        /// normal damage. False to fall through — including for a spell that really is just damage.
+        /// </returns>
+        bool HandleArrival(AbilityDefinition ability, ControllerBrain target, ProjectileHitInfo hit,
+                           DiceProfile dice, float damageMultiplier);
+    }
 }

@@ -1,16 +1,19 @@
 using System;
 
-public interface IHealthProvider
+namespace CrabSystem
 {
-    float GetCurrentHealth();
-    float GetMaxHealth();
-    float GetHealthPercentage();
+    public interface IHealthProvider
+    {
+        float GetCurrentHealth();
+        float GetMaxHealth();
+        float GetHealthPercentage();
 
-    bool IsAlive();
+        bool IsAlive();
 
-    void ApplyDamage(float amount);
-    void ApplyHealing(float amount);
+        void ApplyDamage(float amount);
+        void ApplyHealing(float amount);
 
-    event Action<float> OnHealthChanged;
-    event Action OnDeath;
+        event Action<float> OnHealthChanged;
+        event Action OnDeath;
+    }
 }

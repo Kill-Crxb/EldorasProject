@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // "Dodge costs 2 less stamina", "Techniques cool down 1 s faster": flat changes to the abilities a filter picks,
     // held while the reward is.

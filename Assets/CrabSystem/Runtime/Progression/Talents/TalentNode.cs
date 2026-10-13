@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // What a talent gives. Shared by every tree that places it (generics live in the library tree), so position
     // and prerequisites are on the placement, not here. Held under talent:{nodeId}, so taking a generic in a

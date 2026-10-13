@@ -4,40 +4,44 @@ using UnityEngine;
 // Auto-attached by AnimatorIKModule. OnAnimatorIK is only delivered to a component sharing the
 // Animator's GameObject, and the Animator sits under the model root rather than under the Brain,
 // so no module can receive the callback itself.
-[DisallowMultipleComponent]
-public class AnimatorIKRelay : MonoBehaviour
+
+namespace CrabSystem
 {
-    private readonly List<IAnimatorIKReceiver> receivers = new List<IAnimatorIKReceiver>();
-    private Animator animator;
-    private int lastHandledFrame = -1;
-
-    public void Bind(IAnimatorIKReceiver receiver)
+    [DisallowMultipleComponent]
+    public class AnimatorIKRelay : MonoBehaviour
     {
-        if (receiver == null || receivers.Contains(receiver)) return;
+        private readonly List<IAnimatorIKReceiver> receivers = new List<IAnimatorIKReceiver>();
+        private Animator animator;
+        private int lastHandledFrame = -1;
 
-        if (animator == null) animator = GetComponent<Animator>();
+        public void Bind(IAnimatorIKReceiver receiver)
+        {
+            if (receiver == null || receivers.Contains(receiver)) return;
 
-        receivers.Add(receiver);
-        receivers.Sort(CompareOrder);
-    }
+            if (animator == null) animator = GetComponent<Animator>();
 
-    public void Unbind(IAnimatorIKReceiver receiver)
-    {
-        receivers.Remove(receiver);
-    }
+            receivers.Add(receiver);
+            receivers.Sort(CompareOrder);
+        }
 
-    private static int CompareOrder(IAnimatorIKReceiver a, IAnimatorIKReceiver b) => a.IKOrder.CompareTo(b.IKOrder);
+        public void Unbind(IAnimatorIKReceiver receiver)
+        {
+            receivers.Remove(receiver);
+        }
 
-    void OnAnimatorIK(int layerIndex)
-    {
-        if (animator == null || receivers.Count == 0) return;
+        private static int CompareOrder(IAnimatorIKReceiver a, IAnimatorIKReceiver b) => a.IKOrder.CompareTo(b.IKOrder);
 
-        // Fires once per IK-enabled layer. Every receiver here is layer-independent, so only the
-        // first call each frame does the work.
-        if (lastHandledFrame == Time.frameCount) return;
-        lastHandledFrame = Time.frameCount;
+        void OnAnimatorIK(int layerIndex)
+        {
+            if (animator == null || receivers.Count == 0) return;
 
-        for (int i = 0; i < receivers.Count; i++)
-            receivers[i].ApplyIK(animator);
+            // Fires once per IK-enabled layer. Every receiver here is layer-independent, so only the
+            // first call each frame does the work.
+            if (lastHandledFrame == Time.frameCount) return;
+            lastHandledFrame = Time.frameCount;
+
+            for (int i = 0; i < receivers.Count; i++)
+                receivers[i].ApplyIK(animator);
+        }
     }
 }

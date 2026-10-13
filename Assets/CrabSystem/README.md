@@ -14,6 +14,8 @@ Character framework for Unity 6 / URP. A `ControllerBrain` on each character dis
 ## Rules
 
 - Runtime code never references game code. Game builders and game-specific tools live in the game.
+- Every type is in the `CrabSystem` namespace (or a child of it: `CrabSystem.Progression`, `.Magic`,
+  `.Stats`, `.Factions`, `.UI`). Game code adds `using CrabSystem;`.
 - Editor code only goes in `Editor/`. A nested `Editor` folder inside `Runtime/` would compile
   into the runtime assembly and break builds.
 - No `Resources` folders here. Data the game loads by path belongs in the game's Database.

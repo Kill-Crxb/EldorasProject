@@ -5,98 +5,102 @@ using UnityEngine;
 /// Instant Heal Effect
 /// Data-driven, HealthProvider-authoritative
 /// </summary>
-[Serializable]
-public class HealEffect
+
+namespace CrabSystem
 {
-    [Header("Heal Configuration")]
-    [Tooltip("Amount of health to restore")]
-    public float healAmount = 50f;
-
-    public event Action OnCompleted;
-
-    [NonSerialized]
-    private IHealthProvider healthProvider;
-
-    private bool isCompleted;
-
-    /// <summary>
-    /// Set the health provider that will receive healing
-    /// Optional convenience for Apply()
-    /// </summary>
-    public void SetHealthProvider(IHealthProvider provider)
+    [Serializable]
+    public class HealEffect
     {
-        healthProvider = provider;
-    }
+        [Header("Heal Configuration")]
+        [Tooltip("Amount of health to restore")]
+        public float healAmount = 50f;
 
-    /// <summary>
-    /// Apply healing using previously set health provider
-    /// </summary>
-    public void Apply()
-    {
-        if (isCompleted)
-            return;
+        public event Action OnCompleted;
 
-        if (healthProvider == null)
+        [NonSerialized]
+        private IHealthProvider healthProvider;
+
+        private bool isCompleted;
+
+        /// <summary>
+        /// Set the health provider that will receive healing
+        /// Optional convenience for Apply()
+        /// </summary>
+        public void SetHealthProvider(IHealthProvider provider)
         {
-            Debug.LogWarning("[HealEffect] No health provider set - healing not applied");
-            Complete();
-            return;
+            healthProvider = provider;
         }
 
-        healthProvider.ApplyHealing(healAmount);
-        Complete();
-    }
-
-    /// <summary>
-    /// Apply healing directly to a target (preferred API)
-    /// </summary>
-    public void Apply(IHealthProvider target)
-    {
-        if (isCompleted)
-            return;
-
-        if (target == null)
+        /// <summary>
+        /// Apply healing using previously set health provider
+        /// </summary>
+        public void Apply()
         {
-            Debug.LogWarning("[HealEffect] Target health provider is null");
+            if (isCompleted)
+                return;
+
+            if (healthProvider == null)
+            {
+                Debug.LogWarning("[HealEffect] No health provider set - healing not applied");
+                Complete();
+                return;
+            }
+
+            healthProvider.ApplyHealing(healAmount);
             Complete();
-            return;
         }
 
-        target.ApplyHealing(healAmount);
-        Complete();
-    }
-
-    /// <summary>
-    /// Legacy IDamageable compatibility
-    /// </summary>
-    [Obsolete("Use Apply(IHealthProvider) instead")]
-    public void Apply(IDamageable target)
-    {
-        if (isCompleted)
-            return;
-
-        if (healthProvider == null)
+        /// <summary>
+        /// Apply healing directly to a target (preferred API)
+        /// </summary>
+        public void Apply(IHealthProvider target)
         {
-            Debug.LogWarning("[HealEffect] No health provider set - legacy heal ignored");
+            if (isCompleted)
+                return;
+
+            if (target == null)
+            {
+                Debug.LogWarning("[HealEffect] Target health provider is null");
+                Complete();
+                return;
+            }
+
+            target.ApplyHealing(healAmount);
             Complete();
-            return;
         }
 
-        healthProvider.ApplyHealing(healAmount);
-        Complete();
-    }
+        /// <summary>
+        /// Legacy IDamageable compatibility
+        /// </summary>
+        [Obsolete("Use Apply(IHealthProvider) instead")]
+        public void Apply(IDamageable target)
+        {
+            if (isCompleted)
+                return;
 
-    public void Cancel()
-    {
-        Complete();
-    }
+            if (healthProvider == null)
+            {
+                Debug.LogWarning("[HealEffect] No health provider set - legacy heal ignored");
+                Complete();
+                return;
+            }
 
-    private void Complete()
-    {
-        if (isCompleted)
-            return;
+            healthProvider.ApplyHealing(healAmount);
+            Complete();
+        }
 
-        isCompleted = true;
-        OnCompleted?.Invoke();
+        public void Cancel()
+        {
+            Complete();
+        }
+
+        private void Complete()
+        {
+            if (isCompleted)
+                return;
+
+            isCompleted = true;
+            OnCompleted?.Invoke();
+        }
     }
 }

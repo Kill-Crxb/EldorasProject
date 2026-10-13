@@ -17,263 +17,267 @@ using UnityEngine;
 /// </summary>
 // The movement tier the player has chosen or been granted — not how fast they happen to be going.
 // None means the handler has no gait concept, and MovementSystem falls back to measured speed.
-public enum Gait { None, Crouch, Walk, Run, Sprint }
 
-public abstract class LocomotionHandler : MonoBehaviour
+namespace CrabSystem
 {
-    [Header("Core Settings")]
-    [SerializeField] protected float walkSpeed = 2f;
-    [SerializeField] protected float runSpeed = 4f;
-    [SerializeField] protected float sprintSpeed = 6f;
+    public enum Gait { None, Crouch, Walk, Run, Sprint }
 
-    [Header("Physics")]
-    [SerializeField] protected float gravity = -20f;
-    [SerializeField] protected float groundedGravity = -2f;
-
-    [Header("Debug")]
-    [SerializeField] protected bool showDebugInfo = false;
-
-    // References
-    protected MovementSystem movementSystem;
-    protected CharacterController characterController;
-    protected Transform rootTransform;
-
-    // State
-    protected Vector3 currentVelocity;
-    protected Vector3 verticalVelocity;
-
-    // ========================================
-    // Initialization
-    // ========================================
-
-    /// <summary>
-    /// Initialize the locomotion handler
-    /// Called by MovementSystem during setup
-    /// </summary>
-    public virtual void Initialize(MovementSystem system)
+    public abstract class LocomotionHandler : MonoBehaviour
     {
-        movementSystem = system;
+        [Header("Core Settings")]
+        [SerializeField] protected float walkSpeed = 2f;
+        [SerializeField] protected float runSpeed = 4f;
+        [SerializeField] protected float sprintSpeed = 6f;
 
-        // Find CharacterController (should be on root GameObject)
-        characterController = GetComponentInParent<CharacterController>();
+        [Header("Physics")]
+        [SerializeField] protected float gravity = -20f;
+        [SerializeField] protected float groundedGravity = -2f;
 
-        if (characterController == null)
+        [Header("Debug")]
+        [SerializeField] protected bool showDebugInfo = false;
+
+        // References
+        protected MovementSystem movementSystem;
+        protected CharacterController characterController;
+        protected Transform rootTransform;
+
+        // State
+        protected Vector3 currentVelocity;
+        protected Vector3 verticalVelocity;
+
+        // ========================================
+        // Initialization
+        // ========================================
+
+        /// <summary>
+        /// Initialize the locomotion handler
+        /// Called by MovementSystem during setup
+        /// </summary>
+        public virtual void Initialize(MovementSystem system)
         {
-            Debug.LogError($"[{GetType().Name}] CharacterController not found!");
-            enabled = false;
-            return;
+            movementSystem = system;
+
+            // Find CharacterController (should be on root GameObject)
+            characterController = GetComponentInParent<CharacterController>();
+
+            if (characterController == null)
+            {
+                Debug.LogError($"[{GetType().Name}] CharacterController not found!");
+                enabled = false;
+                return;
+            }
+
+            rootTransform = characterController.transform;
+
+            if (showDebugInfo)
+                Debug.Log($"[{GetType().Name}] Initialized on {rootTransform.name}");
         }
 
-        rootTransform = characterController.transform;
+        // ========================================
+        // Main Execution (Override in subclasses)
+        // ========================================
 
-        if (showDebugInfo)
-            Debug.Log($"[{GetType().Name}] Initialized on {rootTransform.name}");
-    }
+        /// <summary>
+        /// Execute movement for this frame
+        /// 
+        /// This is the main method that defines your game's movement style.
+        /// Subclasses override this to implement their specific movement feel.
+        /// 
+        /// Input is already in world space - no transformation needed.
+        /// </summary>
+        public abstract void ExecuteMovement(MovementInput input);
 
-    // ========================================
-    // Main Execution (Override in subclasses)
-    // ========================================
+        // ========================================
+        // Common Helpers (Available to subclasses)
+        // ========================================
 
-    /// <summary>
-    /// Execute movement for this frame
-    /// 
-    /// This is the main method that defines your game's movement style.
-    /// Subclasses override this to implement their specific movement feel.
-    /// 
-    /// Input is already in world space - no transformation needed.
-    /// </summary>
-    public abstract void ExecuteMovement(MovementInput input);
-
-    // ========================================
-    // Common Helpers (Available to subclasses)
-    // ========================================
-
-    /// <summary>
-    /// Apply gravity to vertical velocity
-    /// Call this in your ExecuteMovement implementation
-    /// </summary>
-    protected virtual void ApplyGravity()
-    {
-        if (characterController.isGrounded && verticalVelocity.y < 0f)
+        /// <summary>
+        /// Apply gravity to vertical velocity
+        /// Call this in your ExecuteMovement implementation
+        /// </summary>
+        protected virtual void ApplyGravity()
         {
-            verticalVelocity.y = groundedGravity;
+            if (characterController.isGrounded && verticalVelocity.y < 0f)
+            {
+                verticalVelocity.y = groundedGravity;
+            }
+            else
+            {
+                verticalVelocity.y += gravity * Time.deltaTime;
+            }
         }
-        else
+
+        /// <summary>
+        /// Apply rotation to face a direction
+        /// </summary>
+        protected virtual void ApplyRotation(Vector2 lookDirection, float rotationSpeed)
         {
-            verticalVelocity.y += gravity * Time.deltaTime;
+            if (lookDirection.magnitude < 0.1f) return;
+
+            Vector3 lookDir3D = new Vector3(lookDirection.x, 0f, lookDirection.y);
+            Quaternion targetRotation = Quaternion.LookRotation(lookDir3D);
+
+            rootTransform.rotation = Quaternion.Slerp(
+                rootTransform.rotation,
+                targetRotation,
+                rotationSpeed * Time.deltaTime
+            );
         }
-    }
 
-    /// <summary>
-    /// Apply rotation to face a direction
-    /// </summary>
-    protected virtual void ApplyRotation(Vector2 lookDirection, float rotationSpeed)
-    {
-        if (lookDirection.magnitude < 0.1f) return;
+        /// <summary>
+        /// Move the CharacterController
+        /// </summary>
+        protected virtual void MoveCharacterController(Vector3 movement)
+        {
+            Vector3 rootMotion = TakeRootMotion(out _);
+            characterController.Move(movement * Time.deltaTime + rootMotion);
+        }
 
-        Vector3 lookDir3D = new Vector3(lookDirection.x, 0f, lookDirection.y);
-        Quaternion targetRotation = Quaternion.LookRotation(lookDir3D);
+        // ========================================
+        // Root motion — moves that travel as animated
+        // ========================================
 
-        rootTransform.rotation = Quaternion.Slerp(
-            rootTransform.rotation,
-            targetRotation,
-            rotationSpeed * Time.deltaTime
-        );
-    }
+        // Collected from RootMotionRelay (the model's OnAnimatorMove) and spent by the handler's own move
+        // while MovementSystem.RootMotionDriven is up. Dropped otherwise: locomotion clips travel too,
+        // and walking belongs to the handler alone.
+        protected Vector3 pendingRootMotion;
+        protected float pendingRootMotionTime;
 
-    /// <summary>
-    /// Move the CharacterController
-    /// </summary>
-    protected virtual void MoveCharacterController(Vector3 movement)
-    {
-        Vector3 rootMotion = TakeRootMotion(out _);
-        characterController.Move(movement * Time.deltaTime + rootMotion);
-    }
+        /// <summary>The clip's travel over one animator frame, in world space. Only XZ is kept: gravity
+        /// and grounding stay the handler's.</summary>
+        public void AddRootMotion(Vector3 worldDelta, float deltaTime)
+        {
+            pendingRootMotion += new Vector3(worldDelta.x, 0f, worldDelta.z);
+            pendingRootMotionTime += deltaTime;
+        }
 
-    // ========================================
-    // Root motion — moves that travel as animated
-    // ========================================
+        /// <summary>The travel collected since the last call and the time it covers; zero travel when no
+        /// root-motion move is playing.</summary>
+        protected Vector3 TakeRootMotion(out float overTime)
+        {
+            Vector3 delta = pendingRootMotion;
+            overTime = pendingRootMotionTime;
+            pendingRootMotion = Vector3.zero;
+            pendingRootMotionTime = 0f;
 
-    // Collected from RootMotionRelay (the model's OnAnimatorMove) and spent by the handler's own move
-    // while MovementSystem.RootMotionDriven is up. Dropped otherwise: locomotion clips travel too,
-    // and walking belongs to the handler alone.
-    protected Vector3 pendingRootMotion;
-    protected float pendingRootMotionTime;
+            bool driven = movementSystem != null && movementSystem.RootMotionDriven;
+            return driven ? delta : Vector3.zero;
+        }
 
-    /// <summary>The clip's travel over one animator frame, in world space. Only XZ is kept: gravity
-    /// and grounding stay the handler's.</summary>
-    public void AddRootMotion(Vector3 worldDelta, float deltaTime)
-    {
-        pendingRootMotion += new Vector3(worldDelta.x, 0f, worldDelta.z);
-        pendingRootMotionTime += deltaTime;
-    }
+        // ========================================
+        // External Motion — the ability channel
+        // ========================================
 
-    /// <summary>The travel collected since the last call and the time it covers; zero travel when no
-    /// root-motion move is playing.</summary>
-    protected Vector3 TakeRootMotion(out float overTime)
-    {
-        Vector3 delta = pendingRootMotion;
-        overTime = pendingRootMotionTime;
-        pendingRootMotion = Vector3.zero;
-        pendingRootMotionTime = 0f;
+        /// <summary>
+        /// Additive impulse: knockback, launches, air jumps — anything that ADDS to momentum rather
+        /// than replacing it. This is the design doc's IntegrateExternal, and the only way an ability
+        /// is allowed to change velocity. Nothing outside a handler writes currentVelocity, and nothing
+        /// outside a motor writes the root transform.
+        ///
+        /// ⚠ Virtual on the BASE deliberately. MovementEffect and KnockbackEffect used to reach this
+        /// through `Locomotion as ARPGLocomotionHandler`, so the moment slice 1 swapped the handler the
+        /// cast returned null and every knockback, launch, dash and teleport on the player became a
+        /// silent no-op — the same failure that blanked MovementDebugDisplay for a whole slice. Call it
+        /// through LocomotionHandler. Do not cast to a concrete handler.
+        /// </summary>
+        public virtual void ApplyImpulse(Vector3 direction, float force)
+        {
+            currentVelocity += direction.normalized * force;
+        }
 
-        bool driven = movementSystem != null && movementSystem.RootMotionDriven;
-        return driven ? delta : Vector3.zero;
-    }
+        /// <summary>
+        /// Instant position change. This default is the CharacterController path, which has to be
+        /// disabled across the write or it immediately fights it. Handlers owning their own motor
+        /// override it and go through the motor instead.
+        /// </summary>
+        public virtual void TeleportTo(Vector3 position)
+        {
+            if (characterController == null || rootTransform == null) return;
 
-    // ========================================
-    // External Motion — the ability channel
-    // ========================================
+            characterController.enabled = false;
+            rootTransform.position = position;
+            characterController.enabled = true;
 
-    /// <summary>
-    /// Additive impulse: knockback, launches, air jumps — anything that ADDS to momentum rather
-    /// than replacing it. This is the design doc's IntegrateExternal, and the only way an ability
-    /// is allowed to change velocity. Nothing outside a handler writes currentVelocity, and nothing
-    /// outside a motor writes the root transform.
-    ///
-    /// ⚠ Virtual on the BASE deliberately. MovementEffect and KnockbackEffect used to reach this
-    /// through `Locomotion as ARPGLocomotionHandler`, so the moment slice 1 swapped the handler the
-    /// cast returned null and every knockback, launch, dash and teleport on the player became a
-    /// silent no-op — the same failure that blanked MovementDebugDisplay for a whole slice. Call it
-    /// through LocomotionHandler. Do not cast to a concrete handler.
-    /// </summary>
-    public virtual void ApplyImpulse(Vector3 direction, float force)
-    {
-        currentVelocity += direction.normalized * force;
-    }
+            currentVelocity = Vector3.zero;
+            verticalVelocity = Vector3.zero;
+        }
 
-    /// <summary>
-    /// Instant position change. This default is the CharacterController path, which has to be
-    /// disabled across the write or it immediately fights it. Handlers owning their own motor
-    /// override it and go through the motor instead.
-    /// </summary>
-    public virtual void TeleportTo(Vector3 position)
-    {
-        if (characterController == null || rootTransform == null) return;
+        /// <summary>
+        /// Timed velocity override — a dash that OWNS locomotion for a duration rather than nudging it.
+        /// Returns false when the handler has no such mode, so a caller can say so out loud instead of
+        /// silently doing nothing.
+        ///
+        /// ParkourLocomotionHandler returns false on purpose. A dash there belongs to a LowerBodyState
+        /// plus an impulse, not to a coroutine that hides velocity from friction, gravity and collision
+        /// for its whole duration. See Movement_Ability_Interface.md, channel 4.
+        /// </summary>
+        public virtual bool BeginDash(Vector3 direction, float speed, float duration) => false;
 
-        characterController.enabled = false;
-        rootTransform.position = position;
-        characterController.enabled = true;
+        /// <summary>
+        /// Hold ground friction off for a moment. Paired with ApplyImpulse this is what separates a
+        /// dash from a shove: friction decays velocity with a time constant of 1/groundFriction, so at
+        /// friction 5 an unprotected impulse is 63% gone in 0.2s and a big one buys barely a metre.
+        ///
+        /// Deliberately NOT a parameter on ApplyImpulse. An ability may want one without the other —
+        /// an ice patch suppresses friction with no impulse, knockback wants an impulse with no
+        /// holiday — and a combined signature would force every caller to answer both questions.
+        ///
+        /// No-op on the base: friction is a concept of the handler that has one. ARPGLocomotionHandler
+        /// lerps toward a target velocity and has no friction term to suspend.
+        /// </summary>
+        public virtual void SuppressFriction(float seconds) { }
 
-        currentVelocity = Vector3.zero;
-        verticalVelocity = Vector3.zero;
-    }
+        // ========================================
+        // Public Properties
+        // ========================================
 
-    /// <summary>
-    /// Timed velocity override — a dash that OWNS locomotion for a duration rather than nudging it.
-    /// Returns false when the handler has no such mode, so a caller can say so out loud instead of
-    /// silently doing nothing.
-    ///
-    /// ParkourLocomotionHandler returns false on purpose. A dash there belongs to a LowerBodyState
-    /// plus an impulse, not to a coroutine that hides velocity from friction, gravity and collision
-    /// for its whole duration. See Movement_Ability_Interface.md, channel 4.
-    /// </summary>
-    public virtual bool BeginDash(Vector3 direction, float speed, float duration) => false;
+        /// <summary>
+        /// True when this handler owns grounding and MovementSystem should read IsGrounded from it
+        /// instead of from a FeetDetectionModule trigger volume. Sweep-based handlers set this; the
+        /// CharacterController-based ones leave it false and the trigger volume stays authoritative.
+        /// Two answers to "am I grounded" is one too many, and this is which one wins.
+        /// </summary>
+        public virtual bool ProvidesGrounding => false;
 
-    /// <summary>
-    /// Hold ground friction off for a moment. Paired with ApplyImpulse this is what separates a
-    /// dash from a shove: friction decays velocity with a time constant of 1/groundFriction, so at
-    /// friction 5 an unprotected impulse is 63% gone in 0.2s and a big one buys barely a metre.
-    ///
-    /// Deliberately NOT a parameter on ApplyImpulse. An ability may want one without the other —
-    /// an ice patch suppresses friction with no impulse, knockback wants an impulse with no
-    /// holiday — and a combined signature would force every caller to answer both questions.
-    ///
-    /// No-op on the base: friction is a concept of the handler that has one. ARPGLocomotionHandler
-    /// lerps toward a target velocity and has no friction term to suspend.
-    /// </summary>
-    public virtual void SuppressFriction(float seconds) { }
+        public virtual bool IsGrounded => characterController?.isGrounded ?? false;
+        public virtual bool IsMoving => currentVelocity.magnitude > 0.1f;
+        public virtual Gait CurrentGait => Gait.None;
 
-    // ========================================
-    // Public Properties
-    // ========================================
+        // The one sprint rule every handler serves: granted, not denied, and allowed by what the upper
+        // body is doing (StatePermissionMatrix — guard up means no sprint). A refusal drops the gait to
+        // run rather than stopping the character, and IsSprinting drops with it.
+        //
+        // Read at the point of use, never cached: the blackboard is resolved after handlers initialize,
+        // and a grant or denial landing mid-stride is the point of putting them on the blackboard.
+        protected bool SprintAvailable()
+        {
+            Blackboard blackboard = movementSystem != null && movementSystem.Brain != null ? movementSystem.Brain.Blackboard : null;
+            if (blackboard == null) return false;
+            if (!blackboard.GetBool(BlackboardKey.SprintGranted)) return false;
+            if (blackboard.GetBool(BlackboardKey.CannotSprint)) return false;
 
-    /// <summary>
-    /// True when this handler owns grounding and MovementSystem should read IsGrounded from it
-    /// instead of from a FeetDetectionModule trigger volume. Sweep-based handlers set this; the
-    /// CharacterController-based ones leave it false and the trigger volume stays authoritative.
-    /// Two answers to "am I grounded" is one too many, and this is which one wins.
-    /// </summary>
-    public virtual bool ProvidesGrounding => false;
+            return movementSystem.Permits(LowerBodyState.Sprinting);
+        }
+        public virtual Vector3 Velocity => currentVelocity;
+        public virtual Vector3 VerticalVelocity => verticalVelocity;
+        public CharacterController CharacterController => characterController;
+        public MovementSystem MovementSystem => movementSystem;
 
-    public virtual bool IsGrounded => characterController?.isGrounded ?? false;
-    public virtual bool IsMoving => currentVelocity.magnitude > 0.1f;
-    public virtual Gait CurrentGait => Gait.None;
+        // ========================================
+        // Debug Visualization
+        // ========================================
 
-    // The one sprint rule every handler serves: granted, not denied, and allowed by what the upper
-    // body is doing (StatePermissionMatrix — guard up means no sprint). A refusal drops the gait to
-    // run rather than stopping the character, and IsSprinting drops with it.
-    //
-    // Read at the point of use, never cached: the blackboard is resolved after handlers initialize,
-    // and a grant or denial landing mid-stride is the point of putting them on the blackboard.
-    protected bool SprintAvailable()
-    {
-        Blackboard blackboard = movementSystem != null && movementSystem.Brain != null ? movementSystem.Brain.Blackboard : null;
-        if (blackboard == null) return false;
-        if (!blackboard.GetBool(BlackboardKey.SprintGranted)) return false;
-        if (blackboard.GetBool(BlackboardKey.CannotSprint)) return false;
+        protected virtual void OnDrawGizmos()
+        {
+            if (!showDebugInfo || !Application.isPlaying) return;
 
-        return movementSystem.Permits(LowerBodyState.Sprinting);
-    }
-    public virtual Vector3 Velocity => currentVelocity;
-    public virtual Vector3 VerticalVelocity => verticalVelocity;
-    public CharacterController CharacterController => characterController;
-    public MovementSystem MovementSystem => movementSystem;
+            // Draw velocity vector
+            Gizmos.color = Color.blue;
+            Gizmos.DrawRay(transform.position + Vector3.up, currentVelocity);
 
-    // ========================================
-    // Debug Visualization
-    // ========================================
-
-    protected virtual void OnDrawGizmos()
-    {
-        if (!showDebugInfo || !Application.isPlaying) return;
-
-        // Draw velocity vector
-        Gizmos.color = Color.blue;
-        Gizmos.DrawRay(transform.position + Vector3.up, currentVelocity);
-
-        // Draw vertical velocity
-        Gizmos.color = Color.red;
-        Gizmos.DrawRay(transform.position + Vector3.up, verticalVelocity);
+            // Draw vertical velocity
+            Gizmos.color = Color.red;
+            Gizmos.DrawRay(transform.position + Vector3.up, verticalVelocity);
+        }
     }
 }

@@ -15,45 +15,49 @@
 /// - Designer-friendly category management
 /// - Visual customization per category
 /// </summary>
-[CreateAssetMenu(fileName = "New Item Category", menuName = "Items/Category")]
-public class ItemCategory : ScriptableObject
+
+namespace CrabSystem
 {
-    [Header("Identification")]
-    [Tooltip("Unique identifier for this category (e.g., 'weapon', 'armor', 'consumable')")]
-    public string categoryId;
-
-    [Tooltip("Display name shown in UI")]
-    public string displayName;
-
-    [Header("Visual")]
-    [Tooltip("Icon representing this category in UI")]
-    public Sprite categoryIcon;
-
-    [Tooltip("Color tint for category in UI")]
-    public Color categoryColor = Color.white;
-
-    [Header("Description")]
-    [TextArea(2, 4)]
-    public string description;
-
-    [Header("Behavior")]
-    [Tooltip("Can items in this category be equipped?")]
-    public bool isEquippable = false;
-
-    [Tooltip("Can items in this category be consumed/used?")]
-    public bool isConsumable = false;
-
-    [Tooltip("Can items in this category be stacked?")]
-    public bool isStackable = false;
-
-    [Tooltip("Can items in this category be traded?")]
-    public bool isTradeable = true;
-
-    /// <summary>
-    /// Validation helper
-    /// </summary>
-    public bool IsValid()
+    [CreateAssetMenu(fileName = "New Item Category", menuName = "Items/Category")]
+    public class ItemCategory : ScriptableObject
     {
-        return !string.IsNullOrEmpty(categoryId) && !string.IsNullOrEmpty(displayName);
+        [Header("Identification")]
+        [Tooltip("Unique identifier for this category (e.g., 'weapon', 'armor', 'consumable')")]
+        public string categoryId;
+
+        [Tooltip("Display name shown in UI")]
+        public string displayName;
+
+        [Header("Visual")]
+        [Tooltip("Icon representing this category in UI")]
+        public Sprite categoryIcon;
+
+        [Tooltip("Color tint for category in UI")]
+        public Color categoryColor = Color.white;
+
+        [Header("Description")]
+        [TextArea(2, 4)]
+        public string description;
+
+        [Header("Behavior")]
+        [Tooltip("Can items in this category be equipped?")]
+        public bool isEquippable = false;
+
+        [Tooltip("Can items in this category be consumed/used?")]
+        public bool isConsumable = false;
+
+        [Tooltip("Can items in this category be stacked?")]
+        public bool isStackable = false;
+
+        [Tooltip("Can items in this category be traded?")]
+        public bool isTradeable = true;
+
+        /// <summary>
+        /// Validation helper
+        /// </summary>
+        public bool IsValid()
+        {
+            return !string.IsNullOrEmpty(categoryId) && !string.IsNullOrEmpty(displayName);
+        }
     }
 }

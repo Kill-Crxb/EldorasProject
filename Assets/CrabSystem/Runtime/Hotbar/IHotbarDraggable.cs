@@ -3,8 +3,12 @@
 /// ActionBarSlotView.OnDrop checks for this interface.
 /// Ability and Item are mutually exclusive — only one should be set per drag.
 /// </summary>
-public interface IHotbarDraggable
+
+namespace CrabSystem
 {
-    AbilityDefinition Ability { get; } // null if dragging an item
-    ItemInstance      Item    { get; } // null if dragging an ability
+    public interface IHotbarDraggable
+    {
+        AbilityDefinition Ability { get; } // null if dragging an item
+        ItemInstance      Item    { get; } // null if dragging an ability
+    }
 }

@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → AI → Move Dummies And Spirit To Parkour (roadmap V4). TargetDummy and Nature_Spirit are hand-built NPCs
 // that ran ARPGLocomotionHandler and StubAIControlSource, both now deleted. This gives them Base_PC's movement

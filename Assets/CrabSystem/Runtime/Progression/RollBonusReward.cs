@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     /// <summary>
     /// Adds dice, a flat amount, or both to a named roll. "+1d4 to crit rolls",

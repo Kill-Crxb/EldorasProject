@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Magic
+namespace CrabSystem.Magic
 {
     /// <summary>
     /// One composed spell. The magic-system equivalent of ProjectileRuntime, one level up: the

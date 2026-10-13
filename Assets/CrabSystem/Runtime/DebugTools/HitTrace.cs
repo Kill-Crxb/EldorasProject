@@ -8,75 +8,79 @@ using UnityEngine;
 //
 //   [HitTrace] Porphi → Hvy_Dummy  Melee Physical  d20 14 +4 = 18 vs 17 FULL
 //              12 − soak 7 → 5   hp 55/60
-public class HitTrace : MonoBehaviour
+
+namespace CrabSystem
 {
-    [SerializeField] private float rescanInterval = 1f;
-    [SerializeField] private bool logTicks = false;
-
-    private readonly HashSet<DamageSystem> tracked = new();
-    private float nextScan;
-
-    private void Update()
+    public class HitTrace : MonoBehaviour
     {
-        if (Time.unscaledTime < nextScan) return;
-        nextScan = Time.unscaledTime + rescanInterval;
+        [SerializeField] private float rescanInterval = 1f;
+        [SerializeField] private bool logTicks = false;
 
-        foreach (DamageSystem damage in FindObjectsByType<DamageSystem>())
+        private readonly HashSet<DamageSystem> tracked = new();
+        private float nextScan;
+
+        private void Update()
         {
-            if (!tracked.Add(damage)) continue;
+            if (Time.unscaledTime < nextScan) return;
+            nextScan = Time.unscaledTime + rescanInterval;
 
-            DamageSystem d = damage;
-            d.OnHitResolved += (packet, hit) => LogHit(d, packet, hit);
-            d.OnKill += victim => LogKill(d, victim);
+            foreach (DamageSystem damage in FindObjectsByType<DamageSystem>())
+            {
+                if (!tracked.Add(damage)) continue;
+
+                DamageSystem d = damage;
+                d.OnHitResolved += (packet, hit) => LogHit(d, packet, hit);
+                d.OnKill += victim => LogKill(d, victim);
+            }
         }
-    }
 
-    private void LogHit(DamageSystem target, CombatDamagePacket packet, HitResolution hit)
-    {
-        if (this == null || target == null) return;
-        if (packet.source == DamageSource.Tick && !logTicks) return;
+        private void LogHit(DamageSystem target, CombatDamagePacket packet, HitResolution hit)
+        {
+            if (this == null || target == null) return;
+            if (packet.source == DamageSource.Tick && !logTicks) return;
 
-        string attacker = packet.attacker != null ? packet.attacker.root.name : "none";
-        string head = $"[HitTrace] {attacker} → {target.transform.root.name}  {packet.source} {packet.damageType}";
+            string attacker = packet.attacker != null ? packet.attacker.root.name : "none";
+            string head = $"[HitTrace] {attacker} → {target.transform.root.name}  {packet.source} {packet.damageType}";
 
-        Debug.Log($"{head}  {Roll(hit)}\n           {Damage(packet, hit)}   {Health(target)}");
-    }
+            Debug.Log($"{head}  {Roll(hit)}\n           {Damage(packet, hit)}   {Health(target)}");
+        }
 
-    private void LogKill(DamageSystem killer, ControllerBrain victim)
-    {
-        if (this == null || killer == null) return;
+        private void LogKill(DamageSystem killer, ControllerBrain victim)
+        {
+            if (this == null || killer == null) return;
 
-        string victimName = victim != null ? victim.transform.root.name : "none";
-        Debug.Log($"[HitTrace] {killer.transform.root.name} killed {victimName}");
-    }
+            string victimName = victim != null ? victim.transform.root.name : "none";
+            Debug.Log($"[HitTrace] {killer.transform.root.name} killed {victimName}");
+        }
 
-    private static string Roll(HitResolution hit)
-    {
-        if (hit.grade == HitGrade.Unrolled) return "unrolled";
-        if (hit.grade == HitGrade.Blocked) return "BLOCKED (no roll)";
-        if (hit.grade == HitGrade.Parried) return "PARRIED (no roll)";
+        private static string Roll(HitResolution hit)
+        {
+            if (hit.grade == HitGrade.Unrolled) return "unrolled";
+            if (hit.grade == HitGrade.Blocked) return "BLOCKED (no roll)";
+            if (hit.grade == HitGrade.Parried) return "PARRIED (no roll)";
 
-        float total = hit.roll + hit.accuracy;
-        string grade = hit.grade == HitGrade.Full ? "FULL" : "glancing";
-        string adv = hit.advantage ? " (ADV)" : "";
-        string counter = hit.counter ? " COUNTER" : "";
-        return $"d20{adv} {hit.roll} {hit.accuracy:+0;-0} = {total:0} vs {hit.defense:0} {grade}{counter}";
-    }
+            float total = hit.roll + hit.accuracy;
+            string grade = hit.grade == HitGrade.Full ? "FULL" : "glancing";
+            string adv = hit.advantage ? " (ADV)" : "";
+            string counter = hit.counter ? " COUNTER" : "";
+            return $"d20{adv} {hit.roll} {hit.accuracy:+0;-0} = {total:0} vs {hit.defense:0} {grade}{counter}";
+        }
 
-    private static string Damage(CombatDamagePacket packet, HitResolution hit)
-    {
-        string carried = $"{packet.finalDamage:0.#}";
-        if (hit.grade == HitGrade.Glancing)
-            carried += " halved";
+        private static string Damage(CombatDamagePacket packet, HitResolution hit)
+        {
+            string carried = $"{packet.finalDamage:0.#}";
+            if (hit.grade == HitGrade.Glancing)
+                carried += " halved";
 
-        return $"{carried} = {hit.rolled:0.#} − absorbed {hit.soak:0.#} → {hit.applied:0.#}";
-    }
+            return $"{carried} = {hit.rolled:0.#} − absorbed {hit.soak:0.#} → {hit.applied:0.#}";
+        }
 
-    private static string Health(DamageSystem target)
-    {
-        IHealthProvider health = target.Brain != null ? target.Brain.Health : null;
-        if (health == null) return "";
-        return $"hp {health.GetCurrentHealth():0}/{health.GetMaxHealth():0}";
+        private static string Health(DamageSystem target)
+        {
+            IHealthProvider health = target.Brain != null ? target.Brain.Health : null;
+            if (health == null) return "";
+            return $"hp {health.GetCurrentHealth():0}/{health.GetMaxHealth():0}";
+        }
     }
 }
 #endif

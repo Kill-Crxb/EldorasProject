@@ -1,7 +1,8 @@
 using System.Collections.Generic;
-using NinjaGame.Stats;
+using CrabSystem.Stats;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → Crab → Dials → Set Up (10 Oct). Makes the two dial schemas (MovementStats, CombatDials), loads them on
 // every base character prefab, names each resource's regen dials, points the Dash's push at mov.dash_speed and

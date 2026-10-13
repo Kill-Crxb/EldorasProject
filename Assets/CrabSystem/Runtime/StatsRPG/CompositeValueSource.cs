@@ -39,166 +39,170 @@ using System.Collections.Generic;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 18, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "CompositeValue", menuName = "CrabSystem/Blackboard/Value Sources/Composite")]
-public class CompositeValueSource : ValueSourceDefinition
+
+namespace CrabSystem
 {
-    [Header("Source Combination")]
-    [Tooltip("Value sources to combine")]
-    [SerializeField] private List<ValueSourceDefinition> sources = new List<ValueSourceDefinition>();
-
-    [Tooltip("How to combine the values")]
-    [SerializeField] private CompositeOperation operation = CompositeOperation.Add;
-
-    public override float GetValue(ControllerBrain brain)
+    [CreateAssetMenu(fileName = "CompositeValue", menuName = "CrabSystem/Blackboard/Value Sources/Composite")]
+    public class CompositeValueSource : ValueSourceDefinition
     {
-        // Guard clauses (flat logic)
-        if (brain == null) return 0f;
-        if (sources == null || sources.Count == 0) return 0f;
+        [Header("Source Combination")]
+        [Tooltip("Value sources to combine")]
+        [SerializeField] private List<ValueSourceDefinition> sources = new List<ValueSourceDefinition>();
 
-        // Collect values from all sources
-        float result = 0f;
-        int validCount = 0;
+        [Tooltip("How to combine the values")]
+        [SerializeField] private CompositeOperation operation = CompositeOperation.Add;
 
-        switch (operation)
+        public override float GetValue(ControllerBrain brain)
         {
-            case CompositeOperation.Add:
-                result = CalculateAdd(brain, ref validCount);
-                break;
+            // Guard clauses (flat logic)
+            if (brain == null) return 0f;
+            if (sources == null || sources.Count == 0) return 0f;
 
-            case CompositeOperation.Multiply:
-                result = CalculateMultiply(brain, ref validCount);
-                break;
+            // Collect values from all sources
+            float result = 0f;
+            int validCount = 0;
 
-            case CompositeOperation.Average:
-                result = CalculateAverage(brain, ref validCount);
-                break;
-
-            case CompositeOperation.Min:
-                result = CalculateMin(brain, ref validCount);
-                break;
-
-            case CompositeOperation.Max:
-                result = CalculateMax(brain, ref validCount);
-                break;
-        }
-
-        return validCount > 0 ? result : 0f;
-    }
-
-    private float CalculateAdd(ControllerBrain brain, ref int validCount)
-    {
-        float sum = 0f;
-
-        foreach (var source in sources)
-        {
-            if (source == null) continue;
-
-            sum += source.GetValue(brain);
-            validCount++;
-        }
-
-        return sum;
-    }
-
-    private float CalculateMultiply(ControllerBrain brain, ref int validCount)
-    {
-        float product = 1f;
-
-        foreach (var source in sources)
-        {
-            if (source == null) continue;
-
-            product *= source.GetValue(brain);
-            validCount++;
-        }
-
-        return product;
-    }
-
-    private float CalculateAverage(ControllerBrain brain, ref int validCount)
-    {
-        float sum = 0f;
-
-        foreach (var source in sources)
-        {
-            if (source == null) continue;
-
-            sum += source.GetValue(brain);
-            validCount++;
-        }
-
-        return validCount > 0 ? sum / validCount : 0f;
-    }
-
-    private float CalculateMin(ControllerBrain brain, ref int validCount)
-    {
-        float min = float.MaxValue;
-
-        foreach (var source in sources)
-        {
-            if (source == null) continue;
-
-            float value = source.GetValue(brain);
-            if (value < min) min = value;
-            validCount++;
-        }
-
-        return validCount > 0 ? min : 0f;
-    }
-
-    private float CalculateMax(ControllerBrain brain, ref int validCount)
-    {
-        float max = float.MinValue;
-
-        foreach (var source in sources)
-        {
-            if (source == null) continue;
-
-            float value = source.GetValue(brain);
-            if (value > max) max = value;
-            validCount++;
-        }
-
-        return validCount > 0 ? max : 0f;
-    }
-
-    public override string GetDisplayName()
-    {
-        if (sources == null || sources.Count == 0) return "Empty Composite";
-        return $"{operation} ({sources.Count} sources)";
-    }
-
-    public override bool Validate(out string error)
-    {
-        if (sources == null || sources.Count == 0)
-        {
-            error = "No sources assigned";
-            return false;
-        }
-
-        // Check for null sources
-        foreach (var source in sources)
-        {
-            if (source == null)
+            switch (operation)
             {
-                error = "Contains null source";
+                case CompositeOperation.Add:
+                    result = CalculateAdd(brain, ref validCount);
+                    break;
+
+                case CompositeOperation.Multiply:
+                    result = CalculateMultiply(brain, ref validCount);
+                    break;
+
+                case CompositeOperation.Average:
+                    result = CalculateAverage(brain, ref validCount);
+                    break;
+
+                case CompositeOperation.Min:
+                    result = CalculateMin(brain, ref validCount);
+                    break;
+
+                case CompositeOperation.Max:
+                    result = CalculateMax(brain, ref validCount);
+                    break;
+            }
+
+            return validCount > 0 ? result : 0f;
+        }
+
+        private float CalculateAdd(ControllerBrain brain, ref int validCount)
+        {
+            float sum = 0f;
+
+            foreach (var source in sources)
+            {
+                if (source == null) continue;
+
+                sum += source.GetValue(brain);
+                validCount++;
+            }
+
+            return sum;
+        }
+
+        private float CalculateMultiply(ControllerBrain brain, ref int validCount)
+        {
+            float product = 1f;
+
+            foreach (var source in sources)
+            {
+                if (source == null) continue;
+
+                product *= source.GetValue(brain);
+                validCount++;
+            }
+
+            return product;
+        }
+
+        private float CalculateAverage(ControllerBrain brain, ref int validCount)
+        {
+            float sum = 0f;
+
+            foreach (var source in sources)
+            {
+                if (source == null) continue;
+
+                sum += source.GetValue(brain);
+                validCount++;
+            }
+
+            return validCount > 0 ? sum / validCount : 0f;
+        }
+
+        private float CalculateMin(ControllerBrain brain, ref int validCount)
+        {
+            float min = float.MaxValue;
+
+            foreach (var source in sources)
+            {
+                if (source == null) continue;
+
+                float value = source.GetValue(brain);
+                if (value < min) min = value;
+                validCount++;
+            }
+
+            return validCount > 0 ? min : 0f;
+        }
+
+        private float CalculateMax(ControllerBrain brain, ref int validCount)
+        {
+            float max = float.MinValue;
+
+            foreach (var source in sources)
+            {
+                if (source == null) continue;
+
+                float value = source.GetValue(brain);
+                if (value > max) max = value;
+                validCount++;
+            }
+
+            return validCount > 0 ? max : 0f;
+        }
+
+        public override string GetDisplayName()
+        {
+            if (sources == null || sources.Count == 0) return "Empty Composite";
+            return $"{operation} ({sources.Count} sources)";
+        }
+
+        public override bool Validate(out string error)
+        {
+            if (sources == null || sources.Count == 0)
+            {
+                error = "No sources assigned";
                 return false;
             }
+
+            // Check for null sources
+            foreach (var source in sources)
+            {
+                if (source == null)
+                {
+                    error = "Contains null source";
+                    return false;
+                }
+            }
+
+            error = null;
+            return true;
         }
-
-        error = null;
-        return true;
     }
-}
 
-/// <summary>
-/// How to combine multiple value sources
-/// </summary>
-public enum CompositeOperation
-{
-    Add,        // Sum all values
-    Multiply,   // Product of all values
-    Average,    // Mean of all values
-    Min,        // Minimum value
-    Max         // Maximum value
+    /// <summary>
+    /// How to combine multiple value sources
+    /// </summary>
+    public enum CompositeOperation
+    {
+        Add,        // Sum all values
+        Multiply,   // Product of all values
+        Average,    // Mean of all values
+        Min,        // Minimum value
+        Max         // Maximum value
+    }
 }

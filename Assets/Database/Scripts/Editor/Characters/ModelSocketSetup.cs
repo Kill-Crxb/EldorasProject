@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Builds socket transforms on a model rig and wires them into its ModelSocketProvider.
 //

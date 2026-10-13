@@ -11,47 +11,51 @@ using UnityEngine;
 // rely on speed falling once input stopped, but a root-motion move travels at running speed, and reading
 // that speed handed the legs to locomotion's run cycle mid-lunge — whose own travel then kept the speed up. While the Actions state machine rests, the
 // rest rule holds both layers at 0 whatever this claims.
-public class ActionsLayerDriver : MonoBehaviour, IBrainModule
+
+namespace CrabSystem
 {
-    [Tooltip("At or below this speed (m/s) the whole body plays the action.")]
-    [SerializeField] private float fullBodyBelow = 0.3f;
-
-    [Tooltip("At or above this speed (m/s) only the arms play it; the legs keep walking.")]
-    [SerializeField] private float armsOnlyAbove = 1.5f;
-
-    private ControllerBrain brain;
-    private AnimationLayerController layers;
-    private MovementSystem movement;
-
-    public bool IsEnabled { get; set; } = true;
-
-    public void Initialize(ControllerBrain controllerBrain)
+    public class ActionsLayerDriver : MonoBehaviour, IBrainModule
     {
-        brain = controllerBrain;
-    }
+        [Tooltip("At or below this speed (m/s) the whole body plays the action.")]
+        [SerializeField] private float fullBodyBelow = 0.3f;
 
-    public void LateInitialize()
-    {
-        layers = brain?.GetModule<AnimationLayerController>();
-        movement = brain?.Movement;
+        [Tooltip("At or above this speed (m/s) only the arms play it; the legs keep walking.")]
+        [SerializeField] private float armsOnlyAbove = 1.5f;
 
-        if (layers == null)
-            Debug.LogError($"[ActionsLayerDriver] No AnimationLayerController on '{name}'.", this);
-    }
+        private ControllerBrain brain;
+        private AnimationLayerController layers;
+        private MovementSystem movement;
 
-    public void UpdateModule()
-    {
-        if (layers == null) return;
+        public bool IsEnabled { get; set; } = true;
 
-        float speed = movement != null ? movement.Speed : 0f;
-        bool rooted = movement != null && movement.IsRooted;
-        float fullBody = rooted ? 1f : 1f - Mathf.InverseLerp(fullBodyBelow, armsOnlyAbove, speed);
+        public void Initialize(ControllerBrain controllerBrain)
+        {
+            brain = controllerBrain;
+        }
 
-        layers.Claim(this, AnimationLayerNames.Actions, fullBody, AnimationLayerController.PriorityAbility);
-    }
+        public void LateInitialize()
+        {
+            layers = brain?.GetModule<AnimationLayerController>();
+            movement = brain?.Movement;
 
-    void OnDisable()
-    {
-        if (layers != null) layers.ReleaseAll(this);
+            if (layers == null)
+                Debug.LogError($"[ActionsLayerDriver] No AnimationLayerController on '{name}'.", this);
+        }
+
+        public void UpdateModule()
+        {
+            if (layers == null) return;
+
+            float speed = movement != null ? movement.Speed : 0f;
+            bool rooted = movement != null && movement.IsRooted;
+            float fullBody = rooted ? 1f : 1f - Mathf.InverseLerp(fullBodyBelow, armsOnlyAbove, speed);
+
+            layers.Claim(this, AnimationLayerNames.Actions, fullBody, AnimationLayerController.PriorityAbility);
+        }
+
+        void OnDisable()
+        {
+            if (layers != null) layers.ReleaseAll(this);
+        }
     }
 }

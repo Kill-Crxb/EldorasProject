@@ -1,6 +1,6 @@
 using System;
 
-namespace RPG.Factions
+namespace CrabSystem.Factions
 {
     [Serializable]
     public class FactionSaveData

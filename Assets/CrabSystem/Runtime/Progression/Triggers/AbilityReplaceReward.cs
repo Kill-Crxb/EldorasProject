@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // "Your Sinister abilities become Shadow Strike": every ability the filter picks plays the replacement instead,
     // for this character, while held. The replacement keeps the filter's tag (Shadow Strike is still Sinister).

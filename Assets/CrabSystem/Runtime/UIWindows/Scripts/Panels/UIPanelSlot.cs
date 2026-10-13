@@ -8,130 +8,134 @@ using UnityEngine;
 /// Views are collected on first use rather than in Awake, so the slot works no matter
 /// what order it and its panel are activated in.
 /// </summary>
-public class UIPanelSlot : MonoBehaviour
+
+namespace CrabSystem
 {
-    [Header("Identity")]
-    [SerializeField] private string slotId = "Slot";
-
-    [Header("Content")]
-    [Tooltip("View shown when the panel opens. Falls back to the first child view.")]
-    [SerializeField] private string defaultViewId;
-
-    private readonly List<UIPanelView> views = new();
-    private bool collected;
-
-    public string SlotId => slotId;
-    public UIPanelView Current { get; private set; }
-
-    public IReadOnlyList<UIPanelView> Views
+    public class UIPanelSlot : MonoBehaviour
     {
-        get { Collect(); return views; }
-    }
+        [Header("Identity")]
+        [SerializeField] private string slotId = "Slot";
 
-    public event Action<UIPanelSlot> ViewChanged;
+        [Header("Content")]
+        [Tooltip("View shown when the panel opens. Falls back to the first child view.")]
+        [SerializeField] private string defaultViewId;
 
-    private void Collect()
-    {
-        if (collected) return;
-        collected = true;
+        private readonly List<UIPanelView> views = new();
+        private bool collected;
 
-        foreach (Transform child in transform)
+        public string SlotId => slotId;
+        public UIPanelView Current { get; private set; }
+
+        public IReadOnlyList<UIPanelView> Views
         {
-            var view = Resolve(child);
-            if (view == null) continue;
-
-            views.Add(view);
-            view.Hide();
+            get { Collect(); return views; }
         }
 
-        if (views.Count == 0)
-            Debug.LogWarning($"[UIPanelSlot] '{slotId}' on {name} has no UIPanelView children");
-    }
+        public event Action<UIPanelSlot> ViewChanged;
 
-    /// <summary>
-    /// A specialised view (StatPanelView, InventoryPanelView) already is a UIPanelView,
-    /// so an object carrying both has two. Take the specialised one and say so.
-    /// </summary>
-    private static UIPanelView Resolve(Transform child)
-    {
-        var found = child.GetComponents<UIPanelView>();
-        if (found.Length == 0) return null;
-        if (found.Length == 1) return found[0];
-
-        var chosen = found[0];
-
-        for (int i = 0; i < found.Length; i++)
+        private void Collect()
         {
-            if (found[i].GetType() != typeof(UIPanelView)) chosen = found[i];
+            if (collected) return;
+            collected = true;
+
+            foreach (Transform child in transform)
+            {
+                var view = Resolve(child);
+                if (view == null) continue;
+
+                views.Add(view);
+                view.Hide();
+            }
+
+            if (views.Count == 0)
+                Debug.LogWarning($"[UIPanelSlot] '{slotId}' on {name} has no UIPanelView children");
         }
 
-        Debug.LogWarning($"[UIPanelSlot] {child.name} has {found.Length} UIPanelView components. " +
-                         $"Using {chosen.GetType().Name}; remove the plain UIPanelView.");
-
-        return chosen;
-    }
-
-    public UIPanelView Find(string viewId)
-    {
-        if (string.IsNullOrEmpty(viewId)) return null;
-
-        Collect();
-
-        for (int i = 0; i < views.Count; i++)
+        /// <summary>
+        /// A specialised view (StatPanelView, InventoryPanelView) already is a UIPanelView,
+        /// so an object carrying both has two. Take the specialised one and say so.
+        /// </summary>
+        private static UIPanelView Resolve(Transform child)
         {
-            if (views[i].ViewId == viewId) return views[i];
+            var found = child.GetComponents<UIPanelView>();
+            if (found.Length == 0) return null;
+            if (found.Length == 1) return found[0];
+
+            var chosen = found[0];
+
+            for (int i = 0; i < found.Length; i++)
+            {
+                if (found[i].GetType() != typeof(UIPanelView)) chosen = found[i];
+            }
+
+            Debug.LogWarning($"[UIPanelSlot] {child.name} has {found.Length} UIPanelView components. " +
+                             $"Using {chosen.GetType().Name}; remove the plain UIPanelView.");
+
+            return chosen;
         }
 
-        return null;
-    }
-
-    public bool Show(string viewId)
-    {
-        var view = Find(viewId);
-        if (view == null) return false;
-
-        Show(view);
-        return true;
-    }
-
-    public void Show(UIPanelView view)
-    {
-        if (view == null || Current == view) return;
-
-        Collect();
-
-        for (int i = 0; i < views.Count; i++)
+        public UIPanelView Find(string viewId)
         {
-            if (views[i] != view) views[i].Hide();
+            if (string.IsNullOrEmpty(viewId)) return null;
+
+            Collect();
+
+            for (int i = 0; i < views.Count; i++)
+            {
+                if (views[i].ViewId == viewId) return views[i];
+            }
+
+            return null;
         }
 
-        Current = view;
-        view.Show();
-        ViewChanged?.Invoke(this);
-    }
+        public bool Show(string viewId)
+        {
+            var view = Find(viewId);
+            if (view == null) return false;
 
-    public void ShowDefault()
-    {
-        Collect();
+            Show(view);
+            return true;
+        }
 
-        var view = Find(defaultViewId);
+        public void Show(UIPanelView view)
+        {
+            if (view == null || Current == view) return;
 
-        if (view == null && !string.IsNullOrEmpty(defaultViewId))
-            Debug.LogWarning($"[UIPanelSlot] '{slotId}' has no view called '{defaultViewId}'");
+            Collect();
 
-        if (view == null && views.Count > 0) view = views[0];
-        if (view == null) return;
+            for (int i = 0; i < views.Count; i++)
+            {
+                if (views[i] != view) views[i].Hide();
+            }
 
-        Show(view);
-    }
+            Current = view;
+            view.Show();
+            ViewChanged?.Invoke(this);
+        }
 
-    public void HideAll()
-    {
-        Collect();
+        public void ShowDefault()
+        {
+            Collect();
 
-        for (int i = 0; i < views.Count; i++)
-            views[i].Hide();
+            var view = Find(defaultViewId);
 
-        Current = null;
+            if (view == null && !string.IsNullOrEmpty(defaultViewId))
+                Debug.LogWarning($"[UIPanelSlot] '{slotId}' has no view called '{defaultViewId}'");
+
+            if (view == null && views.Count > 0) view = views[0];
+            if (view == null) return;
+
+            Show(view);
+        }
+
+        public void HideAll()
+        {
+            Collect();
+
+            for (int i = 0; i < views.Count; i++)
+                views[i].Hide();
+
+            Current = null;
+        }
     }
 }

@@ -33,20 +33,24 @@
 /// 
 /// Phase 1.7b: Marked as legacy, kept for backwards compatibility
 /// </summary>
-public interface IDamageable
+
+namespace CrabSystem
 {
-    /// <summary>Take damage and return whether target survived</summary>
-    bool TakeDamage(float damage, Vector3 source = default);
+    public interface IDamageable
+    {
+        /// <summary>Take damage and return whether target survived</summary>
+        bool TakeDamage(float damage, Vector3 source = default);
 
-    /// <summary>Heal the target</summary>
-    void Heal(float amount);
+        /// <summary>Heal the target</summary>
+        void Heal(float amount);
 
-    /// <summary>Current health value</summary>
-    float CurrentHealth { get; }
+        /// <summary>Current health value</summary>
+        float CurrentHealth { get; }
 
-    /// <summary>Maximum health value</summary>
-    float MaxHealth { get; }
+        /// <summary>Maximum health value</summary>
+        float MaxHealth { get; }
 
-    /// <summary>Health as percentage (0-1)</summary>
-    float HealthPercentage { get; }
+        /// <summary>Health as percentage (0-1)</summary>
+        float HealthPercentage { get; }
+    }
 }

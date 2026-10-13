@@ -7,93 +7,97 @@ using UnityEngine.UI;
 // DialogueCanvas starts inactive and is only activated by DialogueUIListener reacting
 // to GameEvents.OnDialogueStarted — a script parented under it would only subscribe
 // in OnEnable once active, meaning it would miss the very event meant to wake it up.
-public class DialogueUIController : MonoBehaviour
+
+namespace CrabSystem
 {
-    [SerializeField] private TextMeshProUGUI npcDialogueText;
-    [SerializeField] private RectTransform optionsContainer;
-    [SerializeField] private Button optionTemplate;
-
-    private readonly List<GameObject> spawnedOptions = new List<GameObject>();
-
-    private void OnEnable()
+    public class DialogueUIController : MonoBehaviour
     {
-        GameEvents.OnDialogueStarted += HandleDialogueStarted;
-        GameEvents.OnDialogueEnded += HandleDialogueEnded;
-    }
+        [SerializeField] private TextMeshProUGUI npcDialogueText;
+        [SerializeField] private RectTransform optionsContainer;
+        [SerializeField] private Button optionTemplate;
 
-    private void OnDisable()
-    {
-        GameEvents.OnDialogueStarted -= HandleDialogueStarted;
-        GameEvents.OnDialogueEnded -= HandleDialogueEnded;
-    }
+        private readonly List<GameObject> spawnedOptions = new List<GameObject>();
 
-    private void HandleDialogueStarted(ControllerBrain npc, ControllerBrain actor)
-    {
-        var dialogue = npc.GetModule<DialogueSystem>();
-        var database = dialogue?.Database;
+        private void OnEnable()
+        {
+            GameEvents.OnDialogueStarted += HandleDialogueStarted;
+            GameEvents.OnDialogueEnded += HandleDialogueEnded;
+        }
 
-        if (npcDialogueText != null)
-            npcDialogueText.text = database != null ? database.greetingText : "";
+        private void OnDisable()
+        {
+            GameEvents.OnDialogueStarted -= HandleDialogueStarted;
+            GameEvents.OnDialogueEnded -= HandleDialogueEnded;
+        }
 
-        if (dialogue == null)
+        private void HandleDialogueStarted(ControllerBrain npc, ControllerBrain actor)
+        {
+            var dialogue = npc.GetModule<DialogueSystem>();
+            var database = dialogue?.Database;
+
+            if (npcDialogueText != null)
+                npcDialogueText.text = database != null ? database.greetingText : "";
+
+            if (dialogue == null)
+            {
+                ClearOptions();
+                return;
+            }
+
+            BuildOptions(dialogue);
+        }
+
+        // Rebuilt after every pick, so an option that has just used itself up disappears
+        // without the dialogue needing to close and reopen.
+        private void BuildOptions(DialogueSystem dialogue)
         {
             ClearOptions();
-            return;
-        }
+            if (!dialogue.IsInConversation) return; // the pick ended it — OpenShop, say
 
-        BuildOptions(dialogue);
-    }
+            var options = dialogue.Database != null ? dialogue.Database.options : null;
 
-    // Rebuilt after every pick, so an option that has just used itself up disappears
-    // without the dialogue needing to close and reopen.
-    private void BuildOptions(DialogueSystem dialogue)
-    {
-        ClearOptions();
-        if (!dialogue.IsInConversation) return; // the pick ended it — OpenShop, say
-
-        var options = dialogue.Database != null ? dialogue.Database.options : null;
-
-        if (options != null)
-        {
-            foreach (var option in options)
+            if (options != null)
             {
-                if (!dialogue.IsOptionAvailable(option)) continue;
-
-                SpawnOptionButton(option.optionText, () =>
+                foreach (var option in options)
                 {
-                    dialogue.SelectOption(option);
-                    BuildOptions(dialogue);
-                });
+                    if (!dialogue.IsOptionAvailable(option)) continue;
+
+                    SpawnOptionButton(option.optionText, () =>
+                    {
+                        dialogue.SelectOption(option);
+                        BuildOptions(dialogue);
+                    });
+                }
             }
+
+            SpawnOptionButton("Goodbye", () => dialogue.EndConversation());
         }
 
-        SpawnOptionButton("Goodbye", () => dialogue.EndConversation());
-    }
+        private void HandleDialogueEnded(ControllerBrain npc)
+        {
+            ClearOptions();
+        }
 
-    private void HandleDialogueEnded(ControllerBrain npc)
-    {
-        ClearOptions();
-    }
+        private void SpawnOptionButton(string text, System.Action onClick)
+        {
+            if (optionTemplate == null || optionsContainer == null) return;
 
-    private void SpawnOptionButton(string text, System.Action onClick)
-    {
-        if (optionTemplate == null || optionsContainer == null) return;
+            GameObject buttonObj = Instantiate(optionTemplate.gameObject, optionsContainer);
+            buttonObj.SetActive(true);
+            spawnedOptions.Add(buttonObj);
 
-        GameObject buttonObj = Instantiate(optionTemplate.gameObject, optionsContainer);
-        buttonObj.SetActive(true);
-        spawnedOptions.Add(buttonObj);
+            var label = buttonObj.GetComponentInChildren<TextMeshProUGUI>();
+            if (label != null) label.text = text;
 
-        var label = buttonObj.GetComponentInChildren<TextMeshProUGUI>();
-        if (label != null) label.text = text;
+            var button = buttonObj.GetComponent<Button>();
+            button.onClick.AddListener(() => onClick());
+        }
 
-        var button = buttonObj.GetComponent<Button>();
-        button.onClick.AddListener(() => onClick());
-    }
-
-    private void ClearOptions()
-    {
-        foreach (var obj in spawnedOptions)
-            if (obj != null) Destroy(obj);
-        spawnedOptions.Clear();
+        private void ClearOptions()
+        {
+            foreach (var obj in spawnedOptions)
+                if (obj != null) Destroy(obj);
+            spawnedOptions.Clear();
+        }
     }
 }

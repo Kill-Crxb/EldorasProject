@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
 
 // Tools → Combat → Add Targeting to Player (8 Oct). Puts a TargetingModule on Base_PC next to its CameraModule.
 // The HUD marks (TargetMarker, Crosshair) are placed by hand: an Image under the HUD canvas with the component.

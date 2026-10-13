@@ -4,11 +4,15 @@
 //
 // HumanoidAnimator_v2 layers (Animator_Audit.md). Action layers rest at weight 1 and show only
 // while they play something — AnimationLayerController's rest rule.
-public static class AnimationLayerNames
+
+namespace CrabSystem
 {
-    public const string Locomotion = "Locomotion";
-    public const string MovementActions = "Movement Actions";
-    public const string Actions = "Actions";
-    public const string ActionsUpper = "Actions Upper";
-    public const string Reactions = "Reactions";
+    public static class AnimationLayerNames
+    {
+        public const string Locomotion = "Locomotion";
+        public const string MovementActions = "Movement Actions";
+        public const string Actions = "Actions";
+        public const string ActionsUpper = "Actions Upper";
+        public const string Reactions = "Reactions";
+    }
 }

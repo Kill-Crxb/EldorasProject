@@ -1,7 +1,11 @@
 // Why a press did nothing (AbilitySystem.OnAbilityRefused).
-public enum AbilityRefusal
+
+namespace CrabSystem
 {
-    Cooldown,
-    Resource,
-    Denied
+    public enum AbilityRefusal
+    {
+        Cooldown,
+        Resource,
+        Denied
+    }
 }

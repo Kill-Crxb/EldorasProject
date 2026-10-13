@@ -5,26 +5,30 @@ using UnityEngine;
 // model itself: the body stays on the capsule, and the travel goes to the handler, which uses it only
 // while a useRootMotion move plays (MovementSystem.RootMotionDriven). Walking stays the handler's.
 // No brain (the creation preview) means nothing to hand it to, so the model plays in place.
-[RequireComponent(typeof(Animator))]
-public class RootMotionRelay : MonoBehaviour, IModelPart
+
+namespace CrabSystem
 {
-    private Animator animator;
-    private MovementSystem movement;
-
-    private void Awake()
+    [RequireComponent(typeof(Animator))]
+    public class RootMotionRelay : MonoBehaviour, IModelPart
     {
-        animator = GetComponent<Animator>();
-        animator.applyRootMotion = true; // handled here; never applied to the transform
-    }
+        private Animator animator;
+        private MovementSystem movement;
 
-    public void Bind(ControllerBrain brain, ModelModule model)
-    {
-        movement = brain != null ? brain.Movement : null;
-    }
+        private void Awake()
+        {
+            animator = GetComponent<Animator>();
+            animator.applyRootMotion = true; // handled here; never applied to the transform
+        }
 
-    private void OnAnimatorMove()
-    {
-        if (movement == null || movement.Locomotion == null) return;
-        movement.Locomotion.AddRootMotion(animator.deltaPosition, Time.deltaTime);
+        public void Bind(ControllerBrain brain, ModelModule model)
+        {
+            movement = brain != null ? brain.Movement : null;
+        }
+
+        private void OnAnimatorMove()
+        {
+            if (movement == null || movement.Locomotion == null) return;
+            movement.Locomotion.AddRootMotion(animator.deltaPosition, Time.deltaTime);
+        }
     }
 }

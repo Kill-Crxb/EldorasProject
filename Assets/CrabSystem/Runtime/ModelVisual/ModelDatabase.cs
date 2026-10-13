@@ -1,89 +1,92 @@
 using System.Linq;
 using UnityEngine;
 
-public class ModelDatabase : ScriptableObject
+namespace CrabSystem
 {
+    public class ModelDatabase : ScriptableObject
+    {
     #region Model Variant
 
-    [System.Serializable]
-    public class ModelVariant
-    {
-        [Header("Identity")]
-        public string modelId;
-        public string displayName;
-
-        [Tooltip("Offered in character creation.")]
-        public bool playable;
-
-        [Header("Model")]
-        public GameObject prefab;
-        public Sprite thumbnailSprite;
-
-        [Header("Customization")]
-        public bool allowColorCustomization = true;
-        public Color[] defaultColors = new Color[4];
-
-        public bool IsValid()
+        [System.Serializable]
+        public class ModelVariant
         {
-            return !string.IsNullOrEmpty(modelId) &&
-                   !string.IsNullOrEmpty(displayName) &&
-                   prefab != null;
+            [Header("Identity")]
+            public string modelId;
+            public string displayName;
+
+            [Tooltip("Offered in character creation.")]
+            public bool playable;
+
+            [Header("Model")]
+            public GameObject prefab;
+            public Sprite thumbnailSprite;
+
+            [Header("Customization")]
+            public bool allowColorCustomization = true;
+            public Color[] defaultColors = new Color[4];
+
+            public bool IsValid()
+            {
+                return !string.IsNullOrEmpty(modelId) &&
+                       !string.IsNullOrEmpty(displayName) &&
+                       prefab != null;
+            }
         }
-    }
 
     #endregion
 
     #region Inspector
 
-    [Header("Models")]
-    [SerializeField] private ModelVariant[] models = new ModelVariant[0];
+        [Header("Models")]
+        [SerializeField] private ModelVariant[] models = new ModelVariant[0];
 
-    [Header("Settings")]
-    [SerializeField] private bool validateOnLoad = true;
+        [Header("Settings")]
+        [SerializeField] private bool validateOnLoad = true;
 
     #endregion
 
     #region Properties
 
-    public ModelVariant[] AllModels => models;
+        public ModelVariant[] AllModels => models;
 
     #endregion
 
     #region Lookup
 
-    public ModelVariant GetModel(string modelId)
-    {
-        if (string.IsNullOrEmpty(modelId))
-            return null;
+        public ModelVariant GetModel(string modelId)
+        {
+            if (string.IsNullOrEmpty(modelId))
+                return null;
 
-        return models.FirstOrDefault(m => m.modelId.Equals(modelId, System.StringComparison.OrdinalIgnoreCase));
-    }
+            return models.FirstOrDefault(m => m.modelId.Equals(modelId, System.StringComparison.OrdinalIgnoreCase));
+        }
 
-    public ModelVariant GetModelByIndex(int index)
-    {
-        if (index < 0 || index >= models.Length)
-            return null;
+        public ModelVariant GetModelByIndex(int index)
+        {
+            if (index < 0 || index >= models.Length)
+                return null;
 
-        return models[index];
-    }
+            return models[index];
+        }
 
     #endregion
 
     #region Validation
 
-    public bool ValidateDatabase()
-    {
-        if (!validateOnLoad)
-            return true;
-
-        foreach (var model in models)
+        public bool ValidateDatabase()
         {
-            if (!model.IsValid())
-                return false;
+            if (!validateOnLoad)
+                return true;
+
+            foreach (var model in models)
+            {
+                if (!model.IsValid())
+                    return false;
+            }
+
+            return true;
         }
 
-        return true;
-    }
-
     #endregion
+    }
 }

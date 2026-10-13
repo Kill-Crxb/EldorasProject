@@ -5,24 +5,28 @@ using System.Collections.Generic;
 /// <summary>
 /// Loot container component (attach to prefab).
 /// </summary>
-public class LootContainer : MonoBehaviour
+
+namespace CrabSystem
 {
-    private List<ItemInstance> containedItems = new List<ItemInstance>();
-
-    public void Initialize(List<ItemInstance> items)
+    public class LootContainer : MonoBehaviour
     {
-        containedItems = items;
-    }
+        private List<ItemInstance> containedItems = new List<ItemInstance>();
 
-    public ItemInstance[] GetItems()
-    {
-        return containedItems.ToArray();
-    }
+        public void Initialize(List<ItemInstance> items)
+        {
+            containedItems = items;
+        }
 
-    public bool RemoveItem(ItemInstance item)
-    {
-        return containedItems.Remove(item);
-    }
+        public ItemInstance[] GetItems()
+        {
+            return containedItems.ToArray();
+        }
 
-    public int ItemCount => containedItems.Count;
+        public bool RemoveItem(ItemInstance item)
+        {
+            return containedItems.Remove(item);
+        }
+
+        public int ItemCount => containedItems.Count;
+    }
 }

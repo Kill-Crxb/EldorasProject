@@ -1,25 +1,28 @@
 using UnityEngine;
 using System;
 
-[CreateAssetMenu(fileName = "InteractionIconDatabase", menuName = "CrabSystem/Interaction/Icon Database")]
-public class InteractionIconDatabase : ScriptableObject
+namespace CrabSystem
 {
-    [SerializeField] private IconEntry[] icons;
-
-    [Serializable]
-    public struct IconEntry
+    [CreateAssetMenu(fileName = "InteractionIconDatabase", menuName = "CrabSystem/Interaction/Icon Database")]
+    public class InteractionIconDatabase : ScriptableObject
     {
-        public InteractionAction action;
-        public Sprite icon;
-    }
+        [SerializeField] private IconEntry[] icons;
 
-    public Sprite GetIcon(InteractionAction action)
-    {
-        foreach (var entry in icons)
+        [Serializable]
+        public struct IconEntry
         {
-            if (entry.action == action)
-                return entry.icon;
+            public InteractionAction action;
+            public Sprite icon;
         }
-        return null;
+
+        public Sprite GetIcon(InteractionAction action)
+        {
+            foreach (var entry in icons)
+            {
+                if (entry.action == action)
+                    return entry.icon;
+            }
+            return null;
+        }
     }
 }

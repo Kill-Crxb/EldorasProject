@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace NinjaGame.Magic
+namespace CrabSystem.Magic
 {
     /// <summary>One key, one element. Explicit rather than positional so the list can be reordered.</summary>
     [Serializable]

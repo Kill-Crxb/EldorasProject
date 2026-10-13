@@ -14,147 +14,151 @@ using UnityEngine;
 ///                   all. This is where a VFX asset's colour actually lives.
 ///   Light           light.color, straight.
 /// </summary>
-public static class VfxTint
+
+namespace CrabSystem
 {
-    /// <summary>
-    /// Take the HUE and SATURATION from the tint, keep the original's BRIGHTNESS and its
-    /// relative saturation.
-    ///
-    /// A flat replace would work, and it would look wrong. A fireball is not one orange — it is
-    /// a near-white core inside saturated embers inside dark smoke, and that brightness ladder
-    /// is what makes it read as fire rather than as a coloured blob. Replacing every layer with
-    /// the same blue flattens it into a sticker.
-    ///
-    /// Keeping V means the core stays the brightest thing; scaling the original's S by the
-    /// tint's means a pale centre stays pale. The shape survives, only the colour moves.
-    /// </summary>
-    public static Color Recolor(Color original, Color tint)
+    public static class VfxTint
     {
-        Color.RGBToHSV(original, out _, out float originalS, out float originalV);
-        Color.RGBToHSV(tint, out float tintH, out float tintS, out _);
-
-        Color result = Color.HSVToRGB(tintH, tintS * originalS, originalV);
-        result.a = original.a;
-
-        return result;
-    }
-
-    /// <summary>
-    /// Tint a freshly instantiated effect and forget about it. For spawn-and-destroy VFX, where
-    /// the instance is new so its current colours ARE the prefab's.
-    ///
-    /// Do not call this repeatedly on the same instance — tinting an already-tinted result
-    /// compounds, and a pooled object would drift to black. Pooled things cache their base
-    /// colours and use the per-type methods below.
-    /// </summary>
-    public static void ApplyOnce(GameObject root, Color tint, string colorProperty)
-    {
-        if (root == null) return;
-
-        var particles = root.GetComponentsInChildren<ParticleSystem>(true);
-
-        for (int i = 0; i < particles.Length; i++)
+        /// <summary>
+        /// Take the HUE and SATURATION from the tint, keep the original's BRIGHTNESS and its
+        /// relative saturation.
+        ///
+        /// A flat replace would work, and it would look wrong. A fireball is not one orange — it is
+        /// a near-white core inside saturated embers inside dark smoke, and that brightness ladder
+        /// is what makes it read as fire rather than as a coloured blob. Replacing every layer with
+        /// the same blue flattens it into a sticker.
+        ///
+        /// Keeping V means the core stays the brightest thing; scaling the original's S by the
+        /// tint's means a pale centre stays pale. The shape survives, only the colour moves.
+        /// </summary>
+        public static Color Recolor(Color original, Color tint)
         {
-            ParticleSystem.MainModule main = particles[i].main;
+            Color.RGBToHSV(original, out _, out float originalS, out float originalV);
+            Color.RGBToHSV(tint, out float tintH, out float tintS, out _);
 
-            // A GRADIENT is a deliberate colour design — white-hot fading to smoke — and
-            // recolouring it would need the whole ramp rebuilt. A flat colour is a tint slot.
-            if (main.startColor.mode != ParticleSystemGradientMode.Color) continue;
+            Color result = Color.HSVToRGB(tintH, tintS * originalS, originalV);
+            result.a = original.a;
 
-            main.startColor = Recolor(main.startColor.color, tint);
+            return result;
         }
 
-        var lights = root.GetComponentsInChildren<Light>(true);
-
-        for (int i = 0; i < lights.Length; i++)
-            lights[i].color = Recolor(lights[i].color, tint);
-
-        if (string.IsNullOrEmpty(colorProperty)) return;
-
-        var renderers = root.GetComponentsInChildren<Renderer>(true);
-        var block = new MaterialPropertyBlock();
-
-        for (int i = 0; i < renderers.Length; i++)
+        /// <summary>
+        /// Tint a freshly instantiated effect and forget about it. For spawn-and-destroy VFX, where
+        /// the instance is new so its current colours ARE the prefab's.
+        ///
+        /// Do not call this repeatedly on the same instance — tinting an already-tinted result
+        /// compounds, and a pooled object would drift to black. Pooled things cache their base
+        /// colours and use the per-type methods below.
+        /// </summary>
+        public static void ApplyOnce(GameObject root, Color tint, string colorProperty)
         {
-            if (renderers[i] == null) continue;
+            if (root == null) return;
 
-            renderers[i].GetPropertyBlock(block);
-            block.SetColor(colorProperty, tint);
-            renderers[i].SetPropertyBlock(block);
+            var particles = root.GetComponentsInChildren<ParticleSystem>(true);
+
+            for (int i = 0; i < particles.Length; i++)
+            {
+                ParticleSystem.MainModule main = particles[i].main;
+
+                // A GRADIENT is a deliberate colour design — white-hot fading to smoke — and
+                // recolouring it would need the whole ramp rebuilt. A flat colour is a tint slot.
+                if (main.startColor.mode != ParticleSystemGradientMode.Color) continue;
+
+                main.startColor = Recolor(main.startColor.color, tint);
+            }
+
+            var lights = root.GetComponentsInChildren<Light>(true);
+
+            for (int i = 0; i < lights.Length; i++)
+                lights[i].color = Recolor(lights[i].color, tint);
+
+            if (string.IsNullOrEmpty(colorProperty)) return;
+
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
+            var block = new MaterialPropertyBlock();
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+
+                renderers[i].GetPropertyBlock(block);
+                block.SetColor(colorProperty, tint);
+                renderers[i].SetPropertyBlock(block);
+            }
         }
-    }
 
-    // =========================================================================
-    // Cached forms — for pooled objects that re-tint every reuse
-    // =========================================================================
+        // =========================================================================
+        // Cached forms — for pooled objects that re-tint every reuse
+        // =========================================================================
 
-    public static void TintRenderers(Renderer[] renderers, MaterialPropertyBlock block,
-                                     Color tint, string colorProperty)
-    {
-        if (renderers == null || block == null) return;
-        if (string.IsNullOrEmpty(colorProperty)) return;
-
-        for (int i = 0; i < renderers.Length; i++)
+        public static void TintRenderers(Renderer[] renderers, MaterialPropertyBlock block,
+                                         Color tint, string colorProperty)
         {
-            if (renderers[i] == null) continue;
+            if (renderers == null || block == null) return;
+            if (string.IsNullOrEmpty(colorProperty)) return;
 
-            renderers[i].GetPropertyBlock(block);
-            block.SetColor(colorProperty, tint);
-            renderers[i].SetPropertyBlock(block);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+
+                renderers[i].GetPropertyBlock(block);
+                block.SetColor(colorProperty, tint);
+                renderers[i].SetPropertyBlock(block);
+            }
         }
-    }
 
-    /// <summary>Base colours are the PREFAB's, captured once — never the last tint applied.</summary>
-    public static void TintParticles(ParticleSystem[] particles, Color[] baseColors, Color tint)
-    {
-        if (particles == null || baseColors == null) return;
-
-        for (int i = 0; i < particles.Length && i < baseColors.Length; i++)
+        /// <summary>Base colours are the PREFAB's, captured once — never the last tint applied.</summary>
+        public static void TintParticles(ParticleSystem[] particles, Color[] baseColors, Color tint)
         {
-            if (particles[i] == null) continue;
+            if (particles == null || baseColors == null) return;
 
-            ParticleSystem.MainModule main = particles[i].main;
+            for (int i = 0; i < particles.Length && i < baseColors.Length; i++)
+            {
+                if (particles[i] == null) continue;
 
-            if (main.startColor.mode != ParticleSystemGradientMode.Color) continue;
+                ParticleSystem.MainModule main = particles[i].main;
 
-            main.startColor = Recolor(baseColors[i], tint);
+                if (main.startColor.mode != ParticleSystemGradientMode.Color) continue;
+
+                main.startColor = Recolor(baseColors[i], tint);
+            }
         }
-    }
 
-    public static void TintLights(Light[] lights, Color[] baseColors, Color tint)
-    {
-        if (lights == null || baseColors == null) return;
-
-        for (int i = 0; i < lights.Length && i < baseColors.Length; i++)
+        public static void TintLights(Light[] lights, Color[] baseColors, Color tint)
         {
-            if (lights[i] == null) continue;
+            if (lights == null || baseColors == null) return;
 
-            lights[i].color = Recolor(baseColors[i], tint);
+            for (int i = 0; i < lights.Length && i < baseColors.Length; i++)
+            {
+                if (lights[i] == null) continue;
+
+                lights[i].color = Recolor(baseColors[i], tint);
+            }
         }
-    }
 
-    /// <summary>The flat start colour of each system, for capturing at build time.</summary>
-    public static Color[] CaptureParticleColors(ParticleSystem[] particles)
-    {
-        if (particles == null) return new Color[0];
+        /// <summary>The flat start colour of each system, for capturing at build time.</summary>
+        public static Color[] CaptureParticleColors(ParticleSystem[] particles)
+        {
+            if (particles == null) return new Color[0];
 
-        var colors = new Color[particles.Length];
+            var colors = new Color[particles.Length];
 
-        for (int i = 0; i < particles.Length; i++)
-            colors[i] = particles[i] != null ? particles[i].main.startColor.color : Color.white;
+            for (int i = 0; i < particles.Length; i++)
+                colors[i] = particles[i] != null ? particles[i].main.startColor.color : Color.white;
 
-        return colors;
-    }
+            return colors;
+        }
 
-    public static Color[] CaptureLightColors(Light[] lights)
-    {
-        if (lights == null) return new Color[0];
+        public static Color[] CaptureLightColors(Light[] lights)
+        {
+            if (lights == null) return new Color[0];
 
-        var colors = new Color[lights.Length];
+            var colors = new Color[lights.Length];
 
-        for (int i = 0; i < lights.Length; i++)
-            colors[i] = lights[i] != null ? lights[i].color : Color.white;
+            for (int i = 0; i < lights.Length; i++)
+                colors[i] = lights[i] != null ? lights[i].color : Color.white;
 
-        return colors;
+            return colors;
+        }
     }
 }

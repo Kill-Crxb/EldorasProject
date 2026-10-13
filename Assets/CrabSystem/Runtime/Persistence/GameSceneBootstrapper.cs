@@ -12,10 +12,14 @@
 /// SceneLoader lives in the menu scene and is destroyed before its coroutine
 /// can fire GameSceneReady after scene activation.
 /// </summary>
-public class GameSceneBootstrapper : UnityEngine.MonoBehaviour
+
+namespace CrabSystem
 {
-    private void Start()
+    public class GameSceneBootstrapper : UnityEngine.MonoBehaviour
     {
-        GameEvents.GameSceneReady();
+        private void Start()
+        {
+            GameEvents.GameSceneReady();
+        }
     }
 }

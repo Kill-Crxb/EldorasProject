@@ -1,9 +1,9 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using RPG.Factions;
+using CrabSystem.Factions;
 
-namespace RPG.NPC.UI
+namespace CrabSystem.UI
 {
     [RequireComponent(typeof(Canvas))]
     public class NPCNameplate : MonoBehaviour

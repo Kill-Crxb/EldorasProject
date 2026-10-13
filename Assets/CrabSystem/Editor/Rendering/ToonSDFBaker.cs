@@ -19,158 +19,161 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-public static class ToonSDFBaker
+namespace CrabSystem
 {
-    // How many pixels of gradient sit either side of the painted boundary. Larger values
-    // give the Coverage slider more travel before the shape stops changing.
-    const float Spread = 48f;
-
-    const float Ortho = 1.0f;
-    const float Diag = 1.41421356f;
-
-    [MenuItem("Tools/Toon/Generate SDF From Mask")]
-    static void Generate()
+    public static class ToonSDFBaker
     {
-        Object[] selected = Selection.GetFiltered(typeof(Texture2D), SelectionMode.Assets);
+        // How many pixels of gradient sit either side of the painted boundary. Larger values
+        // give the Coverage slider more travel before the shape stops changing.
+        const float Spread = 48f;
 
-        if (selected.Length == 0)
+        const float Ortho = 1.0f;
+        const float Diag = 1.41421356f;
+
+        [MenuItem("Tools/Toon/Generate SDF From Mask")]
+        static void Generate()
         {
-            Debug.LogWarning("[ToonSDFBaker] Select one or more mask textures in the Project window first.");
-            return;
+            Object[] selected = Selection.GetFiltered(typeof(Texture2D), SelectionMode.Assets);
+
+            if (selected.Length == 0)
+            {
+                Debug.LogWarning("[ToonSDFBaker] Select one or more mask textures in the Project window first.");
+                return;
+            }
+
+            for (int i = 0; i < selected.Length; i++)
+                Bake(AssetDatabase.GetAssetPath(selected[i]));
+
+            AssetDatabase.Refresh();
         }
 
-        for (int i = 0; i < selected.Length; i++)
-            Bake(AssetDatabase.GetAssetPath(selected[i]));
-
-        AssetDatabase.Refresh();
-    }
-
-    static void Bake(string sourcePath)
-    {
-        if (string.IsNullOrEmpty(sourcePath))
-            return;
-
-        Texture2D source = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-
-        if (!source.LoadImage(File.ReadAllBytes(sourcePath)))
+        static void Bake(string sourcePath)
         {
-            Debug.LogWarning("[ToonSDFBaker] Could not decode " + sourcePath + " - PNG, JPG or TGA only.");
+            if (string.IsNullOrEmpty(sourcePath))
+                return;
+
+            Texture2D source = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+
+            if (!source.LoadImage(File.ReadAllBytes(sourcePath)))
+            {
+                Debug.LogWarning("[ToonSDFBaker] Could not decode " + sourcePath + " - PNG, JPG or TGA only.");
+                Object.DestroyImmediate(source);
+                return;
+            }
+
+            int width = source.width;
+            int height = source.height;
+            Color32[] pixels = source.GetPixels32();
             Object.DestroyImmediate(source);
-            return;
+
+            bool[] lit = new bool[width * height];
+
+            for (int i = 0; i < lit.Length; i++)
+                lit[i] = pixels[i].r > 127;
+
+            bool[] shadow = new bool[lit.Length];
+
+            for (int i = 0; i < lit.Length; i++)
+                shadow[i] = !lit[i];
+
+            float[] toShadow = DistanceField(shadow, width, height);
+            float[] toLit = DistanceField(lit, width, height);
+
+            Color32[] output = new Color32[lit.Length];
+
+            for (int i = 0; i < lit.Length; i++)
+            {
+                float signed = lit[i] ? toShadow[i] : -toLit[i];
+                float value = Mathf.Clamp01(0.5f + signed / (2f * Spread));
+                byte v = (byte)Mathf.RoundToInt(value * 255f);
+                output[i] = new Color32(v, v, v, 255);
+            }
+
+            Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            result.SetPixels32(output);
+            result.Apply();
+
+            string directory = Path.GetDirectoryName(sourcePath);
+            string name = Path.GetFileNameWithoutExtension(sourcePath);
+            string outputPath = Path.Combine(directory, name + "_SDF.png").Replace("\\", "/");
+
+            File.WriteAllBytes(outputPath, result.EncodeToPNG());
+            Object.DestroyImmediate(result);
+
+            AssetDatabase.ImportAsset(outputPath, ImportAssetOptions.ForceUpdate);
+            ApplyImportSettings(outputPath);
+
+            Debug.Log("[ToonSDFBaker] Wrote " + outputPath);
         }
 
-        int width = source.width;
-        int height = source.height;
-        Color32[] pixels = source.GetPixels32();
-        Object.DestroyImmediate(source);
-
-        bool[] lit = new bool[width * height];
-
-        for (int i = 0; i < lit.Length; i++)
-            lit[i] = pixels[i].r > 127;
-
-        bool[] shadow = new bool[lit.Length];
-
-        for (int i = 0; i < lit.Length; i++)
-            shadow[i] = !lit[i];
-
-        float[] toShadow = DistanceField(shadow, width, height);
-        float[] toLit = DistanceField(lit, width, height);
-
-        Color32[] output = new Color32[lit.Length];
-
-        for (int i = 0; i < lit.Length; i++)
+        static void ApplyImportSettings(string path)
         {
-            float signed = lit[i] ? toShadow[i] : -toLit[i];
-            float value = Mathf.Clamp01(0.5f + signed / (2f * Spread));
-            byte v = (byte)Mathf.RoundToInt(value * 255f);
-            output[i] = new Color32(v, v, v, 255);
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+
+            if (importer == null)
+                return;
+
+            importer.sRGBTexture = false;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
         }
 
-        Texture2D result = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        result.SetPixels32(output);
-        result.Apply();
+        // Chamfer distance transform: two sweeps over the grid, each relaxing a pixel against
+        // the neighbours the sweep has already visited. Approximate compared to an exact
+        // Euclidean transform, but the error is under a percent and it runs in milliseconds.
+        static float[] DistanceField(bool[] seed, int width, int height)
+        {
+            float far = width + height;
+            float[] distance = new float[seed.Length];
 
-        string directory = Path.GetDirectoryName(sourcePath);
-        string name = Path.GetFileNameWithoutExtension(sourcePath);
-        string outputPath = Path.Combine(directory, name + "_SDF.png").Replace("\\", "/");
+            for (int i = 0; i < seed.Length; i++)
+                distance[i] = seed[i] ? 0f : far;
 
-        File.WriteAllBytes(outputPath, result.EncodeToPNG());
-        Object.DestroyImmediate(result);
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                    RelaxForward(distance, width, height, x, y, far);
 
-        AssetDatabase.ImportAsset(outputPath, ImportAssetOptions.ForceUpdate);
-        ApplyImportSettings(outputPath);
+            for (int y = height - 1; y >= 0; y--)
+                for (int x = width - 1; x >= 0; x--)
+                    RelaxBackward(distance, width, height, x, y, far);
 
-        Debug.Log("[ToonSDFBaker] Wrote " + outputPath);
-    }
+            return distance;
+        }
 
-    static void ApplyImportSettings(string path)
-    {
-        TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        static void RelaxForward(float[] d, int width, int height, int x, int y, float far)
+        {
+            int i = y * width + x;
+            float best = d[i];
 
-        if (importer == null)
-            return;
+            best = Mathf.Min(best, Read(d, width, height, x - 1, y, far) + Ortho);
+            best = Mathf.Min(best, Read(d, width, height, x, y - 1, far) + Ortho);
+            best = Mathf.Min(best, Read(d, width, height, x - 1, y - 1, far) + Diag);
+            best = Mathf.Min(best, Read(d, width, height, x + 1, y - 1, far) + Diag);
 
-        importer.sRGBTexture = false;
-        importer.wrapMode = TextureWrapMode.Clamp;
-        importer.filterMode = FilterMode.Bilinear;
-        importer.textureCompression = TextureImporterCompression.Uncompressed;
-        importer.SaveAndReimport();
-    }
+            d[i] = best;
+        }
 
-    // Chamfer distance transform: two sweeps over the grid, each relaxing a pixel against
-    // the neighbours the sweep has already visited. Approximate compared to an exact
-    // Euclidean transform, but the error is under a percent and it runs in milliseconds.
-    static float[] DistanceField(bool[] seed, int width, int height)
-    {
-        float far = width + height;
-        float[] distance = new float[seed.Length];
+        static void RelaxBackward(float[] d, int width, int height, int x, int y, float far)
+        {
+            int i = y * width + x;
+            float best = d[i];
 
-        for (int i = 0; i < seed.Length; i++)
-            distance[i] = seed[i] ? 0f : far;
+            best = Mathf.Min(best, Read(d, width, height, x + 1, y, far) + Ortho);
+            best = Mathf.Min(best, Read(d, width, height, x, y + 1, far) + Ortho);
+            best = Mathf.Min(best, Read(d, width, height, x + 1, y + 1, far) + Diag);
+            best = Mathf.Min(best, Read(d, width, height, x - 1, y + 1, far) + Diag);
 
-        for (int y = 0; y < height; y++)
-            for (int x = 0; x < width; x++)
-                RelaxForward(distance, width, height, x, y, far);
+            d[i] = best;
+        }
 
-        for (int y = height - 1; y >= 0; y--)
-            for (int x = width - 1; x >= 0; x--)
-                RelaxBackward(distance, width, height, x, y, far);
+        static float Read(float[] d, int width, int height, int x, int y, float far)
+        {
+            if (x < 0 || y < 0 || x >= width || y >= height)
+                return far;
 
-        return distance;
-    }
-
-    static void RelaxForward(float[] d, int width, int height, int x, int y, float far)
-    {
-        int i = y * width + x;
-        float best = d[i];
-
-        best = Mathf.Min(best, Read(d, width, height, x - 1, y, far) + Ortho);
-        best = Mathf.Min(best, Read(d, width, height, x, y - 1, far) + Ortho);
-        best = Mathf.Min(best, Read(d, width, height, x - 1, y - 1, far) + Diag);
-        best = Mathf.Min(best, Read(d, width, height, x + 1, y - 1, far) + Diag);
-
-        d[i] = best;
-    }
-
-    static void RelaxBackward(float[] d, int width, int height, int x, int y, float far)
-    {
-        int i = y * width + x;
-        float best = d[i];
-
-        best = Mathf.Min(best, Read(d, width, height, x + 1, y, far) + Ortho);
-        best = Mathf.Min(best, Read(d, width, height, x, y + 1, far) + Ortho);
-        best = Mathf.Min(best, Read(d, width, height, x + 1, y + 1, far) + Diag);
-        best = Mathf.Min(best, Read(d, width, height, x - 1, y + 1, far) + Diag);
-
-        d[i] = best;
-    }
-
-    static float Read(float[] d, int width, int height, int x, int y, float far)
-    {
-        if (x < 0 || y < 0 || x >= width || y >= height)
-            return far;
-
-        return d[y * width + x];
+            return d[y * width + x];
+        }
     }
 }

@@ -6,6 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
+using CrabSystem;
 
 // Tools → CrabSystem → Build Starter Prefabs. Turns the scene objects every game needs into CrabSystem base prefabs,
 // each with a NinjaGame variant in Database/Prefabs, and swaps the scene objects for their variants.

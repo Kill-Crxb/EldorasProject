@@ -10,168 +10,172 @@ using UnityEngine;
 // recovery and the tell are BAKED from the clip's Strike, Unlocked and Tell events by Tools → Combat →
 // Bake Move Frames (and on every clip import), so they are never hand-synced. To change timing,
 // change the clip. The speed class is the animation TARGET, compared in Move Report.
-public partial class AbilityDefinition
+
+namespace CrabSystem
 {
-    [Header("Move — frames at 60 fps")]
-    [Tooltip("The animation target for this move (Move_Block_Build.md speed classes). Move Report shows the clip " +
-             "against it; it never sets the frames.")]
-    public SpeedClass speedClass = SpeedClass.None;
-    [Tooltip("Baked from the clip's events. Edit the clip, not these numbers: the next bake overwrites them.")]
-    public MoveFrames frames;
-    [Tooltip("The clip the frames were baked from. Set by the bake.")]
-    public AnimationClip bakedClip;
-    [Tooltip("The animator state the move plays (full path hash), started directly when the move starts. " +
-             "0 = not baked: the move falls back to setting its animationTrigger. Set by the bake.")]
-    public int bakedState;
-    [Tooltip("The layer bakedState is on. Set by the bake.")]
-    public int bakedLayer;
-    [Tooltip("Cross-fade into bakedState, in seconds, from the controller's transition. Set by the bake.")]
-    public float bakedFade;
-    [Tooltip("Where in the state the move starts, in seconds, from the transition's offset. Set by the bake.")]
-    public float bakedStartTime;
-    public HitProperties hit;
-    public List<CancelRoute> routes = new List<CancelRoute>();
-
-    public bool HasMoveData => frames.startup > 0;
-    public int ActiveStart => frames.startup;
-    public int RecoveryStart => frames.startup + frames.active;
-    public int TotalFrames => frames.startup + frames.active + frames.recovery;
-
-    public MovePhase PhaseAt(int frame)
+    public partial class AbilityDefinition
     {
-        if (!HasMoveData || frame < 0) return MovePhase.None;
-        if (frame < ActiveStart) return MovePhase.Startup;
-        if (frame < RecoveryStart) return MovePhase.Active;
-        if (frame < TotalFrames) return MovePhase.Recovery;
-        return MovePhase.None;
+        [Header("Move — frames at 60 fps")]
+        [Tooltip("The animation target for this move (Move_Block_Build.md speed classes). Move Report shows the clip " +
+                 "against it; it never sets the frames.")]
+        public SpeedClass speedClass = SpeedClass.None;
+        [Tooltip("Baked from the clip's events. Edit the clip, not these numbers: the next bake overwrites them.")]
+        public MoveFrames frames;
+        [Tooltip("The clip the frames were baked from. Set by the bake.")]
+        public AnimationClip bakedClip;
+        [Tooltip("The animator state the move plays (full path hash), started directly when the move starts. " +
+                 "0 = not baked: the move falls back to setting its animationTrigger. Set by the bake.")]
+        public int bakedState;
+        [Tooltip("The layer bakedState is on. Set by the bake.")]
+        public int bakedLayer;
+        [Tooltip("Cross-fade into bakedState, in seconds, from the controller's transition. Set by the bake.")]
+        public float bakedFade;
+        [Tooltip("Where in the state the move starts, in seconds, from the transition's offset. Set by the bake.")]
+        public float bakedStartTime;
+        public HitProperties hit;
+        public List<CancelRoute> routes = new List<CancelRoute>();
+
+        public bool HasMoveData => frames.startup > 0;
+        public int ActiveStart => frames.startup;
+        public int RecoveryStart => frames.startup + frames.active;
+        public int TotalFrames => frames.startup + frames.active + frames.recovery;
+
+        public MovePhase PhaseAt(int frame)
+        {
+            if (!HasMoveData || frame < 0) return MovePhase.None;
+            if (frame < ActiveStart) return MovePhase.Startup;
+            if (frame < RecoveryStart) return MovePhase.Active;
+            if (frame < TotalFrames) return MovePhase.Recovery;
+            return MovePhase.None;
+        }
+
+        public bool InCancelWindow(int frame) => InRange(frame, frames.cancelFrom, frames.cancelTo);
+        public bool HasIFramesAt(int frame) => InRange(frame, frames.iframeFrom, frames.iframeTo);
+        public bool HasArmorAt(int frame) => InRange(frame, frames.armorFrom, frames.armorTo);
+
+        static bool InRange(int frame, int from, int to) => to > from && frame >= from && frame < to;
+
+        // Hit defaults only. Frames come from the clip (the bake); the class frames are the animator's target.
+        [ContextMenu("Move/Fill hit defaults from speed class")]
+        void FillFromSpeedClass()
+        {
+            if (speedClass == SpeedClass.None) return;
+            hit.blockAdvantage = ClassOnBlock(speedClass);
+            hit.hitStop = ClassHitStop(speedClass);
+            hit.blockStamina = ClassBlockStamina(speedClass);
+        }
+
+        // Class defaults — Move_Block_Build.md "Speed classes". Technique startup is 12 + 8 per seal
+        // and is composed at cast time, so only its base is here.
+        public static int ClassStartup(SpeedClass c) => c switch
+        {
+            SpeedClass.Quick => 10,
+            SpeedClass.Standard => 16,
+            SpeedClass.Heavy => 26,
+            SpeedClass.Technique => 12,
+            _ => 0
+        };
+
+        public static int ClassActive(SpeedClass c) => c switch
+        {
+            SpeedClass.Quick => 3,
+            SpeedClass.Standard => 4,
+            SpeedClass.Heavy => 5,
+            _ => 0
+        };
+
+        public static int ClassRecovery(SpeedClass c) => c switch
+        {
+            SpeedClass.Quick => 15,
+            SpeedClass.Standard => 22,
+            SpeedClass.Heavy => 34,
+            SpeedClass.Technique => 30,
+            _ => 0
+        };
+
+        public static int ClassOnBlock(SpeedClass c) => c switch
+        {
+            SpeedClass.Quick => -2,
+            SpeedClass.Standard => -5,
+            SpeedClass.Heavy => -12,
+            _ => 0
+        };
+
+        public static int ClassHitStop(SpeedClass c) => c switch
+        {
+            SpeedClass.Quick => 4,
+            SpeedClass.Standard => 6,
+            SpeedClass.Heavy => 10,
+            SpeedClass.Technique => 8,
+            _ => 0
+        };
+
+        public static int ClassBlockStamina(SpeedClass c) => c switch
+        {
+            SpeedClass.Quick => 4,
+            SpeedClass.Standard => 5,
+            SpeedClass.Heavy => 7,
+            _ => 0
+        };
     }
 
-    public bool InCancelWindow(int frame) => InRange(frame, frames.cancelFrom, frames.cancelTo);
-    public bool HasIFramesAt(int frame) => InRange(frame, frames.iframeFrom, frames.iframeTo);
-    public bool HasArmorAt(int frame) => InRange(frame, frames.armorFrom, frames.armorTo);
+    public enum SpeedClass { None, Quick, Standard, Heavy, Technique }
+    public enum MovePhase { None, Startup, Active, Recovery }
+    public enum GuardType { Strike, Perilous, Grab }
+    public enum HitState { None, Flinch, Stagger, Knockdown, Launch, GuardBreak }
+    public enum Tracking { None, Partial, Full }
+    public enum FeelTier { None, Light, Medium, Heavy }
+    public enum MoveCategory { None, Normal, Technique, Dodge }
+    public enum CancelCondition { OnHit, OnHitOrBlock, Always }
 
-    static bool InRange(int frame, int from, int to) => to > from && frame >= from && frame < to;
+    [Flags]
+    public enum HitBypass { None = 0, Pierce = 1, Exposed = 2, Grab = 4 }
 
-    // Hit defaults only. Frames come from the clip (the bake); the class frames are the animator's target.
-    [ContextMenu("Move/Fill hit defaults from speed class")]
-    void FillFromSpeedClass()
+    [Serializable]
+    public struct MoveFrames
     {
-        if (speedClass == SpeedClass.None) return;
-        hit.blockAdvantage = ClassOnBlock(speedClass);
-        hit.hitStop = ClassHitStop(speedClass);
-        hit.blockStamina = ClassBlockStamina(speedClass);
+        public int startup;
+        public int active;
+        public int recovery;
+
+        [Tooltip("Frames from ability start. 0/0 = none.")]
+        public int cancelFrom;
+        public int cancelTo;
+        [Tooltip("Baked from the clip's Invuln(1) → Invuln(0) when it has them; authored otherwise.")]
+        public int iframeFrom;
+        public int iframeTo;
+        public int armorFrom;
+        public int armorTo;
+
+        [Tooltip("The clip's first Tell, baked. 0 = the move tells as it starts.")]
+        public int tell;
     }
 
-    // Class defaults — Move_Block_Build.md "Speed classes". Technique startup is 12 + 8 per seal
-    // and is composed at cast time, so only its base is here.
-    public static int ClassStartup(SpeedClass c) => c switch
+    [Serializable]
+    public struct HitProperties
     {
-        SpeedClass.Quick => 10,
-        SpeedClass.Standard => 16,
-        SpeedClass.Heavy => 26,
-        SpeedClass.Technique => 12,
-        _ => 0
-    };
+        public GuardType guard;
+        public HitState onHit;
+        [Tooltip("Base hit-state frames. Scaled by applied ÷ average damage, clamped 0.5–1.5 (CF2).")]
+        public int onHitFrames;
+        [Tooltip("Defender's stamina cost on block. On parry the attacker pays it instead.")]
+        public int blockStamina;
+        [Tooltip("Attacker's frame advantage when blocked. Usually negative.")]
+        public int blockAdvantage;
+        public Tracking tracking;
+        public int hitStop;
+        public FeelTier feel;
+        public HitBypass bypass;
+    }
 
-    public static int ClassActive(SpeedClass c) => c switch
+    [Serializable]
+    public struct CancelRoute
     {
-        SpeedClass.Quick => 3,
-        SpeedClass.Standard => 4,
-        SpeedClass.Heavy => 5,
-        _ => 0
-    };
-
-    public static int ClassRecovery(SpeedClass c) => c switch
-    {
-        SpeedClass.Quick => 15,
-        SpeedClass.Standard => 22,
-        SpeedClass.Heavy => 34,
-        SpeedClass.Technique => 30,
-        _ => 0
-    };
-
-    public static int ClassOnBlock(SpeedClass c) => c switch
-    {
-        SpeedClass.Quick => -2,
-        SpeedClass.Standard => -5,
-        SpeedClass.Heavy => -12,
-        _ => 0
-    };
-
-    public static int ClassHitStop(SpeedClass c) => c switch
-    {
-        SpeedClass.Quick => 4,
-        SpeedClass.Standard => 6,
-        SpeedClass.Heavy => 10,
-        SpeedClass.Technique => 8,
-        _ => 0
-    };
-
-    public static int ClassBlockStamina(SpeedClass c) => c switch
-    {
-        SpeedClass.Quick => 4,
-        SpeedClass.Standard => 5,
-        SpeedClass.Heavy => 7,
-        _ => 0
-    };
-}
-
-public enum SpeedClass { None, Quick, Standard, Heavy, Technique }
-public enum MovePhase { None, Startup, Active, Recovery }
-public enum GuardType { Strike, Perilous, Grab }
-public enum HitState { None, Flinch, Stagger, Knockdown, Launch, GuardBreak }
-public enum Tracking { None, Partial, Full }
-public enum FeelTier { None, Light, Medium, Heavy }
-public enum MoveCategory { None, Normal, Technique, Dodge }
-public enum CancelCondition { OnHit, OnHitOrBlock, Always }
-
-[Flags]
-public enum HitBypass { None = 0, Pierce = 1, Exposed = 2, Grab = 4 }
-
-[Serializable]
-public struct MoveFrames
-{
-    public int startup;
-    public int active;
-    public int recovery;
-
-    [Tooltip("Frames from ability start. 0/0 = none.")]
-    public int cancelFrom;
-    public int cancelTo;
-    [Tooltip("Baked from the clip's Invuln(1) → Invuln(0) when it has them; authored otherwise.")]
-    public int iframeFrom;
-    public int iframeTo;
-    public int armorFrom;
-    public int armorTo;
-
-    [Tooltip("The clip's first Tell, baked. 0 = the move tells as it starts.")]
-    public int tell;
-}
-
-[Serializable]
-public struct HitProperties
-{
-    public GuardType guard;
-    public HitState onHit;
-    [Tooltip("Base hit-state frames. Scaled by applied ÷ average damage, clamped 0.5–1.5 (CF2).")]
-    public int onHitFrames;
-    [Tooltip("Defender's stamina cost on block. On parry the attacker pays it instead.")]
-    public int blockStamina;
-    [Tooltip("Attacker's frame advantage when blocked. Usually negative.")]
-    public int blockAdvantage;
-    public Tracking tracking;
-    public int hitStop;
-    public FeelTier feel;
-    public HitBypass bypass;
-}
-
-[Serializable]
-public struct CancelRoute
-{
-    [Tooltip("A specific move. Leave empty to use the category.")]
-    public AbilityDefinition into;
-    public MoveCategory intoCategory;
-    public CancelCondition when;
-    public int costStamina;
-    public int costMana;
+        [Tooltip("A specific move. Leave empty to use the category.")]
+        public AbilityDefinition into;
+        public MoveCategory intoCategory;
+        public CancelCondition when;
+        public int costStamina;
+        public int costMana;
+    }
 }

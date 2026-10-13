@@ -4,29 +4,33 @@ using UnityEngine;
 // not typed. The inspector shows a dropdown of the ids that exist, flags a missing one in red,
 // and Tools > CrabSystem > Validate Ids lists every field pointing at an id that doesn't exist.
 // Inspector only: no runtime cost, no data change.
-public enum IdKind
-{
-    Fact,
-    Stat,
-    Ability,
-    Item,
-    Resource,
-    Status,
-    Faction,
-    EquipmentSlot,
-    Archetype,
-    Model,
-    Scene,
-    AnimatorParam,
-    Layer
-}
 
-public class IdRefAttribute : PropertyAttribute
+namespace CrabSystem
 {
-    public readonly IdKind Kind;
-
-    public IdRefAttribute(IdKind kind)
+    public enum IdKind
     {
-        Kind = kind;
+        Fact,
+        Stat,
+        Ability,
+        Item,
+        Resource,
+        Status,
+        Faction,
+        EquipmentSlot,
+        Archetype,
+        Model,
+        Scene,
+        AnimatorParam,
+        Layer
+    }
+
+    public class IdRefAttribute : PropertyAttribute
+    {
+        public readonly IdKind Kind;
+
+        public IdRefAttribute(IdKind kind)
+        {
+            Kind = kind;
+        }
     }
 }

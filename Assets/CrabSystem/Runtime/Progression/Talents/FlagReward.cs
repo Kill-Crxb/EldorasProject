@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     // Holds a blackboard fact true for as long as the reward is held: a capability grant (SprintGranted,
     // DoubleJumpGranted) or a standing boon. Claims under the reward's source key on the blackboard's ledger,

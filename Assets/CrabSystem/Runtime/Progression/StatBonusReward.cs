@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace NinjaGame.Progression
+namespace CrabSystem.Progression
 {
     /// <summary>A flat amount added to one or more stats. "+1 Armor and Evasion".</summary>
     [CreateAssetMenu(fileName = "Reward_StatBonus", menuName = "CrabSystem/Rewards/Stat Bonus")]

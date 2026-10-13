@@ -1,5 +1,7 @@
 using UnityEditor;
 using UnityEngine;
+using CrabSystem;
+using SaveType = CrabSystem.SaveType; // UnityEditor has a SaveType too
 
 // Tools → Crab → Statuses → Set Up Control (12 Oct). Gives the existing statuses their crowd-control category and
 // saving throw (Combat_Framework §11, Stat_Resolution §6), tags the hit states "hitstate" (not CC, kept out of the
