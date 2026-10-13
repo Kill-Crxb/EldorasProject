@@ -15,8 +15,7 @@ using UnityEngine;
 // A strategy inside AbilitySystem, which owns it and calls it on each Strike event.
 public class StrikeHandler
 {
-    const string HurtboxLayer = "Hurtbox";
-    static readonly string[] BlockerLayers = { "Terrain", "StaticProp" };
+    static readonly string[] BlockerLayers = { CrabLayers.Terrain, CrabLayers.StaticProp };
 
     readonly ControllerBrain brain;
     readonly AbilitySystem abilities;
@@ -44,7 +43,7 @@ public class StrikeHandler
         stance = brain.GetModule<CombatStanceModule>();
         equipment = brain.GetModule<EquipmentSystem>();
         vfx = brain.GetModule<VFXSystem>();
-        hurtboxMask = LayerMask.GetMask(HurtboxLayer);
+        hurtboxMask = LayerMask.GetMask(CrabLayers.Hurtbox);
         blockerMask = LayerMask.GetMask(BlockerLayers);
     }
 

@@ -3,15 +3,15 @@ using UnityEditor;
 using System.Collections.Generic;
 
 /// <summary>
-/// Creates a pre-filled LayerConfig asset for NinjaGame with the agreed layer
-/// definitions and collision matrix rules.
+/// Creates a pre-filled LayerConfig asset with the default layer definitions and collision
+/// matrix rules. It includes every layer in CrabLayers.
 ///
-/// Run via: Tools → CrabSystem → Create NinjaGame Layer Config
+/// Run via: Tools → CrabSystem → Create Default Layer Config
 /// </summary>
 public static class LayerConfigFactory
 {
-    [MenuItem("Tools/CrabSystem/Create NinjaGame Layer Config")]
-    public static void CreateNinjaGameLayerConfig()
+    [MenuItem("Tools/CrabSystem/Create Default Layer Config")]
+    public static void CreateDefaultLayerConfig()
     {
         var config = ScriptableObject.CreateInstance<LayerConfig>();
 
@@ -21,16 +21,16 @@ public static class LayerConfigFactory
             new LayerDefinition { index = 0,  name = "Default",        isBuiltIn = true,  description = "Catch-all — keep things off this" },
             new LayerDefinition { index = 1,  name = "TransparentFX",  isBuiltIn = true,  description = "Unity built-in" },
             new LayerDefinition { index = 2,  name = "Ignore Raycast", isBuiltIn = true,  description = "Unity built-in" },
-            new LayerDefinition { index = 3,  name = "Terrain",        isBuiltIn = false, description = "Ground, floors, static world geometry" },
+            new LayerDefinition { index = 3,  name = CrabLayers.Terrain,        isBuiltIn = false, description = "Ground, floors, static world geometry" },
             new LayerDefinition { index = 4,  name = "Water",          isBuiltIn = true,  description = "Unity built-in" },
             new LayerDefinition { index = 5,  name = "UI",             isBuiltIn = true,  description = "Unity built-in" },
-            new LayerDefinition { index = 6,  name = "StaticProp",     isBuiltIn = false, description = "Non-interactive world objects — pillars, walls, rocks" },
+            new LayerDefinition { index = 6,  name = CrabLayers.StaticProp,     isBuiltIn = false, description = "Non-interactive world objects — pillars, walls, rocks" },
             new LayerDefinition { index = 7,  name = "DynamicProp",    isBuiltIn = false, description = "Moveable/destructible objects — crates, chests, barrels" },
             new LayerDefinition { index = 8,  name = "Player",         isBuiltIn = false, description = "Player characters" },
             new LayerDefinition { index = 9,  name = "NPC",            isBuiltIn = false, description = "All non-player entities — enemies and friendlies alike" },
             new LayerDefinition { index = 10, name = "Projectile",     isBuiltIn = false, description = "Arrows, spells, thrown objects" },
             new LayerDefinition { index = 11, name = "Hitbox",         isBuiltIn = false, description = "Weapon hitboxes and attack volumes" },
-            new LayerDefinition { index = 12, name = "Hurtbox",        isBuiltIn = false, description = "Entity vulnerable areas — where hits land" },
+            new LayerDefinition { index = 12, name = CrabLayers.Hurtbox,        isBuiltIn = false, description = "Entity vulnerable areas — where hits land" },
             new LayerDefinition { index = 13, name = "Trigger",        isBuiltIn = false, description = "Area triggers, quest volumes, zone detection" },
             new LayerDefinition { index = 14, name = "Interactable",   isBuiltIn = false, description = "Interactive objects — levers, doors, pickups" },
         };
@@ -105,10 +105,10 @@ public static class LayerConfigFactory
             R(13, 14, false, "Trigger ↔ Interactable — no interaction"),
         };
 
-        string path = "Assets/Database/Config/Layers/NinjaGameLayerConfig.asset";
+        // The game picks where its config lives; CrabSystem holds no game assets.
+        string path = EditorUtility.SaveFilePanelInProject("Save Layer Config", "LayerConfig", "asset", "Where to save the layer config");
+        if (string.IsNullOrEmpty(path)) return;
 
-        // Ensure directory exists
-        System.IO.Directory.CreateDirectory("Assets/Database/Config/Layers");
         AssetDatabase.CreateAsset(config, path);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -116,9 +116,9 @@ public static class LayerConfigFactory
         EditorUtility.FocusProjectWindow();
         Selection.activeObject = config;
 
-        Debug.Log($"[LayerConfigFactory] Created NinjaGame LayerConfig at {path}");
+        Debug.Log($"[LayerConfigFactory] Created LayerConfig at {path}");
         EditorUtility.DisplayDialog("LayerConfig Created",
-            $"NinjaGame LayerConfig created at:\n{path}\n\nOpen Tools → CrabSystem → Layer Manager and assign it.",
+            $"LayerConfig created at:\n{path}\n\nOpen Tools → CrabSystem → Layer Manager and assign it.",
             "OK");
     }
 

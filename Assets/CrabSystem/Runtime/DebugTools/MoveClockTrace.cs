@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Editor-only. Spawns itself when play starts. Moves run on their clip's events; for moves that also
-// carry baked frame data, this logs where Tell / the first Strike / Unlocked landed against those
-// frames, so the frame data can be kept honest (blockstun and armour windows read it).
+// Editor-only. Sits on the Debugtools prefab: off in the CrabSystem base, on in the game's variant.
+// Moves run on their clip's events; for moves that also carry baked frame data, this logs where Tell,
+// the first Strike and Unlocked landed against those frames, so the frame data can be kept honest
+// (blockstun and armour windows read it).
 //
 //   [MoveClockTrace] Base_PC(Clone)  BasicAttack1  Strike @22f, frames say 10 (+12)
 //   [MoveClockTrace] Base_PC(Clone)  BasicAttack1  Unlocked after the move ended (frames say 30)
@@ -18,21 +19,6 @@ public class MoveClockTrace : MonoBehaviour
     private readonly HashSet<AbilitySystem> tracked = new();
     private readonly Dictionary<AbilitySystem, AbilityDefinition> lastMove = new();
     private float nextScan;
-
-    private void Awake()
-    {
-        if (FindObjectsByType<MoveClockTrace>().Length > 1) Destroy(this);
-    }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void Spawn()
-    {
-        if (FindAnyObjectByType<MoveClockTrace>() != null) return;
-
-        GameObject host = new GameObject("[MoveClockTrace]");
-        DontDestroyOnLoad(host);
-        host.AddComponent<MoveClockTrace>();
-    }
 
     private void Update()
     {

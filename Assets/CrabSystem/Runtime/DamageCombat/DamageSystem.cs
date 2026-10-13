@@ -123,7 +123,7 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         // New GameObjects default to layer 0 (Default), which weapon hitLayers
         // masks don't include — the hurtbox would be invisible to strikes (StrikeHandler).
         // Use the project's Hurtbox layer, falling back to this GO's own layer.
-        int hurtboxLayer = LayerMask.NameToLayer("Hurtbox");
+        int hurtboxLayer = LayerMask.NameToLayer(CrabLayers.Hurtbox);
         hurtboxGO.layer = hurtboxLayer >= 0 ? hurtboxLayer : gameObject.layer;
 
         var capsule = hurtboxGO.AddComponent<CapsuleCollider>();

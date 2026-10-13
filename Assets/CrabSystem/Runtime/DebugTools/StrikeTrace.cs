@@ -4,8 +4,8 @@ using UnityEngine;
 
 // Editor-only. Draws every strike in the Scene view: the cone at the bottom and the top of its height band,
 // out to its reach (the attacker's hurtbox edge plus the weapon's reach plus the strike's bonus). Green when
-// it landed on someone, yellow when it didn't. Spawns itself when play starts, like MoveClockTrace. Turn on
-// Gizmos in the Game view to see it there too.
+// it landed on someone, yellow when it didn't. Turn on Gizmos in the Game view to see it there too.
+// Sits on the Debugtools prefab: off in the CrabSystem base, on in the game's variant.
 public class StrikeTrace : MonoBehaviour
 {
     [SerializeField] private float rescanInterval = 1f;
@@ -14,21 +14,6 @@ public class StrikeTrace : MonoBehaviour
 
     private readonly HashSet<AbilitySystem> tracked = new();
     private float nextScan;
-
-    private void Awake()
-    {
-        if (FindObjectsByType<StrikeTrace>().Length > 1) Destroy(this);
-    }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void Spawn()
-    {
-        if (FindAnyObjectByType<StrikeTrace>() != null) return;
-
-        GameObject host = new GameObject("[StrikeTrace]");
-        DontDestroyOnLoad(host);
-        host.AddComponent<StrikeTrace>();
-    }
 
     private void Update()
     {

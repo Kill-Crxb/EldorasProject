@@ -65,6 +65,7 @@ public static class IdSources
             case IdKind.Model: return Assets<ModelDatabase>().SelectMany(d => d.AllModels ?? Array.Empty<ModelDatabase.ModelVariant>()).Select(m => m?.modelId);
             case IdKind.Scene: return EditorBuildSettings.scenes.Select(s => Path.GetFileNameWithoutExtension(s.path));
             case IdKind.AnimatorParam: return AnimatorParameters();
+            case IdKind.Layer: return UnityEditorInternal.InternalEditorUtility.layers;
         }
 
         Debug.LogError($"[IdSources] No source for id kind {kind}.");

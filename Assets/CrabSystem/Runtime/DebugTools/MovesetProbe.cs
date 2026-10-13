@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Editor-only. Spawns itself when play starts, so it needs no scene setup. For every entity with a MovesetModule, logs
-// one line whenever its moveset state changes: stance, the item in the weapon slot, the active
-// moveset, the step LMB would fire, and what the hotbar's LMB slot resolves to.
+// Editor-only. Sits on the Debugtools prefab: off in the CrabSystem base, on in the game's variant.
+// For every entity with a MovesetModule, logs one line whenever its moveset state changes: stance,
+// the item in the weapon slot, the active moveset, the step LMB would fire, and what the hotbar's
+// LMB slot resolves to.
 //
 //   [MovesetProbe] Base_PC(Clone)  armed  item steel_katana  moveset Moveset_Katana  next BasicAttack1  slot BasicAttack1
 public class MovesetProbe : MonoBehaviour
@@ -14,23 +15,6 @@ public class MovesetProbe : MonoBehaviour
 
     private readonly Dictionary<MovesetModule, string> last = new();
     private bool reportedNone;
-
-    // A copy placed in a scene loaded after the self-spawned one stands down, so lines aren't doubled.
-    private void Awake()
-    {
-        if (FindObjectsByType<MovesetProbe>().Length > 1) Destroy(this);
-    }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void Spawn()
-    {
-        if (FindAnyObjectByType<MovesetProbe>() != null) return;
-
-        GameObject host = new GameObject("[MovesetProbe]");
-        DontDestroyOnLoad(host);
-        host.AddComponent<MovesetProbe>();
-        Debug.Log("[MovesetProbe] running");
-    }
 
     private void Update()
     {

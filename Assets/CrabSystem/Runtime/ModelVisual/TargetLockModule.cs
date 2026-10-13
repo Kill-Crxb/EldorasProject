@@ -6,7 +6,6 @@ public class TargetLockModule : MonoBehaviour, IBrainModule, IInputHandler
 {
     [Header("Target Lock Settings")]
     [SerializeField] private float lockOnRange = 15f;
-    [SerializeField] private bool useComponentBasedTargeting = true;
 
     [Header("Debug")]
     // [SerializeField] private bool showDebugInfo = false;
@@ -112,31 +111,13 @@ public class TargetLockModule : MonoBehaviour, IBrainModule, IInputHandler
         }
     }
 
+    // Only ITargetable counts; tags are a project setting the framework can't assume exist.
     bool IsValidTarget(Collider target)
     {
-        // Skip self
-        if (target.transform.IsChildOf(playerRoot) || target.transform == playerRoot)
-        {
-            return false;
-        }
+        if (target.transform.IsChildOf(playerRoot)) return false;
 
-        // Check targetable component if required
-        if (useComponentBasedTargeting)
-        {
-            var targetable = target.GetComponent<ITargetable>();
-
-            if (targetable != null)
-            {
-                return targetable.CanBeTargeted;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        // Fallback to tags
-        return target.CompareTag("Enemy") || target.CompareTag("Targetable");
+        var targetable = target.GetComponent<ITargetable>();
+        return targetable != null && targetable.CanBeTargeted;
     }
 
     void SetTarget(Transform target)

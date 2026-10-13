@@ -60,8 +60,9 @@ public static class IdValidator
             checkedFields += Walk(asset, asset.GetType(), path, asset, findings, 0);
         }
 
-        checkedFields += CheckConstants(typeof(StatIds), findings);
-        checkedFields += CheckConstants(typeof(DialIds), findings);
+        checkedFields += CheckConstants(typeof(StatIds), IdKind.Stat, findings);
+        checkedFields += CheckConstants(typeof(DialIds), IdKind.Stat, findings);
+        checkedFields += CheckConstants(typeof(CrabLayers), IdKind.Layer, findings);
 
         WriteReport(findings, missingScripts, checkedFields);
 
@@ -153,14 +154,15 @@ public static class IdValidator
         return current != null ? $"was renamed to '{current}'" : "doesn't exist";
     }
 
-    // Code names stat ids only through StatIds and DialIds, so every constant there must be a live stat.
-    private static int CheckConstants(Type holder, List<Finding> findings)
+    // Code names stat ids only through StatIds and DialIds, and layers only through CrabLayers, so every
+    // constant there must exist.
+    private static int CheckConstants(Type holder, IdKind kind, List<Finding> findings)
     {
         int count = 0;
         foreach (FieldInfo field in holder.GetFields(BindingFlags.Public | BindingFlags.Static))
         {
             if (!field.IsLiteral || field.FieldType != typeof(string)) continue;
-            count += CheckIds(field.GetValue(null), IdKind.Stat, $"{holder.Name}.{field.Name}", null, findings);
+            count += CheckIds(field.GetValue(null), kind, $"{holder.Name}.{field.Name}", null, findings);
         }
         return count;
     }

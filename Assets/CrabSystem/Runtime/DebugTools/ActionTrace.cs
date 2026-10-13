@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Editor-only. Spawns itself when play starts (or drop one in the scene). Logs every ability an
-// entity starts, its guard going up or down, parry windows, parries, stamina spent on guarded and
-// parried hits, and guard breaks, with the time, so input feel can be read from the console.
+// Editor-only. Sits on the Debugtools prefab: off in the CrabSystem base, on in the game's variant.
+// Logs every ability an entity starts, its guard going up or down, parry windows, parries, stamina
+// spent on guarded and parried hits, and guard breaks, with the time, so input feel can be read from
+// the console.
 //
 //   [ActionTrace] 12.43  Base_PC(Clone)  used BasicAttack1
 //   [ActionTrace] 13.02  Base_PC(Clone)  guard UP
@@ -18,22 +19,6 @@ public class ActionTrace : MonoBehaviour
     private readonly HashSet<AbilitySystem> tracked = new();
     private readonly HashSet<GuardModule> trackedGuards = new();
     private float nextScan;
-
-    // A copy placed in a scene loaded after the self-spawned one stands down, so lines aren't doubled.
-    private void Awake()
-    {
-        if (FindObjectsByType<ActionTrace>().Length > 1) Destroy(this);
-    }
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void Spawn()
-    {
-        if (FindAnyObjectByType<ActionTrace>() != null) return;
-
-        GameObject host = new GameObject("[ActionTrace]");
-        DontDestroyOnLoad(host);
-        host.AddComponent<ActionTrace>();
-    }
 
     private void Update()
     {

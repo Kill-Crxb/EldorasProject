@@ -11,8 +11,6 @@ using UnityEngine;
 // A strategy inside ParkourLocomotionHandler, which calls it while MovementSystem.RootMotionDriven is up.
 public class RootMotionContact
 {
-    const string HurtboxLayer = "Hurtbox";
-
     // How far past this step's travel to look for other bodies: wider than the widest hurtbox radius.
     const float SearchMargin = 2f;
 
@@ -28,7 +26,7 @@ public class RootMotionContact
     public RootMotionContact(ControllerBrain brain)
     {
         this.brain = brain;
-        hurtboxMask = LayerMask.GetMask(HurtboxLayer);
+        hurtboxMask = LayerMask.GetMask(CrabLayers.Hurtbox);
     }
 
     public Vector3 Limit(Vector3 velocity, float dt, float gap)

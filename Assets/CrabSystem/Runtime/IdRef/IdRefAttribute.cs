@@ -17,7 +17,8 @@ public enum IdKind
     Archetype,
     Model,
     Scene,
-    AnimatorParam
+    AnimatorParam,
+    Layer
 }
 
 public class IdRefAttribute : PropertyAttribute
