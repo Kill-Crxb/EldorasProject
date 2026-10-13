@@ -32,8 +32,6 @@ namespace CrabSystem
         [Header("Abilities")]
         public List<AbilityDefinition> abilities = new List<AbilityDefinition>();
 
-        [Header("Ability Loadout")]
-
         [Header("Combat")]
         public string combatBehaviorClassName;
         public AISystemType aiSystemType = AISystemType.GOAP;
