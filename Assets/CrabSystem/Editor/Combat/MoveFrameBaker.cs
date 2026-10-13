@@ -151,7 +151,7 @@ namespace CrabSystem
             return false;
         }
 
-        static MoveBakeSettings FindSettings()
+        public static MoveBakeSettings FindSettings()
         {
             string[] guids = AssetDatabase.FindAssets("t:MoveBakeSettings");
             if (guids.Length == 0) return null;

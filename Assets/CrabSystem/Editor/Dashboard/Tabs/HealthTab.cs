@@ -20,8 +20,6 @@ namespace CrabSystem
         const string MissingScripts = "Missing scripts";
         const string Lineage = "Prefab lineage";
         const string Staging = "Staging";
-        const string StagingRoot = "Assets/_Staging";
-        const string ThirdPartyRoot = "Assets/ThirdParty/";
 
         static readonly string[] Categories = { Standard, Ids, MissingScripts, Lineage, Staging };
 
@@ -173,7 +171,7 @@ namespace CrabSystem
             var issues = new List<DashboardIssue>();
             foreach (string path in result.MissingScripts)
             {
-                bool theirs = IdValidator.IsThirdParty(path);
+                bool theirs = CrabSystemSettings.IsThirdParty(path);
                 issues.Add(new DashboardIssue { Severity = theirs ? IssueSeverity.Info : IssueSeverity.Error, Category = MissingScripts, Message = theirs ? $"Missing script (third-party pack): {path}" : $"Missing script: {path}", Path = path });
             }
             return issues;
@@ -187,7 +185,7 @@ namespace CrabSystem
             foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (path.StartsWith(ThirdPartyRoot)) continue;
+                if (CrabSystemSettings.IsThirdParty(path)) continue;
 
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (prefab == null || prefab.GetComponent<ControllerBrain>() == null) continue;
@@ -216,13 +214,14 @@ namespace CrabSystem
         static List<DashboardIssue> StagingIssues()
         {
             var issues = new List<DashboardIssue>();
-            if (!Directory.Exists(StagingRoot)) return issues;
+            string stagingRoot = CrabSystemSettings.instance.stagingFolder;
+            if (!Directory.Exists(stagingRoot)) return issues;
 
-            foreach (string file in Directory.GetFiles(StagingRoot, "*", SearchOption.AllDirectories))
+            foreach (string file in Directory.GetFiles(stagingRoot, "*", SearchOption.AllDirectories))
             {
                 string path = file.Replace('\\', '/');
                 if (path.EndsWith(".meta") || path.EndsWith("/README.md")) continue;
-                issues.Add(new DashboardIssue { Severity = IssueSeverity.Info, Category = Staging, Message = $"In staging: {path.Substring(StagingRoot.Length + 1)}", Path = path });
+                issues.Add(new DashboardIssue { Severity = IssueSeverity.Info, Category = Staging, Message = $"In staging: {path.Substring(stagingRoot.Length + 1)}", Path = path });
             }
             return issues;
         }

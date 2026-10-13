@@ -210,7 +210,7 @@ namespace CrabSystem
             foreach (string path in AssetDatabase.GetAllAssetPaths())
             {
                 if (!path.StartsWith("Assets/")) continue;
-                if (path.StartsWith("Assets/ThirdParty/")) continue;
+                if (CrabSystemSettings.IsThirdParty(path)) continue;
 
                 string extension = Path.GetExtension(path).ToLowerInvariant();
                 if (extension != ".asset" && extension != ".prefab" && extension != ".unity" && extension != ".controller") continue;

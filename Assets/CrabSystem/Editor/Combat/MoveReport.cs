@@ -24,7 +24,6 @@ namespace CrabSystem
     public class MoveReport : EditorWindow
     {
         const float Fps = MoveClipReader.Fps;
-        const string DefaultController = "Assets/Database/Animation/Humanoid/HumanoidAnimator_v2.controller";
 
         class Row
         {
@@ -46,7 +45,9 @@ namespace CrabSystem
         static void Open()
         {
             var window = GetWindow<MoveReport>("Move Report");
-            window.controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(DefaultController);
+            // Opens on the highest-priority controller the bake reads.
+            var settings = MoveFrameBaker.FindSettings();
+            window.controller = settings != null && settings.controllers.Count > 0 ? settings.controllers[0] : null;
             window.Scan();
         }
 

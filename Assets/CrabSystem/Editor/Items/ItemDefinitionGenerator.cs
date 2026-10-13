@@ -18,8 +18,7 @@ namespace CrabSystem
 {
     public class ItemDefinitionGenerator : EditorWindow
     {
-        private const string OutputRoot =
-            "Assets/Database/Resources/ItemDatabase";
+        private static string OutputRoot => CrabSystemSettings.instance.itemFolder;
 
         // Order matters — specific words before generic ones.
         private static readonly (string slot, string[] words)[] SlotWords =

@@ -88,13 +88,14 @@ namespace CrabSystem
             return schema.Concat(conditions).Concat(constants);
         }
 
-        // Our controllers live under Database/; the imported animation packs bring their own, which
-        // would bury the real parameters in the dropdown.
+        // Downloaded packs bring their own controllers, which would bury the real parameters in the dropdown.
         private static IEnumerable<string> AnimatorParameters()
         {
-            foreach (string guid in AssetDatabase.FindAssets("t:AnimatorController", new[] { "Assets/Database" }))
+            foreach (string guid in AssetDatabase.FindAssets("t:AnimatorController", new[] { "Assets" }))
             {
-                var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(AssetDatabase.GUIDToAssetPath(guid));
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (CrabSystemSettings.IsThirdParty(path)) continue;
+                var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
                 if (controller == null) continue;
                 foreach (var parameter in controller.parameters) yield return parameter.name;
             }

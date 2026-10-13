@@ -19,7 +19,7 @@ namespace CrabSystem
 {
     public class TalentWizard : EditorWindow
     {
-        const string TreeFolder = "Assets/Database/Talents";
+        static string TreeFolder => CrabSystemSettings.instance.talentFolder;
         const float CellWidth = 124f;
         const float CellHeight = 66f;
         const float Gap = 16f;

@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
-// Runs the CrabSystem Standard's review checklist (section 13) over Assets/CrabSystem and lists every hit
+// Runs the CrabSystem Standard's review checklist (section 13) over CrabSystem's own scripts and lists every hit
 // with file and line. Read-only: it reports, it never edits. A hit is a prompt to look, not proof of a
 // defect - a rule broken on purpose should carry a comment saying why, and stays listed so the next
 // audit can judge it.
@@ -15,7 +15,6 @@ namespace CrabSystem
 {
     public static class CrabSystemValidator
     {
-        const string Root = "Assets/CrabSystem";
         const string ReportPath = "Logs/CrabSystem_Validate.md";
 
         // Folders where a rule doesn't apply. Editor code may log and search; diagnostics may log;
@@ -64,22 +63,23 @@ namespace CrabSystem
         {
             List<Hit> hits = Scan();
             WriteReport(hits);
-            Debug.Log($"[CrabSystemValidator] {hits.Count} findings in {Root}. Report: {ReportPath}");
+            Debug.Log($"[CrabSystemValidator] {hits.Count} findings in {CrabPackage.AssetRoot}. Report: {ReportPath}");
         }
 
         // Also read by the dashboard's Health tab.
         public static List<Hit> Scan()
         {
             var hits = new List<Hit>();
-            foreach (string path in Directory.GetFiles(Root, "*.cs", SearchOption.AllDirectories))
-                ScanFile(path.Replace('\\', '/'), hits);
+            foreach (string path in Directory.GetFiles(CrabPackage.DiskRoot, "*.cs", SearchOption.AllDirectories))
+                ScanFile(path, CrabPackage.ToAssetPath(path), hits);
 
             return hits;
         }
 
-        static void ScanFile(string path, List<Hit> hits)
+        // Read from disk, reported by asset path so a hit can be pinged and opened.
+        static void ScanFile(string diskPath, string path, List<Hit> hits)
         {
-            string[] lines = File.ReadAllLines(path);
+            string[] lines = File.ReadAllLines(diskPath);
             if (IsGenerated(lines)) return;
 
             for (int i = 0; i < lines.Length; i++)
@@ -166,7 +166,7 @@ namespace CrabSystem
             var report = new StringBuilder();
             report.AppendLine("# CrabSystem Validate");
             report.AppendLine();
-            report.AppendLine($"{hits.Count} findings in `{Root}`. Rules: `claude/CrabSystem_Standard.md` section 13.");
+            report.AppendLine($"{hits.Count} findings in `{CrabPackage.AssetRoot}`. Rules: `claude/CrabSystem_Standard.md` section 13.");
             report.AppendLine();
 
             foreach (var group in byRule)

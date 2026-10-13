@@ -102,12 +102,6 @@ namespace CrabSystem
             return AssetDatabase.LoadAllAssetsAtPath(path).Any(asset => asset == null);
         }
 
-        // Asset-store packs and their demo content; reported apart so our own list stays readable.
-        private static readonly string[] ThirdPartyRoots =
-            { "Assets/ThirdParty/" };
-
-        public static bool IsThirdParty(string path) => ThirdPartyRoots.Any(root => path.StartsWith(root));
-
         private static IEnumerable<string> AssetPaths(string filter)
         {
             return AssetDatabase.FindAssets(filter, new[] { "Assets" }).Select(AssetDatabase.GUIDToAssetPath);
@@ -246,8 +240,8 @@ namespace CrabSystem
                 sb.AppendLine();
             }
 
-            AppendPaths(sb, "Missing scripts, ours", missingScripts.Where(p => !IsThirdParty(p)));
-            AppendPaths(sb, "Missing scripts, third-party packs", missingScripts.Where(IsThirdParty));
+            AppendPaths(sb, "Missing scripts, ours", missingScripts.Where(p => !CrabSystemSettings.IsThirdParty(p)));
+            AppendPaths(sb, "Missing scripts, third-party packs", missingScripts.Where(CrabSystemSettings.IsThirdParty));
 
             Directory.CreateDirectory(Path.GetDirectoryName(ReportPath));
             File.WriteAllText(ReportPath, sb.ToString());

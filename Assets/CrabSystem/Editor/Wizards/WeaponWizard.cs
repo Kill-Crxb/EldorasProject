@@ -18,7 +18,7 @@ namespace CrabSystem
     public class WeaponWizard : EditorWindow
     {
         // Same root as Editor/Items/ItemDefinitionGenerator.
-        const string DatabaseRoot = "Assets/Database/Resources/ItemDatabase";
+        static string DatabaseRoot => CrabSystemSettings.instance.itemFolder;
 
         string displayName = "";
         string itemId = "";
