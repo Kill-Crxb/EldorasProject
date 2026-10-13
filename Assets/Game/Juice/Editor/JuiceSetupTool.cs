@@ -10,7 +10,7 @@ using UnityEngine.Rendering.Universal;
 
 // One-shot authoring for Juice.md §6. Tools → Juice → Build FX And Fill Players.
 //
-// 1. Builds placeholder particle prefabs into CrabSystem/Juice/FX — the project has no hit sparks
+// 1. Builds placeholder particle prefabs into Game/Juice/FX — the project has no hit sparks
 //    or dust since the Cartoon FX pack was removed. Swap them for real art any time; the players
 //    only hold a reference.
 // 2. Clears and refills every MMF_Player in JuiceSystem.prefab. World players get particles and
@@ -21,7 +21,7 @@ using UnityEngine.Rendering.Universal;
 // place, and the onStep listener is only added if missing. Any hand edits to the players are lost.
 public static class JuiceSetupTool
 {
-    private const string FxFolder = "Assets/CrabSystem/Juice/FX";
+    private const string FxFolder = "Assets/Game/Juice/FX";
     private const string SoundFolder = "Assets/Database/Assets/Sound/";
     private const string SystemPrefab = "Assets/Database/Characters/JuiceSystem.prefab";
     private const string PlayerPrefab = "Assets/Database/Characters/PlayerCharacter/Base_PC.prefab";
@@ -52,7 +52,7 @@ public static class JuiceSetupTool
             return;
         }
 
-        if (!AssetDatabase.IsValidFolder(FxFolder)) AssetDatabase.CreateFolder("Assets/CrabSystem/Juice", "FX");
+        if (!AssetDatabase.IsValidFolder(FxFolder)) AssetDatabase.CreateFolder("Assets/Game/Juice", "FX");
 
         ParticleSystem spark = Save(Build(Spark(), material));
         ParticleSystem sparkHeavy = Save(Build(SparkHeavy(), material));
