@@ -2,21 +2,19 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// HotbarSystem — owns the entity's action bars, one set of contents per page.
-///
-/// Bars are ActionBarDefinition assets. Nothing in this class names a bar: "centre", "mouse" and
-/// "modifier" are ids on assets, and adding a bar is creating one asset and dropping it in
-/// availableBars.
-///
-/// Two independent axes, deliberately not merged:
-///   availableBars  — which bars this entity CAN have.            Authored on the prefab.
-///   activeBarIds   — which of them the player HAS switched on.   Saved per character.
-///   pages          — which CONTENTS a bar shows right now.       Claimed by a blackboard fact.
-///
-/// A page swaps what is in a bar. Activation decides whether the bar exists at all. Implementing
-/// one with the other is how they end up fighting.
-/// </summary>
+// HotbarSystem — owns the entity's action bars, one set of contents per page.
+//
+// Bars are ActionBarDefinition assets. Nothing in this class names a bar: "centre", "mouse" and
+// "modifier" are ids on assets, and adding a bar is creating one asset and dropping it in
+// availableBars.
+//
+// Two independent axes, deliberately not merged:
+//   availableBars  — which bars this entity CAN have.            Authored on the prefab.
+//   activeBarIds   — which of them the player HAS switched on.   Saved per character.
+//   pages          — which CONTENTS a bar shows right now.       Claimed by a blackboard fact.
+//
+// A page swaps what is in a bar. Activation decides whether the bar exists at all. Implementing
+// one with the other is how they end up fighting.
 
 namespace CrabSystem
 {
@@ -71,10 +69,10 @@ namespace CrabSystem
         // A slot's key was pressed, whether or not anything played (GI-49: the icon dips).
         public event Action<string, int> OnSlotPressed;
 
-        /// <summary>Fires when the active page changes. Views must rebuild — slot counts can differ.</summary>
+        // Fires when the active page changes. Views must rebuild — slot counts can differ.
         public event Action<string> OnPageChanged;
 
-        /// <summary>Fires when a bar is switched on or off. HotbarHud rebuilds the screen.</summary>
+        // Fires when a bar is switched on or off. HotbarHud rebuilds the screen.
         public event Action OnActiveBarsChanged;
 
         public bool IsEnabled { get; set; } = true;
@@ -82,8 +80,6 @@ namespace CrabSystem
         public ControllerBrain Brain => brain;
         public string ActivePageId => activePage != null ? activePage.pageId : "";
         public HotbarPageDefinition ActivePage => activePage;
-
-    #region IBrainModule
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -121,14 +117,8 @@ namespace CrabSystem
             RefreshActivePage();
         }
 
-    #endregion
-
-    #region Bars
-
-        /// <summary>
-        /// A bar cannot be synthesised — an ActionBarDefinition is an asset — so an empty or broken
-        /// list is reported rather than papered over. An entity with no bars is legitimate for an NPC.
-        /// </summary>
+        // A bar cannot be synthesised — an ActionBarDefinition is an asset — so an empty or broken
+        // list is reported rather than papered over. An entity with no bars is legitimate for an NPC.
         private void WarnOnBadBars()
         {
             if (availableBars == null) availableBars = new List<ActionBarDefinition>();
@@ -166,19 +156,13 @@ namespace CrabSystem
 
         public bool HasBar(string barId) => FindBar(barId) != null;
 
-    #endregion
-
-    #region Activation
-
         public bool IsBarActive(string barId)
             => !string.IsNullOrEmpty(barId) && activeBarIds.Contains(barId);
 
         public IReadOnlyList<string> GetActiveBarIds() => activeBarIds;
 
-        /// <summary>
-        /// Switches a bar on or off. Contents are untouched either way — turning a bar back on
-        /// restores whatever the player had arranged on it, which is why this never clears a page.
-        /// </summary>
+        // Switches a bar on or off. Contents are untouched either way — turning a bar back on
+        // restores whatever the player had arranged on it, which is why this never clears a page.
         public void SetBarActive(string barId, bool active)
         {
             var def = FindBar(barId);
@@ -209,11 +193,9 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Fills the active list from each bar's defaultActive, for a fresh character or a save
-        /// written before the player could choose. Also forces alwaysOn bars in every time, so a
-        /// bar that became mandatory after a save was written still appears.
-        /// </summary>
+        // Fills the active list from each bar's defaultActive, for a fresh character or a save
+        // written before the player could choose. Also forces alwaysOn bars in every time, so a
+        // bar that became mandatory after a save was written still appears.
         private void ApplyDefaultActiveBars()
         {
             if (!hasChosenBars)
@@ -236,14 +218,8 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Pages
-
-        /// <summary>
-        /// Re-evaluates which page should be active and switches if it changed.
-        /// Called on the pulse; call it directly after writing a fact for an immediate swap.
-        /// </summary>
+        // Re-evaluates which page should be active and switches if it changed.
+        // Called on the pulse; call it directly after writing a fact for an immediate swap.
         public void RefreshActivePage()
         {
             var winner = PickPage();
@@ -327,10 +303,8 @@ namespace CrabSystem
             return state;
         }
 
-        /// <summary>
-        /// Adds a config for any bar the page is missing. This is what lets a bar added after a save
-        /// was written appear empty rather than not at all.
-        /// </summary>
+        // Adds a config for any bar the page is missing. This is what lets a bar added after a save
+        // was written appear empty rather than not at all.
         private void EnsureBarsIn(HotbarPageState state)
         {
             if (state.bars == null) state.bars = new List<ActionBarConfig>();
@@ -357,10 +331,6 @@ namespace CrabSystem
         }
 
         public List<HotbarPageDefinition> GetPageDefinitions() => pageDefinitions;
-
-    #endregion
-
-    #region Slot Access
 
         public void AssignSlot(string barId, int index, string abilitySlotId)
         {
@@ -444,7 +414,7 @@ namespace CrabSystem
             return abilitySystem?.GetAbility(abilityId);
         }
 
-        /// <summary>Searches the bars as currently resolved — active page plus default fallthrough.</summary>
+        // Searches the bars as currently resolved — active page plus default fallthrough.
         public (string barId, int index) FindSlotForAbility(string abilityId)
         {
             foreach (var (id, config) in AllBars())
@@ -522,10 +492,6 @@ namespace CrabSystem
 
         private bool Stunned() => blackboard != null && blackboard.GetBool(BlackboardKey.CannotAct);
 
-    #endregion
-
-    #region ISaveable
-
         public string GetSaveId() => "hotbar";
         public int GetSaveVersion() => HotbarSaveData.CurrentVersion;
         public int LoadOrder => 60;
@@ -584,10 +550,8 @@ namespace CrabSystem
             OnActiveBarsChanged?.Invoke();
         }
 
-        /// <summary>
-        /// v1 saves stored the three bars at the root. Fold them into the default page so the
-        /// player's arrangement survives the format change.
-        /// </summary>
+        // v1 saves stored the three bars at the root. Fold them into the default page so the
+        // player's arrangement survives the format change.
         private void MigrateLegacyBars(HotbarSaveData data)
         {
             var state = new HotbarPageState
@@ -607,14 +571,8 @@ namespace CrabSystem
                 Debug.Log("[HotbarSystem] Migrated v1 bars into the default page.");
         }
 
-    #endregion
-
-    #region Resolution
-
-        /// <summary>
-        /// The config a bar currently reads and writes: the active page's copy when that page
-        /// supplies the bar, otherwise the default page's.
-        /// </summary>
+        // The config a bar currently reads and writes: the active page's copy when that page
+        // supplies the bar, otherwise the default page's.
         private ActionBarConfig ResolveBar(string barId)
         {
             bool supplied = activePage != null && activePage.Supplies(barId);
@@ -663,7 +621,5 @@ namespace CrabSystem
                     OnSlotChanged?.Invoke(id, i);
             }
         }
-
-    #endregion
     }
 }

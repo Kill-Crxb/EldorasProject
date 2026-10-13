@@ -191,10 +191,8 @@ namespace CrabSystem
 
         // Intent — called by goals
 
-        /// <summary>
-        /// Move this way. Strength 0–1 is the analog stick: the locomotion handler scales its speed
-        /// request by it, the same as a half-pushed gamepad stick.
-        /// </summary>
+        // Move this way. Strength 0–1 is the analog stick: the locomotion handler scales its speed
+        // request by it, the same as a half-pushed gamepad stick.
         public void Steer(Vector3 worldDirection, float strength = 1f)
         {
             moveDirection = Flatten(worldDirection) * Mathf.Clamp01(strength);
@@ -228,7 +226,6 @@ namespace CrabSystem
         }
 
         // IAbilityControlSource. Goals fire the moveset directly for now (roadmap A5, ability half).
-
 
         // Shared by both control-source interfaces.
 

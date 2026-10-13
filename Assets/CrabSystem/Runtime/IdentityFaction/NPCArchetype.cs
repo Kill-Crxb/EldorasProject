@@ -76,25 +76,17 @@ namespace CrabSystem
         public bool assistsAlliedFactions = false;
         public bool defendsFactionMembers = true;
 
-    #region Helpers
-
-        /// <summary>String id for CharacterConfigData / persistence. Empty if no faction assigned.</summary>
+        // String id for CharacterConfigData / persistence. Empty if no faction assigned.
         public string FactionId => faction != null ? faction.FactionId : "";
 
         public bool HasGOAPGoals => goapGoals != null && goapGoals.Count > 0;
         public bool UsesGOAP => aiSystemType == AISystemType.GOAP;
-
-    #endregion
-
-    #region Validation
 
         private void OnValidate()
         {
             if (string.IsNullOrEmpty(archetypeId))
                 archetypeId = $"archetype_{npcType}_{importance}".ToLower();
         }
-
-    #endregion
     }
 
     [Serializable]

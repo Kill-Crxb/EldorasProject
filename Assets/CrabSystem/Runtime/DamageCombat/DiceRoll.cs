@@ -1,11 +1,9 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Dice roll expression — e.g. 2d6, 1d4, 1d12.
-/// Serialises cleanly as an inspector field on DiceProfile or a status tick.
-/// Standard die sizes (d4/d6/d8/d10/d12/d20) are just diceFaces values; any value works.
-/// </summary>
+// Dice roll expression — e.g. 2d6, 1d4, 1d12.
+// Serialises cleanly as an inspector field on DiceProfile or a status tick.
+// Standard die sizes (d4/d6/d8/d10/d12/d20) are just diceFaces values; any value works.
 
 namespace CrabSystem
 {

@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// One region of a panel. Every view authored as a direct child belongs to this slot,
-/// and exactly one of them is visible at a time.
-/// Views are collected on first use rather than in Awake, so the slot works no matter
-/// what order it and its panel are activated in.
-/// </summary>
+// One region of a panel. Every view authored as a direct child belongs to this slot,
+// and exactly one of them is visible at a time.
+// Views are collected on first use rather than in Awake, so the slot works no matter
+// what order it and its panel are activated in.
 
 namespace CrabSystem
 {
@@ -51,10 +49,8 @@ namespace CrabSystem
                 Debug.LogWarning($"[UIPanelSlot] '{slotId}' on {name} has no UIPanelView children");
         }
 
-        /// <summary>
-        /// A specialised view (StatPanelView, InventoryPanelView) already is a UIPanelView,
-        /// so an object carrying both has two. Take the specialised one and say so.
-        /// </summary>
+        // A specialised view (StatPanelView, InventoryPanelView) already is a UIPanelView,
+        // so an object carrying both has two. Take the specialised one and say so.
         private static UIPanelView Resolve(Transform child)
         {
             var found = child.GetComponents<UIPanelView>();

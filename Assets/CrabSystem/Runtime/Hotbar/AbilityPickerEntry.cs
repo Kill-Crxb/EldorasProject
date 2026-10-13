@@ -4,11 +4,9 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-/// <summary>
-/// One draggable row in the AbilityPickerPanel.
-/// Carries SlotData (SO-backed) or AbilityDef (runtime ability with no SO).
-/// ActionBarSlotView.OnDrop reads these properties to call the correct AssignSlot overload.
-/// </summary>
+// One draggable row in the AbilityPickerPanel.
+// Carries SlotData (SO-backed) or AbilityDef (runtime ability with no SO).
+// ActionBarSlotView.OnDrop reads these properties to call the correct AssignSlot overload.
 
 namespace CrabSystem
 {

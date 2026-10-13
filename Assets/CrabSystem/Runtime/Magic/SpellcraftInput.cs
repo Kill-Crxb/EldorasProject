@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 
 namespace CrabSystem.Magic
 {
-    /// <summary>One key, one element. Explicit rather than positional so the list can be reordered.</summary>
+    // One key, one element. Explicit rather than positional so the list can be reordered.
     [Serializable]
     public class ElementKeyBinding
     {
@@ -12,23 +12,21 @@ namespace CrabSystem.Magic
         public Key key = Key.Numpad1;
     }
 
-    /// <summary>
-    /// TEMPORARY. Drives SpellcraftSystem from the keyboard so the grammar can be played before
-    /// the element hotbar page exists. Delete this component the day it does.
-    ///
-    /// It is a separate component rather than part of SpellcraftSystem for the same reason
-    /// IAbilityControlSource is separate from AbilitySystem: what decides to cast and what knows
-    /// how to cast are different jobs, and keeping them apart is what lets an AI, a test, or a
-    /// hotbar drive the same system.
-    ///
-    /// Reads Keyboard.current directly rather than going through PlayerInputControls, because
-    /// adding actions to the generated input asset for a throwaway driver is a worse trade than
-    /// a dozen lines here. That also means these keys DO NOT respect the UI input router — typing
-    /// in a text field will still enter elements. Another reason this is temporary.
-    ///
-    /// Defaults are the numpad, because 1-6 are already bound to Hotbar1-6 in
-    /// PlayerInputControls and a collision would fire a hotbar slot on every element press.
-    /// </summary>
+    // TEMPORARY. Drives SpellcraftSystem from the keyboard so the grammar can be played before
+    // the element hotbar page exists. Delete this component the day it does.
+    //
+    // It is a separate component rather than part of SpellcraftSystem for the same reason
+    // IAbilityControlSource is separate from AbilitySystem: what decides to cast and what knows
+    // how to cast are different jobs, and keeping them apart is what lets an AI, a test, or a
+    // hotbar drive the same system.
+    //
+    // Reads Keyboard.current directly rather than going through PlayerInputControls, because
+    // adding actions to the generated input asset for a throwaway driver is a worse trade than
+    // a dozen lines here. That also means these keys DO NOT respect the UI input router — typing
+    // in a text field will still enter elements. Another reason this is temporary.
+    //
+    // Defaults are the numpad, because 1-6 are already bound to Hotbar1-6 in
+    // PlayerInputControls and a collision would fire a hotbar slot on every element press.
     public class SpellcraftInput : MonoBehaviour, IBrainModule
     {
         [Header("Module Settings")]

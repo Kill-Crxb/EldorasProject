@@ -6,10 +6,8 @@ namespace CrabSystem
 {
     public enum PanelSide { Left, Right }
 
-    /// <summary>
-    /// One side of the screen. Owns its slots and whether the side is showing at all.
-    /// Left is opened by the player, right is opened by the world.
-    /// </summary>
+    // One side of the screen. Owns its slots and whether the side is showing at all.
+    // Left is opened by the player, right is opened by the world.
     public class UIPanel : MonoBehaviour
     {
         [Header("Identity")]
@@ -56,7 +54,7 @@ namespace CrabSystem
             UIInputRouter.Instance?.ApplyMode();
         }
 
-        /// <summary>Shows a view in whichever slot owns it, opening the panel if needed.</summary>
+        // Shows a view in whichever slot owns it, opening the panel if needed.
         public bool Show(string viewId)
         {
             var slot = SlotOwning(viewId);
@@ -116,7 +114,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>A Full view takes the panel to itself; the other slots step aside.</summary>
+        // A Full view takes the panel to itself; the other slots step aside.
         private void ApplySpan()
         {
             UIPanelSlot expanded = null;

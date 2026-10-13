@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Enhanced Damage Effect - Full damage calculation pipeline
-/// </summary>
+// Enhanced Damage Effect - Full damage calculation pipeline
 
 namespace CrabSystem
 {
@@ -56,27 +54,25 @@ namespace CrabSystem
             attackerDamageSystem = system;
         }
 
-        /// <summary>
-        /// Applies this effect to a target.
-        ///
-        /// <paramref name="externalMultiplier"/> scales the final damage for THIS application only.
-        /// It exists so a caller can scale damage without writing to the serialized fields on the
-        /// shared AbilityDefinition asset — mutating those would corrupt the ability for every
-        /// future use. ProjectileRuntime.damageMultiplier arrives through here; crits and buffs
-        /// can use the same door.
-        ///
-        /// <paramref name="weaponOverride"/> supplies the dice for THIS application instead of
-        /// looking up the equipped weapon. A thrown weapon is the weapon — a shuriken must roll
-        /// its own 1d4, not the katana still sitting in the main-hand slot, and not the fist dice
-        /// when the thrower happens to be unarmed.
-        ///
-        /// Both default to their no-op, so existing callers (StrikeHandler,
-        /// AbilityDefinition.ExecuteOnSelf) are unaffected.
-        ///
-        /// <paramref name="source"/> and <paramref name="contactPoint"/> tell presentation where the
-        /// hit came from and where it landed. Without a contact the packet's hit point falls back to
-        /// the target's Overhead anchor. The damage number always spawns at Overhead.
-        /// </summary>
+        // Applies this effect to a target.
+        //
+        // externalMultiplier scales the final damage for THIS application only.
+        // It exists so a caller can scale damage without writing to the serialized fields on the
+        // shared AbilityDefinition asset — mutating those would corrupt the ability for every
+        // future use. ProjectileRuntime.damageMultiplier arrives through here; crits and buffs
+        // can use the same door.
+        //
+        // weaponOverride supplies the dice for THIS application instead of
+        // looking up the equipped weapon. A thrown weapon is the weapon — a shuriken must roll
+        // its own 1d4, not the katana still sitting in the main-hand slot, and not the fist dice
+        // when the thrower happens to be unarmed.
+        //
+        // Both default to their no-op, so existing callers (StrikeHandler,
+        // AbilityDefinition.ExecuteOnSelf) are unaffected.
+        //
+        // source and contactPoint tell presentation where the
+        // hit came from and where it landed. Without a contact the packet's hit point falls back to
+        // the target's Overhead anchor. The damage number always spawns at Overhead.
         public float Apply(DamageSystem target, float externalMultiplier = 1f, DiceProfile weaponOverride = null,
             DamageSource source = DamageSource.Other, Vector3? contactPoint = null)
         {
@@ -152,10 +148,8 @@ namespace CrabSystem
             return damage;
         }
 
-        /// <summary>
-        /// The DiceProfile this application actually rolls — a supplied override, the equipped
-        /// weapon, or the fists. Null when this effect rolls no dice at all.
-        /// </summary>
+        // The DiceProfile this application actually rolls — a supplied override, the equipped
+        // weapon, or the fists. Null when this effect rolls no dice at all.
         private DiceProfile ResolveWeapon(DamageSystem attacker, DiceProfile weaponOverride)
         {
             if (!useWeaponDamage) return null;
@@ -192,15 +186,13 @@ namespace CrabSystem
             return weaponData != null ? weaponData : stance?.UnarmedWeapon;
         }
 
-        /// <summary>
-        /// Flat damage and extra dice other systems grant this attacker — gear, talents, and the
-        /// status layer. All of it arrives as stats, so nothing here knows what a buff is, and
-        /// filling this one method makes bonus damage work for melee, thrown and spells at once.
-        ///
-        /// cmb.bonus_dice rolls the weapon's dice expression directly rather than RollDamage(),
-        /// so the weapon's own flat bonus is paid once per hit rather than once per die.
-        /// Extra dice need a weapon to copy; flat bonus applies either way.
-        /// </summary>
+        // Flat damage and extra dice other systems grant this attacker — gear, talents, and the
+        // status layer. All of it arrives as stats, so nothing here knows what a buff is, and
+        // filling this one method makes bonus damage work for melee, thrown and spells at once.
+        //
+        // cmb.bonus_dice rolls the weapon's dice expression directly rather than RollDamage(),
+        // so the weapon's own flat bonus is paid once per hit rather than once per die.
+        // Extra dice need a weapon to copy; flat bonus applies either way.
         private float GetExternalFlatDamage(DamageSystem attacker, DiceProfile weapon)
         {
             var stats = attacker?.Brain?.Stats;

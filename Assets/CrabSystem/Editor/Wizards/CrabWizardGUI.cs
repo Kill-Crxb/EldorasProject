@@ -89,7 +89,7 @@ namespace CrabSystem
             return path;
         }
 
-        /// <summary>Creates every missing folder along an Assets-relative path.</summary>
+        // Creates every missing folder along an Assets-relative path.
         public static void EnsureFolder(string assetFolder)
         {
             if (string.IsNullOrEmpty(assetFolder) || AssetDatabase.IsValidFolder(assetFolder)) return;

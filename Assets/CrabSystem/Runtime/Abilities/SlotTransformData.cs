@@ -1,10 +1,8 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// All data types used by the slot transformation system.
-/// Plain serialisable C# — no MonoBehaviour deps, fully unit-testable.
-/// </summary>
+// All data types used by the slot transformation system.
+// Plain serialisable C# — no MonoBehaviour deps, fully unit-testable.
 
 namespace CrabSystem
 {
@@ -35,11 +33,9 @@ namespace CrabSystem
         public float windowSeconds = 8f;
     }
 
-    /// <summary>
-    /// One sequence-prerequisite entry on an AbilityDefinition.
-    /// When triggerAbilityId completes, the slot holding this definition
-    /// transforms to transformAbility for windowSeconds.
-    /// </summary>
+    // One sequence-prerequisite entry on an AbilityDefinition.
+    // When triggerAbilityId completes, the slot holding this definition
+    // transforms to transformAbility for windowSeconds.
     [Serializable]
     public class SequencePrerequisite
     {
@@ -53,10 +49,8 @@ namespace CrabSystem
         public AbilityDefinition transformAbility;
     }
 
-    /// <summary>
-    /// Replaces the slot ability when a resource crosses a threshold.
-    /// Re-evaluated at 10Hz; override is set/cleared automatically.
-    /// </summary>
+    // Replaces the slot ability when a resource crosses a threshold.
+    // Re-evaluated at 10Hz; override is set/cleared automatically.
     [Serializable]
     public class ResourceThresholdTransform
     {
@@ -73,10 +67,8 @@ namespace CrabSystem
         public AbilityDefinition transformAbility;
     }
 
-    /// <summary>
-    /// Replaces the slot ability while a blackboard fact is true on this entity.
-    /// Re-evaluated at 10Hz.
-    /// </summary>
+    // Replaces the slot ability while a blackboard fact is true on this entity.
+    // Re-evaluated at 10Hz.
     [Serializable]
     public class BuffTransform
     {
@@ -87,10 +79,8 @@ namespace CrabSystem
         public AbilityDefinition transformAbility;
     }
 
-    /// <summary>
-    /// Replaces the slot ability while a blackboard fact is true on the locked target.
-    /// Re-evaluated at 10Hz via TargetLockModule.
-    /// </summary>
+    // Replaces the slot ability while a blackboard fact is true on the locked target.
+    // Re-evaluated at 10Hz via TargetLockModule.
     [Serializable]
     public class TargetConditionTransform
     {
@@ -101,9 +91,7 @@ namespace CrabSystem
         public AbilityDefinition transformAbility;
     }
 
-    /// <summary>
-    /// One active override on a slot. Stored in SlotTransformationSystem.
-    /// </summary>
+    // One active override on a slot. Stored in SlotTransformationSystem.
     public class SlotOverride
     {
         public AbilityDefinition ability;

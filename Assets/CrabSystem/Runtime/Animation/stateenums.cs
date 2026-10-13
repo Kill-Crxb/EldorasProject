@@ -1,12 +1,8 @@
-/// <summary>
-/// Template state enums for Third-Person Action RPG.
-/// These are examples - you'll customize these per game.
-/// </summary>
+// Template state enums for Third-Person Action RPG.
+// These are examples - you'll customize these per game.
 
-/// <summary>
-/// Brain State - What is the entity's focus/intent?
-/// High-level context that affects UI, camera, and available systems.
-/// </summary>
+// Brain State - What is the entity's focus/intent?
+// High-level context that affects UI, camera, and available systems.
 
 namespace CrabSystem
 {
@@ -25,10 +21,8 @@ namespace CrabSystem
         Dead            // Entity is dead
     }
 
-    /// <summary>
-    /// Upper Body State - What are the arms/torso doing?
-    /// Action execution layer, often animation-driven.
-    /// </summary>
+    // Upper Body State - What are the arms/torso doing?
+    // Action execution layer, often animation-driven.
     public enum UpperBodyState
     {
         Idle,               // Hands free, relaxed
@@ -73,14 +67,10 @@ namespace CrabSystem
         Vaulting,
         Mantling,
         WallClimbing,
-
-
     }
 
-    /// <summary>
-    /// Lower Body State - What are the legs doing?
-    /// Locomotion layer, affects velocity and physics.
-    /// </summary>
+    // Lower Body State - What are the legs doing?
+    // Locomotion layer, affects velocity and physics.
     public enum LowerBodyState
     {
         Idle,               // Standing still
@@ -123,13 +113,10 @@ namespace CrabSystem
         Mantling,
         AirStrafing,
         HardLanding
-
     }
 
-    /// <summary>
-    /// Posture State - What is the body position?
-    /// Foundation layer, most restrictive, affects collision and capabilities.
-    /// </summary>
+    // Posture State - What is the body position?
+    // Foundation layer, most restrictive, affects collision and capabilities.
     public enum PostureState
     {
         Standing,           // Upright, full mobility

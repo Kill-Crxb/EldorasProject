@@ -23,15 +23,12 @@ namespace CrabSystem
                 targetIndicator.SetActive(true);
 
             // Could trigger UI elements, sound effects, etc.
-     
         }
 
         public void OnTargetLost()
         {
             if (targetIndicator != null)
                 targetIndicator.SetActive(false);
-
-    
         }
 
         public void SetTargetable(bool targetable)

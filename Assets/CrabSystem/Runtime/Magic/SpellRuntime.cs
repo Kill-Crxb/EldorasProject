@@ -2,20 +2,18 @@ using UnityEngine;
 
 namespace CrabSystem.Magic
 {
-    /// <summary>
-    /// One composed spell. The magic-system equivalent of ProjectileRuntime, one level up: the
-    /// sequence resolved once at cast time into values the rest of the game can read without
-    /// knowing a grammar exists.
-    ///
-    /// A STRUCT ON PURPOSE, and composed by value, for the same reason ProjectileRuntime is:
-    /// nothing downstream can reach back and write to the shared grammar asset. And critically,
-    /// composing a spell allocates NOTHING — no ScriptableObject.CreateInstance per cast, which
-    /// is the GC trap the projectile system was built to avoid.
-    ///
-    /// It carries three resolved asset references alongside the numbers. That is deliberate: the
-    /// alternative is re-scanning the grammar in the launcher, and the launcher is the wrong
-    /// place to know what a School is.
-    /// </summary>
+    // One composed spell. The magic-system equivalent of ProjectileRuntime, one level up: the
+    // sequence resolved once at cast time into values the rest of the game can read without
+    // knowing a grammar exists.
+    //
+    // A STRUCT ON PURPOSE, and composed by value, for the same reason ProjectileRuntime is:
+    // nothing downstream can reach back and write to the shared grammar asset. And critically,
+    // composing a spell allocates NOTHING — no ScriptableObject.CreateInstance per cast, which
+    // is the GC trap the projectile system was built to avoid.
+    //
+    // It carries three resolved asset references alongside the numbers. That is deliberate: the
+    // alternative is re-scanning the grammar in the launcher, and the launcher is the wrong
+    // place to know what a School is.
     public struct SpellRuntime
     {
         // ── What the sequence said ────────────────────────────────────────────
@@ -24,19 +22,17 @@ namespace CrabSystem.Magic
         public SpellElement form;
         public SpellElement effect;
 
-        /// <summary>
-        /// The later three slots, kept as ELEMENTS rather than only as folded numbers.
-        ///
-        /// Most of what these slots do is already baked into the multipliers below, but not all
-        /// of it — Ignite has to be recognised on arrival, and a UI has to name what the player
-        /// typed. A slot that resolved to no row leaves its field at the School, which reads as
-        /// "unset" only in combination with length; check length before trusting them.
-        /// </summary>
+        // The later three slots, kept as ELEMENTS rather than only as folded numbers.
+        //
+        // Most of what these slots do is already baked into the multipliers below, but not all
+        // of it — Ignite has to be recognised on arrival, and a UI has to name what the player
+        // typed. A slot that resolved to no row leaves its field at the School, which reads as
+        // "unset" only in combination with length; check length before trusting them.
         public SpellElement modify;
         public SpellElement range;
         public SpellElement amplify;
 
-        /// <summary>How many elements were entered. Drives the cost curve.</summary>
+        // How many elements were entered. Drives the cost curve.
         public int length;
 
         public bool HasModify => length > (int)SpellSlot.Modify;
@@ -45,26 +41,26 @@ namespace CrabSystem.Magic
 
         // ── Resolved definitions ──────────────────────────────────────────────
 
-        /// <summary>Slot 1. Damage type, colour, tier names, and the cast ability to invoke.</summary>
+        // Slot 1. Damage type, colour, tier names, and the cast ability to invoke.
         public ElementDefinition schoolDef;
 
-        /// <summary>Slot 2. The ProjectileData to fire, and the base tier.</summary>
+        // Slot 2. The ProjectileData to fire, and the base tier.
         public FormDefinition formDef;
 
-        /// <summary>The rung the ladder landed on — dice, scale and cost multiplier.</summary>
+        // The rung the ladder landed on — dice, scale and cost multiplier.
         public SpellTierRow tierRow;
 
         public SpellTier tier;
 
         // ── Composed values ───────────────────────────────────────────────────
 
-        /// <summary>Who the projectile is for. Written straight into ProjectileRuntime.</summary>
+        // Who the projectile is for. Written straight into ProjectileRuntime.
         public TargetStance stance;
 
-        /// <summary>Projectiles this cast produces. Split divides into these; Amplify adds to them.</summary>
+        // Projectiles this cast produces. Split divides into these; Amplify adds to them.
         public int instanceCount;
 
-        /// <summary>Total fan angle across every instance. Meaningless at instanceCount 1.</summary>
+        // Total fan angle across every instance. Meaningless at instanceCount 1.
         public float spreadDegrees;
 
         public float scaleMultiplier;
@@ -74,34 +70,28 @@ namespace CrabSystem.Magic
         public int pierceBonus;
         public float homingBonus;
 
-        /// <summary>Range redirected the effect to the caster — a Displace at self range is a dash.</summary>
+        // Range redirected the effect to the caster — a Displace at self range is a dash.
         public bool redirectToSelf;
 
-        /// <summary>Resource consumed. base x length^2 x tier multiplier.</summary>
+        // Resource consumed. base x length^2 x tier multiplier.
         public float cost;
 
         // ── Convenience ───────────────────────────────────────────────────────
 
-        /// <summary>What the player calls this spell — "Fireball", "Wind Slash". School x Tier.</summary>
+        // What the player calls this spell — "Fireball", "Wind Slash". School x Tier.
         public string DisplayName => schoolDef != null ? schoolDef.TierName(tier) : "Unknown";
 
-        /// <summary>The dice this spell rolls. Null means the grammar is missing a tier row.</summary>
+        // The dice this spell rolls. Null means the grammar is missing a tier row.
         public DiceProfile Dice => tierRow != null ? tierRow.dice : null;
 
-        // =========================================================================
-        // Composition
-        // =========================================================================
-
-        /// <summary>
-        /// Resolve a sequence into a spell. Returns false only when the grammar is incomplete —
-        /// never because the player entered something wrong, because EVERY SEQUENCE IS VALID BY
-        /// CONSTRUCTION. There is no fizzle, no invalid-combination path, and no resource wasted
-        /// on a typo.
-        ///
-        /// Slots past the end of the sequence fall back to their defaults, which is what makes
-        /// `Fire·Air` a complete spell rather than one missing four slots. Length buys
-        /// specificity, not completeness — and not magnitude, which comes from Form and Amplify.
-        /// </summary>
+        // Resolve a sequence into a spell. Returns false only when the grammar is incomplete —
+        // never because the player entered something wrong, because EVERY SEQUENCE IS VALID BY
+        // CONSTRUCTION. There is no fizzle, no invalid-combination path, and no resource wasted
+        // on a typo.
+        //
+        // Slots past the end of the sequence fall back to their defaults, which is what makes
+        // `Fire·Air` a complete spell rather than one missing four slots. Length buys
+        // specificity, not completeness — and not magnitude, which comes from Form and Amplify.
         public static bool TryCompose(SpellGrammar grammar, SpellElement[] sequence, int length,
                                       out SpellRuntime spell)
         {
@@ -187,11 +177,9 @@ namespace CrabSystem.Magic
             return true;
         }
 
-        /// <summary>
-        /// Fold one adjust row into the spell. Returns its tier steps rather than applying them,
-        /// because the ladder has to be stepped once at the end — three separate clamps would let
-        /// a Split at Faint eat an Amplify that should have cancelled it.
-        /// </summary>
+        // Fold one adjust row into the spell. Returns its tier steps rather than applying them,
+        // because the ladder has to be stepped once at the end — three separate clamps would let
+        // a Split at Faint eat an Amplify that should have cancelled it.
         private static int Apply(SpellAdjustRow row, ref SpellRuntime spell)
         {
             if (row == null) return 0;
@@ -213,35 +201,31 @@ namespace CrabSystem.Magic
             return row.tierSteps;
         }
 
-        /// <summary>
-        /// Multiply, treating a non-positive multiplier as UNSET rather than as zero.
-        ///
-        /// Unity does not run C# field initialisers when you add an element to a [Serializable]
-        /// class array with the inspector's + button — it zero-fills the new row. So every
-        /// `= 1f` default on SpellAdjustRow is a lie for exactly the rows a designer creates by
-        /// hand, and a plain `*=` would annihilate the projectile: scale 0 is invisible, speed 0
-        /// is motionless, lifetime 0 expires on the first frame. Silently, and looking for all
-        /// the world like the spell system does not work.
-        ///
-        /// Zero is never a wanted multiplier here either way. A projectile that should not move
-        /// has speed 0 on its ProjectileData; it does not have every Range row multiplying its
-        /// speed to nothing.
-        /// </summary>
+        // Multiply, treating a non-positive multiplier as UNSET rather than as zero.
+        //
+        // Unity does not run C# field initialisers when you add an element to a [Serializable]
+        // class array with the inspector's + button — it zero-fills the new row. So every
+        // `= 1f` default on SpellAdjustRow is a lie for exactly the rows a designer creates by
+        // hand, and a plain `*=` would annihilate the projectile: scale 0 is invisible, speed 0
+        // is motionless, lifetime 0 expires on the first frame. Silently, and looking for all
+        // the world like the spell system does not work.
+        //
+        // Zero is never a wanted multiplier here either way. A projectile that should not move
+        // has speed 0 on its ProjectileData; it does not have every Range row multiplying its
+        // speed to nothing.
         private static float Scale(float current, float multiplier)
         {
             return multiplier > 0f ? current * multiplier : current;
         }
 
-        /// <summary>A Form only counts if it has something to fire. Null in, null out.</summary>
+        // A Form only counts if it has something to fire. Null in, null out.
         private static FormDefinition Buildable(FormDefinition form)
         {
             return form != null && form.IsBuildable ? form : null;
         }
 
-        /// <summary>
-        /// The row a slot selects, or null when the sequence never reached that slot. Null is the
-        /// slot's default: no adjustment. That is the whole of short-sequence handling.
-        /// </summary>
+        // The row a slot selects, or null when the sequence never reached that slot. Null is the
+        // slot's default: no adjustment. That is the whole of short-sequence handling.
         private static SpellAdjustRow RowAt(SpellGrammar grammar, SpellAdjustRow[] table,
                                             SpellElement[] sequence, int length, SpellSlot slot)
         {

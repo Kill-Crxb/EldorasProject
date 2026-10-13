@@ -1,10 +1,8 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Instant Heal Effect
-/// Data-driven, HealthProvider-authoritative
-/// </summary>
+// Instant Heal Effect
+// Data-driven, HealthProvider-authoritative
 
 namespace CrabSystem
 {
@@ -22,18 +20,14 @@ namespace CrabSystem
 
         private bool isCompleted;
 
-        /// <summary>
-        /// Set the health provider that will receive healing
-        /// Optional convenience for Apply()
-        /// </summary>
+        // Set the health provider that will receive healing
+        // Optional convenience for Apply()
         public void SetHealthProvider(IHealthProvider provider)
         {
             healthProvider = provider;
         }
 
-        /// <summary>
-        /// Apply healing using previously set health provider
-        /// </summary>
+        // Apply healing using previously set health provider
         public void Apply()
         {
             if (isCompleted)
@@ -50,9 +44,7 @@ namespace CrabSystem
             Complete();
         }
 
-        /// <summary>
-        /// Apply healing directly to a target (preferred API)
-        /// </summary>
+        // Apply healing directly to a target (preferred API)
         public void Apply(IHealthProvider target)
         {
             if (isCompleted)
@@ -69,9 +61,7 @@ namespace CrabSystem
             Complete();
         }
 
-        /// <summary>
-        /// Legacy IDamageable compatibility
-        /// </summary>
+        // Legacy IDamageable compatibility
         [Obsolete("Use Apply(IHealthProvider) instead")]
         public void Apply(IDamageable target)
         {

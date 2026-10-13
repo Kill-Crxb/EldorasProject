@@ -2,37 +2,34 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Runtime storage for semantic facts (boolean/float/int values).
-/// Per-entity cache of interpreted game state.
-/// 
-/// Responsibilities:
-/// - Store semantic facts with fast O(1) lookup
-/// - Emit change events for reactive systems
-/// - Preallocate memory based on schema
-/// 
-/// NOT Responsible For:
-/// - Calculating fact values (SemanticBridge does this)
-/// - Interpreting numbers to meaning (SemanticBridge does this)
-/// - Knowing where facts come from
-/// 
-/// Architecture Pattern:
-/// - Separate dictionary per type (better cache locality)
-/// - Integer keys (hashed from strings)
-/// - Event-driven updates (not polling)
-/// 
-/// Performance:
-/// - ~350 bytes per entity (typical 20-30 facts)
-/// - O(1) lookup via int key
-/// - Zero allocations in hot paths
-/// 
-/// Usage:
-/// blackboard.SetBool(BlackboardKey.IsWounded, true);
-/// if (blackboard.GetBool(BlackboardKey.CanDodge)) { ... }
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 18, 2026
-/// </summary>
+// Runtime storage for semantic facts (boolean/float/int values).
+// Per-entity cache of interpreted game state.
+//
+// Responsibilities:
+// - Store semantic facts with fast O(1) lookup
+// - Emit change events for reactive systems
+// - Preallocate memory based on schema
+//
+// NOT Responsible For:
+// - Calculating fact values (SemanticBridge does this)
+// - Interpreting numbers to meaning (SemanticBridge does this)
+// - Knowing where facts come from
+//
+// Architecture Pattern:
+// - Separate dictionary per type (better cache locality)
+// - Integer keys (hashed from strings)
+// - Event-driven updates (not polling)
+//
+// Performance:
+// - ~350 bytes per entity (typical 20-30 facts)
+// - O(1) lookup via int key
+// - Zero allocations in hot paths
+//
+// Usage:
+// blackboard.SetBool(BlackboardKey.IsWounded, true);
+// if (blackboard.GetBool(BlackboardKey.CanDodge)) { ... }
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -56,11 +53,7 @@ namespace CrabSystem
         private bool debugLogging = false;
         private string ownerName = "Unknown";
 
-    #region Initialization
-
-        /// <summary>
-        /// Initialize blackboard with preallocated capacity from schema
-        /// </summary>
+        // Initialize blackboard with preallocated capacity from schema
         public void Initialize(BlackboardSchema schema, bool enableDebug = false, string owner = "Unknown")
         {
             if (schema == null)
@@ -115,22 +108,14 @@ namespace CrabSystem
                 Debug.Log($"[Blackboard] Initialized for {ownerName}: {boolCount} bools, {floatCount} floats, {intCount} ints");
         }
 
-    #endregion
-
-    #region Bool Accessors
-
-        /// <summary>
-        /// Get boolean fact value (returns false if not found)
-        /// </summary>
+        // Get boolean fact value (returns false if not found)
         public bool GetBool(int key)
         {
             if (bools == null) return false;
             return bools.TryGetValue(key, out var value) && value;
         }
 
-        /// <summary>
-        /// Set boolean fact value (emits event on change)
-        /// </summary>
+        // Set boolean fact value (emits event on change)
         public void SetBool(int key, bool value)
         {
             if (bools == null) return;
@@ -147,22 +132,14 @@ namespace CrabSystem
                 Debug.Log($"[Blackboard:{ownerName}] Bool changed - Key:{key} Value:{value}");
         }
 
-    #endregion
-
-    #region Float Accessors
-
-        /// <summary>
-        /// Get float fact value (returns 0 if not found)
-        /// </summary>
+        // Get float fact value (returns 0 if not found)
         public float GetFloat(int key)
         {
             if (floats == null) return 0f;
             return floats.TryGetValue(key, out var value) ? value : 0f;
         }
 
-        /// <summary>
-        /// Set float fact value (emits event on change)
-        /// </summary>
+        // Set float fact value (emits event on change)
         public void SetFloat(int key, float value)
         {
             if (floats == null) return;
@@ -179,22 +156,14 @@ namespace CrabSystem
                 Debug.Log($"[Blackboard:{ownerName}] Float changed - Key:{key} Value:{value:F2}");
         }
 
-    #endregion
-
-    #region Int Accessors
-
-        /// <summary>
-        /// Get int fact value (returns 0 if not found)
-        /// </summary>
+        // Get int fact value (returns 0 if not found)
         public int GetInt(int key)
         {
             if (ints == null) return 0;
             return ints.TryGetValue(key, out var value) ? value : 0;
         }
 
-        /// <summary>
-        /// Set int fact value (emits event on change)
-        /// </summary>
+        // Set int fact value (emits event on change)
         public void SetInt(int key, int value)
         {
             if (ints == null) return;
@@ -211,13 +180,7 @@ namespace CrabSystem
                 Debug.Log($"[Blackboard:{ownerName}] Int changed - Key:{key} Value:{value}");
         }
 
-    #endregion
-
-    #region Utility
-
-        /// <summary>
-        /// Clear all facts to defaults (useful for entity respawn/reset)
-        /// </summary>
+        // Clear all facts to defaults (useful for entity respawn/reset)
         public void Clear()
         {
             if (bools != null) bools.Clear();
@@ -229,9 +192,7 @@ namespace CrabSystem
                 Debug.Log($"[Blackboard:{ownerName}] Cleared all facts");
         }
 
-        /// <summary>
-        /// Check if a key exists in the blackboard
-        /// </summary>
+        // Check if a key exists in the blackboard
         public bool HasKey(int key)
         {
             if (bools != null && bools.ContainsKey(key)) return true;
@@ -240,9 +201,7 @@ namespace CrabSystem
             return false;
         }
 
-        /// <summary>
-        /// Get memory footprint for profiling
-        /// </summary>
+        // Get memory footprint for profiling
         public int GetMemoryFootprint()
         {
             int bytes = 0;
@@ -253,8 +212,6 @@ namespace CrabSystem
         
             return bytes + 300; // + dictionary overhead
         }
-
-    #endregion
 
         // One ledger for every held flag: statuses claim under status:{id}, rewards under their source key.
         public void Claim(int key, string sourceKey)

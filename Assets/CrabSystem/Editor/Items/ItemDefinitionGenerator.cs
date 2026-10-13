@@ -4,17 +4,15 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-/// <summary>
-/// Turns a folder of icon sprites into ItemDefinition assets.
-///
-/// The slot is read from the filename: the first keyword found in the name wins, so
-/// "Falmer_armored_boots_17.png" lands on boots rather than on the "armor" in body armour.
-/// Everything else — category, subtype, grid size — follows from the slot, so adding a new
-/// item type is a matter of authoring an ItemSubType asset, not editing this file.
-///
-/// Sprites whose name matches nothing are listed at the end and skipped. Rename and re-run.
-/// Nothing is ever overwritten: an itemId that already exists is left alone.
-/// </summary>
+// Turns a folder of icon sprites into ItemDefinition assets.
+//
+// The slot is read from the filename: the first keyword found in the name wins, so
+// "Falmer_armored_boots_17.png" lands on boots rather than on the "armor" in body armour.
+// Everything else — category, subtype, grid size — follows from the slot, so adding a new
+// item type is a matter of authoring an ItemSubType asset, not editing this file.
+//
+// Sprites whose name matches nothing are listed at the end and skipped. Rename and re-run.
+// Nothing is ever overwritten: an itemId that already exists is left alone.
 
 namespace CrabSystem
 {
@@ -167,7 +165,7 @@ namespace CrabSystem
             AssetDatabase.CreateAsset(item, AssetDatabase.GenerateUniqueAssetPath($"{dir}/Item_{ToAssetName(fileName)}.asset"));
         }
 
-        /// <summary>slotId -> the subtype bound to it. Built from the assets, so no ids live in this file.</summary>
+        // slotId -> the subtype bound to it. Built from the assets, so no ids live in this file.
         private static Dictionary<string, ItemSubType> CollectSubTypes()
         {
             var result = new Dictionary<string, ItemSubType>();
@@ -186,7 +184,7 @@ namespace CrabSystem
             return result;
         }
 
-        /// <summary>Textures import as plain textures in a 3D project, so make sure it is a sprite first.</summary>
+        // Textures import as plain textures in a 3D project, so make sure it is a sprite first.
         private static Sprite LoadAsSprite(string assetPath)
         {
             var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;

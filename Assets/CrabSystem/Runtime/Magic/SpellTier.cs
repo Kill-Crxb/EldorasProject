@@ -3,13 +3,11 @@ using UnityEngine;
 
 namespace CrabSystem.Magic
 {
-    /// <summary>
-    /// Magnitude. ORDINAL on purpose — Split steps down and Amplify steps up, so the tier has to
-    /// be something you can do arithmetic on. That is why this is an enum indexing a table rather
-    /// than a set of loose assets.
-    ///
-    /// Never reorder. Split and Amplify move by ±1 along this order.
-    /// </summary>
+    // Magnitude. ORDINAL on purpose — Split steps down and Amplify steps up, so the tier has to
+    // be something you can do arithmetic on. That is why this is an enum indexing a table rather
+    // than a set of loose assets.
+    //
+    // Never reorder. Split and Amplify move by ±1 along this order.
     public enum SpellTier
     {
         Faint = 0,
@@ -19,11 +17,9 @@ namespace CrabSystem.Magic
         Grand = 4,
     }
 
-    /// <summary>
-    /// One rung of the ladder. Dice, size and cost move together, which is what makes
-    /// "a bigger projectile hits harder" true by construction rather than by an artist
-    /// remembering to match them.
-    /// </summary>
+    // One rung of the ladder. Dice, size and cost move together, which is what makes
+    // "a bigger projectile hits harder" true by construction rather than by an artist
+    // remembering to match them.
     [Serializable]
     public class SpellTierRow
     {
@@ -48,27 +44,23 @@ namespace CrabSystem.Magic
         public float costMultiplier = 1f;
     }
 
-    /// <summary>
-    /// The ladder. ONE table, authored in one inspector, because this is where balance actually
-    /// happens — five rows side by side is legible in a way five separate assets are not.
-    ///
-    /// Lives inline on SpellGrammar rather than as its own asset for the same reason
-    /// ProjectileMovement lives inline on ProjectileData: once it is rows rather than behaviour,
-    /// a separate asset only buys indirection.
-    /// </summary>
+    // The ladder. ONE table, authored in one inspector, because this is where balance actually
+    // happens — five rows side by side is legible in a way five separate assets are not.
+    //
+    // Lives inline on SpellGrammar rather than as its own asset for the same reason
+    // ProjectileMovement lives inline on ProjectileData: once it is rows rather than behaviour,
+    // a separate asset only buys indirection.
     [Serializable]
     public class SpellTierTable
     {
         [Tooltip("Five rows, Faint through Grand, in order.")]
         public SpellTierRow[] rows = new SpellTierRow[0];
 
-        /// <summary>
-        /// The row for a tier, or null. Scans rather than indexing, so a mis-ordered or short
-        /// array returns null instead of throwing IndexOutOfRange mid-cast.
-        ///
-        /// Silent on a miss: the caller has the context to say something useful, and the
-        /// grammar validator calls this in a loop where an error per rung would be noise.
-        /// </summary>
+        // The row for a tier, or null. Scans rather than indexing, so a mis-ordered or short
+        // array returns null instead of throwing IndexOutOfRange mid-cast.
+        //
+        // Silent on a miss: the caller has the context to say something useful, and the
+        // grammar validator calls this in a loop where an error per rung would be noise.
         public SpellTierRow Get(SpellTier tier)
         {
             for (int i = 0; i < rows.Length; i++)
@@ -80,10 +72,8 @@ namespace CrabSystem.Magic
             return null;
         }
 
-        /// <summary>
-        /// Move along the ladder, CLAMPED at both ends. Splitting an already-Faint Form does not
-        /// fall off the bottom, and amplifying a Grand cast does not fall off the top.
-        /// </summary>
+        // Move along the ladder, CLAMPED at both ends. Splitting an already-Faint Form does not
+        // fall off the bottom, and amplifying a Grand cast does not fall off the top.
         public static SpellTier Step(SpellTier tier, int steps)
         {
             int index = (int)tier + steps;

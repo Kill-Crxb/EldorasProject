@@ -38,7 +38,6 @@ namespace CrabSystem
             "m_GameObject", "m_Enabled", "m_EditorHideFlags", "m_Script", "m_Name", "m_EditorClassIdentifier",
         };
 
-
         // Internal so the dashboard's Weapons tab can host it.
         internal void OnGUI()
         {

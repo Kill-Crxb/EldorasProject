@@ -1,21 +1,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Pooling for projectile instances, keyed by ARCHETYPE PREFAB.
-///
-/// Keyed by prefab rather than by ProjectileData on purpose: several data assets share one
-/// archetype, so Archetype_Orb's pool serves Fireball, Iceball and every other orb-shaped
-/// spell from one recycled set. What varies per cast is the runtime struct and the visual,
-/// both of which are applied at Launch.
-///
-/// Deliberately static and self-creating — NOT a manager module. ManagerBrain is disabled
-/// in the Zoo scene, so ManagerBrain.Instance?.GetManager&lt;T&gt;() returns null there and
-/// anything routed through it would silently fail. This has no dependencies at all.
-///
-/// The pool root is an ordinary scene object, so it is destroyed on scene change; the
-/// static maps are cleared on subsystem registration to match.
-/// </summary>
+// Pooling for projectile instances, keyed by ARCHETYPE PREFAB.
+//
+// Keyed by prefab rather than by ProjectileData on purpose: several data assets share one
+// archetype, so Archetype_Orb's pool serves Fireball, Iceball and every other orb-shaped
+// spell from one recycled set. What varies per cast is the runtime struct and the visual,
+// both of which are applied at Launch.
+//
+// Deliberately static and self-creating — NOT a manager module. ManagerBrain is disabled
+// in the Zoo scene, so ManagerBrain.Instance?.GetManager<T>() returns null there and
+// anything routed through it would silently fail. This has no dependencies at all.
+//
+// The pool root is an ordinary scene object, so it is destroyed on scene change; the
+// static maps are cleared on subsystem registration to match.
 
 namespace CrabSystem
 {
@@ -33,10 +31,6 @@ namespace CrabSystem
 
         private static Transform root;
 
-        // =========================================================================
-        // Domain reset
-        // =========================================================================
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetState()
         {
@@ -46,14 +40,8 @@ namespace CrabSystem
             root = null;
         }
 
-        // =========================================================================
-        // Public API
-        // =========================================================================
-
-        /// <summary>
-        /// An active instance of <paramref name="prefab"/>, recycled where possible.
-        /// The caller is expected to call ProjectileBrain.Launch immediately after.
-        /// </summary>
+        // An active instance of prefab, recycled where possible.
+        // The caller is expected to call ProjectileBrain.Launch immediately after.
         public static GameObject Get(GameObject prefab)
         {
             if (prefab == null)
@@ -76,7 +64,7 @@ namespace CrabSystem
             return CreateInstance(prefab);
         }
 
-        /// <summary>Deactivate and return an instance. Called by ProjectileBrain.Release.</summary>
+        // Deactivate and return an instance. Called by ProjectileBrain.Release.
         public static void Release(GameObject instance)
         {
             if (instance == null) return;
@@ -94,10 +82,8 @@ namespace CrabSystem
             StackFor(prefab).Push(instance);
         }
 
-        /// <summary>
-        /// Build instances up front so the first shot does not hitch. Runs once per prefab;
-        /// repeat calls are ignored.
-        /// </summary>
+        // Build instances up front so the first shot does not hitch. Runs once per prefab;
+        // repeat calls are ignored.
         public static void Prewarm(GameObject prefab, int count)
         {
             if (prefab == null) return;
@@ -113,10 +99,6 @@ namespace CrabSystem
                 stack.Push(instance);
             }
         }
-
-        // =========================================================================
-        // Internals
-        // =========================================================================
 
         private static GameObject CreateInstance(GameObject prefab)
         {

@@ -1,18 +1,14 @@
 using UnityEngine;
 
-/// <summary>
-/// One authored equipment socket. Tag it with a slot id in the inspector and it wires
-/// itself to the player's EquipmentSystem — accepting drops, showing the equipped item
-/// and unequipping on right-click, all handled by the EquipmentItemIcon it drives.
-/// Equipping goes straight through EquipmentSystem, which already owns persistence.
-/// </summary>
+// One authored equipment socket. Tag it with a slot id in the inspector and it wires
+// itself to the player's EquipmentSystem — accepting drops, showing the equipped item
+// and unequipping on right-click, all handled by the EquipmentItemIcon it drives.
+// Equipping goes straight through EquipmentSystem, which already owns persistence.
 
 namespace CrabSystem
 {
     public class EquipmentSocket : MonoBehaviour
     {
-    #region Inspector
-
         [Header("Slot")]
         [Tooltip("Slot id this socket represents, e.g. 'helmet', 'bodyarmor', 'mainwep'.")]
         [IdRef(IdKind.EquipmentSlot)] [SerializeField] private string slotId;
@@ -24,14 +20,12 @@ namespace CrabSystem
         [Tooltip("Shown while the socket is empty.")]
         [SerializeField] private Sprite emptyIcon;
 
-    #endregion
-
         public string SlotId => slotId;
         public EquipmentSlotDefinition Slot { get; private set; }
 
         private EquipmentSystem equipment;
 
-        /// <summary>Called by EquipmentPanelView once the player is known.</summary>
+        // Called by EquipmentPanelView once the player is known.
         public void Bind(EquipmentSystem system)
         {
             Unbind();
@@ -86,10 +80,8 @@ namespace CrabSystem
             icon.SetItem(equipment.GetEquippedItem(Slot));
         }
 
-        /// <summary>
-        /// Uses an authored icon if there is one, otherwise builds it. The icon must be its own
-        /// child so it layers over the socket art instead of replacing the background sprite.
-        /// </summary>
+        // Uses an authored icon if there is one, otherwise builds it. The icon must be its own
+        // child so it layers over the socket art instead of replacing the background sprite.
         private bool ResolveIcon()
         {
             if (icon == null) icon = GetComponentInChildren<EquipmentItemIcon>(true);

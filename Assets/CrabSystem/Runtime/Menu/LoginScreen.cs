@@ -3,20 +3,18 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// LoginScreen
-///
-/// Handles account registration and login.
-/// On success, hides itself and shows the CharacterSelectScreen.
-///
-/// UI wiring (assign in Inspector):
-///   usernameField      — TMP_InputField
-///   passwordField      — TMP_InputField (content type: Password)
-///   feedbackText       — TextMeshProUGUI  (error / status messages)
-///   loginButton        — Button
-///   registerButton     — Button
-///   characterSelect    — GameObject (the CharacterSelectScreen panel)
-/// </summary>
+// LoginScreen
+//
+// Handles account registration and login.
+// On success, hides itself and shows the CharacterSelectScreen.
+//
+// UI wiring (assign in Inspector):
+//   usernameField      — TMP_InputField
+//   passwordField      — TMP_InputField (content type: Password)
+//   feedbackText       — TextMeshProUGUI  (error / status messages)
+//   loginButton        — Button
+//   registerButton     — Button
+//   characterSelect    — GameObject (the CharacterSelectScreen panel)
 
 namespace CrabSystem
 {

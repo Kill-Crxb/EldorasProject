@@ -1,10 +1,8 @@
 using UnityEngine;
 
-/// <summary>
-/// Represents a slottable ability or combo chain.
-/// Can be assigned to quickslots (Z, X, C, V).
-/// Single abilities are just combos with a chain of 1.
-/// </summary>
+// Represents a slottable ability or combo chain.
+// Can be assigned to quickslots (Z, X, C, V).
+// Single abilities are just combos with a chain of 1.
 
 namespace CrabSystem
 {
@@ -36,9 +34,7 @@ namespace CrabSystem
         public bool IsCombo => abilityChain != null && abilityChain.Length > 1;
         public int ChainLength => abilityChain?.Length ?? 0;
 
-        /// <summary>
-        /// Get the icon to display. Uses displayIcon if set, otherwise first ability's icon.
-        /// </summary>
+        // Get the icon to display. Uses displayIcon if set, otherwise first ability's icon.
         public Sprite GetDisplayIcon()
         {
             if (displayIcon != null)
@@ -50,9 +46,7 @@ namespace CrabSystem
             return null;
         }
 
-        /// <summary>
-        /// Get ability at specific index in chain.
-        /// </summary>
+        // Get ability at specific index in chain.
         public AbilityDefinition GetAbilityAtIndex(int index)
         {
             if (abilityChain == null || index < 0 || index >= abilityChain.Length)
@@ -61,10 +55,8 @@ namespace CrabSystem
             return abilityChain[index];
         }
 
-        /// <summary>
-        /// Check if this slot is unlocked for the player.
-        /// TODO: Hook into your progression system when ready.
-        /// </summary>
+        // Check if this slot is unlocked for the player.
+        // TODO: Hook into your progression system when ready.
         public bool IsUnlocked()
         {
             if (!requiresUnlock)
@@ -77,9 +69,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Validate the ability chain on creation.
-        /// </summary>
+        // Validate the ability chain on creation.
         private void OnValidate()
         {
             if (abilityChain != null)

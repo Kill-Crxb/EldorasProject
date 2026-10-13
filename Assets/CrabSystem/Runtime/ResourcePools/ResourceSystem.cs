@@ -2,16 +2,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Holds this entity's live resource pools. Each pool's ceiling comes from a stat, so
-/// anything that feeds that stat — core stats, gear, level — moves the ceiling, and the
-/// pool follows without knowing what moved it.
-///
-/// Regeneration is budgeted, not free. A tier-one pool (Health, Stamina, Mana) refills by
-/// spending a tier-two pool (Regeneration, Recovery, Recollection), converting one point of
-/// the source into amountPerSourcePoint of the target over secondsPerSourcePoint. Run the
-/// source dry and the pool stops refilling until the source itself comes back.
-/// </summary>
+// Holds this entity's live resource pools. Each pool's ceiling comes from a stat, so
+// anything that feeds that stat — core stats, gear, level — moves the ceiling, and the
+// pool follows without knowing what moved it.
+//
+// Regeneration is budgeted, not free. A tier-one pool (Health, Stamina, Mana) refills by
+// spending a tier-two pool (Regeneration, Recovery, Recollection), converting one point of
+// the source into amountPerSourcePoint of the target over secondsPerSourcePoint. Run the
+// source dry and the pool stops refilling until the source itself comes back.
 
 namespace CrabSystem
 {
@@ -22,10 +20,8 @@ namespace CrabSystem
         private const float DEFAULT_MAX_VALUE = 100f;
         private const float EPSILON = 0.001f;
 
-        /// <summary>
-        /// One pool. Serialized so the live numbers are visible in the inspector during play —
-        /// this is the only readout of current values that does not go through the HUD.
-        /// </summary>
+        // One pool. Serialized so the live numbers are visible in the inspector during play —
+        // this is the only readout of current values that does not go through the HUD.
         [Serializable]
         public class ResourceState
         {
@@ -65,8 +61,6 @@ namespace CrabSystem
         public event Action<float> OnHealthChanged;
         public event Action OnDeath;
 
-    #region IBrainModule
-
         public void Initialize(ControllerBrain controllerBrain)
         {
             brain = controllerBrain;
@@ -85,11 +79,9 @@ namespace CrabSystem
                 Debug.LogError("[ResourceSystem] No health resource defined (triggerDeathOnDepletion = true)");
         }
 
-        /// <summary>
-        /// Ceilings are resolved a second time here, after StatDerivationSystem has applied what
-        /// the core stats are worth. Reading them in Initialize alone would snapshot the value
-        /// before Body had contributed anything, and every pool would sit at its authored base.
-        /// </summary>
+        // Ceilings are resolved a second time here, after StatDerivationSystem has applied what
+        // the core stats are worth. Reading them in Initialize alone would snapshot the value
+        // before Body had contributed anything, and every pool would sit at its authored base.
         public void LateInitialize()
         {
             if (stats == null) return;
@@ -109,10 +101,6 @@ namespace CrabSystem
 
             for (int i = 0; i < states.Count; i++) TickRegen(states[i], delta);
         }
-
-    #endregion
-
-    #region Setup
 
         private void InitializeResources()
         {
@@ -161,10 +149,6 @@ namespace CrabSystem
             return statValue > 0f ? statValue : DEFAULT_MAX_VALUE;
         }
 
-    #endregion
-
-    #region Max Values
-
         private void HandleStatChanged(string statId, float oldValue, float newValue)
         {
             for (int i = 0; i < states.Count; i++)
@@ -188,12 +172,10 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Moves the ceiling and decides what happens to what is already in the pool. A pool
-        /// that was full stays full, so a fresh character spawns topped up and a level-up is a
-        /// clean gain. A partly spent pool keeps its absolute value, so swapping a +health item
-        /// in and out is never a heal and taking it off can never kill you.
-        /// </summary>
+        // Moves the ceiling and decides what happens to what is already in the pool. A pool
+        // that was full stays full, so a fresh character spawns topped up and a level-up is a
+        // clean gain. A partly spent pool keeps its absolute value, so swapping a +health item
+        // in and out is never a heal and taking it off can never kill you.
         private void ApplyMaxValue(ResourceState state, float newMax)
         {
             if (newMax <= 0f) newMax = DEFAULT_MAX_VALUE;
@@ -211,10 +193,6 @@ namespace CrabSystem
             if (state.definition.triggerDeathOnDepletion) OnHealthChanged?.Invoke(state.current);
         }
 
-    #endregion
-
-    #region Regeneration
-
         private void TickRegen(ResourceState state, float delta)
         {
             var def = state.definition;
@@ -226,7 +204,7 @@ namespace CrabSystem
             else TickBudgetedRegen(state, def, delta);
         }
 
-        /// <summary>How a source pool comes back: a flat trickle, or nothing at all.</summary>
+        // How a source pool comes back: a flat trickle, or nothing at all.
         private void TickFlatRegen(ResourceState state, ResourceDefinition def, float delta)
         {
             float rate = def.regenPerSecond + Dial(def.regenStatId);
@@ -255,10 +233,8 @@ namespace CrabSystem
             SetResourceValue(state, Mathf.Min(state.current + 1f, state.max));
         }
 
-        /// <summary>
-        /// Spends the source pool to refill this one. The cost is charged against what was
-        /// actually granted, so topping off mid-payout wastes no part of a source point.
-        /// </summary>
+        // Spends the source pool to refill this one. The cost is charged against what was
+        // actually granted, so topping off mid-payout wastes no part of a source point.
         private void TickBudgetedRegen(ResourceState state, ResourceDefinition def, float delta)
         {
             if (def.amountPerSourcePoint <= 0f) return;
@@ -283,10 +259,8 @@ namespace CrabSystem
             SetResourceValue(state, state.current + granted);
         }
 
-        /// <summary>
-        /// Holds regen off after a spend or a hit. Paying for regen out of a source pool does
-        /// not call this — a pool being drained to heal you should not also stall its own refill.
-        /// </summary>
+        // Holds regen off after a spend or a hit. Paying for regen out of a source pool does
+        // not call this — a pool being drained to heal you should not also stall its own refill.
         private void BlockRegen(ResourceState state)
         {
             if (state?.definition == null) return;
@@ -296,10 +270,6 @@ namespace CrabSystem
 
             state.regenReadyAt = Now + delay;
         }
-
-    #endregion
-
-    #region ISaveable
 
         public string GetSaveId() => "resources";
         public int GetSaveVersion() => 1;
@@ -360,10 +330,6 @@ namespace CrabSystem
             public string resourceId;
             public float percentage;
         }
-
-    #endregion
-
-    #region IResourceProvider
 
         public float GetResource(ResourceDefinition def)
         {
@@ -430,10 +396,6 @@ namespace CrabSystem
             return result;
         }
 
-    #endregion
-
-    #region IHealthProvider
-
         public float GetCurrentHealth() => healthResource?.current ?? 0f;
         public float GetMaxHealth() => healthResource?.max ?? 0f;
 
@@ -463,10 +425,6 @@ namespace CrabSystem
             ModifyResourceDirect(healthResource, Mathf.Abs(amount));
         }
 
-    #endregion
-
-    #region Mutation
-
         private void ModifyResource(ResourceDefinition def, float delta)
         {
             if (!resources.TryGetValue(def.resourceId, out var state)) return;
@@ -491,8 +449,6 @@ namespace CrabSystem
 
             if (clamped <= 0f) OnDeath?.Invoke();
         }
-
-    #endregion
 
         private void OnDestroy()
         {

@@ -3,11 +3,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// The character on the creation panel, in 3D. Sits on a RawImage; a camera on a stage out of the
-/// menu's view renders the model into a texture made to the image's shape. Drag the image to turn
-/// the model. The model has no brain: its Animator plays the idle and nothing else runs.
-/// </summary>
+// The character on the creation panel, in 3D. Sits on a RawImage; a camera on a stage out of the
+// menu's view renders the model into a texture made to the image's shape. Drag the image to turn
+// the model. The model has no brain: its Animator plays the idle and nothing else runs.
 
 namespace CrabSystem
 {

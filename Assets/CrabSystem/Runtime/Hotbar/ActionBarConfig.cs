@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Runtime + serialisable configuration for one action bar.
-/// Resize() grows or shrinks the slot list while preserving existing assignments.
-/// </summary>
+// Runtime + serialisable configuration for one action bar.
+// Resize() grows or shrinks the slot list while preserving existing assignments.
 
 namespace CrabSystem
 {
@@ -30,10 +28,8 @@ namespace CrabSystem
                 slots.Add(new ActionBarSlotData(barId, i));
         }
 
-        /// <summary>
-        /// Change the slot count and row count, preserving assignments that still fit.
-        /// New slots are added empty at the end; slots beyond newCount are dropped.
-        /// </summary>
+        // Change the slot count and row count, preserving assignments that still fit.
+        // New slots are added empty at the end; slots beyond newCount are dropped.
         public void Resize(int newCount, int newRows)
         {
             newCount = Mathf.Clamp(newCount, 1, 12);

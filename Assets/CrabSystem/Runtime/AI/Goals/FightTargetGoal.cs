@@ -1,13 +1,11 @@
 using UnityEngine;
 
-/// <summary>
-/// First goal: close in on the perceived target and hit it with one attack on an interval.
-/// Bare bones by design — no blocking, spacing or reads yet. It exists so the player can be hit
-/// by something that plays through the real ability, hit roll, soak and hit-reaction path.
-///
-/// Needs on the entity: PerceptionModule (the target), AIControlSource (movement), and the
-/// attack ability in its AbilitySystem list.
-/// </summary>
+// First goal: close in on the perceived target and hit it with one attack on an interval.
+// Bare bones by design — no blocking, spacing or reads yet. It exists so the player can be hit
+// by something that plays through the real ability, hit roll, soak and hit-reaction path.
+//
+// Needs on the entity: PerceptionModule (the target), AIControlSource (movement), and the
+// attack ability in its AbilitySystem list.
 
 namespace CrabSystem
 {

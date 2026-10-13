@@ -1,14 +1,12 @@
 using UnityEngine;
 
-/// <summary>
-/// Permission matrix that defines what states can coexist.
-/// Enforces physical constraints: Posture -> LowerBody -> UpperBody -> Brain
-/// 
-/// This is a ScriptableObject so you can:
-/// 1. Create different permission profiles per enemy type
-/// 2. Override specific rules in derived classes
-/// 3. Configure in inspector
-/// </summary>
+// Permission matrix that defines what states can coexist.
+// Enforces physical constraints: Posture -> LowerBody -> UpperBody -> Brain
+//
+// This is a ScriptableObject so you can:
+// 1. Create different permission profiles per enemy type
+// 2. Override specific rules in derived classes
+// 3. Configure in inspector
 
 namespace CrabSystem
 {
@@ -20,10 +18,8 @@ namespace CrabSystem
 
         // ===== POSTURE CONSTRAINS MOVEMENT =====
 
-        /// <summary>
-        /// Check if current posture allows a desired lower body movement.
-        /// Posture is the foundation - it has most restrictive power.
-        /// </summary>
+        // Check if current posture allows a desired lower body movement.
+        // Posture is the foundation - it has most restrictive power.
         public virtual bool CanPerformMovement(PostureState posture, LowerBodyState desiredMovement)
         {
             switch (posture)
@@ -102,10 +98,8 @@ namespace CrabSystem
 
         // ===== MOVEMENT CONSTRAINS ACTIONS =====
 
-        /// <summary>
-        /// Check if current movement allows a desired upper body action.
-        /// Some movements restrict what you can do with your arms.
-        /// </summary>
+        // Check if current movement allows a desired upper body action.
+        // Some movements restrict what you can do with your arms.
         public virtual bool CanPerformAction_MovementCheck(LowerBodyState movement, UpperBodyState desiredAction)
         {
             switch (movement)
@@ -161,10 +155,8 @@ namespace CrabSystem
 
         // ===== ACTIONS CONSTRAIN MOVEMENT =====
 
-        /// <summary>
-        /// Check if current upper body action allows a desired movement.
-        /// Some actions lock you in place or restrict mobility.
-        /// </summary>
+        // Check if current upper body action allows a desired movement.
+        // Some actions lock you in place or restrict mobility.
         public virtual bool CanPerformMovement_ActionCheck(UpperBodyState action, LowerBodyState desiredMovement)
         {
             switch (action)
@@ -243,10 +235,8 @@ namespace CrabSystem
 
         // ===== POSTURE CONSTRAINS ACTIONS =====
 
-        /// <summary>
-        /// Check if current posture allows a desired upper body action.
-        /// Body position limits what you can do with your arms.
-        /// </summary>
+        // Check if current posture allows a desired upper body action.
+        // Body position limits what you can do with your arms.
         public virtual bool CanPerformAction_PostureCheck(PostureState posture, UpperBodyState desiredAction)
         {
             switch (posture)
@@ -308,10 +298,8 @@ namespace CrabSystem
 
         // ===== POSTURE CHANGE RESTRICTIONS =====
 
-        /// <summary>
-        /// Check if posture can be changed based on current states.
-        /// Some states prevent changing body position.
-        /// </summary>
+        // Check if posture can be changed based on current states.
+        // Some states prevent changing body position.
         public virtual bool CanChangePosture(UpperBodyState upperBody, LowerBodyState lowerBody, PostureState desiredPosture)
         {
             // Can't change posture while mid-swing

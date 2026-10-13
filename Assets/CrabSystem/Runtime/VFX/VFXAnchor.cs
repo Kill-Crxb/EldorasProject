@@ -1,25 +1,23 @@
-/// <summary>
-/// Named anchor points on an entity for spawning visual effects.
-/// Each anchor is a Transform child of the VFXSystem's Anchors GameObject.
-/// </summary>
+// Named anchor points on an entity for spawning visual effects.
+// Each anchor is a Transform child of the VFXSystem's Anchors GameObject.
 
 namespace CrabSystem
 {
     public enum VFXAnchor
     {
-        /// <summary>Above the entity's head. Damage numbers, status icons.</summary>
+        // Above the entity's head. Damage numbers, status icons.
         Overhead,
 
-        /// <summary>Hands / weapon origin. Cast effects, spell particles.</summary>
+        // Hands / weapon origin. Cast effects, spell particles.
         CastOrigin,
 
-        /// <summary>Centre of mass. Hit impact sparks, reaction effects.</summary>
+        // Centre of mass. Hit impact sparks, reaction effects.
         HitSparks,
 
-        /// <summary>Around the entity's body. Persistent aura effects, buffs, debuffs.</summary>
+        // Around the entity's body. Persistent aura effects, buffs, debuffs.
         Aura,
 
-        /// <summary>Behind the entity. Cape effects, back-mounted equipment VFX.</summary>
+        // Behind the entity. Cape effects, back-mounted equipment VFX.
         Back,
     }
 }

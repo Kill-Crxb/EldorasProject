@@ -4,20 +4,10 @@ namespace CrabSystem
 {
     public class CharacterConfigurationHandler : MonoBehaviour, IBrainModule
     {
-    #region Private Fields
-
         private ControllerBrain brain;
         private bool nameplateSpawned;
 
-    #endregion
-
-    #region Properties
-
         public bool IsEnabled { get; set; } = true;
-
-    #endregion
-
-    #region IBrainModule Implementation
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -31,10 +21,6 @@ namespace CrabSystem
         public void LateInitialize()
         {
         }
-
-    #endregion
-
-    #region Public API
 
         // Configs go straight to the brain they're for (Audit 2 C1). They used to be broadcast and
         // filtered by EntityId, and every Zoo dummy shares one id, so each applied all four dummy
@@ -73,10 +59,6 @@ namespace CrabSystem
             if (brain.IsNPC)
                 TrySpawnNameplate();
         }
-
-    #endregion
-
-    #region Configuration
 
         private void ConfigureIdentity(CharacterConfigData data)
         {
@@ -159,7 +141,5 @@ namespace CrabSystem
             nameplateSpawned = true;
             NameplateManager.Instance?.SpawnNameplate(brain);
         }
-
-    #endregion
     }
 }

@@ -1,13 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-// ========================================
-// ENUMS
-// ========================================
-
-/// <summary>
-/// Ability Type - Determines execution mode
-/// </summary>
+// Ability Type - Determines execution mode
 
 namespace CrabSystem
 {
@@ -18,9 +12,7 @@ namespace CrabSystem
         Utility     // Movement, buffs, utility → Various execution modes
     }
 
-    /// <summary>
-    /// Ability Category - Determines default blackboard requirements
-    /// </summary>
+    // Ability Category - Determines default blackboard requirements
     public enum AbilityCategory
     {
         Spell,      // Magical abilities (blocked by silence)
@@ -31,9 +23,7 @@ namespace CrabSystem
         Utility     // Generic abilities (minimal restrictions)
     }
 
-    /// <summary>
-    /// Ability Target Type - Who/what can be targeted
-    /// </summary>
+    // Ability Target Type - Who/what can be targeted
     public enum AbilityTargetType
     {
         Self,
@@ -43,22 +33,18 @@ namespace CrabSystem
         Direction
     }
 
-    /// <summary>
-    /// Who a status lands on when this ability resolves.
-    ///
-    /// Both are real and neither is an obvious default: a debuff rides the hit onto whoever was
-    /// struck, while a rage stack or a lifesteal buff belongs to whoever swung. On a self-targeted
-    /// ability the two resolve to the same brain.
-    /// </summary>
+    // Who a status lands on when this ability resolves.
+    //
+    // Both are real and neither is an obvious default: a debuff rides the hit onto whoever was
+    // struck, while a rage stack or a lifesteal buff belongs to whoever swung. On a self-targeted
+    // ability the two resolve to the same brain.
     public enum StatusRecipient
     {
         Target,
         Caster
     }
 
-    /// <summary>
-    /// One status this ability applies, and to whom.
-    /// </summary>
+    // One status this ability applies, and to whom.
     [System.Serializable]
     public struct StatusApplication
     {
@@ -70,13 +56,7 @@ namespace CrabSystem
         public StatusRecipient recipient;
     }
 
-    // ========================================
-    // RESOURCE COST STRUCTURE
-    // ========================================
-
-    /// <summary>
-    /// Resource cost entry for multi-resource abilities
-    /// </summary>
+    // Resource cost entry for multi-resource abilities
     [System.Serializable]
     public class ResourceCostEntry
     {
@@ -93,31 +73,21 @@ namespace CrabSystem
         public float refund = 0f;
     }
 
-    // ========================================
-    // ABILITY DEFINITION
-    // ========================================
-
-    /// <summary>
-    /// Unified Ability Definition - Works for all ability types
-    /// Split into partial classes by domain for clarity and maintainability
-    /// 
-    /// Partials:
-    /// - AbilityDefinition.cs (this file): Core identity, targeting, effects
-    /// - AbilityDefinition.Animation.cs: Animation triggers and VFX
-    /// - AbilityDefinition.Costs.cs: Resource costs and cooldowns
-    /// - AbilityDefinition.Blackboard.cs: Semantic requirements (optimized)
-    /// - AbilityDefinition.Defense.cs: Block/parry policy helpers
-    /// - AbilityDefinition.Chaining.cs: Combo policy helpers
-    /// - AbilityDefinition.LegacyExecute.cs: Legacy execution methods
-    /// - AbilityDefinition.Validation.cs: Editor validation
-    /// </summary>
+    // Unified Ability Definition - Works for all ability types
+    // Split into partial classes by domain for clarity and maintainability
+    //
+    // Partials:
+    // - AbilityDefinition.cs (this file): Core identity, targeting, effects
+    // - AbilityDefinition.Animation.cs: Animation triggers and VFX
+    // - AbilityDefinition.Costs.cs: Resource costs and cooldowns
+    // - AbilityDefinition.Blackboard.cs: Semantic requirements (optimized)
+    // - AbilityDefinition.Defense.cs: Block/parry policy helpers
+    // - AbilityDefinition.Chaining.cs: Combo policy helpers
+    // - AbilityDefinition.LegacyExecute.cs: Legacy execution methods
+    // - AbilityDefinition.Validation.cs: Editor validation
     [CreateAssetMenu(fileName = "New Ability", menuName = "CrabSystem/Ability Definition")]
     public partial class AbilityDefinition : ScriptableObject
     {
-        // ========================================
-        // BASIC INFO
-        // ========================================
-
         [Header("Basic Info")]
         [Tooltip("Unique identifier for this ability")]
         public string abilityId;
@@ -132,10 +102,6 @@ namespace CrabSystem
         [Tooltip("Icon shown in UI")]
         public Sprite icon;
 
-        // ========================================
-        // CLASSIFICATION
-        // ========================================
-
         [Header("Classification")]
         [Tooltip("Type determines execution mode (Offensive/Defensive/Utility)")]
         public AbilityType abilityType = AbilityType.Offensive;
@@ -149,10 +115,6 @@ namespace CrabSystem
 
         public bool HasTag(string tag) => !string.IsNullOrEmpty(tag) && tags != null && tags.Contains(tag);
 
-        // ========================================
-        // TARGETING
-        // ========================================
-
         [Header("Targeting")]
         [Tooltip("Who/what can be targeted")]
         public AbilityTargetType targetType = AbilityTargetType.Enemy;
@@ -163,11 +125,6 @@ namespace CrabSystem
         [Tooltip("Requires line of sight to target?")]
         public bool requiresLineOfSight = true;
 
-        // ========================================
-        // COMBAT EFFECTS (Legacy - Transitioning to Polymorphic)
-        // ========================================
-
-
         [Header("Combat Effects")]
         public List<DamageEffect> damageEffects = new List<DamageEffect>();
         public List<HealEffect> healEffects = new List<HealEffect>();
@@ -175,10 +132,6 @@ namespace CrabSystem
 
         [Header("Movement Effects")]
         public List<MovementEffect> movementEffects = new List<MovementEffect>();
-
-        // ========================================
-        // STATUS EFFECTS
-        // ========================================
 
         [Header("Status Effects")]
         [Tooltip("Statuses pushed onto whoever this ability reaches. Same authoring model as the " +
@@ -188,20 +141,16 @@ namespace CrabSystem
                  "potion behaves identically.")]
         public List<StatusApplication> statusEffects = new List<StatusApplication>();
 
-        /// <summary>
-        /// Push this ability's statuses onto whoever it reached.
-        ///
-        /// Called from all three places an ability actually lands — ExecuteOnSelf (self-targeted),
-        /// StrikeHandler (melee contact) and ProjectilePayload (arrival) — for the same reason all
-        /// three already read damageEffects: an ability is authored once, and how it was delivered
-        /// is not supposed to change what it does.
-        ///
-        /// Early-outs on an empty list before touching the hierarchy, because GetModule falls
-        /// through to GetComponentInChildren for anything not in the brain's provider cache and
-        /// this runs per contact.
-        /// </summary>
-        /// <param name="target">Whoever was hit. May be null for a self-cast with no victim.</param>
-        /// <param name="caster">Whoever used the ability. Recorded on the instance as the source.</param>
+        // Push this ability's statuses onto whoever it reached.
+        //
+        // Called from all three places an ability actually lands — ExecuteOnSelf (self-targeted),
+        // StrikeHandler (melee contact) and ProjectilePayload (arrival) — for the same reason all
+        // three already read damageEffects: an ability is authored once, and how it was delivered
+        // is not supposed to change what it does.
+        //
+        // Early-outs on an empty list before touching the hierarchy, because GetModule falls
+        // through to GetComponentInChildren for anything not in the brain's provider cache and
+        // this runs per contact.
         public void ApplyStatuses(ControllerBrain target, ControllerBrain caster)
         {
             if (statusEffects == null || statusEffects.Count == 0) return;

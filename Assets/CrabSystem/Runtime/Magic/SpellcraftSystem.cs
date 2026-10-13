@@ -4,13 +4,11 @@ using UnityEngine;
 
 namespace CrabSystem.Magic
 {
-    /// <summary>
-    /// Save payload. JsonUtility needs a concrete class and a plain array.
-    ///
-    /// Carries its own version, matching StatSystem, ResourceSystem and HotbarSystem — a file
-    /// whose shape has to change later cannot be migrated if it never recorded which shape it
-    /// was written in.
-    /// </summary>
+    // Save payload. JsonUtility needs a concrete class and a plain array.
+    //
+    // Carries its own version, matching StatSystem, ResourceSystem and HotbarSystem — a file
+    // whose shape has to change later cannot be migrated if it never recorded which shape it
+    // was written in.
     [Serializable]
     public class SpellcraftSaveData
     {
@@ -18,29 +16,27 @@ namespace CrabSystem.Magic
         public string[] unlockedSpells = new string[0];
     }
 
-    /// <summary>
-    /// The magic system. Owns the sequence being entered, the authored-spell lookup, the tier and
-    /// cost resolve, and the fold into a launch.
-    ///
-    /// AUTO-DISCOVERED. ControllerBrain.CacheModuleArrays walks GetComponentsInChildren
-    /// &lt;IBrainModule&gt; and InitializeModules falls through to anything not in its explicit
-    /// ordered list, so this needs NO serialized field on ControllerBrain and no edit to it —
-    /// the same way ProjectileLauncher, VFXSystem and CombatStanceModule are already wired.
-    ///
-    /// NO MANAGER. Sort what this owns into two piles and the reason is obvious. The grammar is
-    /// static data, authored once and read by everyone, referenced directly the way ModelDatabase
-    /// is. The unlock list is per-character state, so it saves itself through ISaveable exactly as
-    /// FactionSystem does. Neither is shared mutable world state, which is the only thing a manager
-    /// is for. This is not academic: Manager_Brain is DISABLED in Zoo.unity, so anything depending
-    /// on it would already be dead in the project's main test scene.
-    ///
-    /// NO INPUT. This exposes PushElement/Cast and nothing more. Whatever drives it — the element
-    /// hotbar, SpellcraftInput, a test script, an AI — is somebody else's component, the same way
-    /// IAbilityControlSource keeps ability input out of AbilitySystem.
-    ///
-    /// SETUP: add to any child of the ControllerBrain (next to ProjectileLauncher is the obvious
-    /// home), assign the grammar, done.
-    /// </summary>
+    // The magic system. Owns the sequence being entered, the authored-spell lookup, the tier and
+    // cost resolve, and the fold into a launch.
+    //
+    // AUTO-DISCOVERED. ControllerBrain.CacheModuleArrays walks GetComponentsInChildren
+    // <IBrainModule> and InitializeModules falls through to anything not in its explicit
+    // ordered list, so this needs NO serialized field on ControllerBrain and no edit to it —
+    // the same way ProjectileLauncher, VFXSystem and CombatStanceModule are already wired.
+    //
+    // NO MANAGER. Sort what this owns into two piles and the reason is obvious. The grammar is
+    // static data, authored once and read by everyone, referenced directly the way ModelDatabase
+    // is. The unlock list is per-character state, so it saves itself through ISaveable exactly as
+    // FactionSystem does. Neither is shared mutable world state, which is the only thing a manager
+    // is for. This is not academic: Manager_Brain is DISABLED in Zoo.unity, so anything depending
+    // on it would already be dead in the project's main test scene.
+    //
+    // NO INPUT. This exposes PushElement/Cast and nothing more. Whatever drives it — the element
+    // hotbar, SpellcraftInput, a test script, an AI — is somebody else's component, the same way
+    // IAbilityControlSource keeps ability input out of AbilitySystem.
+    //
+    // SETUP: add to any child of the ControllerBrain (next to ProjectileLauncher is the obvious
+    // home), assign the grammar, done.
     public class SpellcraftSystem : MonoBehaviour, IBrainModule, ISaveable,
                                     IProjectileLaunchModifier, IProjectileArrivalHandler
     {
@@ -126,27 +122,21 @@ namespace CrabSystem.Magic
         public IReadOnlyList<SpellElement> Sequence => sequence;
         public SpellGrammar Grammar => grammar;
 
-        /// <summary>Fires whenever the sequence changes — pushed, cleared or cast.</summary>
+        // Fires whenever the sequence changes — pushed, cleared or cast.
         public event Action OnSequenceChanged;
 
-        /// <summary>
-        /// One element was just entered. Carries WHICH, because OnSequenceChanged deliberately
-        /// does not — a UI redrawing the whole row does not care, but anything reacting to the
-        /// individual sign does. Hand-sign VFX and per-element audio both hang off this.
-        /// </summary>
+        // One element was just entered. Carries WHICH, because OnSequenceChanged deliberately
+        // does not — a UI redrawing the whole row does not care, but anything reacting to the
+        // individual sign does. Hand-sign VFX and per-element audio both hang off this.
         public event Action<SpellElement> OnElementDrawn;
         // A sign drawn while silenced. Hook fizzle sound and UI here.
         public event Action<SpellElement> OnElementFizzled;
 
-        /// <summary>The spell that was cast, for floating text and the sequence display.</summary>
+        // The spell that was cast, for floating text and the sequence display.
         public event Action<SpellRuntime> OnSpellCast;
 
-        /// <summary>Why a cast did not happen. Never fires for a "wrong" sequence — there is no such thing.</summary>
+        // Why a cast did not happen. Never fires for a "wrong" sequence — there is no such thing.
         public event Action<string> OnCastFailed;
-
-        // =========================================================================
-        // IBrainModule
-        // =========================================================================
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -189,15 +179,13 @@ namespace CrabSystem.Magic
         // fact bridge mirrors it to IsDrawing, and the sign-hold state follows it.
         public void UpdateModule() { }
 
-        /// <summary>
-        /// AbilitySystem resolves abilities BY STRING ID out of its own list, so anything this
-        /// system might ask it to cast has to be in that list first. Two sets qualify: the six
-        /// per-school cast abilities, and every authored spell in the grammar.
-        ///
-        /// Registered here rather than asked of every caster prefab, because the grammar already
-        /// knows the full set and a prefab that forgot one would fail only for the sequence that
-        /// needed it — a bug that hides until someone happens to type those elements.
-        /// </summary>
+        // AbilitySystem resolves abilities BY STRING ID out of its own list, so anything this
+        // system might ask it to cast has to be in that list first. Two sets qualify: the six
+        // per-school cast abilities, and every authored spell in the grammar.
+        //
+        // Registered here rather than asked of every caster prefab, because the grammar already
+        // knows the full set and a prefab that forgot one would fail only for the sequence that
+        // needed it — a bug that hides until someone happens to type those elements.
         private void RegisterSpellAbilities()
         {
             for (int i = 0; i < grammar.elements.Length; i++)
@@ -226,11 +214,9 @@ namespace CrabSystem.Magic
             }
         }
 
-        /// <summary>
-        /// Add one ability, refusing an unusable one loudly. AbilitySystem keys on abilityId, so
-        /// an empty id registers nothing and every cast of it is refused as "not ready" — with no
-        /// hint that the id is the problem.
-        /// </summary>
+        // Add one ability, refusing an unusable one loudly. AbilitySystem keys on abilityId, so
+        // an empty id registers nothing and every cast of it is refused as "not ready" — with no
+        // hint that the id is the problem.
         private void Register(AbilityDefinition ability)
         {
             if (string.IsNullOrEmpty(ability.abilityId))
@@ -244,23 +230,16 @@ namespace CrabSystem.Magic
             abilities.AddAbility(ability);
         }
 
-        // =========================================================================
-        // Entering a sequence
-        // =========================================================================
-
-        /// <summary>
-        /// Add an element. Refuses past the last slot rather than shuffling — there is nothing
-        /// after Amplify, and silently dropping the School would be worse than doing nothing.
-        /// </summary>
-        /// <summary>
-        /// Add an element. Refuses past the last slot rather than shuffling — there is nothing
-        /// after Amplify, and silently dropping the School would be worse than doing nothing.
-        ///
-        /// Also refuses while the previous hand sign is still being drawn. That refusal IS the
-        /// balance lever: length costs seconds of standing still, so a six-element spell is a
-        /// commitment rather than a keystroke. Silent, because a player mashing keys does not
-        /// need to be told they are mashing.
-        /// </summary>
+        // Add an element. Refuses past the last slot rather than shuffling — there is nothing
+        // after Amplify, and silently dropping the School would be worse than doing nothing.
+        //
+        // Add an element. Refuses past the last slot rather than shuffling — there is nothing
+        // after Amplify, and silently dropping the School would be worse than doing nothing.
+        //
+        // Also refuses while the previous hand sign is still being drawn. That refusal IS the
+        // balance lever: length costs seconds of standing still, so a six-element spell is a
+        // commitment rather than a keystroke. Silent, because a player mashing keys does not
+        // need to be told they are mashing.
         public void PushElement(SpellElement element)
         {
             if (!isEnabled) return;
@@ -304,7 +283,7 @@ namespace CrabSystem.Magic
 
         private bool HasFact(int key) => brain?.Blackboard?.GetBool(key) ?? false;
 
-        /// <summary>How fast this caster's hands are, 1 at no stat. Above 1 is faster.</summary>
+        // How fast this caster's hands are, 1 at no stat. Above 1 is faster.
         public float DrawSpeedMultiplier
         {
             get
@@ -315,7 +294,7 @@ namespace CrabSystem.Magic
             }
         }
 
-        /// <summary>Seconds this caster takes per element, after stats.</summary>
+        // Seconds this caster takes per element, after stats.
         public float CurrentDrawInterval
         {
             get
@@ -326,13 +305,11 @@ namespace CrabSystem.Magic
             }
         }
 
-        /// <summary>
-        /// Seconds a sequence of this length would take to enter. For a UI that wants to show
-        /// what a spell is about to cost in exposure, not just in mana.
-        /// </summary>
+        // Seconds a sequence of this length would take to enter. For a UI that wants to show
+        // what a spell is about to cost in exposure, not just in mana.
         public float DrawTimeFor(int length) => length * CurrentDrawInterval;
 
-        /// <summary>Drop the last element — the backspace.</summary>
+        // Drop the last element — the backspace.
         public void PopElement()
         {
             if (!isEnabled) return;
@@ -343,7 +320,7 @@ namespace CrabSystem.Magic
             OnSequenceChanged?.Invoke();
         }
 
-        /// <summary>Abandon the sequence. Hands come down.</summary>
+        // Abandon the sequence. Hands come down.
         public void ClearSequence()
         {
             if (SequenceLength == 0) return;
@@ -352,10 +329,8 @@ namespace CrabSystem.Magic
             OnSequenceChanged?.Invoke();
         }
 
-        /// <summary>
-        /// Clear because the sequence was SPENT, not abandoned. The cast's own trigger takes the
-        /// hands from the sign hold straight into the cast animation.
-        /// </summary>
+        // Clear because the sequence was SPENT, not abandoned. The cast's own trigger takes the
+        // hands from the sign hold straight into the cast animation.
         private void ConsumeSequence()
         {
             SequenceLength = 0;
@@ -364,16 +339,14 @@ namespace CrabSystem.Magic
 
         // ── Draw animation ────────────────────────────────────────────────
 
-        /// <summary>
-        /// The whole visible response to one element being entered: the hand sign, and the burst
-        /// of that element's colour at the casting hand.
-        ///
-        /// Both live here rather than in a listener, because "play the draw" is one idea and
-        /// AbilitySystem already sets the precedent — it spawns an ability's castEffectPrefab
-        /// through VFXSystem the same way. The generic halves (socket resolution, parenting,
-        /// recolouring) belong to VFXSystem and VfxTint; what is left here is the only part that
-        /// is actually about magic: which prefab, and which colour.
-        /// </summary>
+        // The whole visible response to one element being entered: the hand sign, and the burst
+        // of that element's colour at the casting hand.
+        //
+        // Both live here rather than in a listener, because "play the draw" is one idea and
+        // AbilitySystem already sets the precedent — it spawns an ability's castEffectPrefab
+        // through VFXSystem the same way. The generic halves (socket resolution, parenting,
+        // recolouring) belong to VFXSystem and VfxTint; what is left here is the only part that
+        // is actually about magic: which prefab, and which colour.
         private void PlayDraw(SpellElement element)
         {
             ElementDefinition def = grammar.GetElement(element);
@@ -383,16 +356,14 @@ namespace CrabSystem.Magic
             PlayDrawAnimation(def);
         }
 
-        /// <summary>
-        /// THE READABILITY CONTRACT for the input half of the system. Everything else makes a
-        /// spell readable once it is airborne; this makes it readable while it is being made, so
-        /// an onlooker can count the signs and read their colours and know roughly what is
-        /// coming. That is what turns a six-element cast into a commitment someone can punish
-        /// rather than a keystroke nobody saw.
-        ///
-        /// One prefab for all six schools, recoloured at spawn — the same economy as the
-        /// projectile visuals.
-        /// </summary>
+        // THE READABILITY CONTRACT for the input half of the system. Everything else makes a
+        // spell readable once it is airborne; this makes it readable while it is being made, so
+        // an onlooker can count the signs and read their colours and know roughly what is
+        // coming. That is what turns a six-element cast into a commitment someone can punish
+        // rather than a keystroke nobody saw.
+        //
+        // One prefab for all six schools, recoloured at spawn — the same economy as the
+        // projectile visuals.
         private void PlayDrawBurst(Color color)
         {
             if (vfx == null || grammar.drawVfxPrefab == null) return;
@@ -418,14 +389,12 @@ namespace CrabSystem.Magic
             animation.TriggerCombatAnimation(def.drawTrigger);
         }
 
-        /// <summary>The lookup key for what is currently entered.</summary>
+        // The lookup key for what is currently entered.
         public string CurrentKey => SpellSequence.ToKey(sequence, SequenceLength);
 
-        /// <summary>
-        /// What the sequence would cast, without casting it. For the live name under the icons.
-        /// Returns empty for an empty sequence; never throws on a partial one, because a partial
-        /// sequence is a complete spell.
-        /// </summary>
+        // What the sequence would cast, without casting it. For the live name under the icons.
+        // Returns empty for an empty sequence; never throws on a partial one, because a partial
+        // sequence is a complete spell.
         public string PreviewName()
         {
             if (SequenceLength == 0) return string.Empty;
@@ -439,16 +408,10 @@ namespace CrabSystem.Magic
             return spell.DisplayName;
         }
 
-        // =========================================================================
-        // Casting
-        // =========================================================================
-
-        /// <summary>
-        /// Resolve and cast. Look the sequence up; if this character has learned an authored spell
-        /// for it, cast that as an ordinary ability. Otherwise compose one.
-        ///
-        /// The difference between the two is not power, it is precision.
-        /// </summary>
+        // Resolve and cast. Look the sequence up; if this character has learned an authored spell
+        // for it, cast that as an ordinary ability. Otherwise compose one.
+        //
+        // The difference between the two is not power, it is precision.
         public void Cast()
         {
             if (!isEnabled) return;
@@ -548,13 +511,11 @@ namespace CrabSystem.Magic
             OnCastFailed?.Invoke(reason);
         }
 
-        /// <summary>
-        /// Why AbilitySystem said no, in the terms a person can act on.
-        ///
-        /// "Not ready" covers a cooldown, a busy caster, a blackboard fact and an ability that
-        /// was never registered — and those want completely different fixes. The last one used
-        /// to be indistinguishable from a cooldown that never expires, which is a bad hour.
-        /// </summary>
+        // Why AbilitySystem said no, in the terms a person can act on.
+        //
+        // "Not ready" covers a cooldown, a busy caster, a blackboard fact and an ability that
+        // was never registered — and those want completely different fixes. The last one used
+        // to be indistinguishable from a cooldown that never expires, which is a bad hour.
         private string NotReadyReason(AbilityDefinition ability)
         {
             if (abilities.GetAbility(ability.abilityId) == null)
@@ -575,18 +536,12 @@ namespace CrabSystem.Magic
             return spell.Dice != null ? spell.Dice.DamageLabel() : "no dice";
         }
 
-        // =========================================================================
-        // Cost
-        // =========================================================================
-
-        /// <summary>
-        /// The cost lives here, not on the cast ability, because it varies by sequence and tier
-        /// and the ability is a SHARED ASSET — writing a per-cast cost into resourceCosts would
-        /// corrupt it for every future cast. The six cast abilities carry an empty cost array.
-        ///
-        /// Resolved through IResourceProvider off the brain, which is the codebase's own
-        /// convention — it is what AbilitySystem itself does.
-        /// </summary>
+        // The cost lives here, not on the cast ability, because it varies by sequence and tier
+        // and the ability is a SHARED ASSET — writing a per-cast cost into resourceCosts would
+        // corrupt it for every future cast. The six cast abilities carry an empty cost array.
+        //
+        // Resolved through IResourceProvider off the brain, which is the codebase's own
+        // convention — it is what AbilitySystem itself does.
         private bool HasResourceFor(float cost)
         {
             if (cost <= 0f) return true;
@@ -608,18 +563,12 @@ namespace CrabSystem.Magic
             return grammar.costResource != null ? grammar.costResource.displayName : "resource";
         }
 
-        // =========================================================================
-        // IProjectileLaunchModifier — the fold
-        // =========================================================================
-
-        /// <summary>
-        /// Turn the composed spell into a launch. This is the only place the spell system touches
-        /// the projectile system, and it does so through a door the projectile system opened for
-        /// anyone — talents and gear will come through the same one.
-        ///
-        /// Form decides WHICH projectile, School decides its colour and damage type, Tier decides
-        /// its dice and its size. Everything else is multipliers the sequence accumulated.
-        /// </summary>
+        // Turn the composed spell into a launch. This is the only place the spell system touches
+        // the projectile system, and it does so through a door the projectile system opened for
+        // anyone — talents and gear will come through the same one.
+        //
+        // Form decides WHICH projectile, School decides its colour and damage type, Tier decides
+        // its dice and its size. Everything else is multipliers the sequence accumulated.
         public void ModifyLaunch(AbilityDefinition ability, ref ProjectileLaunchPlan plan)
         {
             if (!hasPending) return;
@@ -645,18 +594,14 @@ namespace CrabSystem.Magic
             plan.spreadDegrees = pending.spreadDegrees;
         }
 
-        // =========================================================================
         // IProjectileArrivalHandler — what the spell DOES when it lands
-        // =========================================================================
 
-        /// <summary>
-        /// The Effect slot, finally cashed in. Everything up to here has been about getting the
-        /// right projectile to the right target; this decides what happens to them.
-        ///
-        /// Returns false for Damage, which is not a gap — it means "the payload's normal path is
-        /// already correct", and the normal path already rolls the tier's dice with the school's
-        /// damage type. Adding a special case to reach the same result would be worse code.
-        /// </summary>
+        // The Effect slot, finally cashed in. Everything up to here has been about getting the
+        // right projectile to the right target; this decides what happens to them.
+        //
+        // Returns false for Damage, which is not a gap — it means "the payload's normal path is
+        // already correct", and the normal path already rolls the tier's dice with the school's
+        // damage type. Adding a special case to reach the same result would be worse code.
         public bool HandleArrival(AbilityDefinition ability, ControllerBrain target, ProjectileHitInfo hit,
                                   DiceProfile dice, float damageMultiplier)
         {
@@ -676,10 +621,8 @@ namespace CrabSystem.Magic
             return false;
         }
 
-        /// <summary>
-        /// Heal the thing we hit. The stance already guaranteed it is an ally — ProjectileAim
-        /// filtered enemies out as pass-throughs before this was ever called.
-        /// </summary>
+        // Heal the thing we hit. The stance already guaranteed it is an ally — ProjectileAim
+        // filtered enemies out as pass-throughs before this was ever called.
         private bool ApplyRestore(AbilityDefinition ability, ControllerBrain target)
         {
             if (ability.healEffects == null || ability.healEffects.Count == 0)
@@ -698,20 +641,14 @@ namespace CrabSystem.Magic
             return true;
         }
 
-        // =========================================================================
-        // Unlocks
-        // =========================================================================
-
-        /// <summary>
-        /// An authored spell this character has learned. A grammar entry that is not unlocked
-        /// composes primitively instead — the sequence still works, it is just less precise.
-        ///
-        /// Two ways to know a spell: the grammar says everyone knows it, or this character
-        /// learned it. Kept as an OR rather than seeding the unlock set at startup, because
-        /// LoadSaveData replaces that set wholesale — a seeded default would vanish on the
-        /// first load and reappear on a fresh character, which is the kind of bug that takes a
-        /// week to notice.
-        /// </summary>
+        // An authored spell this character has learned. A grammar entry that is not unlocked
+        // composes primitively instead — the sequence still works, it is just less precise.
+        //
+        // Two ways to know a spell: the grammar says everyone knows it, or this character
+        // learned it. Kept as an OR rather than seeding the unlock set at startup, because
+        // LoadSaveData replaces that set wholesale — a seeded default would vanish on the
+        // first load and reappear on a fresh character, which is the kind of bug that takes a
+        // week to notice.
         private AbilityDefinition ResolveAuthored()
         {
             AuthoredSpellEntry entry = grammar.FindAuthored(sequence, SequenceLength);
@@ -731,7 +668,7 @@ namespace CrabSystem.Magic
             return entry != null && entry.unlockedByDefault;
         }
 
-        /// <summary>Learning a spell is adding a dictionary entry. Returns false if already known.</summary>
+        // Learning a spell is adding a dictionary entry. Returns false if already known.
         public bool Unlock(string sequenceKey)
         {
             if (string.IsNullOrEmpty(sequenceKey)) return false;
@@ -745,10 +682,6 @@ namespace CrabSystem.Magic
         }
 
         public IReadOnlyCollection<string> UnlockedSpells => unlocked;
-
-        // =========================================================================
-        // ISaveable
-        // =========================================================================
 
         public string GetSaveId() => "spellcraft";
 

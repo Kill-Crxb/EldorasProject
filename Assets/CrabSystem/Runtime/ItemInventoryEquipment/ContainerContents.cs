@@ -1,44 +1,40 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Container Contents - ScriptableObject representing what's inside a container
-/// 
-/// Philosophy:
-/// - This is JUST data - "here's what items are in this container"
-/// - No behavior, no lifecycle logic
-/// - Can be created at runtime or pre-configured in editor
-/// - Can be saved to disk or kept in memory
-/// 
-/// Use Cases:
-/// 1. Pre-configured Loot (Inspector)
-///    - Designer creates asset with specific items
-///    - InventorySystem loads this on spawn
-///    - Example: Tutorial chest with starting gear
-/// 
-/// 2. Runtime Generated Loot (LootSystem)
-///    - LootSystem rolls loot, creates ContainerContents instance
-///    - InventorySystem uses this data
-///    - Example: Boss dies, generates loot, stores in ContainerContents
-/// 
-/// 3. Player-Modified Containers (Extraction Shooter)
-///    - Player loots chest, leaves items behind
-///    - InventorySystem updates ContainerContents
-///    - Other players see modified contents
-///    - End of raid: LootSystem decides to respawn or clear
-/// 
-/// 4. Persistent Storage (Stash)
-///    - InventorySystem saves ContainerContents to disk
-///    - On load: InventorySystem reads from disk, applies to container
-///    - Same ContainerContents loaded across multiple play sessions
-/// 
-/// Lifecycle Responsibility:
-/// - LootSystem: Decides WHEN to generate/clear/respawn contents
-/// - InventorySystem: Manages WHAT items are in the container
-/// - ContainerContents: Just holds the data
-/// 
-/// Created: February 9, 2026
-/// </summary>
+// Container Contents - ScriptableObject representing what's inside a container
+//
+// Philosophy:
+// - This is JUST data - "here's what items are in this container"
+// - No behavior, no lifecycle logic
+// - Can be created at runtime or pre-configured in editor
+// - Can be saved to disk or kept in memory
+//
+// Use Cases:
+// 1. Pre-configured Loot (Inspector)
+//    - Designer creates asset with specific items
+//    - InventorySystem loads this on spawn
+//    - Example: Tutorial chest with starting gear
+//
+// 2. Runtime Generated Loot (LootSystem)
+//    - LootSystem rolls loot, creates ContainerContents instance
+//    - InventorySystem uses this data
+//    - Example: Boss dies, generates loot, stores in ContainerContents
+//
+// 3. Player-Modified Containers (Extraction Shooter)
+//    - Player loots chest, leaves items behind
+//    - InventorySystem updates ContainerContents
+//    - Other players see modified contents
+//    - End of raid: LootSystem decides to respawn or clear
+//
+// 4. Persistent Storage (Stash)
+//    - InventorySystem saves ContainerContents to disk
+//    - On load: InventorySystem reads from disk, applies to container
+//    - Same ContainerContents loaded across multiple play sessions
+//
+// Lifecycle Responsibility:
+// - LootSystem: Decides WHEN to generate/clear/respawn contents
+// - InventorySystem: Manages WHAT items are in the container
+// - ContainerContents: Just holds the data
 
 namespace CrabSystem
 {
@@ -72,11 +68,6 @@ namespace CrabSystem
         [Tooltip("Original creator (for player-placed containers)")]
         public string creatorId;
 
-    #region Runtime API
-
-        /// <summary>
-        /// Remove an item by index
-        /// </summary>
         public bool RemoveItem(int index)
         {
             if (index < 0 || index >= items.Count)
@@ -87,9 +78,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Remove specific item by item ID
-        /// </summary>
+        // Remove specific item by item ID
         public bool RemoveItem(string itemId)
         {
             int index = items.FindIndex(i => i.definitionId == itemId);
@@ -102,35 +91,22 @@ namespace CrabSystem
             return false;
         }
 
-        /// <summary>
-        /// Clear all items
-        /// </summary>
+        // Clear all items
         public void ClearAll()
         {
             items.Clear();
             UpdateTimestamp();
         }
 
-        /// <summary>
-        /// Get item count
-        /// </summary>
         public int ItemCount => items.Count;
 
-        /// <summary>
-        /// Update last modified timestamp
-        /// </summary>
+        // Update last modified timestamp
         public void UpdateTimestamp()
         {
             lastModified = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
 
-    #endregion
-
-    #region Serialization
-
-        /// <summary>
-        /// Convert to ContainerData for network/save serialization
-        /// </summary>
+        // Convert to ContainerData for network/save serialization
         public ContainerData ToContainerData()
         {
             var itemInstances = new List<ItemInstance>();
@@ -152,9 +128,7 @@ namespace CrabSystem
             };
         }
 
-        /// <summary>
-        /// Create ContainerContents from ContainerData
-        /// </summary>
+        // Create ContainerContents from ContainerData
         public static ContainerContents FromContainerData(ContainerData data)
         {
             var contents = CreateInstance<ContainerContents>();
@@ -170,9 +144,7 @@ namespace CrabSystem
             return contents;
         }
 
-        /// <summary>
-        /// Save this container contents to disk as JSON
-        /// </summary>
+        // Save this container contents to disk as JSON
         public void SaveToDisk(string path)
         {
             var wrapper = new ContainerContentsWrapper { contents = this };
@@ -180,9 +152,6 @@ namespace CrabSystem
             System.IO.File.WriteAllText(path, json);
         }
 
-        /// <summary>
-        /// Load container contents from disk
-        /// </summary>
         public static ContainerContents LoadFromDisk(string path)
         {
             if (!System.IO.File.Exists(path))
@@ -192,10 +161,6 @@ namespace CrabSystem
             var wrapper = JsonUtility.FromJson<ContainerContentsWrapper>(json);
             return wrapper.contents;
         }
-
-    #endregion
-
-    #region Validation
 
         private void OnValidate()
         {
@@ -209,10 +174,6 @@ namespace CrabSystem
             gridWidth = Mathf.Max(1, gridWidth);
             gridHeight = Mathf.Max(1, gridHeight);
         }
-
-    #endregion
-
-    #region Debug
 
         [ContextMenu("Clear All Items")]
         private void DebugClearAll()
@@ -232,14 +193,9 @@ namespace CrabSystem
                 Debug.Log($"  - {item.definitionId} ({item.rarity}) x{item.stackCount} at ({item.gridX}, {item.gridY})");
             }
         }
-
-    #endregion
     }
 
-
-    /// <summary>
-    /// Wrapper for JSON serialization
-    /// </summary>
+    // Wrapper for JSON serialization
     [System.Serializable]
     public class ContainerContentsWrapper
     {

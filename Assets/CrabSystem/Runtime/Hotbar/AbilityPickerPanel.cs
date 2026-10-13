@@ -4,14 +4,12 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-/// <summary>
-/// Toggle panel listing available AbilitySlotData SOs for drag-to-hotbar assignment.
-/// Also surfaces raw AbilityDefinitions from RuntimeAbilityManager for abilities not
-/// yet wrapped in an AbilitySlotData asset.
-///
-/// No transient ScriptableObjects are created — AbilityPickerEntry carries
-/// SlotData (nullable) or AbilityDef directly.
-/// </summary>
+// Toggle panel listing available AbilitySlotData SOs for drag-to-hotbar assignment.
+// Also surfaces raw AbilityDefinitions from RuntimeAbilityManager for abilities not
+// yet wrapped in an AbilitySlotData asset.
+//
+// No transient ScriptableObjects are created — AbilityPickerEntry carries
+// SlotData (nullable) or AbilityDef directly.
 
 namespace CrabSystem
 {

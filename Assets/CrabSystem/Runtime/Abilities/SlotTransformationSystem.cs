@@ -2,15 +2,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Maintains active overrides on hotbar slots and evaluates all reactive transforms.
-/// The view layer's single query point — ActionBarSlotView always calls GetEffectiveAbility,
-/// never decides what to show on its own.
-///
-/// Override priority: higher wins. FIFO at equal priority.
-/// Reactive transforms (ResourceThreshold, Buff, TargetCondition) are evaluated at 10Hz.
-/// Event-driven transforms (HitProc, SequencePrereq) are applied externally and expire automatically.
-/// </summary>
+// Maintains active overrides on hotbar slots and evaluates all reactive transforms.
+// The view layer's single query point — ActionBarSlotView always calls GetEffectiveAbility,
+// never decides what to show on its own.
+//
+// Override priority: higher wins. FIFO at equal priority.
+// Reactive transforms (ResourceThreshold, Buff, TargetCondition) are evaluated at 10Hz.
+// Event-driven transforms (HitProc, SequencePrereq) are applied externally and expire automatically.
 
 namespace CrabSystem
 {
@@ -129,10 +127,8 @@ namespace CrabSystem
 
         // ── Core API ──────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Returns the override ability if active, else resolves from HotbarSystem.
-        /// Always call this — never bypass to HotbarSystem directly from the view.
-        /// </summary>
+        // Returns the override ability if active, else resolves from HotbarSystem.
+        // Always call this — never bypass to HotbarSystem directly from the view.
         public AbilityDefinition GetEffectiveAbility(string barId, int index)
         {
             string key = SlotKey(barId, index);
@@ -175,10 +171,8 @@ namespace CrabSystem
             return ov;
         }
 
-        /// <summary>
-        /// Applies an override following priority/FIFO rules.
-        /// duration = -1 means permanent until explicitly cleared.
-        /// </summary>
+        // Applies an override following priority/FIFO rules.
+        // duration = -1 means permanent until explicitly cleared.
         public void ApplyOverride(string barId, int index, AbilityDefinition ability,
                                   TransformationType type, float duration, int priority)
         {
@@ -208,11 +202,9 @@ namespace CrabSystem
                           $"(type:{type} pri:{priority} dur:{duration})");
         }
 
-        /// <summary>
-        /// Drops every active override. Called when HotbarSystem swaps pages — override keys carry
-        /// no page, so a proc earned on one page would otherwise apply to whatever slot replaces it.
-        /// Reactive transforms re-apply on the next pulse if their condition still holds.
-        /// </summary>
+        // Drops every active override. Called when HotbarSystem swaps pages — override keys carry
+        // no page, so a proc earned on one page would otherwise apply to whatever slot replaces it.
+        // Reactive transforms re-apply on the next pulse if their condition still holds.
         public void ClearAllOverrides()
         {
             if (activeOverrides.Count == 0) return;

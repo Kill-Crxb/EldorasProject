@@ -2,20 +2,18 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
-/// <summary>
-/// LayerManagerWindow — Editor window for validating and applying layer and physics matrix settings.
-///
-/// Open via: Tools → CrabSystem → Layer Manager
-///
-/// Features:
-///   - Validates current project layers against a LayerConfig SO
-///   - Validates current physics collision matrix against LayerConfig rules
-///   - One-click apply for layers, matrix, or both
-///   - Clear pass/fail status per item
-///   - Data-driven via LayerConfig SO — swap SO for different projects
-///
-/// Place this file in any Editor/ folder in your project.
-/// </summary>
+// LayerManagerWindow — Editor window for validating and applying layer and physics matrix settings.
+//
+// Open via: Tools → CrabSystem → Layer Manager
+//
+// Features:
+//   - Validates current project layers against a LayerConfig SO
+//   - Validates current physics collision matrix against LayerConfig rules
+//   - One-click apply for layers, matrix, or both
+//   - Clear pass/fail status per item
+//   - Data-driven via LayerConfig SO — swap SO for different projects
+//
+// Place this file in any Editor/ folder in your project.
 
 namespace CrabSystem
 {
@@ -44,8 +42,6 @@ namespace CrabSystem
         private int selectedTab = 0;
         private readonly string[] tabs = { "Layers", "Collision Matrix", "Apply" };
 
-        // =====================================================================
-
         [MenuItem("Tools/CrabSystem/Layer Manager")]
         public static void Open()
         {
@@ -53,10 +49,6 @@ namespace CrabSystem
             window.minSize = new Vector2(520, 400);
             window.Show();
         }
-
-        // =====================================================================
-        // GUI
-        // =====================================================================
 
         void OnGUI()
         {
@@ -313,10 +305,6 @@ namespace CrabSystem
             EditorGUILayout.LabelField($"Collision rules: {config.collisionRules.Count}", EditorStyles.miniLabel);
         }
 
-        // =====================================================================
-        // Validation
-        // =====================================================================
-
         private void ValidateLayers()
         {
             layerResults.Clear();
@@ -375,10 +363,6 @@ namespace CrabSystem
             Repaint();
         }
 
-        // =====================================================================
-        // Apply
-        // =====================================================================
-
         private void ApplyLayers()
         {
             // Layers are stored in TagManager.asset — modify via SerializedObject
@@ -428,10 +412,6 @@ namespace CrabSystem
             Debug.Log($"[LayerManager] Applied {config.collisionRules.Count} collision matrix rules.");
         }
 
-        // =====================================================================
-        // Styles
-        // =====================================================================
-
         private void InitStyles()
         {
             if (stylesInitialised) return;
@@ -461,10 +441,6 @@ namespace CrabSystem
 
             stylesInitialised = true;
         }
-
-        // =====================================================================
-        // Result types
-        // =====================================================================
 
         private class LayerValidationResult
         {

@@ -3,25 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using CrabSystem.Factions;
 
-/// <summary>
-/// ModelModule — reads sockets from ModelSocketProvider by slot ID.
-/// 
-/// When an item is equipped:
-/// 1. This entity's EquipmentSystem fires OnEquipmentVisual(slot, item)
-/// 2. ModelModule looks up the socket using slot.slotId (via ModelSocketProvider)
-/// 3. If found, instantiates equippedPrefab under that socket
-/// 
-/// ModelSocketProvider is the bridge — it holds the slot-to-socket mappings.
-/// No socketName string matching needed; everything keyed by slot ID.
-/// </summary>
+// ModelModule — reads sockets from ModelSocketProvider by slot ID.
+//
+// When an item is equipped:
+// 1. This entity's EquipmentSystem fires OnEquipmentVisual(slot, item)
+// 2. ModelModule looks up the socket using slot.slotId (via ModelSocketProvider)
+// 3. If found, instantiates equippedPrefab under that socket
+//
+// ModelSocketProvider is the bridge — it holds the slot-to-socket mappings.
+// No socketName string matching needed; everything keyed by slot ID.
 
 namespace CrabSystem
 {
     public class ModelModule : MonoBehaviour, IBrainModule, ISaveable
     {
         public int InitOrder => 20;
-
-    #region Inspector
 
         [Header("Module Settings")]
         [SerializeField] private bool isEnabled = true;
@@ -42,10 +38,6 @@ namespace CrabSystem
                  "Untick only for equipment that should genuinely grow with the creature carrying it.")]
         [SerializeField] private bool normaliseEquipmentScale = true;
 
-    #endregion
-
-    #region Private Fields
-
         private ControllerBrain brain;
         private EquipmentSystem equipment;
         private ModelSocketProvider socketProvider;
@@ -61,15 +53,7 @@ namespace CrabSystem
         // Slot → the appearance group its item drives (clothes in the model's mesh). Equipment owns these.
         private readonly Dictionary<string, string> equippedLooks = new Dictionary<string, string>();
 
-    #endregion
-
-    #region Events
-
         public event Action<string> OnModelChanged;
-
-    #endregion
-
-    #region Properties
 
         public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
         public GameObject CurrentModel => currentModel;
@@ -79,10 +63,6 @@ namespace CrabSystem
 
         // 2: appearance choices. A version 1 file has none and loads every group at its first option.
         public const int SaveVersion = 2;
-
-    #endregion
-
-    #region IBrainModule Implementation
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -137,10 +117,6 @@ namespace CrabSystem
             foreach (string slotId in emptySlots)
                 ClearSocket(slotId);
         }
-
-    #endregion
-
-    #region Model Management
 
         public bool SwapModel(string modelId, bool preserveEquipment = true)
         {
@@ -202,15 +178,9 @@ namespace CrabSystem
                 parts.Apply(appearance);
         }
 
-    #endregion
-
-    #region Socket Management
-
-        /// <summary>
-        /// Reads sockets from ModelSocketProvider on the current model.
-        /// ModelSocketProvider has a list of slot assets mapped to bone transforms.
-        /// We cache all of them for O(1) lookup during equipment changes.
-        /// </summary>
+        // Reads sockets from ModelSocketProvider on the current model.
+        // ModelSocketProvider has a list of slot assets mapped to bone transforms.
+        // We cache all of them for O(1) lookup during equipment changes.
         private void CacheSocketsFromProvider()
         {
             socketCache.Clear();
@@ -232,10 +202,8 @@ namespace CrabSystem
                 Debug.LogWarning($"[ModelModule] Model '{currentModelId}' has no slot-socket mappings in ModelSocketProvider.");
         }
 
-        /// <summary>
-        /// Gets a socket transform by slot ID.
-        /// Returns null if not found.
-        /// </summary>
+        // Gets a socket transform by slot ID.
+        // Returns null if not found.
         public Transform GetSocket(string slotId)
         {
             if (string.IsNullOrEmpty(slotId))
@@ -247,10 +215,8 @@ namespace CrabSystem
             return null;
         }
 
-        /// <summary>
-        /// Gets a non-slot socket (sheath point, prop mount) by its free-form id.
-        /// Returns null if the model has no such socket.
-        /// </summary>
+        // Gets a non-slot socket (sheath point, prop mount) by its free-form id.
+        // Returns null if the model has no such socket.
         public Transform GetNamedSocket(string socketId)
         {
             if (socketProvider == null)
@@ -270,16 +236,14 @@ namespace CrabSystem
             return visual.transform;
         }
 
-        /// <summary>
-        /// Reparents everything under one socket to another, zeroing the local transform so the
-        /// item sits on the new bone rather than keeping its old offset. Used by the stance
-        /// toggle to move a weapon between the hand and its sheath.
-        ///
-        /// World scale is carried across deliberately. SetParent(to, false) keeps localScale, so
-        /// two bones scaled differently — a hand and a spine on the same rig often are — would
-        /// resize the weapon every time it was drawn or sheathed. Capturing lossyScale and
-        /// restoring it means the sword is the same sword on the hip as in the hand.
-        /// </summary>
+        // Reparents everything under one socket to another, zeroing the local transform so the
+        // item sits on the new bone rather than keeping its old offset. Used by the stance
+        // toggle to move a weapon between the hand and its sheath.
+        //
+        // World scale is carried across deliberately. SetParent(to, false) keeps localScale, so
+        // two bones scaled differently — a hand and a spine on the same rig often are — would
+        // resize the weapon every time it was drawn or sheathed. Capturing lossyScale and
+        // restoring it means the sword is the same sword on the hip as in the hand.
         public static void MoveSocketContents(Transform from, Transform to)
         {
             if (from == null || to == null) return;
@@ -302,15 +266,9 @@ namespace CrabSystem
             SocketScale.Normalise(item, worldScale);
         }
 
-    #endregion
-
-    #region Equipment Visual Handling
-
-        /// <summary>
-        /// Called when this entity's EquipmentSystem fires OnEquipmentVisual.
-        /// Uses slot.slotId to look up the socket in the cache.
-        /// Spawns equippedPrefab under the socket.
-        /// </summary>
+        // Called when this entity's EquipmentSystem fires OnEquipmentVisual.
+        // Uses slot.slotId to look up the socket in the cache.
+        // Spawns equippedPrefab under the socket.
         private void HandleItemEquipped(EquipmentSlotDefinition slot, ItemInstance item)
         {
             if (slot == null || currentModel == null)
@@ -356,10 +314,8 @@ namespace CrabSystem
                 SocketScale.Normalise(visual.transform, item.Definition.equippedPrefab.transform.localScale);
         }
 
-        /// <summary>
-        /// A new model has empty sockets. Put back whatever is equipped — an NPC's natural weapon is
-        /// equipped at Initialize, before its config has loaded any model to hang it on.
-        /// </summary>
+        // A new model has empty sockets. Put back whatever is equipped — an NPC's natural weapon is
+        // equipped at Initialize, before its config has loaded any model to hang it on.
         private void ReattachEquipment()
         {
             // A model with no socket map can't hold anything; asking would only warn per slot.
@@ -405,10 +361,6 @@ namespace CrabSystem
                 Destroy(visual);
         }
 
-    #endregion
-
-    #region Model Detection
-
         private void DetectExistingModel()
         {
             var modelRoot = transform.Find("3D Model") ??
@@ -418,10 +370,6 @@ namespace CrabSystem
             if (modelRoot != null)
                 currentModel = modelRoot.gameObject;
         }
-
-    #endregion
-
-    #region ISaveable Implementation
 
         public string GetSaveId() => SaveId;
 
@@ -455,10 +403,6 @@ namespace CrabSystem
         public int GetSaveVersion() => SaveVersion;
         public int LoadOrder => 20;
 
-    #endregion
-
-    #region Cleanup
-
         private void OnDestroy()
         {
             if (equipment != null)
@@ -467,8 +411,6 @@ namespace CrabSystem
             if (brain != null)
                 brain.OnLoaded -= HandleLoaded;
         }
-
-    #endregion
     }
 
     [System.Serializable]

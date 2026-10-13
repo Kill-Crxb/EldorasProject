@@ -46,7 +46,6 @@ namespace CrabSystem
         Vector2 scroll;
         bool idEdited;
 
-
         // Internal so the dashboard's Weapons tab can host it.
         internal void OnGUI()
         {

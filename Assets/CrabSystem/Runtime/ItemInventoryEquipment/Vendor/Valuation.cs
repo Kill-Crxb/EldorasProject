@@ -1,7 +1,5 @@
-/// <summary>
-/// What an item costs at a vendor and what they pay for it. Pure and flat (Economy_Design.md §5):
-/// value is baseValue until composition lands; likes and dislikes slot in here later.
-/// </summary>
+// What an item costs at a vendor and what they pay for it. Pure and flat (Economy_Design.md §5):
+// value is baseValue until composition lands; likes and dislikes slot in here later.
 
 namespace CrabSystem
 {
@@ -11,14 +9,14 @@ namespace CrabSystem
 
         public static bool IsFree(VendorDefinition vendor) => string.IsNullOrEmpty(vendor.currencyItemId);
 
-        /// <summary>What the player pays to take it off the shelf.</summary>
+        // What the player pays to take it off the shelf.
         public static int Price(ItemDefinition item, VendorDefinition vendor)
         {
             if (IsFree(vendor)) return 0;
             return Floor(Value(item) + vendor.margin);
         }
 
-        /// <summary>What the vendor pays the player for it.</summary>
+        // What the vendor pays the player for it.
         public static int Offer(ItemDefinition item, VendorDefinition vendor)
         {
             if (IsFree(vendor)) return 0;

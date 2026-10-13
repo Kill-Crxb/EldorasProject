@@ -1,21 +1,19 @@
 ﻿using UnityEngine;
 using System;
 
-/// <summary>
-/// State Machine Module - manages 4 parallel state layers with permission enforcement.
-/// Companion component to ControllerBrain.
-/// 
-/// Architecture:
-/// - Brain State: What am I focusing on? (high-level context)
-/// - Upper Body State: What are my arms doing? (actions)
-/// - Lower Body State: What are my legs doing? (movement)
-/// - Posture State: What's my body position? (foundation)
-/// 
-/// Universal Design:
-/// - Works for any game genre
-/// - You define state enums per game
-/// - Permission rules are customizable
-/// </summary>
+// State Machine Module - manages 4 parallel state layers with permission enforcement.
+// Companion component to ControllerBrain.
+//
+// Architecture:
+// - Brain State: What am I focusing on? (high-level context)
+// - Upper Body State: What are my arms doing? (actions)
+// - Lower Body State: What are my legs doing? (movement)
+// - Posture State: What's my body position? (foundation)
+//
+// Universal Design:
+// - Works for any game genre
+// - You define state enums per game
+// - Permission rules are customizable
 
 namespace CrabSystem
 {
@@ -130,9 +128,7 @@ namespace CrabSystem
 
         // ===== CONVENIENCE PROPERTIES =====
 
-        /// <summary>
-        /// Is entity currently grounded? (derived from posture)
-        /// </summary>
+        // Is entity currently grounded? (derived from posture)
         public bool IsGrounded
         {
             get
@@ -146,9 +142,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Is entity airborne? (derived from posture and lower body)
-        /// </summary>
+        // Is entity airborne? (derived from posture and lower body)
         public bool IsAirborne
         {
             get
@@ -163,9 +157,7 @@ namespace CrabSystem
 
         // ===== PERMISSION CHECKS =====
 
-        /// <summary>
-        /// Can perform a specific upper body action right now?
-        /// </summary>
+        // Can perform a specific upper body action right now?
         public bool CanPerformUpperBodyAction(UpperBodyState desiredAction)
         {
             // Check posture allows it
@@ -179,9 +171,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Can perform a specific lower body movement right now?
-        /// </summary>
+        // Can perform a specific lower body movement right now?
         public bool CanPerformMovement(LowerBodyState desiredMovement)
         {
             // Check posture allows it
@@ -195,9 +185,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Can change posture right now?
-        /// </summary>
+        // Can change posture right now?
         public bool CanChangePosture(PostureState desiredPosture)
         {
             return permissions.CanChangePosture(
@@ -209,9 +197,7 @@ namespace CrabSystem
 
         // ===== STATE TRANSITIONS (WITH PERMISSION CHECKS) =====
 
-        /// <summary>
-        /// Try to transition brain state (always allowed)
-        /// </summary>
+        // Try to transition brain state (always allowed)
         public bool TryTransitionBrain(BrainState newState)
         {
             brainState.TransitionTo(newState);
@@ -222,9 +208,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Try to transition upper body state (subject to permissions)
-        /// </summary>
+        // Try to transition upper body state (subject to permissions)
         public bool TryTransitionUpperBody(UpperBodyState newState)
         {
             // Check if already in this state
@@ -247,9 +231,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Try to transition lower body state (subject to permissions)
-        /// </summary>
+        // Try to transition lower body state (subject to permissions)
         public bool TryTransitionLowerBody(LowerBodyState newState)
         {
             // Check if already in this state
@@ -272,9 +254,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Try to transition posture state (subject to permissions)
-        /// </summary>
+        // Try to transition posture state (subject to permissions)
         public bool TryTransitionPosture(PostureState newState)
         {
             // Check if already in this state

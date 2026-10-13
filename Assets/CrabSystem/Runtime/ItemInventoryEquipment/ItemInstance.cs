@@ -1,10 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Runtime item instance with cached definition for performance.
-/// Stores state (tier, durability, position) and pre-calculated modifiers.
-/// </summary>
+// Runtime item instance with cached definition for performance.
+// Stores state (tier, durability, position) and pre-calculated modifiers.
 
 namespace CrabSystem
 {

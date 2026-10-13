@@ -1,29 +1,27 @@
 using UnityEngine;
 
-/// <summary>
-/// The presentation tier — the Visual child of a projectile. Same reasoning as m_Root on
-/// ControllerBrain: everything that needs its own transform lives here, and no gameplay
-/// logic does.
-///
-/// Populated at runtime from ProjectileData.visualPrefab, which is what lets one archetype
-/// prefab serve Fireball, Iceball and Poison Bolt.
-///
-/// The model is REBUILT ONLY WHEN THE PREFAB CHANGES. A pooled shuriken fired repeatedly
-/// keeps the same model instance and just re-tints — otherwise every shot would pay an
-/// Instantiate and a Destroy, which is the cost the pool exists to avoid.
-///
-/// THREE WAYS TO BE COLOURED, because a projectile can be made of three things:
-///
-///   Renderer        MaterialPropertyBlock, never renderer.material — the latter instances a
-///                   material per object and leaks under pooling.
-///   ParticleSystem  main.startColor. A particle shader multiplies by vertex colour, so a
-///                   MaterialPropertyBlock on a ParticleSystemRenderer usually does nothing
-///                   at all. THIS is where a spell VFX's colour actually lives.
-///   Light           light.color, straight.
-///
-/// The particle path is not a special case for one asset. Every spell effect worth shipping
-/// is particles, so one orb prefab serving six schools depends on it entirely.
-/// </summary>
+// The presentation tier — the Visual child of a projectile. Same reasoning as m_Root on
+// ControllerBrain: everything that needs its own transform lives here, and no gameplay
+// logic does.
+//
+// Populated at runtime from ProjectileData.visualPrefab, which is what lets one archetype
+// prefab serve Fireball, Iceball and Poison Bolt.
+//
+// The model is REBUILT ONLY WHEN THE PREFAB CHANGES. A pooled shuriken fired repeatedly
+// keeps the same model instance and just re-tints — otherwise every shot would pay an
+// Instantiate and a Destroy, which is the cost the pool exists to avoid.
+//
+// THREE WAYS TO BE COLOURED, because a projectile can be made of three things:
+//
+//   Renderer        MaterialPropertyBlock, never renderer.material — the latter instances a
+//                   material per object and leaks under pooling.
+//   ParticleSystem  main.startColor. A particle shader multiplies by vertex colour, so a
+//                   MaterialPropertyBlock on a ParticleSystemRenderer usually does nothing
+//                   at all. THIS is where a spell VFX's colour actually lives.
+//   Light           light.color, straight.
+//
+// The particle path is not a special case for one asset. Every spell effect worth shipping
+// is particles, so one orb prefab serving six schools depends on it entirely.
 
 namespace CrabSystem
 {
@@ -53,14 +51,12 @@ namespace CrabSystem
                 modelParent = transform;
         }
 
-        /// <summary>
-        /// Called by ProjectileBrain at launch.
-        ///
-        /// The MODEL comes from the shared asset — it is what makes this projectile a fireball
-        /// rather than a shuriken, and it is rebuilt only when it actually changes. The TINT comes
-        /// from the runtime copy, because a composed spell picks its element at cast time. The
-        /// asset's tint seeds the runtime in FromData, so an ordinary projectile is unaffected.
-        /// </summary>
+        // Called by ProjectileBrain at launch.
+        //
+        // The MODEL comes from the shared asset — it is what makes this projectile a fireball
+        // rather than a shuriken, and it is rebuilt only when it actually changes. The TINT comes
+        // from the runtime copy, because a composed spell picks its element at cast time. The
+        // asset's tint seeds the runtime in FromData, so an ordinary projectile is unaffected.
         public void Setup(ProjectileData data, ProjectileRuntime runtime)
         {
             if (data == null) return;
@@ -107,15 +103,13 @@ namespace CrabSystem
             lightBaseColors = VfxTint.CaptureLightColors(lights);
         }
 
-        /// <summary>
-        /// The colour work itself lives in VfxTint, shared with the spell system's hand-sign
-        /// bursts — the rules for where a colour hides in a Unity effect are the same wherever
-        /// the effect is, and having two copies of them would mean one of them going stale.
-        ///
-        /// The CACHED form: base colours were captured at rebuild, so re-tinting a pooled
-        /// projectile always starts from the prefab's colours rather than from the last tint.
-        /// Tinting a tint compounds, and a fireball fired six times would drift to black.
-        /// </summary>
+        // The colour work itself lives in VfxTint, shared with the spell system's hand-sign
+        // bursts — the rules for where a colour hides in a Unity effect are the same wherever
+        // the effect is, and having two copies of them would mean one of them going stale.
+        //
+        // The CACHED form: base colours were captured at rebuild, so re-tinting a pooled
+        // projectile always starts from the prefab's colours rather than from the last tint.
+        // Tinting a tint compounds, and a fireball fired six times would drift to black.
         public void ApplyTint(Color color, string property)
         {
             if (propertyBlock == null)

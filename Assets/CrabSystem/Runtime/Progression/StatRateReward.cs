@@ -2,11 +2,9 @@ using UnityEngine;
 
 namespace CrabSystem.Progression
 {
-    /// <summary>
-    /// An amount per point of whatever drives it. "+0.5 Initiative per Spirit" — at Spirit 5
-    /// that is 2.5, and it keeps climbing as Spirit does, because the breakpoint is
-    /// re-evaluated whenever the driving stat changes.
-    /// </summary>
+    // An amount per point of whatever drives it. "+0.5 Initiative per Spirit" — at Spirit 5
+    // that is 2.5, and it keeps climbing as Spirit does, because the breakpoint is
+    // re-evaluated whenever the driving stat changes.
     [CreateAssetMenu(fileName = "Reward_StatRate", menuName = "CrabSystem/Rewards/Stat Rate")]
     public class StatRateReward : Reward
     {

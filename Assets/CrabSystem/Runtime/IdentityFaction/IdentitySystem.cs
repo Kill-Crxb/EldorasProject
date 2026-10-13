@@ -36,7 +36,7 @@ namespace CrabSystem
 
         public EntityType GetEntityType() => Type;
 
-        /// <summary>This entity's faction asset, via the brain's FactionSystem. Null if unaffiliated.</summary>
+        // This entity's faction asset, via the brain's FactionSystem. Null if unaffiliated.
         public FactionDefinition GetFaction() => brain?.Faction?.CurrentFaction;
 
         public void Initialize(ControllerBrain controllerBrain)
@@ -51,8 +51,6 @@ namespace CrabSystem
         public void LateInitialize()
         {
         }
-
-    #region ISaveable
 
         public string GetSaveId() => "identity";
 
@@ -88,8 +86,6 @@ namespace CrabSystem
         }
 
         public int GetSaveVersion() => 1;
-
-    #endregion
 
         [System.Serializable]
         private class IdentitySaveData

@@ -4,14 +4,12 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Blackboard Debug Display - OnGUI based (no canvas required)
-/// 
-/// Shows semantic bridge and blackboard state:
-/// - All blackboard facts (IsWounded, CanDodge, etc.)
-/// - Raw values from value sources (health%, stamina%, etc.)
-/// - Condition count and update rate
-/// </summary>
+// Blackboard Debug Display - OnGUI based (no canvas required)
+//
+// Shows semantic bridge and blackboard state:
+// - All blackboard facts (IsWounded, CanDodge, etc.)
+// - Raw values from value sources (health%, stamina%, etc.)
+// - Condition count and update rate
 
 namespace CrabSystem
 {
@@ -435,6 +433,5 @@ namespace CrabSystem
             }
         }
     }
-
 }
 #endif

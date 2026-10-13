@@ -1,30 +1,28 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Turns a projectile into a VOLUME: something that sits in the world and applies itself to
-/// everything inside it, on a beat, until its lifetime runs out.
-///
-/// This is the whole of Stream and Field. They are not two systems — they are this one with
-/// two settings different:
-///
-///   Field   areaAngle 360, followSource off   a placed sphere that lingers and ticks
-///   Stream  areaAngle  60, followSource on    a cone that rides the caster, a breath
-///
-/// Inert unless ProjectileData.tickInterval is above 0, so every projectile in the game that
-/// resolves on contact is untouched by its presence.
-///
-/// WHY THE DAMAGE IS HERE AND NOT ON THE BOLTS:
-/// The obvious way to build a flamethrower is to fire a lot of small projectiles. Then a wide
-/// breath deals its damage once per bolt, someone standing close eats six at once, and the
-/// spell's output depends on how many particles happen to intersect them. That is shotgunning,
-/// and it is unbalanceable. So the volume does the damage — once per target per tick, no matter
-/// how it looks — and the bolts are decoration fired by ProjectileEmitter with
-/// ProjectileData.cosmeticOnly set.
-///
-/// SETUP: add to the Base_Projectile archetype alongside ProjectilePayload. It costs one
-/// early-out per frame on projectiles that are not volumes.
-/// </summary>
+// Turns a projectile into a VOLUME: something that sits in the world and applies itself to
+// everything inside it, on a beat, until its lifetime runs out.
+//
+// This is the whole of Stream and Field. They are not two systems — they are this one with
+// two settings different:
+//
+//   Field   areaAngle 360, followSource off   a placed sphere that lingers and ticks
+//   Stream  areaAngle  60, followSource on    a cone that rides the caster, a breath
+//
+// Inert unless ProjectileData.tickInterval is above 0, so every projectile in the game that
+// resolves on contact is untouched by its presence.
+//
+// WHY THE DAMAGE IS HERE AND NOT ON THE BOLTS:
+// The obvious way to build a flamethrower is to fire a lot of small projectiles. Then a wide
+// breath deals its damage once per bolt, someone standing close eats six at once, and the
+// spell's output depends on how many particles happen to intersect them. That is shotgunning,
+// and it is unbalanceable. So the volume does the damage — once per target per tick, no matter
+// how it looks — and the bolts are decoration fired by ProjectileEmitter with
+// ProjectileData.cosmeticOnly set.
+//
+// SETUP: add to the Base_Projectile archetype alongside ProjectilePayload. It costs one
+// early-out per frame on projectiles that are not volumes.
 
 namespace CrabSystem
 {
@@ -111,14 +109,12 @@ namespace CrabSystem
                                  $"or tighten the hit mask.", this);
         }
 
-        /// <summary>
-        /// Whether a target is within the wedge. A full 360 volume skips the check entirely, which
-        /// is the Field case and the common one.
-        ///
-        /// Flattened to the horizontal plane on purpose: a breath weapon that stops working because
-        /// the target is standing slightly downhill is worse than one that reaches slightly further
-        /// than it looks.
-        /// </summary>
+        // Whether a target is within the wedge. A full 360 volume skips the check entirely, which
+        // is the Field case and the common one.
+        //
+        // Flattened to the horizontal plane on purpose: a breath weapon that stops working because
+        // the target is standing slightly downhill is worse than one that reaches slightly further
+        // than it looks.
         private bool InsideCone(ProjectileData data, Vector3 centre, ControllerBrain target)
         {
             if (data.areaAngle >= 360f) return true;

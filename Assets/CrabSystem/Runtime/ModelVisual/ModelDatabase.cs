@@ -5,8 +5,6 @@ namespace CrabSystem
 {
     public class ModelDatabase : ScriptableObject
     {
-    #region Model Variant
-
         [System.Serializable]
         public class ModelVariant
         {
@@ -33,25 +31,13 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Inspector
-
         [Header("Models")]
         [SerializeField] private ModelVariant[] models = new ModelVariant[0];
 
         [Header("Settings")]
         [SerializeField] private bool validateOnLoad = true;
 
-    #endregion
-
-    #region Properties
-
         public ModelVariant[] AllModels => models;
-
-    #endregion
-
-    #region Lookup
 
         public ModelVariant GetModel(string modelId)
         {
@@ -69,10 +55,6 @@ namespace CrabSystem
             return models[index];
         }
 
-    #endregion
-
-    #region Validation
-
         public bool ValidateDatabase()
         {
             if (!validateOnLoad)
@@ -86,7 +68,5 @@ namespace CrabSystem
 
             return true;
         }
-
-    #endregion
     }
 }

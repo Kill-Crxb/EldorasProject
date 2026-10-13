@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Hosts the player's inventory grid inside a panel slot.
-/// Same grid the old floating window used, without the window chrome.
-/// </summary>
+// Hosts the player's inventory grid inside a panel slot.
+// Same grid the old floating window used, without the window chrome.
 
 namespace CrabSystem
 {
@@ -90,11 +88,9 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// The grid maps screen points to cells by dividing the local point inside its layers
-        /// by the slot pitch, so the rect must be exactly the grid's pixel size or every drop
-        /// lands on the wrong cell. Pinned top-left of the container, never stretched.
-        /// </summary>
+        // The grid maps screen points to cells by dividing the local point inside its layers
+        // by the slot pitch, so the rect must be exactly the grid's pixel size or every drop
+        // lands on the wrong cell. Pinned top-left of the container, never stretched.
         private void FitToGrid(RectTransform rect)
         {
             if (rect == null) return;

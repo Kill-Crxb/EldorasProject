@@ -2,12 +2,10 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
-/// <summary>
-/// Creates a pre-filled LayerConfig asset with the default layer definitions and collision
-/// matrix rules. It includes every layer in CrabLayers.
-///
-/// Run via: Tools → CrabSystem → Create Default Layer Config
-/// </summary>
+// Creates a pre-filled LayerConfig asset with the default layer definitions and collision
+// matrix rules. It includes every layer in CrabLayers.
+//
+// Run via: Tools → CrabSystem → Create Default Layer Config
 
 namespace CrabSystem
 {

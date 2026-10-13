@@ -2,15 +2,13 @@ using UnityEngine;
 
 namespace CrabSystem.Progression
 {
-    /// <summary>
-    /// Adds dice, a flat amount, or both to a named roll. "+1d4 to crit rolls",
-    /// "+2 weapon damage", or an ability upgrade that does both.
-    ///
-    /// Purely additive by design — a katana at 1d8 + 2 with this reward reads 1d8 + 1d4 + 2,
-    /// which still has a minimum and a maximum you can work out in your head.
-    ///
-    /// Inert until something on the entity implements IRollModifier.
-    /// </summary>
+    // Adds dice, a flat amount, or both to a named roll. "+1d4 to crit rolls",
+    // "+2 weapon damage", or an ability upgrade that does both.
+    //
+    // Purely additive by design — a katana at 1d8 + 2 with this reward reads 1d8 + 1d4 + 2,
+    // which still has a minimum and a maximum you can work out in your head.
+    //
+    // Inert until something on the entity implements IRollModifier.
     [CreateAssetMenu(fileName = "Reward_RollBonus", menuName = "CrabSystem/Rewards/Roll Bonus")]
     public class RollBonusReward : Reward
     {

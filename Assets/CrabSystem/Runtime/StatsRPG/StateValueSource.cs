@@ -1,42 +1,39 @@
 using UnityEngine;
 
-/// <summary>
-/// Value source that queries entity state flags (grounded, in combat, etc.)
-/// Converts boolean states to float (0/1) for comparison operations.
-/// 
-/// Use Cases:
-/// - Grounded state for "CanJump" condition
-/// - In combat state for "InCombat" condition
-/// - Stunned state for "CannotAct" condition
-/// 
-/// State Properties:
-/// - Grounded: Entity feet touching ground
-/// - InCombat: Recently dealt/received damage
-/// - Stunned: Unable to act (from status effect)
-/// - Blocking: Active defense state
-/// - Sprinting: Movement speed boost active
-/// 
-/// Boolean to Float Conversion:
-/// true → 1.0
-/// false → 0.0
-/// 
-/// Example Configuration:
-/// IsGrounded_State.asset:
-///   stateProperty: Grounded
-///   
-/// InCombat_State.asset:
-///   stateProperty: InCombat
-/// 
-/// Usage in Condition:
-/// BlackboardCondition "CanJump":
-///   valueSource: IsGrounded_State.asset
-///   comparison: Equals
-///   threshold: 1.0 (true)
-///   outputFactKey: "CanJump"
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 18, 2026
-/// </summary>
+// Value source that queries entity state flags (grounded, in combat, etc.)
+// Converts boolean states to float (0/1) for comparison operations.
+//
+// Use Cases:
+// - Grounded state for "CanJump" condition
+// - In combat state for "InCombat" condition
+// - Stunned state for "CannotAct" condition
+//
+// State Properties:
+// - Grounded: Entity feet touching ground
+// - InCombat: Recently dealt/received damage
+// - Stunned: Unable to act (from status effect)
+// - Blocking: Active defense state
+// - Sprinting: Movement speed boost active
+//
+// Boolean to Float Conversion:
+// true → 1.0
+// false → 0.0
+//
+// Example Configuration:
+// IsGrounded_State.asset:
+//   stateProperty: Grounded
+//
+// InCombat_State.asset:
+//   stateProperty: InCombat
+//
+// Usage in Condition:
+// BlackboardCondition "CanJump":
+//   valueSource: IsGrounded_State.asset
+//   comparison: Equals
+//   threshold: 1.0 (true)
+//   outputFactKey: "CanJump"
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -119,9 +116,7 @@ namespace CrabSystem
         }
     }
 
-    /// <summary>
-    /// Available entity state properties
-    /// </summary>
+    // Available entity state properties
     public enum StateProperty
     {
         Grounded,   // Feet touching ground

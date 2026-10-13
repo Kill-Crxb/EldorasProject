@@ -1,21 +1,13 @@
 using UnityEngine;
 
-/// <summary>
-/// AbilityDefinition - Validation Partial
-/// Editor validation and configuration checking
-/// </summary>
+// AbilityDefinition - Validation Partial
+// Editor validation and configuration checking
 
 namespace CrabSystem
 {
     public partial class AbilityDefinition
     {
-        // ========================================
-        // VALIDATION
-        // ========================================
-
-        /// <summary>
-        /// Validate ability configuration
-        /// </summary>
+        // Validate ability configuration
         public bool Validate(out string errorMessage)
         {
             if (string.IsNullOrEmpty(abilityId))

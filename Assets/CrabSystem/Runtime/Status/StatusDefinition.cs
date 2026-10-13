@@ -2,22 +2,20 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// What a status IS. Authored once, shared by every bearer, never written to at runtime —
-/// per-application state lives on StatusInstance.
-///
-/// A status is a NAMED, EXPIRING BUNDLE OF STAT CONTRIBUTIONS. That is the whole model, and
-/// it is deliberately not an effect-scripting system. StatSystem already does keyed,
-/// replace-on-re-add, exact-removal modification; the only thing missing was identity and a
-/// clock, which is what this asset and StatusSystem supply.
-///
-/// So Stoneskin is a contribution to a mitigation stat, Wreathe is a contribution to
-/// cmb.bonus_dice, Attune is a contribution to spell power. None of them need code, and gear
-/// and talents reach the same stats through the same door without knowing statuses exist.
-///
-/// Anything genuinely reactive — Thorns answering a hit — is a small hand-written reader of
-/// a stat, not a behaviour object hanging off this asset.
-/// </summary>
+// What a status IS. Authored once, shared by every bearer, never written to at runtime —
+// per-application state lives on StatusInstance.
+//
+// A status is a NAMED, EXPIRING BUNDLE OF STAT CONTRIBUTIONS. That is the whole model, and
+// it is deliberately not an effect-scripting system. StatSystem already does keyed,
+// replace-on-re-add, exact-removal modification; the only thing missing was identity and a
+// clock, which is what this asset and StatusSystem supply.
+//
+// So Stoneskin is a contribution to a mitigation stat, Wreathe is a contribution to
+// cmb.bonus_dice, Attune is a contribution to spell power. None of them need code, and gear
+// and talents reach the same stats through the same door without knowing statuses exist.
+//
+// Anything genuinely reactive — Thorns answering a hit — is a small hand-written reader of
+// a stat, not a behaviour object hanging off this asset.
 
 namespace CrabSystem
 {
@@ -71,7 +69,7 @@ namespace CrabSystem
                  "else authored against frame data. 0 = use seconds.")]
         public int durationFrames = 0;
 
-        /// <summary>The lifetime every reader uses: frames when authored, otherwise seconds.</summary>
+        // The lifetime every reader uses: frames when authored, otherwise seconds.
         public float Seconds => durationFrames > 0 ? durationFrames / 60f : duration;
 
         [Tooltip("What a second application does. See StatusStacking.")]
@@ -117,12 +115,10 @@ namespace CrabSystem
 
         [NonSerialized] private string cachedSourceKey;
 
-        /// <summary>
-        /// The stat contribution key for this status — "status:{id}".
-        ///
-        /// Cached because it is written once per contributed stat on every apply, stack change
-        /// and removal, and string concatenation in that path allocates for no reason.
-        /// </summary>
+        // The stat contribution key for this status — "status:{id}".
+        //
+        // Cached because it is written once per contributed stat on every apply, stack change
+        // and removal, and string concatenation in that path allocates for no reason.
         public string SourceKey
         {
             get
@@ -149,16 +145,14 @@ namespace CrabSystem
 #endif
     }
 
-    /// <summary>
-    /// What a second application of the same status does.
-    ///
-    /// Both rules use ONE contribution key per id per bearer. Stack does arithmetic on the
-    /// amount rather than juggling N keys — same result, no key hygiene to get wrong.
-    ///
-    /// Independent-per-source (two attackers, two separate clocks) is deliberately absent. It is
-    /// a damage-over-time concern, and adding it later is a key change — "status:{id}:{sourceId}"
-    /// — not a redesign.
-    /// </summary>
+    // What a second application of the same status does.
+    //
+    // Both rules use ONE contribution key per id per bearer. Stack does arithmetic on the
+    // amount rather than juggling N keys — same result, no key hygiene to get wrong.
+    //
+    // Independent-per-source (two attackers, two separate clocks) is deliberately absent. It is
+    // a damage-over-time concern, and adding it later is a key change — "status:{id}:{sourceId}"
+    // — not a redesign.
     public enum ControlCategory { None, Hard, Root, SilenceDisarm, Snare, LossOfControl }
 
     // Each save pairs the bearer's defence with the source's matching stat for the DC (Stat_Resolution §6).
@@ -166,14 +160,14 @@ namespace CrabSystem
 
     public enum StatusStacking
     {
-        /// <summary>One instance. Re-applying resets the clock and changes nothing else.</summary>
+        // One instance. Re-applying resets the clock and changes nothing else.
         Refresh,
 
-        /// <summary>One instance holding a count. Contributes amountPerStack x stacks, up to maxStacks.</summary>
+        // One instance holding a count. Contributes amountPerStack x stacks, up to maxStacks.
         Stack,
     }
 
-    /// <summary>One fact this status raises, once it holds enough stacks.</summary>
+    // One fact this status raises, once it holds enough stacks.
     [Serializable]
     public struct StatusFlag
     {
@@ -184,7 +178,7 @@ namespace CrabSystem
         public int minStacks;
     }
 
-    /// <summary>One stat this status feeds, per stack.</summary>
+    // One stat this status feeds, per stack.
     [Serializable]
     public struct StatContribution
     {

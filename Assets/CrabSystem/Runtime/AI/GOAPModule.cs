@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-/// <summary>
-/// Goal selection modes for different AI personalities
-/// </summary>
+// Goal selection modes for different AI personalities
 
 namespace CrabSystem
 {
@@ -15,35 +13,31 @@ namespace CrabSystem
         TopNWeightedRandom  // Random among top N options (smart variety)
     }
 
-    /// <summary>
-    /// GOAP Module - Goal-Oriented Action Planning AI System
-    /// 
-    /// Replaces AIModule for entities using GOAP-based decision making.
-    /// 
-    /// Architecture:
-    /// - Evaluates goal pool every frame
-    /// - Selects best goal based on selection mode
-    /// - Executes active goal
-    /// - Handles goal transitions and interrupts
-    /// 
-    /// Features:
-    /// - Anti-thrashing (minimum goal duration, stickiness bonus)
-    /// - Multiple selection modes (deterministic, random, top-N random)
-    /// - Interrupt system (evade, react to threats)
-    /// - Goal stack (resume after interrupt)
-    /// - Busy watchdog (automatic deadlock recovery)
-    /// - Type-safe goal references (drag-and-drop in Inspector)
-    /// 
-    /// Usage:
-    /// 1. Add GOAPModule to Component_AI
-    /// 2. Assign goal pool (ScriptableObjects)
-    /// 3. Configure selection mode and anti-thrashing settings
-    /// 4. Set special goal references (evade, rush, etc) if needed
-    /// </summary>
+    // GOAP Module - Goal-Oriented Action Planning AI System
+    //
+    // Replaces AIModule for entities using GOAP-based decision making.
+    //
+    // Architecture:
+    // - Evaluates goal pool every frame
+    // - Selects best goal based on selection mode
+    // - Executes active goal
+    // - Handles goal transitions and interrupts
+    //
+    // Features:
+    // - Anti-thrashing (minimum goal duration, stickiness bonus)
+    // - Multiple selection modes (deterministic, random, top-N random)
+    // - Interrupt system (evade, react to threats)
+    // - Goal stack (resume after interrupt)
+    // - Busy watchdog (automatic deadlock recovery)
+    // - Type-safe goal references (drag-and-drop in Inspector)
+    //
+    // Usage:
+    // 1. Add GOAPModule to Component_AI
+    // 2. Assign goal pool (ScriptableObjects)
+    // 3. Configure selection mode and anti-thrashing settings
+    // 4. Set special goal references (evade, rush, etc) if needed
     public class GOAPModule : MonoBehaviour, IBrainModule
     {
-    #region Serialized Fields
-
         [Header("Module Settings")]
         [Tooltip("Enable/disable this module")]
         public bool isEnabled = true;
@@ -97,10 +91,6 @@ namespace CrabSystem
         [Tooltip("Log goal selection and transitions")]
         public bool debugMode = false;
 
-    #endregion
-
-    #region Private State
-
         // Core references
         private ControllerBrain brain;
         private float Now => brain.Clock.Now;
@@ -118,10 +108,6 @@ namespace CrabSystem
 
         // Cached evaluations
         private List<(GOAPGoal goal, float weight)> evaluatedGoals = new List<(GOAPGoal, float)>();
-
-    #endregion
-
-    #region Properties
 
         public bool IsEnabled
         {
@@ -153,13 +139,7 @@ namespace CrabSystem
         public Transform CurrentTarget => context?.target;
         public GOAPContext GetContext() => context;
 
-    #endregion
-
-    #region Public Configuration API
-
-        /// <summary>
-        /// Set goal pool dynamically (called by AIProviderCoordinator/NPCConfigurationHandler)
-        /// </summary>
+        // Set goal pool dynamically (called by AIProviderCoordinator/NPCConfigurationHandler)
         public void SetGoalPool(System.Collections.Generic.List<GOAPGoal> goals)
         {
             if (goals == null || goals.Count == 0)
@@ -183,9 +163,7 @@ namespace CrabSystem
             Debug.Log($"[GOAPModule] Goal pool set: {goalPool.Count} goals");
         }
 
-        /// <summary>
-        /// Add a single goal to the pool
-        /// </summary>
+        // Add a single goal to the pool
         public void AddGoal(GOAPGoal goal)
         {
             if (goal != null && !goalPool.Contains(goal))
@@ -195,9 +173,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Remove a goal from the pool
-        /// </summary>
+        // Remove a goal from the pool
         public void RemoveGoal(GOAPGoal goal)
         {
             if (goalPool.Remove(goal))
@@ -206,26 +182,17 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Clear all goals
-        /// </summary>
         public void ClearGoals()
         {
             goalPool.Clear();
             Debug.Log("[GOAPModule] Goal pool cleared");
         }
 
-        /// <summary>
-        /// Get current goal count (for debugging)
-        /// </summary>
+        // Get current goal count (for debugging)
         public int GetGoalCount()
         {
             return goalPool != null ? goalPool.Count : 0;
         }
-
-    #endregion
-
-    #region IBrainModule Implementation
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -279,7 +246,6 @@ namespace CrabSystem
                 return;
             }
 
-
             // Check for interrupts first
             if (checkInterrupts && context.target != null && ShouldCheckForInterrupt())
             {
@@ -299,10 +265,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Goal Selection
-
         private bool HasTargetlessGoal()
         {
             foreach (var goal in goalPool)
@@ -310,9 +272,7 @@ namespace CrabSystem
             return false;
         }
 
-        /// <summary>
-        /// Evaluate all goals and select the best one
-        /// </summary>
+        // Evaluate all goals and select the best one
         private void SelectNewGoal()
         {
             // Clear previous evaluations
@@ -378,18 +338,14 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Deterministic selection - always pick highest weight
-        /// </summary>
+        // Deterministic selection - always pick highest weight
         private GOAPGoal SelectHighestWeight()
         {
             var best = evaluatedGoals.OrderByDescending(x => x.weight).First();
             return best.goal;
         }
 
-        /// <summary>
-        /// Full weighted random selection across all valid goals
-        /// </summary>
+        // Full weighted random selection across all valid goals
         private GOAPGoal SelectWeightedRandom()
         {
             float totalWeight = evaluatedGoals.Sum(x => x.weight);
@@ -407,9 +363,7 @@ namespace CrabSystem
             return evaluatedGoals[0].goal;
         }
 
-        /// <summary>
-        /// Weighted random among top N goals (smart variety)
-        /// </summary>
+        // Weighted random among top N goals (smart variety)
         private GOAPGoal SelectTopNWeightedRandom()
         {
             // Get top N goals
@@ -433,13 +387,7 @@ namespace CrabSystem
             return topGoals[0].goal;
         }
 
-    #endregion
-
-    #region Goal Execution
-
-        /// <summary>
-        /// Execute the currently active goal
-        /// </summary>
+        // Execute the currently active goal
         private void ExecuteActiveGoal(GOAPGoal activeGoal)
         {
             // Check if goal is complete
@@ -489,13 +437,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Goal Transitions
-
-        /// <summary>
-        /// Change to a new goal
-        /// </summary>
         private void ChangeGoal(GOAPGoal newGoal)
         {
             if (currentGoal != null)
@@ -516,9 +457,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Clear current goal without selecting a new one
-        /// </summary>
+        // Clear current goal without selecting a new one
         private void ClearCurrentGoal()
         {
             if (currentGoal != null)
@@ -536,13 +475,7 @@ namespace CrabSystem
             goalStack.Clear();
         }
 
-    #endregion
-
-    #region Interrupt System
-
-        /// <summary>
-        /// Should we check for interrupt goals?
-        /// </summary>
+        // Should we check for interrupt goals?
         private bool ShouldCheckForInterrupt()
         {
             // Already executing an interrupt?
@@ -556,9 +489,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Check if an interrupt goal should trigger
-        /// </summary>
+        // Check if an interrupt goal should trigger
         private void CheckForInterrupt()
         {
             // Check evade goal (highest priority interrupt)
@@ -586,9 +517,6 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Trigger an interrupt goal
-        /// </summary>
         private void TriggerInterrupt(GOAPGoal interrupt)
         {
             if (debugMode)
@@ -612,9 +540,7 @@ namespace CrabSystem
             interruptGoal.OnStart(context);
         }
 
-        /// <summary>
-        /// Complete interrupt and resume previous goal
-        /// </summary>
+        // Complete interrupt and resume previous goal
         private void CompleteInterrupt()
         {
             if (debugMode)
@@ -655,13 +581,7 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Public API
-
-        /// <summary>
-        /// Set the current target for GOAP evaluation
-        /// </summary>
+        // Set the current target for GOAP evaluation
         public void SetTarget(Transform target)
         {
             if (context != null)
@@ -670,10 +590,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Force select a specific goal (bypass normal selection)
-        /// Useful for scripted sequences or testing
-        /// </summary>
+        // Force select a specific goal (bypass normal selection)
+        // Useful for scripted sequences or testing
         public void ForceGoal(GOAPGoal goal)
         {
             if (goal != null)
@@ -682,18 +600,12 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Get current goal's debug info
-        /// </summary>
+        // Get current goal's debug info
         public string GetCurrentGoalDebug()
         {
             GOAPGoal active = CurrentGoal;
             return active != null ? active.GetDebugInfo(context) : "No Active Goal";
         }
-
-    #endregion
-
-    #region Debug
 
         private void OnDrawGizmosSelected()
         {
@@ -706,7 +618,5 @@ namespace CrabSystem
                 Gizmos.DrawLine(transform.position, context.target.position);
             }
         }
-
-    #endregion
     }
 }

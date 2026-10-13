@@ -1,17 +1,15 @@
 using UnityEngine;
 
-/// <summary>
-/// ActionBarDefinition — one bar, as an asset.
-///
-/// Everything that used to hold a bar's name now holds a reference to one of these instead:
-/// HotbarSystem.availableBars, HotbarPageDefinition.suppliedBars, and the view spawned by
-/// HotbarHud. A bar with no view, or a view naming a bar that does not exist, stops being a
-/// reachable state.
-///
-/// ⚠ Nothing runtime-mutable belongs on this asset. Slot contents live in HotbarPageState;
-/// whether the player has the bar switched on lives in HotbarSaveData.activeBarIds. Putting
-/// either here would share one layout across every character and lose it in a build.
-/// </summary>
+// ActionBarDefinition — one bar, as an asset.
+//
+// Everything that used to hold a bar's name now holds a reference to one of these instead:
+// HotbarSystem.availableBars, HotbarPageDefinition.suppliedBars, and the view spawned by
+// HotbarHud. A bar with no view, or a view naming a bar that does not exist, stops being a
+// reachable state.
+//
+// ⚠ Nothing runtime-mutable belongs on this asset. Slot contents live in HotbarPageState;
+// whether the player has the bar switched on lives in HotbarSaveData.activeBarIds. Putting
+// either here would share one layout across every character and lose it in a build.
 
 namespace CrabSystem
 {

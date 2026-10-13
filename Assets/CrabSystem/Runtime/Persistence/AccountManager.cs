@@ -4,38 +4,30 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-/// <summary>
-/// Account Manager — Phase 2 of the Persistence System
-///
-/// Responsibilities:
-/// - Session state: holds ActiveAccountName for the duration of the session
-/// - Account registry: reads/writes accounts.json via ISaveProvider
-/// - Credential validation: SHA-256 hashes passwords locally before storage
-/// - Provider ownership: holds the active ISaveProvider, shared with SaveManager
-///
-/// Architecture:
-/// - IGameManager child of ManagerBrain (auto-discovered via GetComponentsInChildren)
-/// - Priority 20 — initialises before SaveManager (priority 25)
-/// - ISaveProvider created here and injected into SaveManager during LateInitialize
-///
-/// Server migration: swap LocalSaveProvider for RemoteSaveProvider in the inspector.
-/// No other files change.
-/// </summary>
+// Account Manager — Phase 2 of the Persistence System
+//
+// Responsibilities:
+// - Session state: holds ActiveAccountName for the duration of the session
+// - Account registry: reads/writes accounts.json via ISaveProvider
+// - Credential validation: SHA-256 hashes passwords locally before storage
+// - Provider ownership: holds the active ISaveProvider, shared with SaveManager
+//
+// Architecture:
+// - IGameManager child of ManagerBrain (auto-discovered via GetComponentsInChildren)
+// - Priority 20 — initialises before SaveManager (priority 25)
+// - ISaveProvider created here and injected into SaveManager during LateInitialize
+//
+// Server migration: swap LocalSaveProvider for RemoteSaveProvider in the inspector.
+// No other files change.
 
 namespace CrabSystem
 {
     public class AccountManager : MonoBehaviour, IGameManager
     {
-    #region IGameManager
-
         public string ManagerName => "Account Manager";
         public int InitializationPriority => 20;
         public bool IsEnabled => enabled;
         public bool IsInitialized { get; private set; }
-
-    #endregion
-
-    #region Inspector
 
         [Header("Provider")]
         [Tooltip("Which save provider to use. Swap to RemoteSaveProvider for server migration.")]
@@ -44,25 +36,15 @@ namespace CrabSystem
         [Header("Debug")]
         [SerializeField] private bool debugLogging = false;
 
-    #endregion
-
-    #region Public State
-
-        /// <summary>Username of the currently logged-in account. Empty string if not logged in.</summary>
+        // Username of the currently logged-in account. Empty string if not logged in.
         public string ActiveAccountName { get; private set; } = string.Empty;
 
-        /// <summary>True when a successful Login() has been completed this session.</summary>
+        // True when a successful Login() has been completed this session.
         public bool IsLoggedIn { get; private set; }
 
-        /// <summary>
-        /// The active save provider. SaveManager reads this reference during LateInitialize.
-        /// Never null after Initialize() completes.
-        /// </summary>
+        // The active save provider. SaveManager reads this reference during LateInitialize.
+        // Never null after Initialize() completes.
         public ISaveProvider SaveProvider { get; private set; }
-
-    #endregion
-
-    #region IGameManager Lifecycle
 
         public void Initialize()
         {
@@ -103,14 +85,8 @@ namespace CrabSystem
             return result;
         }
 
-    #endregion
-
-    #region Public API
-
-        /// <summary>
-        /// Register a new account. Password is SHA-256 hashed before storage — never plaintext.
-        /// Returns false if the username is already taken or if registration fails.
-        /// </summary>
+        // Register a new account. Password is SHA-256 hashed before storage — never plaintext.
+        // Returns false if the username is already taken or if registration fails.
         public async Task<bool> Register(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username)) return false;
@@ -125,11 +101,9 @@ namespace CrabSystem
             return success;
         }
 
-        /// <summary>
-        /// Validate credentials and start a session.
-        /// Password is SHA-256 hashed locally before the provider call — never sent plaintext.
-        /// Returns false if credentials are invalid.
-        /// </summary>
+        // Validate credentials and start a session.
+        // Password is SHA-256 hashed locally before the provider call — never sent plaintext.
+        // Returns false if credentials are invalid.
         public async Task<bool> Login(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username)) return false;
@@ -154,7 +128,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>Clear session state. Does not delete any save data.</summary>
+        // Clear session state. Does not delete any save data.
         public void Logout()
         {
             if (!IsLoggedIn) return;
@@ -165,10 +139,6 @@ namespace CrabSystem
             ActiveAccountName = string.Empty;
             IsLoggedIn = false;
         }
-
-    #endregion
-
-    #region Provider Factory
 
         private ISaveProvider CreateProvider()
         {
@@ -181,14 +151,8 @@ namespace CrabSystem
             };
         }
 
-    #endregion
-
-    #region Password Hashing
-
-        /// <summary>
-        /// SHA-256 hash of the raw password. Produces a deterministic hex string.
-        /// Called before any provider interaction — passwords never leave this method unhashed.
-        /// </summary>
+        // SHA-256 hash of the raw password. Produces a deterministic hex string.
+        // Called before any provider interaction — passwords never leave this method unhashed.
         private static string HashPassword(string password)
         {
             using var sha256 = SHA256.Create();
@@ -201,10 +165,6 @@ namespace CrabSystem
             return sb.ToString();
         }
 
-    #endregion
-
-    #region Debug
-
         [ContextMenu("Debug: Print Session State")]
         private void DebugPrintState()
         {
@@ -213,11 +173,9 @@ namespace CrabSystem
                       $"ActiveAccountName: {ActiveAccountName}\n" +
                       $"Provider:          {SaveProvider?.GetType().Name ?? "null"}");
         }
-
-    #endregion
     }
 
-    /// <summary>Inspector enum to select the active ISaveProvider implementation.</summary>
+    // Inspector enum to select the active ISaveProvider implementation.
     public enum SaveProviderType
     {
         Local,

@@ -3,11 +3,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// The item shown in one equipment socket. Takes drops from the inventory, unequips on
-/// right-click, and shows the same tooltip a bag slot would. Deliberately not draggable —
-/// right-click is harder to do by accident than a drag into empty space.
-/// </summary>
+// The item shown in one equipment socket. Takes drops from the inventory, unequips on
+// right-click, and shows the same tooltip a bag slot would. Deliberately not draggable —
+// right-click is harder to do by accident than a drag into empty space.
 
 namespace CrabSystem
 {
@@ -58,8 +56,6 @@ namespace CrabSystem
             iconImage.enabled = true;
         }
 
-    #region Drop
-
         public void OnDrop(PointerEventData eventData)
         {
             if (eventData.pointerDrag == null) return;
@@ -99,10 +95,6 @@ namespace CrabSystem
             return slotConfig == null || slotConfig.CanEquipItem(item);
         }
 
-    #endregion
-
-    #region Pointer
-
         public void OnPointerEnter(PointerEventData eventData)
         {
             var draggedIcon = eventData.pointerDrag != null
@@ -140,8 +132,6 @@ namespace CrabSystem
 
             equipmentSystem.UnequipItemToInventory(slotDefinition);
         }
-
-    #endregion
 
         private void HideTooltip() => UniversalWindowManager.Instance?.HideTooltip();
 

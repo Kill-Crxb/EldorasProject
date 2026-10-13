@@ -2,36 +2,34 @@ using UnityEngine;
 
 namespace CrabSystem.Magic
 {
-    /// <summary>
-    /// Everything slot 1 (School) decides: what damage type the spell deals, what it looks like,
-    /// and what the player calls it at each rung of the tier ladder.
-    ///
-    /// SIX ASSETS, one per element. This is the School half of the visual split — Form decides
-    /// the shape (an orb, a cone, a beam), School decides the dressing (colour, particles,
-    /// impact). Multiplying those at render time is what turns 6 schools x 6 forms = 36 prefabs
-    /// into 12 assets.
-    ///
-    /// WHY castAbility LIVES HERE, and why there are six of them:
-    /// DamageEffect.damageType is a serialized field on the shared AbilityDefinition asset. It
-    /// cannot vary per cast without writing to that asset and corrupting it for every future use.
-    /// So instead of one CastPrimitiveSpell with a runtime-swapped damage type, there are six —
-    /// identical except for the damage type on their DamageEffect. Data, not a branch.
-    ///
-    /// SETUP for each cast ability:
-    ///   - damageEffects[0].useWeaponDamage      = TRUE  (the dice arrive via weaponOverride)
-    ///   - damageEffects[0].requiresSuppliedDice = TRUE  (arms the guard — without it a spell whose
-    ///                                                    dice went missing silently rolls the
-    ///                                                    equipped katana)
-    ///   - damageEffects[0].damageType           = this element's damageType
-    ///   - damageEffects[0].baseDamage           = 0     (flat empowerment goes here later)
-    ///   - abilityCategory                       = Spell (so silence blocks it)
-    ///   - resourceCosts                         = EMPTY (SpellcraftSystem owns the variable cost)
-    ///   - effectCue                             = 1 or more (a Cue the clip raises), or the launcher never fires
-    ///   - projectileData                   = ANY non-null ProjectileData
-    ///       ProjectileLauncher.HandleMoveEvent bails when projectileData is null, before
-    ///       any modifier gets a chance to run. Assign the Projectile form's data as a default;
-    ///       SpellcraftSystem swaps it for the Form the sequence actually chose.
-    /// </summary>
+    // Everything slot 1 (School) decides: what damage type the spell deals, what it looks like,
+    // and what the player calls it at each rung of the tier ladder.
+    //
+    // SIX ASSETS, one per element. This is the School half of the visual split — Form decides
+    // the shape (an orb, a cone, a beam), School decides the dressing (colour, particles,
+    // impact). Multiplying those at render time is what turns 6 schools x 6 forms = 36 prefabs
+    // into 12 assets.
+    //
+    // WHY castAbility LIVES HERE, and why there are six of them:
+    // DamageEffect.damageType is a serialized field on the shared AbilityDefinition asset. It
+    // cannot vary per cast without writing to that asset and corrupting it for every future use.
+    // So instead of one CastPrimitiveSpell with a runtime-swapped damage type, there are six —
+    // identical except for the damage type on their DamageEffect. Data, not a branch.
+    //
+    // SETUP for each cast ability:
+    //   - damageEffects[0].useWeaponDamage      = TRUE  (the dice arrive via weaponOverride)
+    //   - damageEffects[0].requiresSuppliedDice = TRUE  (arms the guard — without it a spell whose
+    //                                                    dice went missing silently rolls the
+    //                                                    equipped katana)
+    //   - damageEffects[0].damageType           = this element's damageType
+    //   - damageEffects[0].baseDamage           = 0     (flat empowerment goes here later)
+    //   - abilityCategory                       = Spell (so silence blocks it)
+    //   - resourceCosts                         = EMPTY (SpellcraftSystem owns the variable cost)
+    //   - effectCue                             = 1 or more (a Cue the clip raises), or the launcher never fires
+    //   - projectileData                   = ANY non-null ProjectileData
+    //       ProjectileLauncher.HandleMoveEvent bails when projectileData is null, before
+    //       any modifier gets a chance to run. Assign the Projectile form's data as a default;
+    //       SpellcraftSystem swaps it for the Form the sequence actually chose.
     [CreateAssetMenu(fileName = "Element_", menuName = "CrabSystem/Magic/Element Definition")]
     public class ElementDefinition : ScriptableObject
     {
@@ -89,10 +87,8 @@ namespace CrabSystem.Magic
                  "the projectile dies on impact, the buff does not.")]
         public GameObject statusVfx;
 
-        /// <summary>
-        /// The player-facing name for this school at a given tier. Falls back to the plain
-        /// display name when the table is unfilled, so a half-authored grammar still runs.
-        /// </summary>
+        // The player-facing name for this school at a given tier. Falls back to the plain
+        // display name when the table is unfilled, so a half-authored grammar still runs.
         public string TierName(SpellTier tier)
         {
             int index = (int)tier;

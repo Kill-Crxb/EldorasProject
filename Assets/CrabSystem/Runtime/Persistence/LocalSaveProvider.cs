@@ -3,22 +3,20 @@ using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 
-/// <summary>
-/// Local-disk implementation of ISaveProvider.
-/// Stores all save data under Application.persistentDataPath/Saves/.
-///
-/// File layout:
-///   Saves/
-///     accounts.json
-///     {accountName}/
-///       {characterId}/
-///         metadata.json
-///         inventory.json
-///         equipment.json
-///         stats.json
-///
-/// Server migration: Replace with RemoteSaveProvider — no other files change.
-/// </summary>
+// Local-disk implementation of ISaveProvider.
+// Stores all save data under Application.persistentDataPath/Saves/.
+//
+// File layout:
+//   Saves/
+//     accounts.json
+//     {accountName}/
+//       {characterId}/
+//         metadata.json
+//         inventory.json
+//         equipment.json
+//         stats.json
+//
+// Server migration: Replace with RemoteSaveProvider — no other files change.
 
 namespace CrabSystem
 {
@@ -235,10 +233,8 @@ namespace CrabSystem
             else File.Move(filePath + ".tmp", filePath);
         }
 
-        /// <summary>
-        /// Characters are stored under {savesRoot}/{accountName}/{characterId}.
-        /// characterId encodes the accountName prefix (e.g. "Crxb/Hanzo_1740220800").
-        /// </summary>
+        // Characters are stored under {savesRoot}/{accountName}/{characterId}.
+        // characterId encodes the accountName prefix (e.g. "Crxb/Hanzo_1740220800").
         private string ResolveCharacterPath(string characterId)
         {
             return Path.Combine(savesRoot, characterId);

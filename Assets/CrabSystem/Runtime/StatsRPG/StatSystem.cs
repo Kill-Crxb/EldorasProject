@@ -3,17 +3,15 @@ using System.Collections.Generic;
 using CrabSystem.Stats;
 using UnityEngine;
 
-/// <summary>
-/// Holds this entity's stat values. Each stat has a base the character owns and any number
-/// of contributions from elsewhere — gear, talents, core-stat bonuses. The effective value
-/// is base + contributions, clamped to the range authored in its schema.
-///
-/// Contributions are keyed by their source, so removing one is exact: nothing subtracts a
-/// remembered number, and two sources feeding the same stat cannot corrupt each other.
-///
-/// This module never asks who its contributors are — sources push, StatSystem sums. That
-/// keeps it ignorant of equipment, talents and everything else that might feed a stat.
-/// </summary>
+// Holds this entity's stat values. Each stat has a base the character owns and any number
+// of contributions from elsewhere — gear, talents, core-stat bonuses. The effective value
+// is base + contributions, clamped to the range authored in its schema.
+//
+// Contributions are keyed by their source, so removing one is exact: nothing subtracts a
+// remembered number, and two sources feeding the same stat cannot corrupt each other.
+//
+// This module never asks who its contributors are — sources push, StatSystem sums. That
+// keeps it ignorant of equipment, talents and everything else that might feed a stat.
 
 namespace CrabSystem
 {
@@ -21,15 +19,9 @@ namespace CrabSystem
     {
         public int InitOrder => 90;
 
-    #region Inspector
-
         [Header("Schemas")]
         [Tooltip("Schema asset names to load from StatsManager, e.g. 'CoreStats'.")]
         [SerializeField] private List<string> schemaIds = new();
-
-    #endregion
-
-    #region State
 
         // What the character owns. This is what gets saved.
         private readonly Dictionary<string, float> baseValues = new();
@@ -49,10 +41,6 @@ namespace CrabSystem
 
         public event Action<string, float, float> OnStatChanged;
 
-    #endregion
-
-    #region IBrainModule
-
         public void Initialize(ControllerBrain controllerBrain)
         {
             brain = controllerBrain;
@@ -62,10 +50,6 @@ namespace CrabSystem
         public void LateInitialize() { }
 
         public void UpdateModule() { }
-
-    #endregion
-
-    #region Schema Loading
 
         private void LoadSchemas()
         {
@@ -103,10 +87,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region IStatProvider
-
         public float GetValue(string statId, float defaultValue = 0f)
         {
             if (string.IsNullOrEmpty(statId)) return defaultValue;
@@ -121,10 +101,8 @@ namespace CrabSystem
             return StatsManager.Instance.Resolve(statId);
         }
 
-        /// <summary>
-        /// Sets what the character owns. Contributions still stack on top, so this is the
-        /// wrong call for gear or a buff — use AddContribution for anything temporary.
-        /// </summary>
+        // Sets what the character owns. Contributions still stack on top, so this is the
+        // wrong call for gear or a buff — use AddContribution for anything temporary.
         public void SetValue(string statId, float value)
         {
             if (string.IsNullOrEmpty(statId)) return;
@@ -150,18 +128,12 @@ namespace CrabSystem
 
         public IEnumerable<string> GetStatIds() => values.Keys;
 
-        /// <summary>True when this stat comes from elsewhere and is not part of the save.</summary>
+        // True when this stat comes from elsewhere and is not part of the save.
         public bool IsDerived(string statId) => !string.IsNullOrEmpty(statId) && derivedIds.Contains(Live(statId));
 
-    #endregion
-
-    #region Contributions
-
-        /// <summary>
-        /// Adds or replaces one source's contribution to a stat. The key identifies the source
-        /// — "item:{instanceId}", "talent:{id}", "core" — and re-adding under the same key
-        /// replaces the previous amount rather than stacking with it.
-        /// </summary>
+        // Adds or replaces one source's contribution to a stat. The key identifies the source
+        // — "item:{instanceId}", "talent:{id}", "core" — and re-adding under the same key
+        // replaces the previous amount rather than stacking with it.
         public void AddContribution(string statId, string sourceKey, float amount)
         {
             if (string.IsNullOrEmpty(statId) || string.IsNullOrEmpty(sourceKey)) return;
@@ -193,7 +165,7 @@ namespace CrabSystem
             Recalculate(statId);
         }
 
-        /// <summary>Drops everything one source gave, across every stat. Unequipping an item.</summary>
+        // Drops everything one source gave, across every stat. Unequipping an item.
         public void ClearContributions(string sourceKey)
         {
             if (string.IsNullOrEmpty(sourceKey)) return;
@@ -204,7 +176,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>What the character owns, before anything is added to it.</summary>
+        // What the character owns, before anything is added to it.
         public float GetBaseValue(string statId)
         {
             if (string.IsNullOrEmpty(statId)) return 0f;
@@ -230,19 +202,13 @@ namespace CrabSystem
             OnStatChanged?.Invoke(statId, previous, clamped);
         }
 
-    #endregion
-
-    #region ISaveable
-
         public string GetSaveId() => "stats";
 
         public int GetSaveVersion() => 2;
         public int LoadOrder => 10;
 
-        /// <summary>
-        /// Writes base values, never effective ones — saving the total would bake a temporary
-        /// bonus into the character permanently the first time they saved while wearing gear.
-        /// </summary>
+        // Writes base values, never effective ones — saving the total would bake a temporary
+        // bonus into the character permanently the first time they saved while wearing gear.
         public string GetSaveData()
         {
             var data = new StatSaveData { version = GetSaveVersion() };
@@ -289,7 +255,5 @@ namespace CrabSystem
             public string id;
             public float value;
         }
-
-    #endregion
     }
 }

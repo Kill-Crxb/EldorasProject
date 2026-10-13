@@ -2,23 +2,21 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// SceneLoader
-///
-/// Handles the MainMenu → Game scene transition.
-/// Called by CharacterSelectScreen once a character is confirmed.
-///
-/// Flow:
-///   1. CharacterSelectScreen calls SceneLoader.LoadGameScene(characterId)
-///   2. SceneLoader fires GameEvents.OnCharacterSelected (SaveManager stores the id)
-///   3. Async scene load begins (optional loading screen can hook here)
-///   4. Once scene is fully active, fires GameEvents.OnGameSceneReady
-///   5. SaveManager receives OnGameSceneReady and calls LoadCharacter()
-///
-/// Setup:
-///   - Attach to a GameObject in the MainMenu scene (or ManagerBrain)
-///   - Set gameSceneName to match your Game scene name in Build Settings
-/// </summary>
+// SceneLoader
+//
+// Handles the MainMenu → Game scene transition.
+// Called by CharacterSelectScreen once a character is confirmed.
+//
+// Flow:
+//   1. CharacterSelectScreen calls SceneLoader.LoadGameScene(characterId)
+//   2. SceneLoader fires GameEvents.OnCharacterSelected (SaveManager stores the id)
+//   3. Async scene load begins (optional loading screen can hook here)
+//   4. Once scene is fully active, fires GameEvents.OnGameSceneReady
+//   5. SaveManager receives OnGameSceneReady and calls LoadCharacter()
+//
+// Setup:
+//   - Attach to a GameObject in the MainMenu scene (or ManagerBrain)
+//   - Set gameSceneName to match your Game scene name in Build Settings
 
 namespace CrabSystem
 {
@@ -39,9 +37,7 @@ namespace CrabSystem
             Instance = this;
         }
 
-        /// <summary>
-        /// Called by CharacterSelectScreen when the player confirms a character.
-        /// </summary>
+        // Called by CharacterSelectScreen when the player confirms a character.
         public void LoadGameScene(string characterId)
         {
             if (string.IsNullOrEmpty(characterId))
@@ -59,10 +55,8 @@ namespace CrabSystem
             StartCoroutine(LoadSceneAsync(gameSceneName));
         }
 
-        /// <summary>
-        /// Return to the main menu from the game scene (e.g. logout or quit to menu).
-        /// Saves first, then transitions.
-        /// </summary>
+        // Return to the main menu from the game scene (e.g. logout or quit to menu).
+        // Saves first, then transitions.
         public void LoadMainMenu()
         {
             GameEvents.SaveRequested();

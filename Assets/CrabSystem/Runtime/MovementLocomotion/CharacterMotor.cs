@@ -1,21 +1,19 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// Sweep-based capsule motor. Owns position, collision response and grounding — and nothing else.
-///
-/// No input, no gameplay, no states. It takes a velocity, moves the body as far as that velocity
-/// honestly gets it, and hands back the velocity that survived the trip. Everything about how the
-/// velocity was earned lives in the handler above it.
-///
-/// Replaces CharacterController for one disqualifying reason: CharacterController's capsule is
-/// permanently Y-up and OnControllerColliderHit is the only route to a contact normal, which puts
-/// wall-relative motion and a rotated capsule out of reach by construction. CapsuleCast gives a
-/// normal on every hit and does not care which way the capsule points.
-///
-/// GROUNDING IS THE SINGLE AUTHORITY. FeetDetectionModule's trigger volume is not consulted and
-/// should not be present on a prefab driven by this motor — two answers to "am I grounded" is one
-/// too many.
-/// </summary>
+// Sweep-based capsule motor. Owns position, collision response and grounding — and nothing else.
+//
+// No input, no gameplay, no states. It takes a velocity, moves the body as far as that velocity
+// honestly gets it, and hands back the velocity that survived the trip. Everything about how the
+// velocity was earned lives in the handler above it.
+//
+// Replaces CharacterController for one disqualifying reason: CharacterController's capsule is
+// permanently Y-up and OnControllerColliderHit is the only route to a contact normal, which puts
+// wall-relative motion and a rotated capsule out of reach by construction. CapsuleCast gives a
+// normal on every hit and does not care which way the capsule points.
+//
+// GROUNDING IS THE SINGLE AUTHORITY. FeetDetectionModule's trigger volume is not consulted and
+// should not be present on a prefab driven by this motor — two answers to "am I grounded" is one
+// too many.
 
 namespace CrabSystem
 {
@@ -82,62 +80,50 @@ namespace CrabSystem
 
         float lastGroundedTime = Mathf.NegativeInfinity;
 
-        /// <summary>
-        /// World-space motion the last Move gained from step-up without paying for it out of the
-        /// frame's budget — the full vertical rise plus any forward overshoot. Zero on a step that
-        /// climbed nothing. Read it to smooth the visual; the body has already moved.
-        /// </summary>
+        // World-space motion the last Move gained from step-up without paying for it out of the
+        // frame's budget — the full vertical rise plus any forward overshoot. Zero on a step that
+        // climbed nothing. Read it to smooth the visual; the body has already moved.
         public Vector3 LastStepOffset { get; private set; }
 
-        /// <summary>True while a surface no steeper than maxSlopeAngle sits within the ground probe.</summary>
+        // True while a surface no steeper than maxSlopeAngle sits within the ground probe.
         public bool IsGrounded { get; private set; }
 
-        /// <summary>Normal of whatever the ground probe last found, up when it found nothing.</summary>
+        // Normal of whatever the ground probe last found, up when it found nothing.
         public Vector3 GroundNormal { get; private set; } = Vector3.up;
 
-        /// <summary>Gap to that surface, infinity when the probe found nothing.</summary>
+        // Gap to that surface, infinity when the probe found nothing.
         public float GroundDistance { get; private set; } = Mathf.Infinity;
 
-        /// <summary>
-        /// World roll applied to the capsule for movement sweeps. Slice 1 leaves this upright; wall
-        /// running sets it. Grounding deliberately ignores it — see UpdateGrounding.
-        /// </summary>
+        // World roll applied to the capsule for movement sweeps. Slice 1 leaves this upright; wall
+        // running sets it. Grounding deliberately ignores it — see UpdateGrounding.
         public Quaternion CapsuleRotation { get; set; } = Quaternion.identity;
 
-        /// <summary>
-        /// The capsule this motor actually sweeps.
-        ///
-        /// Exposed so ParkourAssistant can size its sensor from the same collider rather than hunting
-        /// for one with GetComponentInChildren — which on a real character prefab will happily return
-        /// a hurtbox capsule, or the sensor's own trigger capsule, and produce a sensor sized from the
-        /// wrong thing while looking perfectly correct in the inspector.
-        /// </summary>
+        // The capsule this motor actually sweeps.
+        //
+        // Exposed so ParkourAssistant can size its sensor from the same collider rather than hunting
+        // for one with GetComponentInChildren — which on a real character prefab will happily return
+        // a hurtbox capsule, or the sensor's own trigger capsule, and produce a sensor sized from the
+        // wrong thing while looking perfectly correct in the inspector.
         public CapsuleCollider Capsule => capsule;
 
-        /// <summary>
-        /// Everything the capsule sweeps against.
-        ///
-        /// Exposed so foot IK probes exactly what the motor collides with. A second mask authored on
-        /// the IK component would drift the moment a level pass moves geometry between layers, and
-        /// the symptom — feet planting on something the capsule walks through — looks like an IK bug
-        /// rather than a layer bug.
-        /// </summary>
+        // Everything the capsule sweeps against.
+        //
+        // Exposed so foot IK probes exactly what the motor collides with. A second mask authored on
+        // the IK component would drift the moment a level pass moves geometry between layers, and
+        // the symptom — feet planting on something the capsule walks through — looks like an IK bug
+        // rather than a layer bug.
         public LayerMask CollisionLayers => collisionLayers;
 
-        /// <summary>
-        /// Steepest surface this motor treats as ground. Read by anything that needs the same
-        /// floor/wall verdict; the angle IS the slope model and lives here alone.
-        /// </summary>
+        // Steepest surface this motor treats as ground. Read by anything that needs the same
+        // floor/wall verdict; the angle IS the slope model and lives here alone.
         public float MaxSlopeAngle => maxSlopeAngle;
 
-        /// <summary>
-        /// Would a capsule of this height, centred at this local height, fit here without overlapping
-        /// the world?
-        ///
-        /// Crouch asks before standing up: under a ledge the answer is no, and growing the capsule
-        /// anyway resolves as a depenetration shove — through the ceiling, or down through the floor.
-        /// Probed from the UPRIGHT reference for the same reason UpdateGrounding is.
-        /// </summary>
+        // Would a capsule of this height, centred at this local height, fit here without overlapping
+        // the world?
+        //
+        // Crouch asks before standing up: under a ledge the answer is no, and growing the capsule
+        // anyway resolves as a depenetration shove — through the ceiling, or down through the floor.
+        // Probed from the UPRIGHT reference for the same reason UpdateGrounding is.
         public bool Fits(float height, float centreY)
         {
             if (capsule == null) return true;
@@ -193,16 +179,14 @@ namespace CrabSystem
             UpdateGrounding(body.position);
         }
 
-        /// <summary>
-        /// Move by `velocity` for `dt`, returning the velocity that survived collision.
-        ///
-        /// Velocity is clipped against every plane the sweep hits, so running into a wall costs you
-        /// the component INTO the wall and nothing else — the along-wall component is kept, which is
-        /// what makes a controller feel like it slides rather than sticks.
-        ///
-        /// Grounding is refreshed at the end, so IsGrounded read at the top of the next step is
-        /// current without probing twice.
-        /// </summary>
+        // Move by `velocity` for `dt`, returning the velocity that survived collision.
+        //
+        // Velocity is clipped against every plane the sweep hits, so running into a wall costs you
+        // the component INTO the wall and nothing else — the along-wall component is kept, which is
+        // what makes a controller feel like it slides rather than sticks.
+        //
+        // Grounding is refreshed at the end, so IsGrounded read at the top of the next step is
+        // current without probing twice.
         public Vector3 Move(Vector3 velocity, float dt, bool allowGroundSnap, Quaternion rotation)
         {
             bool wasGrounded = IsGrounded;
@@ -255,22 +239,18 @@ namespace CrabSystem
             return velocity;
         }
 
-        /// <summary>
-        /// Remove the component of `velocity` heading into `normal`, keeping everything along it.
-        ///
-        /// The overbounce leaves the result a hair off the surface. Clipping exactly to the plane
-        /// lets floating point put the next frame's start point marginally inside it, and the capsule
-        /// creeps into walls it is sliding along.
-        /// </summary>
+        // Remove the component of `velocity` heading into `normal`, keeping everything along it.
+        //
+        // The overbounce leaves the result a hair off the surface. Clipping exactly to the plane
+        // lets floating point put the next frame's start point marginally inside it, and the capsule
+        // creeps into walls it is sliding along.
         static Vector3 ClipVelocity(Vector3 velocity, Vector3 normal, float overbounce = 1.001f)
         {
             return velocity - normal * (Vector3.Dot(velocity, normal) * overbounce);
         }
 
-        /// <summary>
-        /// Place the body without sweeping. For teleports and spawns — anything that must not slide
-        /// through the geometry between where it was and where it is going.
-        /// </summary>
+        // Place the body without sweeping. For teleports and spawns — anything that must not slide
+        // through the geometry between where it was and where it is going.
         public void Teleport(Vector3 position)
         {
             // Interpolation is dropped across the jump. Left on, the body would be smeared between
@@ -284,13 +264,11 @@ namespace CrabSystem
             UpdateGrounding(position);
         }
 
-        /// <summary>
-        /// Downward probe, always run from the UPRIGHT reference regardless of CapsuleRotation.
-        ///
-        /// A rolled capsule shifts where a rolled probe would point, so a wall run would report itself
-        /// falsely grounded and the wall state would exit the instant it should hold. Roll is a visual
-        /// and collision concern; what counts as ground is not allowed to move with it.
-        /// </summary>
+        // Downward probe, always run from the UPRIGHT reference regardless of CapsuleRotation.
+        //
+        // A rolled capsule shifts where a rolled probe would point, so a wall run would report itself
+        // falsely grounded and the wall state would exit the instant it should hold. Roll is a visual
+        // and collision concern; what counts as ground is not allowed to move with it.
         public void UpdateGrounding(Vector3 position)
         {
             if (!Cast(position, Quaternion.identity, Vector3.down, groundProbeDistance + skinWidth, out RaycastHit hit))
@@ -311,14 +289,12 @@ namespace CrabSystem
             if (IsGrounded) lastGroundedTime = Time.time;
         }
 
-        /// <summary>
-        /// Pull the body back down onto ground it is about to leave.
-        ///
-        /// Without this, cresting a hill or walking down stairs launches the capsule into a short
-        /// airborne arc, which costs ground friction, ground acceleration and the grounded animation
-        /// state for a few frames each time. Only walkable surfaces qualify, so this can never hold
-        /// the player onto a wall.
-        /// </summary>
+        // Pull the body back down onto ground it is about to leave.
+        //
+        // Without this, cresting a hill or walking down stairs launches the capsule into a short
+        // airborne arc, which costs ground friction, ground acceleration and the grounded animation
+        // state for a few frames each time. Only walkable surfaces qualify, so this can never hold
+        // the player onto a wall.
         Vector3 SnapToGround(Vector3 position)
         {
             if (!Cast(position, Quaternion.identity, Vector3.down, snapDistance, out RaycastHit hit))
@@ -330,13 +306,11 @@ namespace CrabSystem
             return position + Vector3.down * Mathf.Max(hit.distance - skinWidth, 0f);
         }
 
-        /// <summary>
-        /// Walk up a lip rather than colliding with it: lift by stepHeight, check the way ahead is
-        /// clear, then drop back onto whatever is under the raised position.
-        ///
-        /// Only called against surfaces too steep to walk on — a walkable slope is already handled by
-        /// clipping, and stepping up it would fight the slide.
-        /// </summary>
+        // Walk up a lip rather than colliding with it: lift by stepHeight, check the way ahead is
+        // clear, then drop back onto whatever is under the raised position.
+        //
+        // Only called against surfaces too steep to walk on — a walkable slope is already handled by
+        // clipping, and stepping up it would fight the slide.
         bool TryStepUp(ref Vector3 position, ref Vector3 remaining, RaycastHit blocking)
         {
             if (stepHeight <= 0f) return false;
@@ -419,10 +393,8 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Push out of anything the capsule ended up inside. Sweeps cannot catch everything —
-        /// geometry moves, prefabs spawn overlapping, and skin width is finite.
-        /// </summary>
+        // Push out of anything the capsule ended up inside. Sweeps cannot catch everything —
+        // geometry moves, prefabs spawn overlapping, and skin width is finite.
         Vector3 Depenetrate(Vector3 position)
         {
             Quaternion rotation = CapsuleRotation * transform.rotation;
@@ -476,13 +448,11 @@ namespace CrabSystem
 
         bool IsOwn(Collider other) => other == capsule || other.transform.IsChildOf(transform);
 
-        /// <summary>
-        /// The capsule's two sphere centres in world space, for a given position and roll.
-        ///
-        /// Assumes the collider's centre offset lies on its own up axis, which is true of every
-        /// upright character capsule and is what lets roll be a single rotation of that axis rather
-        /// than a full transform rebuild.
-        /// </summary>
+        // The capsule's two sphere centres in world space, for a given position and roll.
+        //
+        // Assumes the collider's centre offset lies on its own up axis, which is true of every
+        // upright character capsule and is what lets roll be a single rotation of that axis rather
+        // than a full transform rebuild.
         void CapsulePoints(Vector3 position, Quaternion rotation, out Vector3 top, out Vector3 bottom)
         {
             Vector3 up = rotation * Vector3.up;

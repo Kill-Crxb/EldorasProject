@@ -77,8 +77,6 @@ namespace CrabSystem
         [Tooltip("If true, reaching min value causes death")]
         public bool triggerDeathOnDepletion;
 
-    #region Validation
-
         public bool Validate(out string error)
         {
             error = "";
@@ -106,7 +104,5 @@ namespace CrabSystem
 
             return true;
         }
-
-    #endregion
     }
 }

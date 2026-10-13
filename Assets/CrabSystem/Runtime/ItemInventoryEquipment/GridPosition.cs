@@ -1,10 +1,8 @@
 // GridPosition.cs - Simple value type for grid coordinates
 using System;
 
-/// <summary>
-/// Represents a position in a 2D grid using integer coordinates.
-/// Bottom-left is (0,0), X increases right, Y increases up.
-/// </summary>
+// Represents a position in a 2D grid using integer coordinates.
+// Bottom-left is (0,0), X increases right, Y increases up.
 
 namespace CrabSystem
 {
@@ -20,27 +18,19 @@ namespace CrabSystem
             this.y = y;
         }
 
-        /// <summary>
-        /// Returns true if this position has valid (non-negative) coordinates.
-        /// </summary>
+        // Returns true if this position has valid (non-negative) coordinates.
         public bool IsValid => x >= 0 && y >= 0;
 
-        /// <summary>
-        /// Represents an invalid/uninitialized position.
-        /// </summary>
+        // Represents an invalid/uninitialized position.
         public static GridPosition Invalid => new GridPosition(-1, -1);
 
-        /// <summary>
-        /// Returns true if this position is within the specified grid bounds.
-        /// </summary>
+        // Returns true if this position is within the specified grid bounds.
         public bool IsWithinBounds(int gridWidth, int gridHeight)
         {
             return x >= 0 && x < gridWidth && y >= 0 && y < gridHeight;
         }
 
-        /// <summary>
-        /// Calculates Manhattan distance to another position.
-        /// </summary>
+        // Calculates Manhattan distance to another position.
         public int ManhattanDistance(GridPosition other)
         {
             return Math.Abs(x - other.x) + Math.Abs(y - other.y);

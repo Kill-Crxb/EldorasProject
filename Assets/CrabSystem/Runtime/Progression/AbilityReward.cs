@@ -2,11 +2,9 @@ using UnityEngine;
 
 namespace CrabSystem.Progression
 {
-    /// <summary>
-    /// Grants an ability for as long as the reward is held. Works from a stat breakpoint,
-    /// a talent node or an item — RuntimeAbilityManager already tracks abilities by source,
-    /// so withdrawing the reward removes exactly the one it added.
-    /// </summary>
+    // Grants an ability for as long as the reward is held. Works from a stat breakpoint,
+    // a talent node or an item — RuntimeAbilityManager already tracks abilities by source,
+    // so withdrawing the reward removes exactly the one it added.
     [CreateAssetMenu(fileName = "Reward_Ability", menuName = "CrabSystem/Rewards/Ability")]
     public class AbilityReward : Reward
     {

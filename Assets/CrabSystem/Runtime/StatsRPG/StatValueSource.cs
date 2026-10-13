@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Reads a stat value for a blackboard condition.
-/// Stats are addressed by string id because a schema can hold dozens of them.
-/// </summary>
+// Reads a stat value for a blackboard condition.
+// Stats are addressed by string id because a schema can hold dozens of them.
 
 namespace CrabSystem
 {

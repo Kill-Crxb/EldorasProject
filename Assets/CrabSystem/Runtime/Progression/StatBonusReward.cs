@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace CrabSystem.Progression
 {
-    /// <summary>A flat amount added to one or more stats. "+1 Armor and Evasion".</summary>
+    // A flat amount added to one or more stats. "+1 Armor and Evasion".
     [CreateAssetMenu(fileName = "Reward_StatBonus", menuName = "CrabSystem/Rewards/Stat Bonus")]
     public class StatBonusReward : Reward
     {

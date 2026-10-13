@@ -1,12 +1,10 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Which basis a MovementEffect's direction is expressed in.
-///
-/// ⚠ Appended, never reordered — these serialize by integer and every authored asset stores a
-/// number, so inserting a member silently repoints every existing effect.
-/// </summary>
+// Which basis a MovementEffect's direction is expressed in.
+//
+// ⚠ Appended, never reordered — these serialize by integer and every authored asset stores a
+// number, so inserting a member silently repoints every existing effect.
 
 namespace CrabSystem
 {
@@ -102,11 +100,9 @@ namespace CrabSystem
             casterTransform = ResolveRoot(system);
         }
 
-        /// <summary>
-        /// The entity root, asked for by name rather than assumed to be one level up the hierarchy.
-        /// `system.transform.parent` happened to be right on Base_PC and breaks silently on anything
-        /// nested differently — and a wrong root here means every dash points the wrong way.
-        /// </summary>
+        // The entity root, asked for by name rather than assumed to be one level up the hierarchy.
+        // `system.transform.parent` happened to be right on Base_PC and breaks silently on anything
+        // nested differently — and a wrong root here means every dash points the wrong way.
         static Transform ResolveRoot(MovementSystem system)
         {
             if (system == null) return null;
@@ -234,24 +230,20 @@ namespace CrabSystem
             Push(worldDirection);
         }
 
-        /// <summary>
-        /// Speed below which there is no meaningful direction of travel and Movement falls back to
-        /// facing. Above walking pace would steal the fallback from a genuine slow walk; far below it
-        /// would let post-landing drift or a nudge against a wall pick the direction.
-        /// </summary>
+        // Speed below which there is no meaningful direction of travel and Movement falls back to
+        // facing. Above walking pace would steal the fallback from a genuine slow walk; far below it
+        // would let post-landing drift or a nudge against a wall pick the direction.
         private const float MinMovementSpeed = 0.5f;
 
-        /// <summary>
-        /// Apply the impulse, capped along its own direction when the asset asks for it.
-        ///
-        /// The uncapped path is a plain add, which is correct for knockback and was the only
-        /// behaviour before. The capped path measures how fast you ALREADY are in this direction and
-        /// adds only the shortfall — so repeated pushes converge on the cap instead of compounding.
-        ///
-        /// Nothing happens at all when the shortfall is zero, INCLUDING the friction holiday. A dash
-        /// that adds no speed must not also hand out free momentum retention, or spamming it at the
-        /// cap would still be better than not.
-        /// </summary>
+        // Apply the impulse, capped along its own direction when the asset asks for it.
+        //
+        // The uncapped path is a plain add, which is correct for knockback and was the only
+        // behaviour before. The capped path measures how fast you ALREADY are in this direction and
+        // adds only the shortfall — so repeated pushes converge on the cap instead of compounding.
+        //
+        // Nothing happens at all when the shortfall is zero, INCLUDING the friction holiday. A dash
+        // that adds no speed must not also hand out free momentum retention, or spamming it at the
+        // cap would still be better than not.
         private void Push(Vector3 worldDirection)
         {
             float bonus = SpeedBonus;
@@ -278,11 +270,9 @@ namespace CrabSystem
             return ResolveBasis(caster) * local;
         }
 
-        /// <summary>
-        /// The rotation `direction` is expressed in. Replaces the old special-casing of exact forward
-        /// and back, which was doing the same thing three ways — Transform.TransformDirection ignores
-        /// position and scale, so it is already just `rotation * v`.
-        /// </summary>
+        // The rotation `direction` is expressed in. Replaces the old special-casing of exact forward
+        // and back, which was doing the same thing three ways — Transform.TransformDirection ignores
+        // position and scale, so it is already just `rotation * v`.
         private Quaternion ResolveBasis(Transform caster)
         {
             if (directionSource == MovementDirectionSource.CasterFacing) return caster.rotation;

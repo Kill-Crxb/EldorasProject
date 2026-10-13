@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Creates a natural lantern/candle flicker using Perlin noise.
-/// Assign the target Light manually.
-/// </summary>
+// Creates a natural lantern/candle flicker using Perlin noise.
+// Assign the target Light manually.
 
 namespace CrabSystem
 {

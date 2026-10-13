@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// World state snapshot passed to GOAP goals each tick.
-/// Holds spatial data and live module references. Semantic facts
-/// (IsWounded, LowMana, etc.) are read directly from brain.Blackboard.
-/// </summary>
+// World state snapshot passed to GOAP goals each tick.
+// Holds spatial data and live module references. Semantic facts
+// (IsWounded, LowMana, etc.) are read directly from brain.Blackboard.
 
 namespace CrabSystem
 {

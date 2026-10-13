@@ -2,13 +2,11 @@ using UnityEngine;
 
 namespace CrabSystem.Progression
 {
-    /// <summary>
-    /// Talent points for one tree. "1 talent point for spirit-aligned trees."
-    ///
-    /// Inert until something on the entity implements ITalentPointPool. Authoring the
-    /// reward now is still worth it — the balance data is the slow part, and the day the
-    /// talent module lands it starts paying out with no change here.
-    /// </summary>
+    // Talent points for one tree. "1 talent point for spirit-aligned trees."
+    //
+    // Inert until something on the entity implements ITalentPointPool. Authoring the
+    // reward now is still worth it — the balance data is the slow part, and the day the
+    // talent module lands it starts paying out with no change here.
     [CreateAssetMenu(fileName = "Reward_TalentPoint", menuName = "CrabSystem/Rewards/Talent Point")]
     public class TalentPointReward : Reward
     {

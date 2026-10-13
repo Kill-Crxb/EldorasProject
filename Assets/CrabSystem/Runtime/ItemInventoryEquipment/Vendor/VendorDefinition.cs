@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// One vendor: what's on the shelf and what they charge. First slice of Economy_Design.md §5 —
-/// likes / dislikes, faction, zone, commissions and access come later.
-/// </summary>
+// One vendor: what's on the shelf and what they charge. First slice of Economy_Design.md §5 —
+// likes / dislikes, faction, zone, commissions and access come later.
 
 namespace CrabSystem
 {

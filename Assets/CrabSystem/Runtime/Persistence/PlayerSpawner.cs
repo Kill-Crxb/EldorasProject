@@ -5,22 +5,12 @@ namespace CrabSystem
 {
     public class PlayerSpawner : MonoBehaviour
     {
-    #region Inspector
-
         [Header("Spawn Configuration")]
         [SerializeField] private GameObject playerPrefab;
         [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
 
-    #endregion
-
-    #region Private Fields
-
         private SaveManager saveManager;
         private ControllerBrain spawnedPlayerBrain;
-
-    #endregion
-
-    #region Lifecycle
 
         private void Awake()
         {
@@ -39,10 +29,6 @@ namespace CrabSystem
             GameEvents.OnGameSceneReady -= HandleGameSceneReady;
         }
 
-    #endregion
-
-    #region Event Handlers
-
         private void HandleGameSceneReady()
         {
             if (!saveManager.HasActiveCharacter)
@@ -53,10 +39,6 @@ namespace CrabSystem
 
             SpawnPlayer();
         }
-
-    #endregion
-
-    #region Spawning
 
         private void SpawnPlayer()
         {
@@ -103,16 +85,10 @@ namespace CrabSystem
             saveManager.SetPlayerBrain(spawnedPlayerBrain);
         }
 
-    #endregion
-
-    #region Public API
-
         public void AddSpawnPoint(Transform spawnPoint)
         {
             if (spawnPoint != null && !spawnPoints.Contains(spawnPoint))
                 spawnPoints.Add(spawnPoint);
         }
-
-    #endregion
     }
 }

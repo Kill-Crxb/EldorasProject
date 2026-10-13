@@ -9,22 +9,12 @@ namespace CrabSystem
 {
     public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpdatableManager
     {
-    #region IGameManager
-
         public string ManagerName => "Save Manager";
         public int InitializationPriority => 25;
         public bool IsEnabled => enabled;
         public bool IsInitialized { get; private set; }
 
-    #endregion
-
-    #region IManagerDependency
-
         public IEnumerable<Type> DependsOn => new[] { typeof(AccountManager) };
-
-    #endregion
-
-    #region Inspector
 
         [Header("Auto-Save")]
         [SerializeField] private bool autoSaveEnabled = true;
@@ -33,10 +23,6 @@ namespace CrabSystem
         [Tooltip("Seconds between writes of saveables that marked themselves dirty (an item picked up, a slot " +
                  "equipped). A burst of changes inside one window is written once.")]
         [SerializeField] private float dirtyFlushInterval = 5f;
-
-    #endregion
-
-    #region State
 
         public string ActiveCharacterId { get; private set; } = string.Empty;
         public bool HasActiveCharacter => !string.IsNullOrEmpty(ActiveCharacterId);
@@ -61,11 +47,6 @@ namespace CrabSystem
 
         // Character select's index for the loaded character, refreshed from the owning modules on every save.
         private CharacterMetadata activeMetadata;
-
-
-    #endregion
-
-    #region IGameManager Lifecycle
 
         public void Initialize()
         {
@@ -111,10 +92,6 @@ namespace CrabSystem
             return result;
         }
 
-    #endregion
-
-    #region Update
-
         public void UpdateManager()
         {
             if (!HasActiveCharacter || playerBrain == null) return;
@@ -149,10 +126,6 @@ namespace CrabSystem
             dirty.Add(saveable);
         }
 
-    #endregion
-
-    #region Player Brain Registration
-
         public void SetPlayerBrain(ControllerBrain brain)
         {
             UnsubscribeFromSaveables();
@@ -163,10 +136,6 @@ namespace CrabSystem
             if (pendingLoad && HasActiveCharacter)
                 _ = LoadCharacter(ActiveCharacterId);
         }
-
-    #endregion
-
-    #region Event Handlers
 
         private void HandleCharacterSelected(string characterId)
         {
@@ -182,10 +151,6 @@ namespace CrabSystem
         }
 
         private void HandleSaveRequested() => _ = SaveAll();
-
-    #endregion
-
-    #region Load
 
         public async Task LoadCharacter(string characterId)
         {
@@ -296,8 +261,6 @@ namespace CrabSystem
             public int version;
         }
 
-    #region Save
-
         public async Task SaveAll()
         {
             if (string.IsNullOrEmpty(ActiveCharacterId) || playerBrain == null) return;
@@ -374,10 +337,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Helpers
-
         // Once per player brain, not per save. A second saveable with the same id is a prefab mistake;
         // the first found keeps the file.
         private void CacheSaveables()
@@ -410,10 +369,6 @@ namespace CrabSystem
             foreach (var saveable in saveables)
                 saveable.Dirty -= HandleDirty;
         }
-
-    #endregion
-
-    #region Character Management
 
         public async Task<string> CreateCharacter(string characterName, string accountName = null)
         {
@@ -579,10 +534,7 @@ namespace CrabSystem
 
             return result;
         }
-
-    #endregion
     }
-#endregion
     [System.Serializable]
     public class CharacterMetadata
     {

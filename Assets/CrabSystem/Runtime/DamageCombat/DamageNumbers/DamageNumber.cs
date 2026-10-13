@@ -1,15 +1,13 @@
 using UnityEngine;
 using TMPro;
 
-/// <summary>
-/// DamageNumber — spawned at hit point, floats upward, fades out, self-destructs.
-///
-/// Setup:
-///   1. Create a GameObject with this component and a TextMeshPro (world space).
-///   2. Assign the TextMeshPro reference in the inspector.
-///   3. Save as DamageNumber.prefab.
-///   4. Assign the prefab to DamageNumberManager in the scene.
-/// </summary>
+// DamageNumber — spawned at hit point, floats upward, fades out, self-destructs.
+//
+// Setup:
+//   1. Create a GameObject with this component and a TextMeshPro (world space).
+//   2. Assign the TextMeshPro reference in the inspector.
+//   3. Save as DamageNumber.prefab.
+//   4. Assign the prefab to DamageNumberManager in the scene.
 
 namespace CrabSystem
 {

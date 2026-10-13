@@ -1,11 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// The only place UI keys, Escape and the cursor are decided.
-/// Owns its own copy of the UI action map so it works before the player spawns,
-/// and borrows the player's controls only to suspend gameplay while a panel is open.
-/// </summary>
+// The only place UI keys, Escape and the cursor are decided.
+// Owns its own copy of the UI action map so it works before the player spawns,
+// and borrows the player's controls only to suspend gameplay while a panel is open.
 
 namespace CrabSystem
 {
@@ -20,7 +18,7 @@ namespace CrabSystem
 
         public static UIInputRouter Instance { get; private set; }
 
-        /// <summary>True while the UI owns the cursor and keyboard.</summary>
+        // True while the UI owns the cursor and keyboard.
         public static bool InterfaceMode { get; private set; }
 
         private PlayerInputControls uiControls;
@@ -61,7 +59,7 @@ namespace CrabSystem
             left.Toggle();
         }
 
-        /// <summary>Escape closes the world panel first, then the player panel.</summary>
+        // Escape closes the world panel first, then the player panel.
         private void HandleCancel(InputAction.CallbackContext _)
         {
             var right = UIPanelRegistry.Right;
@@ -70,7 +68,7 @@ namespace CrabSystem
             else UIPanelRegistry.Left?.Close();
         }
 
-        /// <summary>Called by UIPanel whenever a panel opens or closes.</summary>
+        // Called by UIPanel whenever a panel opens or closes.
         public void ApplyMode()
         {
             bool wanted = UIPanelRegistry.AnyOpen;
@@ -87,10 +85,8 @@ namespace CrabSystem
             SuspendGameplay(wanted);
         }
 
-        /// <summary>
-        /// The player spawns after this object, so the lookup is deferred until first use
-        /// and re-resolved if the previous player was destroyed.
-        /// </summary>
+        // The player spawns after this object, so the lookup is deferred until first use
+        // and re-resolved if the previous player was destroyed.
         private void SuspendGameplay(bool suspend)
         {
             if (!suspendGameplayInput) return;

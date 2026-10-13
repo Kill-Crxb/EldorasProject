@@ -7,15 +7,13 @@ namespace CrabSystem
 {
     public enum DamageSource { Other, Melee, Projectile, Tick }
 
-    /// <summary>
-    /// Context information about an attack before damage calculation.
-    /// Passed from combat system to DamageModule.
-    /// 
-    /// Design:
-    /// - Contains all information needed to calculate damage
-    /// - Lightweight class that's easy to create
-    /// - Provides factory methods for common scenarios
-    /// </summary>
+    // Context information about an attack before damage calculation.
+    // Passed from combat system to DamageModule.
+    //
+    // Design:
+    // - Contains all information needed to calculate damage
+    // - Lightweight class that's easy to create
+    // - Provides factory methods for common scenarios
     [System.Serializable]
     public class CombatAttackData
     {
@@ -47,7 +45,7 @@ namespace CrabSystem
         [Header("Source")]
         public DamageSource source = DamageSource.Other;
 
-        /// <summary>Create basic attack data with minimal information</summary>
+        // Create basic attack data with minimal information
         public static CombatAttackData CreateBasic(Transform attacker, Vector3 hitPoint)
         {
             Vector3 direction = Vector3.zero;
@@ -71,7 +69,7 @@ namespace CrabSystem
             };
         }
 
-        /// <summary>Create attack data with combo information</summary>
+        // Create attack data with combo information
         public static CombatAttackData CreateWithCombo(Transform attacker, Vector3 hitPoint, int combo, float comboMult)
         {
             var data = CreateBasic(attacker, hitPoint);

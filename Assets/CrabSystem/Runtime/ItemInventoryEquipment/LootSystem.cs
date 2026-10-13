@@ -2,10 +2,8 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
-/// <summary>
-/// Handles death drops and loot generation.
-/// Reads from EquipmentSystem and InventorySystem to generate loot.
-/// </summary>
+// Handles death drops and loot generation.
+// Reads from EquipmentSystem and InventorySystem to generate loot.
 
 namespace CrabSystem
 {
@@ -33,8 +31,6 @@ namespace CrabSystem
         private bool isInitialized = false;
 
         public event Action<LootContainer> OnLootGenerated;
-
-    #region IBrainModule
 
         public bool IsEnabled
         {
@@ -76,10 +72,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Death Handling
-
         private void OnEntityDeath()
         {
             Vector3 deathPosition = brain.transform.position;
@@ -118,10 +110,6 @@ namespace CrabSystem
                 Debug.Log($"[LootSystem] {brain.EntityName} dropped no loot");
             }
         }
-
-    #endregion
-
-    #region Loot Sources
 
         private void AddPoolLoot(List<ItemInstance> lootedItems, Vector3 position)
         {
@@ -192,10 +180,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Container Spawning
-
         private void SpawnLootContainer(Vector3 position, List<ItemInstance> items)
         {
             // Guard clause: No prefab
@@ -240,23 +224,15 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Debug Utilities
-
         [ContextMenu("Debug: Force Drop Loot")]
         private void DebugForceDropLoot()
         {
             GenerateLoot(brain.transform.position);
             Debug.Log("[LootSystem] Forced loot drop");
         }
-
-    #endregion
     }
 
-    /// <summary>
-    /// Loot drop data from pool rolls.
-    /// </summary>
+    // Loot drop data from pool rolls.
     public class LootDrop
     {
         public string itemId;

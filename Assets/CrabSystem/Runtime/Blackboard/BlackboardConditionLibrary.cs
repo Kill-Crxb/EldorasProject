@@ -1,50 +1,47 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Universal Condition Library - Single source of truth for all semantic conditions.
-/// 
-/// Architecture Philosophy:
-/// "One library, infinite entities. Entities ignore conditions that don't apply to them."
-/// 
-/// Why Universal Library?
-/// - Zero per-entity configuration (assign library, done)
-/// - Consistent semantic facts across all entity types
-/// - Single source of truth for gameplay thresholds
-/// - Easy balance changes (update once, affects all entities)
-/// - Genre-agnostic (works for any game type)
-/// 
-/// Responsibilities:
-/// - Hold all BlackboardCondition assets in the game
-/// - Validate conditions on load
-/// - Provide condition list to SemanticBridgeSystem
-/// 
-/// NOT Responsible For:
-/// - Evaluating conditions (SemanticBridgeSystem does this)
-/// - Storing results (Blackboard does this)
-/// - Entity-specific filtering (unnecessary - just evaluate all)
-/// 
-/// Performance:
-/// - 50 conditions @ 10Hz = 500 evaluations/second per entity
-/// - Cost per evaluation: ~10 CPU instructions
-/// - Total cost: <0.01ms per entity (negligible)
-/// 
-/// Usage Pattern:
-/// 1. Create one ConditionLibrary asset (global)
-/// 2. Add ALL conditions to it (health, stamina, mana, combat, movement, etc.)
-/// 3. Assign library to SemanticBridgeSystem on each entity
-/// 4. Done! Each entity evaluates all, ignores irrelevant ones
-/// 
-/// Example Conditions:
-/// - Health: IsWounded, IsHealthy, IsDying, IsCritical
-/// - Stamina: LowStamina, CanDodge, CanSprint, Exhausted
-/// - Mana: LowMana, CanCastSpell, OutOfMana, HighMana
-/// - Combat: InCombat, CanParry, CanCounter, CannotAct
-/// - Movement: CanJump, IsFalling, IsGrounded, IsSwimming
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 20, 2026
-/// </summary>
+// Universal Condition Library - Single source of truth for all semantic conditions.
+//
+// Architecture Philosophy:
+// "One library, infinite entities. Entities ignore conditions that don't apply to them."
+//
+// Why Universal Library?
+// - Zero per-entity configuration (assign library, done)
+// - Consistent semantic facts across all entity types
+// - Single source of truth for gameplay thresholds
+// - Easy balance changes (update once, affects all entities)
+// - Genre-agnostic (works for any game type)
+//
+// Responsibilities:
+// - Hold all BlackboardCondition assets in the game
+// - Validate conditions on load
+// - Provide condition list to SemanticBridgeSystem
+//
+// NOT Responsible For:
+// - Evaluating conditions (SemanticBridgeSystem does this)
+// - Storing results (Blackboard does this)
+// - Entity-specific filtering (unnecessary - just evaluate all)
+//
+// Performance:
+// - 50 conditions @ 10Hz = 500 evaluations/second per entity
+// - Cost per evaluation: ~10 CPU instructions
+// - Total cost: <0.01ms per entity (negligible)
+//
+// Usage Pattern:
+// 1. Create one ConditionLibrary asset (global)
+// 2. Add ALL conditions to it (health, stamina, mana, combat, movement, etc.)
+// 3. Assign library to SemanticBridgeSystem on each entity
+// 4. Done! Each entity evaluates all, ignores irrelevant ones
+//
+// Example Conditions:
+// - Health: IsWounded, IsHealthy, IsDying, IsCritical
+// - Stamina: LowStamina, CanDodge, CanSprint, Exhausted
+// - Mana: LowMana, CanCastSpell, OutOfMana, HighMana
+// - Combat: InCombat, CanParry, CanCounter, CannotAct
+// - Movement: CanJump, IsFalling, IsGrounded, IsSwimming
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -61,11 +58,7 @@ namespace CrabSystem
         // Properties
         public int ConditionCount => conditions?.Count ?? 0;
 
-    #region Validation
-
-        /// <summary>
-        /// Validate all conditions in the library
-        /// </summary>
+        // Validate all conditions in the library
         public bool Validate(out string error)
         {
             // Guard clauses
@@ -110,9 +103,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Validate on asset save (Editor only)
-        /// </summary>
+        // Validate on asset save (Editor only)
         private void OnValidate()
         {
             if (conditions == null || conditions.Count == 0)
@@ -133,13 +124,7 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Context Menu Helpers
-
-        /// <summary>
-        /// Print all conditions in the library (debug)
-        /// </summary>
+        // Print all conditions in the library (debug)
         [ContextMenu("Print All Conditions")]
         private void PrintAllConditions()
         {
@@ -165,9 +150,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Validate all conditions (debug)
-        /// </summary>
+        // Validate all conditions (debug)
         [ContextMenu("Validate All Conditions")]
         private void ValidateAllConditions()
         {
@@ -181,9 +164,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Count conditions by type (debug)
-        /// </summary>
+        // Count conditions by type (debug)
         [ContextMenu("Print Statistics")]
         private void PrintStatistics()
         {
@@ -217,7 +198,5 @@ namespace CrabSystem
                       $"  Disabled: {disabledCount}\n" +
                       $"  Null: {nullCount}");
         }
-
-    #endregion
     }
 }

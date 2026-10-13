@@ -12,9 +12,7 @@ namespace CrabSystem
         // One option per appearance group of the chosen model. Written to model.json at creation.
         public List<AppearanceChoice> appearance;
 
-        /// <summary>
-        /// Starting core stats. Leave null and SaveManager seeds a flat baseline instead.
-        /// </summary>
+        // Starting core stats. Leave null and SaveManager seeds a flat baseline instead.
         public StatBaseOverride[] baseStats;
     }
 }

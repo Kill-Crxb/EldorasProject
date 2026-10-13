@@ -4,47 +4,38 @@ using CrabSystem.Stats;
 using CrabSystem.Factions;
 using System;
 
-/// <summary>
-/// Damage Manager - Global damage configuration (Singleton)
-/// 
-/// Architecture Pattern:
-/// DamageManager (Global) → DamageSystem (Per-Entity)
-/// 
-/// Mirrors:
-/// - StatsManager → StatSystem
-/// - ResourceManager → ResourceSystem
-/// 
-/// Responsibilities:
-/// - Hold active DamageCalculationConfig
-/// - Provide damage rules to all entities
-/// - Validate stat references at startup
-/// - Coordinate with FactionManager for PvP modifiers
-/// - Server-authoritative in multiplayer
-/// 
-/// Benefits vs Hardcoded:
-/// - Data-driven damage types
-/// - Different configs per game mode (PvE vs PvP)
-/// - Hot-reload damage rules at runtime
-/// - No hardcoded stat IDs
-/// 
-/// Priority: 20 (After Stats and Resources)
-/// 
-/// Phase 1.7b: Universal Systems Consolidation + Manager Coordination
-/// Created: January 2026
-/// </summary>
+// Damage Manager - Global damage configuration (Singleton)
+//
+// Architecture Pattern:
+// DamageManager (Global) → DamageSystem (Per-Entity)
+//
+// Mirrors:
+// - StatsManager → StatSystem
+// - ResourceManager → ResourceSystem
+//
+// Responsibilities:
+// - Hold active DamageCalculationConfig
+// - Provide damage rules to all entities
+// - Validate stat references at startup
+// - Coordinate with FactionManager for PvP modifiers
+// - Server-authoritative in multiplayer
+//
+// Benefits vs Hardcoded:
+// - Data-driven damage types
+// - Different configs per game mode (PvE vs PvP)
+// - Hot-reload damage rules at runtime
+// - No hardcoded stat IDs
+//
+// Priority: 20 (After Stats and Resources)
+//
+// Phase 1.7b: Universal Systems Consolidation + Manager Coordination
 
 namespace CrabSystem
 {
     public class DamageManager : MonoBehaviour, IGameManager, IManagerDependency
     {
-    #region Singleton (Simplified)
-
         private static DamageManager instance;
         public static DamageManager Instance => instance;
-
-    #endregion
-
-    #region IGameManager Implementation
 
         public string ManagerName => "Damage Manager";
         public int InitializationPriority => 20; // After Stats (0) and Resources (10)
@@ -116,10 +107,6 @@ namespace CrabSystem
             return result;
         }
 
-    #endregion
-
-    #region Inspector Fields
-
         [Header("Damage Configurations")]
         [Tooltip("All available damage calculation configs")]
         [SerializeField] private List<DamageCalculationConfig> damageConfigs = new List<DamageCalculationConfig>();
@@ -130,18 +117,9 @@ namespace CrabSystem
         [Header("Debug")]
         [SerializeField] private bool debugLogging = false;
 
-    #endregion
-
-    #region Public API
-
-        /// <summary>
-        /// Get the active damage calculation config
-        /// </summary>
         public DamageCalculationConfig ActiveConfig => activeConfig;
 
-        /// <summary>
-        /// Set the active damage config (e.g., switch between PvE and PvP configs)
-        /// </summary>
+        // Set the active damage config (e.g., switch between PvE and PvP configs)
         public void SetActiveConfig(DamageCalculationConfig config)
         {
             if (config == null)
@@ -164,9 +142,6 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Set active config by name
-        /// </summary>
         public void SetActiveConfig(string configName)
         {
             var config = damageConfigs.Find(c => c.name == configName);
@@ -180,13 +155,7 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Coordination: Stat Validation
-
-        /// <summary>
-        /// COORDINATION: Validate stat references with StatsManager
-        /// </summary>
+        // COORDINATION: Validate stat references with StatsManager
         private void ValidateDamageFormulas()
         {
             var stats = StatsManager.Instance;
@@ -241,25 +210,12 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Coordination: Faction Damage Modifiers
-
-        /// <summary>
-        /// COORDINATION: Get faction-based damage modifier for combat.
-        /// Reads the damage multiplier from the relationship entry in FactionRelationships.
-        /// </summary>
-        /// <param name="attackerFaction">Attacker's faction asset</param>
-        /// <param name="defenderFaction">Defender's faction asset</param>
-        /// <returns>Damage multiplier (1.0 = normal damage)</returns>
+        // COORDINATION: Get faction-based damage modifier for combat.
+        // Reads the damage multiplier from the relationship entry in FactionRelationships.
         public float GetFactionDamageModifier(FactionDefinition attackerFaction, FactionDefinition defenderFaction)
         {
             return FactionManager.GetDamageModifier(attackerFaction, defenderFaction);
         }
-
-    #endregion
-
-    #region Context Menu Helpers
 
         [ContextMenu("Validate Damage Formulas")]
         private void ContextValidateDamageFormulas()
@@ -273,14 +229,7 @@ namespace CrabSystem
             ValidateDamageFormulas();
         }
 
-    #endregion
-
-
-    #region Server Authority
-
-        /// <summary>
-        /// Check if we're running on server (for multiplayer authority)
-        /// </summary>
+        // Check if we're running on server (for multiplayer authority)
         private bool IsServer()
         {
 #if UNITY_SERVER
@@ -291,7 +240,5 @@ namespace CrabSystem
             return true;
 #endif
         }
-
-    #endregion
     }
 }

@@ -1,25 +1,23 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Knockback Effect - Applies force/impulse to knock back targets
-/// 
-/// Usage:
-/// - Called by abilities to knock back enemies
-/// - Works through MovementSystem and LocomotionHandler
-/// - Direction can be relative to attacker or absolute
-/// 
-/// Example:
-/// var effect = new KnockbackEffect 
-/// { 
-///     force = 10f,
-///     direction = Vector3.back // Relative to attacker
-/// };
-/// effect.SetAttacker(attackerTransform);
-/// effect.Apply(targetGameObject);
-/// 
-/// Updated: January 2026 - Supports ControllerBrain/MovementSystem
-/// </summary>
+// Knockback Effect - Applies force/impulse to knock back targets
+//
+// Usage:
+// - Called by abilities to knock back enemies
+// - Works through MovementSystem and LocomotionHandler
+// - Direction can be relative to attacker or absolute
+//
+// Example:
+// var effect = new KnockbackEffect
+// {
+//     force = 10f,
+//     direction = Vector3.back // Relative to attacker
+// };
+// effect.SetAttacker(attackerTransform);
+// effect.Apply(targetGameObject);
+//
+// Updated: January 2026 - Supports ControllerBrain/MovementSystem
 
 namespace CrabSystem
 {
@@ -36,23 +34,19 @@ namespace CrabSystem
         [Tooltip("Use direction relative to attacker? (false = world space direction)")]
         public bool useRelativeDirection = true;
 
-        /// <summary>Fired when effect completes</summary>
+        // Fired when effect completes
         public event Action OnCompleted;
 
         [System.NonSerialized]
         private Transform attackerTransform;
 
-        /// <summary>
-        /// Set the attacker transform (for relative direction)
-        /// </summary>
+        // Set the attacker transform (for relative direction)
         public void SetAttacker(Transform attacker)
         {
             attackerTransform = attacker;
         }
 
-        /// <summary>
-        /// Apply knockback to GameObject (modern - works with ControllerBrain)
-        /// </summary>
+        // Apply knockback to GameObject (modern - works with ControllerBrain)
         public void Apply(GameObject targetObject)
         {
             if (targetObject == null)
@@ -79,9 +73,7 @@ namespace CrabSystem
             OnCompleted?.Invoke();
         }
 
-        /// <summary>
-        /// Apply knockback to ControllerBrain entity
-        /// </summary>
+        // Apply knockback to ControllerBrain entity
         private void ApplyToBrain(ControllerBrain brain)
         {
             var movementSystem = brain.GetModule<MovementSystem>();
@@ -124,9 +116,7 @@ namespace CrabSystem
             locomotionHandler.ApplyImpulse(knockbackDir, force);
         }
 
-        /// <summary>
-        /// Apply knockback to IDamageable target (legacy compatibility)
-        /// </summary>
+        // Apply knockback to IDamageable target (legacy compatibility)
         [System.Obsolete("Use Apply(GameObject) instead")]
         public void Apply(IDamageable target)
         {
@@ -141,9 +131,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Cancel the effect (for interruptible abilities)
-        /// </summary>
+        // Cancel the effect (for interruptible abilities)
         public void Cancel()
         {
             OnCompleted?.Invoke();

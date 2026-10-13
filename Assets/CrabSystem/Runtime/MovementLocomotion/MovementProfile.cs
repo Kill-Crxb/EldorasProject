@@ -1,12 +1,10 @@
 using UnityEngine;
 
-/// <summary>
-/// Every tunable number the parkour controller reads, in an asset rather than on a prefab.
-///
-/// One asset can be shared by the test prefab, the real player and any future entity, so a feel
-/// change is made once instead of once per prefab. At slice 3 these stay the BASE values and
-/// `mov.*` stat contributions are added on top at the point of use — nothing here is cached.
-/// </summary>
+// Every tunable number the parkour controller reads, in an asset rather than on a prefab.
+//
+// One asset can be shared by the test prefab, the real player and any future entity, so a feel
+// change is made once instead of once per prefab. At slice 3 these stay the BASE values and
+// `mov.*` stat contributions are added on top at the point of use — nothing here is cached.
 
 namespace CrabSystem
 {
@@ -219,7 +217,6 @@ namespace CrabSystem
         [Tooltip("Seconds before another mantle may fire. Stops a held jump re-mantling every frame " +
                  "while the sensor can still see the edge you are climbing.")]
         public float mantleCooldown = 0.3f;
-
 
         [Header("Crouch")]
         [Tooltip("Wish speed while crouched. Also the speed a slide decays to before it hands over " +

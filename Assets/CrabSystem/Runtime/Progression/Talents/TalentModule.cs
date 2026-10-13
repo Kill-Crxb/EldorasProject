@@ -181,7 +181,6 @@ namespace CrabSystem
             return true;
         }
 
-
         public bool Spend(TalentSlot slot, TalentNode node)
         {
             if (WhyNotSpend(slot, node) != null) return false;

@@ -4,14 +4,12 @@ using UnityEngine;
 
 namespace CrabSystem.Magic
 {
-    /// <summary>
-    /// What an Effect does on arrival, and — the part that matters — WHO IT SEEKS.
-    ///
-    /// The stance is not a branch in the code. It is one property on a row, and it is what lets
-    /// heals, wards and buffs find allies while damage finds enemies, through the exact same
-    /// path: ProjectileAim.StanceAllows governs both the aim probe and the hit filter, so a
-    /// healing bolt probes for allies using the code a fireball uses to probe for enemies.
-    /// </summary>
+    // What an Effect does on arrival, and — the part that matters — WHO IT SEEKS.
+    //
+    // The stance is not a branch in the code. It is one property on a row, and it is what lets
+    // heals, wards and buffs find allies while damage finds enemies, through the exact same
+    // path: ProjectileAim.StanceAllows governs both the aim probe and the hit filter, so a
+    // healing bolt probes for allies using the code a fireball uses to probe for enemies.
     [Serializable]
     public class SpellEffectRow
     {
@@ -33,20 +31,18 @@ namespace CrabSystem.Magic
         public bool implemented = false;
     }
 
-    /// <summary>
-    /// One row of adjustment to a composed spell. Used by THREE tables — Modify, Range and
-    /// Amplify — because all three answer the same kind of question: given the spell the first
-    /// three slots described, what changes?
-    ///
-    /// One row shape rather than three near-identical ones. The difference between "Split" and
-    /// "+count" is entirely in the numbers:
-    ///
-    ///   Modify  Water  Split       tierSteps -1, extraInstances +2   divide and shrink
-    ///   Amplify Air    +count      tierSteps  0, extraInstances +2   add at the same tier
-    ///
-    /// Same field, opposite meaning, no code knows the difference. That is what "data driven"
-    /// has to mean to be worth the name.
-    /// </summary>
+    // One row of adjustment to a composed spell. Used by THREE tables — Modify, Range and
+    // Amplify — because all three answer the same kind of question: given the spell the first
+    // three slots described, what changes?
+    //
+    // One row shape rather than three near-identical ones. The difference between "Split" and
+    // "+count" is entirely in the numbers:
+    //
+    //   Modify  Water  Split       tierSteps -1, extraInstances +2   divide and shrink
+    //   Amplify Air    +count      tierSteps  0, extraInstances +2   add at the same tier
+    //
+    // Same field, opposite meaning, no code knows the difference. That is what "data driven"
+    // has to mean to be worth the name.
     [Serializable]
     public class SpellAdjustRow
     {
@@ -89,18 +85,16 @@ namespace CrabSystem.Magic
         public bool redirectToSelf = false;
     }
 
-    /// <summary>
-    /// An authored spell: the sequence that summons it, and the hand-made ability it resolves to.
-    ///
-    /// The sequence is PICKED, not typed. It used to be a hand-written key string — "fire.air.air"
-    /// — compared exactly, which meant "Nature.Water" silently never matched "nature.water" and
-    /// the spell just quietly composed primitively instead. A dropdown per slot cannot be
-    /// misspelled, cannot be miscapitalised, and shows you the grammar while you author it.
-    ///
-    /// The string key still exists at the persistence boundary, where it has to: unlocks are
-    /// saved by key. It is derived from this array rather than authored beside it, so the two
-    /// can never disagree.
-    /// </summary>
+    // An authored spell: the sequence that summons it, and the hand-made ability it resolves to.
+    //
+    // The sequence is PICKED, not typed. It used to be a hand-written key string — "fire.air.air"
+    // — compared exactly, which meant "Nature.Water" silently never matched "nature.water" and
+    // the spell just quietly composed primitively instead. A dropdown per slot cannot be
+    // misspelled, cannot be miscapitalised, and shows you the grammar while you author it.
+    //
+    // The string key still exists at the persistence boundary, where it has to: unlocks are
+    // saved by key. It is derived from this array rather than authored beside it, so the two
+    // can never disagree.
     [Serializable]
     public class AuthoredSpellEntry
     {
@@ -119,15 +113,13 @@ namespace CrabSystem.Magic
                  "trainer, a tome or a quest reward does.")]
         public bool unlockedByDefault = false;
 
-        /// <summary>The persistence key. Derived, so it can never disagree with the sequence.</summary>
+        // The persistence key. Derived, so it can never disagree with the sequence.
         public string Key => SpellSequence.ToKey(sequence, sequence != null ? sequence.Length : 0);
 
         public int Length => sequence != null ? sequence.Length : 0;
 
-        /// <summary>
-        /// Element-by-element compare against what the player has entered. No string is built,
-        /// so this is free to call from a UI that previews the sequence every frame.
-        /// </summary>
+        // Element-by-element compare against what the player has entered. No string is built,
+        // so this is free to call from a UI that previews the sequence every frame.
         public bool Matches(SpellElement[] entered, int length)
         {
             if (sequence == null || entered == null) return false;
@@ -142,20 +134,18 @@ namespace CrabSystem.Magic
         }
     }
 
-    /// <summary>
-    /// THE grammar. One asset holding every table, because this is where balance happens and six
-    /// tables side by side in one inspector is legible in a way thirty loose assets are not.
-    ///
-    /// Referenced directly by SpellcraftSystem, the way ModelDatabase is referenced — static data
-    /// authored once and read by everyone. NOT a manager: nothing is written here at runtime,
-    /// nothing has to be loaded or warmed, and magic therefore works in any scene the moment the
-    /// brain has the module. ManagerBrain is disabled in Zoo.unity, so anything that depended on
-    /// it would already be dead in the project's main test scene.
-    ///
-    /// Every lookup scans six rows rather than indexing by (int)element. Six iterations per cast
-    /// is nothing, and it means a mis-ordered or half-filled table reports which row is missing
-    /// instead of throwing IndexOutOfRange or silently returning the wrong element.
-    /// </summary>
+    // THE grammar. One asset holding every table, because this is where balance happens and six
+    // tables side by side in one inspector is legible in a way thirty loose assets are not.
+    //
+    // Referenced directly by SpellcraftSystem, the way ModelDatabase is referenced — static data
+    // authored once and read by everyone. NOT a manager: nothing is written here at runtime,
+    // nothing has to be loaded or warmed, and magic therefore works in any scene the moment the
+    // brain has the module. ManagerBrain is disabled in Zoo.unity, so anything that depended on
+    // it would already be dead in the project's main test scene.
+    //
+    // Every lookup scans six rows rather than indexing by (int)element. Six iterations per cast
+    // is nothing, and it means a mis-ordered or half-filled table reports which row is missing
+    // instead of throwing IndexOutOfRange or silently returning the wrong element.
     [CreateAssetMenu(fileName = "SpellGrammar", menuName = "CrabSystem/Magic/Spell Grammar")]
     public class SpellGrammar : ScriptableObject
     {
@@ -218,10 +208,6 @@ namespace CrabSystem.Magic
         [Tooltip("Sequence key to hand-made ability. Unlocking a spell is adding an entry.")]
         public AuthoredSpellEntry[] authoredSpells = new AuthoredSpellEntry[0];
 
-        // =========================================================================
-        // Lookups
-        // =========================================================================
-
         public ElementDefinition GetElement(SpellElement element)
         {
             for (int i = 0; i < elements.Length; i++)
@@ -234,13 +220,11 @@ namespace CrabSystem.Magic
             return null;
         }
 
-        /// <summary>
-        /// Null is a LEGITIMATE answer here, unlike GetElement. Four of the six Forms need
-        /// projectile features that do not exist yet, so a half-authored forms list is the
-        /// normal state of this asset for a while. SpellRuntime falls back to the default Form
-        /// rather than refusing the cast — an unbuilt Form must not break "every sequence is
-        /// valid by construction". Use Validate Grammar to see the whole list of holes at once.
-        /// </summary>
+        // Null is a LEGITIMATE answer here, unlike GetElement. Four of the six Forms need
+        // projectile features that do not exist yet, so a half-authored forms list is the
+        // normal state of this asset for a while. SpellRuntime falls back to the default Form
+        // rather than refusing the cast — an unbuilt Form must not break "every sequence is
+        // valid by construction". Use Validate Grammar to see the whole list of holes at once.
         public FormDefinition GetForm(SpellElement element)
         {
             for (int i = 0; i < forms.Length; i++)
@@ -264,11 +248,9 @@ namespace CrabSystem.Magic
             return null;
         }
 
-        /// <summary>
-        /// A row from any of the three adjust tables. Null is a legitimate answer — an unset
-        /// Modify, Range or Amplify slot simply does not adjust anything, which is what makes
-        /// short sequences complete rather than incomplete.
-        /// </summary>
+        // A row from any of the three adjust tables. Null is a legitimate answer — an unset
+        // Modify, Range or Amplify slot simply does not adjust anything, which is what makes
+        // short sequences complete rather than incomplete.
         public SpellAdjustRow GetAdjust(SpellAdjustRow[] table, SpellElement element)
         {
             if (table == null) return null;
@@ -289,13 +271,11 @@ namespace CrabSystem.Magic
             return entry != null ? entry.ability : null;
         }
 
-        /// <summary>
-        /// The entry for what the player has actually entered. Allocation-free — this is the
-        /// one called on every cast and potentially every frame by a preview.
-        ///
-        /// Only returns entries that have an ability: a sequence pointing at nothing is an
-        /// authoring mistake, not a spell, and treating it as one would swallow the sequence.
-        /// </summary>
+        // The entry for what the player has actually entered. Allocation-free — this is the
+        // one called on every cast and potentially every frame by a preview.
+        //
+        // Only returns entries that have an ability: a sequence pointing at nothing is an
+        // authoring mistake, not a spell, and treating it as one would swallow the sequence.
         public AuthoredSpellEntry FindAuthored(SpellElement[] entered, int length)
         {
             if (entered == null || length <= 0) return null;
@@ -311,10 +291,8 @@ namespace CrabSystem.Magic
             return null;
         }
 
-        /// <summary>
-        /// By key. Only for the persistence boundary — unlocks are saved as strings — so the
-        /// per-entry string build here is paid on load and on Unlock, not on every cast.
-        /// </summary>
+        // By key. Only for the persistence boundary — unlocks are saved as strings — so the
+        // per-entry string build here is paid on load and on Unlock, not on every cast.
         public AuthoredSpellEntry FindAuthored(string sequenceKey)
         {
             if (string.IsNullOrEmpty(sequenceKey)) return null;
@@ -330,20 +308,14 @@ namespace CrabSystem.Magic
             return null;
         }
 
-        // =========================================================================
-        // Validation
-        // =========================================================================
-
-        /// <summary>
-        /// Report EVERY hole in the grammar at once, in one log.
-        ///
-        /// Worth having because the runtime can only ever tell you about the one row the cast you
-        /// just tried happened to need. Thirty assets have to agree with each other before a
-        /// sequence resolves end to end, and finding that out one cast at a time is a bad evening.
-        ///
-        /// Right-click the asset → Validate Grammar. Same pattern as
-        /// DamageCalculationConfig.ValidateConfiguration.
-        /// </summary>
+        // Report EVERY hole in the grammar at once, in one log.
+        //
+        // Worth having because the runtime can only ever tell you about the one row the cast you
+        // just tried happened to need. Thirty assets have to agree with each other before a
+        // sequence resolves end to end, and finding that out one cast at a time is a bad evening.
+        //
+        // Right-click the asset → Validate Grammar. Same pattern as
+        // DamageCalculationConfig.ValidateConfiguration.
         [ContextMenu("Validate Grammar")]
         public void ValidateGrammar()
         {
@@ -394,10 +366,8 @@ namespace CrabSystem.Magic
             }
         }
 
-        /// <summary>
-        /// The cast ability has five ways to be silently wrong, and every one of them looks
-        /// identical from the game: nothing happens.
-        /// </summary>
+        // The cast ability has five ways to be silently wrong, and every one of them looks
+        // identical from the game: nothing happens.
         private void ValidateCastAbility(SpellElement element, ElementDefinition def, List<string> problems)
         {
             AbilityDefinition ability = def.castAbility;
@@ -507,13 +477,11 @@ namespace CrabSystem.Magic
             }
         }
 
-        /// <summary>
-        /// Catches the Unity zero-init signature: a row added with the inspector's + button gets
-        /// memset to zero, because C# field initialisers do not run for [Serializable] class
-        /// instances created that way. SpellRuntime treats a non-positive multiplier as unset so
-        /// this is no longer destructive — but a row of three zeroes almost always means the
-        /// designer meant 1 and never saw the field.
-        /// </summary>
+        // Catches the Unity zero-init signature: a row added with the inspector's + button gets
+        // memset to zero, because C# field initialisers do not run for [Serializable] class
+        // instances created that way. SpellRuntime treats a non-positive multiplier as unset so
+        // this is no longer destructive — but a row of three zeroes almost always means the
+        // designer meant 1 and never saw the field.
         private void ValidateAdjustTable(string label, SpellAdjustRow[] table, List<string> problems)
         {
             if (table == null) return;
@@ -535,11 +503,9 @@ namespace CrabSystem.Magic
             }
         }
 
-        /// <summary>
-        /// An authored spell that never resolves is invisible: the sequence simply composes
-        /// primitively and looks like it worked. Every failure mode here is silent in play,
-        /// which is exactly why they are worth reporting.
-        /// </summary>
+        // An authored spell that never resolves is invisible: the sequence simply composes
+        // primitively and looks like it worked. Every failure mode here is silent in play,
+        // which is exactly why they are worth reporting.
         private void ValidateAuthored(List<string> problems)
         {
             if (authoredSpells == null) return;

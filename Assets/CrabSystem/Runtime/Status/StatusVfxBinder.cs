@@ -1,19 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Puts a status's aura on the bearer and takes it away again. That is the whole job.
-///
-/// Separate from StatusSystem on purpose: statuses are stats and a clock, and nothing about
-/// that should have to know what a ParticleSystem is. An entity with no VFXSystem, or a
-/// status with no auraVfx, simply never involves this module.
-///
-/// WHY NOT VFXSystem.SpawnEffect:
-/// That method spawns UNPARENTED and AUTO-DESTROYS when the particles finish — right for an
-/// impact spark, wrong for an aura in both halves. An aura has to follow the character, and
-/// it has to last exactly as long as the status rather than as long as its own particles.
-/// So this instantiates against the Aura anchor itself and owns the lifetime.
-/// </summary>
+// Puts a status's aura on the bearer and takes it away again. That is the whole job.
+//
+// Separate from StatusSystem on purpose: statuses are stats and a clock, and nothing about
+// that should have to know what a ParticleSystem is. An entity with no VFXSystem, or a
+// status with no auraVfx, simply never involves this module.
+//
+// WHY NOT VFXSystem.SpawnEffect:
+// That method spawns UNPARENTED and AUTO-DESTROYS when the particles finish — right for an
+// impact spark, wrong for an aura in both halves. An aura has to follow the character, and
+// it has to last exactly as long as the status rather than as long as its own particles.
+// So this instantiates against the Aura anchor itself and owns the lifetime.
 
 namespace CrabSystem
 {
@@ -34,8 +32,6 @@ namespace CrabSystem
 
         // Keyed by status id, matching StatusSystem's one-instance-per-id rule.
         private readonly Dictionary<string, GameObject> auras = new();
-
-    #region IBrainModule
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -58,10 +54,6 @@ namespace CrabSystem
         }
 
         public void UpdateModule() { }
-
-    #endregion
-
-    #region Spawn / despawn
 
         private void Spawn(StatusInstance instance)
         {
@@ -111,10 +103,6 @@ namespace CrabSystem
             Destroy(aura, particles.main.startLifetime.constantMax);
         }
 
-    #endregion
-
-    #region Teardown
-
         private void OnDestroy()
         {
             // StatusSystem is a concrete MonoBehaviour reference, so Unity's null-check overload
@@ -128,7 +116,5 @@ namespace CrabSystem
 
             auras.Clear();
         }
-
-    #endregion
     }
 }

@@ -121,10 +121,6 @@ namespace CrabSystem
             if (this == null)
                 return;
 
-            // --------------------------------------------------------
-            // CANVAS
-            // --------------------------------------------------------
-
             canvas = GetComponent<Canvas>();
 
             if (canvas == null)
@@ -137,11 +133,6 @@ namespace CrabSystem
 
             canvas.pixelPerfect = true;
 
-
-            // --------------------------------------------------------
-            // CANVAS SCALER
-            // --------------------------------------------------------
-
             scaler =
                 GetComponent<CanvasScaler>();
 
@@ -153,11 +144,6 @@ namespace CrabSystem
                 CanvasScaler.ScaleMode.ConstantPixelSize;
 
             scaler.scaleFactor = 1f;
-
-
-            // --------------------------------------------------------
-            // RECT TRANSFORM
-            // --------------------------------------------------------
 
             canvasRect =
                 GetComponent<RectTransform>();
@@ -179,11 +165,6 @@ namespace CrabSystem
                 canvasRect.localScale =
                     Vector3.one;
             }
-
-
-            // --------------------------------------------------------
-            // GRID GRAPHIC
-            // --------------------------------------------------------
 
             Transform gridTransform =
                 transform.Find("Grid");
@@ -212,11 +193,6 @@ namespace CrabSystem
             if (gridTransform.GetComponent<CanvasRenderer>() == null)
                 gridTransform.gameObject.AddComponent<CanvasRenderer>();
 
-
-            // --------------------------------------------------------
-            // GRID RECT
-            // --------------------------------------------------------
-
             RectTransform gridRect =
                 gridTransform as RectTransform;
 
@@ -238,11 +214,6 @@ namespace CrabSystem
                     Vector3.one;
             }
 
-
-            // --------------------------------------------------------
-            // GRID GRAPHIC
-            // --------------------------------------------------------
-
             graphic =
                 gridTransform.GetComponent<PixGridGraphic>();
 
@@ -251,13 +222,11 @@ namespace CrabSystem
                     gridTransform.gameObject
                         .AddComponent<PixGridGraphic>();
 
-
             // IMPORTANT:
             // Always reconnect the owner.
             //
             // This fixes the problem after Unity recompiles,
             // reloads the domain, or opens the scene.
-            // --------------------------------------------------------
 
             graphic.Configure(this);
 
@@ -266,11 +235,6 @@ namespace CrabSystem
             canvas.enabled =
                 !Application.isPlaying || showInPlayMode;
         }
-
-
-        // ============================================================
-        // PUBLIC SETTINGS
-        // ============================================================
 
         public Vector2 ReferenceResolution =>
             new Vector2(
@@ -326,11 +290,6 @@ namespace CrabSystem
         public float CenterWidth =>
             centerWidth;
     }
-
-
-    // =================================================================
-    // GRID GRAPHIC
-    // =================================================================
 
     [ExecuteAlways]
     public class PixGridGraphic : Graphic
@@ -388,14 +347,8 @@ namespace CrabSystem
                 height <= 0f)
                 return;
 
-
             Vector2 reference =
                 owner.ReferenceResolution;
-
-
-            // --------------------------------------------------------
-            // SCALE REFERENCE RESOLUTION INTO GAME VIEW
-            // --------------------------------------------------------
 
             float scaleX =
                 width /
@@ -411,7 +364,6 @@ namespace CrabSystem
                     scaleY
                 );
 
-
             float gridWidth =
                 reference.x *
                 scale;
@@ -419,7 +371,6 @@ namespace CrabSystem
             float gridHeight =
                 reference.y *
                 scale;
-
 
             float offsetX =
                 rect.xMin +
@@ -430,11 +381,6 @@ namespace CrabSystem
                 rect.yMin +
                 (height - gridHeight) *
                 0.5f;
-
-
-            // --------------------------------------------------------
-            // MINOR 10 PX GRID
-            // --------------------------------------------------------
 
             if (owner.ShowMinor)
             {
@@ -460,7 +406,6 @@ namespace CrabSystem
                     );
                 }
 
-
                 for (
                     int y = 0;
                     y <= reference.y;
@@ -483,11 +428,6 @@ namespace CrabSystem
                     );
                 }
             }
-
-
-            // --------------------------------------------------------
-            // MEDIUM 50 PX GRID
-            // --------------------------------------------------------
 
             if (owner.ShowMedium)
             {
@@ -513,7 +453,6 @@ namespace CrabSystem
                     );
                 }
 
-
                 for (
                     int y = 0;
                     y <= reference.y;
@@ -537,11 +476,6 @@ namespace CrabSystem
                 }
             }
 
-
-            // --------------------------------------------------------
-            // MAJOR 100 PX GRID
-            // --------------------------------------------------------
-
             if (owner.ShowMajor)
             {
                 for (
@@ -563,7 +497,6 @@ namespace CrabSystem
                     );
                 }
 
-
                 for (
                     int y = 0;
                     y <= reference.y;
@@ -584,11 +517,6 @@ namespace CrabSystem
                 }
             }
 
-
-            // --------------------------------------------------------
-            // EXACT CENTER
-            // --------------------------------------------------------
-
             if (owner.ShowCenter)
             {
                 float centerX =
@@ -603,7 +531,6 @@ namespace CrabSystem
                     0.5f *
                     scale;
 
-
                 AddVertical(
                     vh,
                     centerX,
@@ -613,7 +540,6 @@ namespace CrabSystem
                     owner.CenterXColor
                 );
 
-
                 AddHorizontal(
                     vh,
                     centerY,
@@ -622,7 +548,6 @@ namespace CrabSystem
                     owner.CenterWidth,
                     owner.CenterYColor
                 );
-
 
                 // Center marker
 
@@ -656,7 +581,6 @@ namespace CrabSystem
             }
         }
 
-
         private void AddVertical(
             VertexHelper vh,
             float x,
@@ -681,7 +605,6 @@ namespace CrabSystem
                 color
             );
         }
-
 
         private void AddHorizontal(
             VertexHelper vh,
@@ -708,7 +631,6 @@ namespace CrabSystem
             );
         }
 
-
         private void AddQuad(
             VertexHelper vh,
             Vector2 min,
@@ -718,14 +640,12 @@ namespace CrabSystem
             int index =
                 vh.currentVertCount;
 
-
             UIVertex vertex =
                 UIVertex.simpleVert;
 
             vertex.color =
                 color;
 
-
             vertex.position =
                 new Vector3(
                     min.x,
@@ -734,7 +654,6 @@ namespace CrabSystem
                 );
 
             vh.AddVert(vertex);
-
 
             vertex.position =
                 new Vector3(
@@ -745,7 +664,6 @@ namespace CrabSystem
 
             vh.AddVert(vertex);
 
-
             vertex.position =
                 new Vector3(
                     max.x,
@@ -755,7 +673,6 @@ namespace CrabSystem
 
             vh.AddVert(vertex);
 
-
             vertex.position =
                 new Vector3(
                     max.x,
@@ -764,7 +681,6 @@ namespace CrabSystem
                 );
 
             vh.AddVert(vertex);
-
 
             vh.AddTriangle(
                 index,
@@ -779,6 +695,5 @@ namespace CrabSystem
             );
         }
     }
-
 }
 #endif

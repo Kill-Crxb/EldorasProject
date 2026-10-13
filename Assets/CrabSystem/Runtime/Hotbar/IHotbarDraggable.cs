@@ -1,8 +1,6 @@
-/// <summary>
-/// Implemented by anything that can be dragged onto a hotbar slot.
-/// ActionBarSlotView.OnDrop checks for this interface.
-/// Ability and Item are mutually exclusive — only one should be set per drag.
-/// </summary>
+// Implemented by anything that can be dragged onto a hotbar slot.
+// ActionBarSlotView.OnDrop checks for this interface.
+// Ability and Item are mutually exclusive — only one should be set per drag.
 
 namespace CrabSystem
 {

@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 
-/// <summary>
-/// Lookup for the live panels. Keeps callers from hunting for singletons or
-/// walking the hierarchy to find a side.
-/// </summary>
+// Lookup for the live panels. Keeps callers from hunting for singletons or
+// walking the hierarchy to find a side.
 
 namespace CrabSystem
 {
@@ -14,7 +12,7 @@ namespace CrabSystem
         public static UIPanel Left => Get(PanelSide.Left);
         public static UIPanel Right => Get(PanelSide.Right);
 
-        /// <summary>True while any panel is showing, so gameplay knows to release the cursor.</summary>
+        // True while any panel is showing, so gameplay knows to release the cursor.
         public static bool AnyOpen
         {
             get

@@ -2,23 +2,21 @@
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Observer-based Debug UI for GOAP system
-/// Watches the player's TargetLockModule and displays AI debug info for locked target
-/// 
-/// Setup:
-/// 1. Create Canvas GameObject in scene (NOT on player or NPC prefabs)
-/// 2. Add this component to Canvas
-/// 3. Assign player's TargetLockModule reference
-/// 4. Create UI panel with Text fields and assign them
-/// 5. Press Tab to lock onto enemy and see debug info
-/// 
-/// Architecture:
-/// - Decoupled from NPCs (NPCs don't know about debug UI)
-/// - Decoupled from spawners (spawners don't care about UI)
-/// - Player targeting drives what we observe
-/// - Can handle both GOAP and FSM on same panel
-/// </summary>
+// Observer-based Debug UI for GOAP system
+// Watches the player's TargetLockModule and displays AI debug info for locked target
+//
+// Setup:
+// 1. Create Canvas GameObject in scene (NOT on player or NPC prefabs)
+// 2. Add this component to Canvas
+// 3. Assign player's TargetLockModule reference
+// 4. Create UI panel with Text fields and assign them
+// 5. Press Tab to lock onto enemy and see debug info
+//
+// Architecture:
+// - Decoupled from NPCs (NPCs don't know about debug UI)
+// - Decoupled from spawners (spawners don't care about UI)
+// - Player targeting drives what we observe
+// - Can handle both GOAP and FSM on same panel
 
 namespace CrabSystem
 {

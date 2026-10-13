@@ -2,10 +2,8 @@
 // Adapter that makes a UniversalInventoryWindow work in World Space
 using UnityEngine;
 
-/// <summary>
-/// Attach this to a world-space canvas to make it work with UniversalInventoryWindow
-/// The window will appear at the container's position and face the camera
-/// </summary>
+// Attach this to a world-space canvas to make it work with UniversalInventoryWindow
+// The window will appear at the container's position and face the camera
 
 namespace CrabSystem
 {
@@ -53,17 +51,12 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Set the container this window is attached to
-        /// </summary>
+        // Set the container this window is attached to
         public void SetContainer(Transform container)
         {
             containerTransform = container;
         }
 
-        /// <summary>
-        /// Get the container transform
-        /// </summary>
         public Transform Container => containerTransform;
     }
 }

@@ -1,12 +1,10 @@
 using UnityEngine;
 
-/// <summary>
-/// Bridges GameEvents to UniversalWindowManager's dialogue canvas, the same way
-/// CameraEventListener bridges GameEvents to CameraModule. DialogueSystem raises
-/// GameEvents.DialogueStarted/DialogueEnded without needing a direct reference to the UI.
-///
-/// Scene-level, not per-brain — place once alongside UniversalWindowManager.
-/// </summary>
+// Bridges GameEvents to UniversalWindowManager's dialogue canvas, the same way
+// CameraEventListener bridges GameEvents to CameraModule. DialogueSystem raises
+// GameEvents.DialogueStarted/DialogueEnded without needing a direct reference to the UI.
+//
+// Scene-level, not per-brain — place once alongside UniversalWindowManager.
 
 namespace CrabSystem
 {

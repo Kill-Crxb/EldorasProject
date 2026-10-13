@@ -1,27 +1,24 @@
 using UnityEngine;
 
-/// <summary>
-/// Hashed integer key for blackboard fact lookups.
-/// Uses deterministic hashing for fast O(1) dictionary access without string allocations.
-/// 
-/// Architecture:
-/// - Hash computed once at registration
-/// - Integer comparison in hot paths (faster than string)
-/// - Debug name preserved for inspector/logging
-/// 
-/// Performance:
-/// - sizeof(int) = 4 bytes (vs string overhead)
-/// - Hash comparison ~1-2 CPU cycles
-/// - Zero allocations at runtime
-/// 
-/// Usage:
-/// Code-generated constants:
-///   BlackboardKey.IsWounded = 12345;
-///   blackboard.GetBool(BlackboardKey.IsWounded);
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 18, 2026
-/// </summary>
+// Hashed integer key for blackboard fact lookups.
+// Uses deterministic hashing for fast O(1) dictionary access without string allocations.
+//
+// Architecture:
+// - Hash computed once at registration
+// - Integer comparison in hot paths (faster than string)
+// - Debug name preserved for inspector/logging
+//
+// Performance:
+// - sizeof(int) = 4 bytes (vs string overhead)
+// - Hash comparison ~1-2 CPU cycles
+// - Zero allocations at runtime
+//
+// Usage:
+// Code-generated constants:
+//   BlackboardKey.IsWounded = 12345;
+//   blackboard.GetBool(BlackboardKey.IsWounded);
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -79,33 +76,29 @@ namespace CrabSystem
         public static readonly int IsRunning          = BlackboardKey.Hash("IsRunning");
         public static readonly int IsSprinting        = BlackboardKey.Hash("IsSprinting");
 
-        /// <summary>Float, 0 at the run threshold and 1 at the sprint threshold.</summary>
+        // Float, 0 at the run threshold and 1 at the sprint threshold.
         public static readonly int SpeedBlend         = BlackboardKey.Hash("SpeedBlend");
 
-        /// <summary>
-        /// Sprint GRANTED — a tag any system may raise: an ability, a status, a stat gate. While it is
-        /// up, the run gait is served at sprint speed; walking is unaffected, because a grant cannot
-        /// turn a walk into a sprint. CannotSprint beats it: granted and denied is a run.
-        ///
-        /// Distinct from IsSprinting above, and deliberately so. This one is the GRANT — "has something
-        /// given them permission to". IsSprinting is the RESULT — MovementSystem publishes it when the
-        /// grant has made the gait Sprint and the character is actually moving. Collapsing them would
-        /// make MovementSystem and the granting system two writers on one key.
-        ///
-        /// Single writer, like the keys above: whatever raises it also lowers it.
-        /// </summary>
+        // Sprint GRANTED — a tag any system may raise: an ability, a status, a stat gate. While it is
+        // up, the run gait is served at sprint speed; walking is unaffected, because a grant cannot
+        // turn a walk into a sprint. CannotSprint beats it: granted and denied is a run.
+        //
+        // Distinct from IsSprinting above, and deliberately so. This one is the GRANT — "has something
+        // given them permission to". IsSprinting is the RESULT — MovementSystem publishes it when the
+        // grant has made the gait Sprint and the character is actually moving. Collapsing them would
+        // make MovementSystem and the granting system two writers on one key.
+        //
+        // Single writer, like the keys above: whatever raises it also lowers it.
         public static readonly int SprintGranted      = BlackboardKey.Hash("SprintGranted");
 
-        /// <summary>
-        /// Double jump GRANTED — read by ParkourLocomotionHandler.TryAirJump, which adds one to the
-        /// profile's base air-jump budget while it is up.
-        ///
-        /// Same grant shape as SprintGranted: intent, raised by whatever confers the capability
-        /// (Featherfall, Windwalk, a talent) and lowered by that same thing. There is deliberately no
-        /// measured counterpart — how many air jumps remain is handler state, not a fact, because
-        /// nothing outside movement reads it and the register's own test is "name the system that
-        /// reads it".
-        /// </summary>
+        // Double jump GRANTED — read by ParkourLocomotionHandler.TryAirJump, which adds one to the
+        // profile's base air-jump budget while it is up.
+        //
+        // Same grant shape as SprintGranted: intent, raised by whatever confers the capability
+        // (Featherfall, Windwalk, a talent) and lowered by that same thing. There is deliberately no
+        // measured counterpart — how many air jumps remain is handler state, not a fact, because
+        // nothing outside movement reads it and the register's own test is "name the system that
+        // reads it".
         public static readonly int DoubleJumpGranted  = BlackboardKey.Hash("DoubleJumpGranted");
 
         // Capability denials (2026-09-28). Facts default to false, so "not denied" is the right state
@@ -143,10 +136,8 @@ namespace CrabSystem
         // AbilitySystem only, as a root-motion move starts: the share of the clip's travel it keeps (a float).
         public static readonly int RootMotionScale    = BlackboardKey.Hash("RootMotionScale");
 
-        /// <summary>
-        /// SpellcraftSystem only: a sequence is being entered, so the hands hold the sign pose between
-        /// signs. Mirrored to the animator's IsDrawing bool by AnimatorFactBridge.
-        /// </summary>
+        // SpellcraftSystem only: a sequence is being entered, so the hands hold the sign pose between
+        // signs. Mirrored to the animator's IsDrawing bool by AnimatorFactBridge.
         public static readonly int IsDrawingSigns     = BlackboardKey.Hash("IsDrawingSigns");
     }
 }

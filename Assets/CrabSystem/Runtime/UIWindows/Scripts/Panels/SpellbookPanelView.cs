@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Lists every ability the player knows, sorted by name. Rows are SpellbookRow, which
-/// implements IHotbarDraggable, so a spell can be dragged straight onto the hotbar.
-///
-/// Rebuilt each time the view is shown — abilities are learned mid-session, and a list
-/// that is only correct at spawn is worse than no list.
-/// </summary>
+// Lists every ability the player knows, sorted by name. Rows are SpellbookRow, which
+// implements IHotbarDraggable, so a spell can be dragged straight onto the hotbar.
+//
+// Rebuilt each time the view is shown — abilities are learned mid-session, and a list
+// that is only correct at spawn is worse than no list.
 
 namespace CrabSystem
 {

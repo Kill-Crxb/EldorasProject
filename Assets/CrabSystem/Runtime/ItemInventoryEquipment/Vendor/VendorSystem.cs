@@ -1,12 +1,10 @@
 using UnityEngine;
 
-/// <summary>
-/// Makes this brain's InventorySystem a shop shelf. The shop is the normal container window:
-/// dragging off the shelf buys, dragging onto it sells. GridTransferManager asks Allows before a
-/// move and calls Settle after one.
-/// The shelf is stocked on OnLoaded, not LateInitialize: brains wake in Awake, and ItemManager may
-/// not have loaded its definitions yet at that point.
-/// </summary>
+// Makes this brain's InventorySystem a shop shelf. The shop is the normal container window:
+// dragging off the shelf buys, dragging onto it sells. GridTransferManager asks Allows before a
+// move and calls Settle after one.
+// The shelf is stocked on OnLoaded, not LateInitialize: brains wake in Awake, and ItemManager may
+// not have loaded its definitions yet at that point.
 
 namespace CrabSystem
 {
@@ -43,7 +41,7 @@ namespace CrabSystem
 
         public void UpdateModule() { }
 
-        /// <summary>The vendor whose shelf this grid shows, if any.</summary>
+        // The vendor whose shelf this grid shows, if any.
         public static VendorSystem Of(UniversalGrid grid)
         {
             var inventoryGrid = grid as UniversalInventoryGrid;
@@ -74,7 +72,6 @@ namespace CrabSystem
             return definition.buysFromPlayer && item.Definition.isTradeable;
         }
 
-        /// <param name="from">Where the item sat before the move — a restock takes the same slot.</param>
         public void Settle(ItemInstance item, bool fromShelf, InventorySystem customer, GridPosition from)
         {
             if (fromShelf)

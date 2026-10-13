@@ -1,26 +1,22 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Level and experience progression for one entity.
-///
-/// Level is also published into the stat store as <c>character.level</c>, because
-/// StatDerivationSystem drives off stat ids and has no way to read a field on this module.
-/// Publishing it means "+5 max health per level" is authored in the derivation table
-/// exactly like "+5 per Body", with no second mechanism.
-///
-/// It is published as a contribution rather than a value, so the stat store never owns it:
-/// the Progression schema is marked derived, nothing about level is written to stats.json,
-/// and this module stays the only truth.
-/// </summary>
+// Level and experience progression for one entity.
+//
+// Level is also published into the stat store as character.level, because
+// StatDerivationSystem drives off stat ids and has no way to read a field on this module.
+// Publishing it means "+5 max health per level" is authored in the derivation table
+// exactly like "+5 per Body", with no second mechanism.
+//
+// It is published as a contribution rather than a value, so the stat store never owns it:
+// the Progression schema is marked derived, nothing about level is written to stats.json,
+// and this module stays the only truth.
 
 namespace CrabSystem
 {
     public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable
     {
         public int InitOrder => 140;
-
-    #region Inspector
 
         [Header("Progression")]
         [SerializeField] private int currentLevel = 1;
@@ -31,10 +27,6 @@ namespace CrabSystem
         [Header("XP Curve")]
         [SerializeField] private int baseXPRequired = 100;
         [SerializeField] private float xpExponent = 1.5f;
-
-    #endregion
-
-    #region State
 
         private const string LevelStatId = StatIds.Level;
         private const string LevelSourceKey = "rpg";
@@ -53,10 +45,6 @@ namespace CrabSystem
         public event Action<int, int> OnLevelChanged;
         public event Action<int> OnXPChanged;
 
-    #endregion
-
-    #region IBrainModule
-
         public void Initialize(ControllerBrain controllerBrain)
         {
             brain = controllerBrain;
@@ -70,10 +58,6 @@ namespace CrabSystem
         public void LateInitialize() { }
 
         public void UpdateModule() { }
-
-    #endregion
-
-    #region Progression
 
         public void AddXP(int amount)
         {
@@ -124,11 +108,9 @@ namespace CrabSystem
             return Mathf.RoundToInt(baseXPRequired * Mathf.Pow(level, xpExponent));
         }
 
-        /// <summary>
-        /// Pushes the current level everywhere that needs to see it. Called from every path
-        /// that can change the level, including the save load, so a restored character
-        /// recalculates its derived resources rather than trusting a stale number.
-        /// </summary>
+        // Pushes the current level everywhere that needs to see it. Called from every path
+        // that can change the level, including the save load, so a restored character
+        // recalculates its derived resources rather than trusting a stale number.
         private void PublishLevel()
         {
             // Entities without the Progression schema — NPCs today — simply do not scale by
@@ -137,10 +119,6 @@ namespace CrabSystem
 
             stats.AddContribution(LevelStatId, LevelSourceKey, currentLevel);
         }
-
-    #endregion
-
-    #region ISaveable
 
         public string GetSaveId() => "rpg";
 
@@ -177,7 +155,5 @@ namespace CrabSystem
             public int level;
             public int xp;
         }
-
-    #endregion
     }
 }

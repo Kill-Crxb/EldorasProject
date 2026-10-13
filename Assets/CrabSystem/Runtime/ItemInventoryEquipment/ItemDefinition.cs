@@ -1,10 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Data-driven item template. Classification is by asset reference — category, subtype
-/// and base type are ScriptableObjects, so new item kinds are authored, not coded.
-/// </summary>
+// Data-driven item template. Classification is by asset reference — category, subtype
+// and base type are ScriptableObjects, so new item kinds are authored, not coded.
 
 namespace CrabSystem
 {

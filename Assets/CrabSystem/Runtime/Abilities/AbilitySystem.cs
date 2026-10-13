@@ -348,11 +348,9 @@ namespace CrabSystem
             SetupAnimationEventForwarder();
         }
 
-        /// <summary>
-        /// SwapModel destroys the old model — and with it the forwarder we were
-        /// subscribed to. Fires after the new Animator reference is set, so we can
-        /// re-resolve immediately.
-        /// </summary>
+        // SwapModel destroys the old model — and with it the forwarder we were
+        // subscribed to. Fires after the new Animator reference is set, so we can
+        // re-resolve immediately.
         private void HandleModelChanged(string modelId)
         {
             SetupAnimationEventForwarder();
@@ -973,7 +971,6 @@ namespace CrabSystem
             return UpperBodyState.Idle;
         }
 
-
         private void UpdateCooldownTimers()
         {
             foreach (var kvp in abilityStates)
@@ -1014,7 +1011,6 @@ namespace CrabSystem
             if (!abilityStates.TryGetValue(abilityId, out var state)) return 0f;
             return Modifiers.Cooldown(state.definition);
         }
-
 
         public int GetAbilityRemainingUses(string abilityId)
         {

@@ -1,11 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Global registry of every item that exists. Definitions come from the inspector array
-/// and from any Resources/ItemDatabase folder; everything else in the game resolves items
-/// through GetDefinition/CreateItem by id.
-/// </summary>
+// Global registry of every item that exists. Definitions come from the inspector array
+// and from any Resources/ItemDatabase folder; everything else in the game resolves items
+// through GetDefinition/CreateItem by id.
 
 namespace CrabSystem
 {
@@ -13,8 +11,6 @@ namespace CrabSystem
     {
         private static ItemManager instance;
         public static ItemManager Instance => instance;
-
-    #region IGameManager
 
         public string ManagerName => "Item Manager";
         public int InitializationPriority => 5; // After Stats (0) and Resources (10)
@@ -52,10 +48,6 @@ namespace CrabSystem
             return result;
         }
 
-    #endregion
-
-    #region Inspector Fields
-
         // Any folder named "Resources" anywhere under Assets is a resources root, so the
         // database folder is found by this name alone, wherever it sits in the project.
         private const string DatabaseFolder = CrabResources.Items;
@@ -64,16 +56,8 @@ namespace CrabSystem
         [Tooltip("All item definitions to load at startup. These define what items exist in the game.")]
         [SerializeField] private ItemDefinition[] itemDefinitions;
 
-    #endregion
-
-    #region Private Fields
-
         // Fast lookup cache (itemId → definition)
         private Dictionary<string, ItemDefinition> definitionLookup = new Dictionary<string, ItemDefinition>();
-
-    #endregion
-
-    #region Initialization
 
         private void LoadItems()
         {
@@ -89,11 +73,9 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Adds definitions to the lookup, skipping anything unusable. Returns how many landed.
-        /// Called once for the inspector array and once for the database folder, so an asset
-        /// listed in both is silently ignored the second time rather than reported as a clash.
-        /// </summary>
+        // Adds definitions to the lookup, skipping anything unusable. Returns how many landed.
+        // Called once for the inspector array and once for the database folder, so an asset
+        // listed in both is silently ignored the second time rather than reported as a clash.
         private int Register(ItemDefinition[] definitions)
         {
             if (definitions == null) return 0;
@@ -125,14 +107,8 @@ namespace CrabSystem
             return count;
         }
 
-    #endregion
-
-    #region Public API - Static Methods
-
-        /// <summary>
-        /// Get ItemDefinition by itemId
-        /// STATIC METHOD - Called from anywhere as: ItemManager.GetDefinition("item_id")
-        /// </summary>
+        // Get ItemDefinition by itemId
+        // STATIC METHOD - Called from anywhere as: ItemManager.GetDefinition("item_id")
         public static ItemDefinition GetDefinition(string itemId)
         {
             if (instance == null)
@@ -163,10 +139,8 @@ namespace CrabSystem
             return null;
         }
 
-        /// <summary>
-        /// Create new ItemInstance from definition
-        /// STATIC METHOD
-        /// </summary>
+        // Create new ItemInstance from definition
+        // STATIC METHOD
         public static ItemInstance CreateItem(string itemId, ItemRarity tier = ItemRarity.Common)
         {
             var definition = GetDefinition(itemId);
@@ -180,10 +154,8 @@ namespace CrabSystem
             return new ItemInstance(itemId, tier);
         }
 
-        /// <summary>
-        /// Check if an item exists
-        /// STATIC METHOD
-        /// </summary>
+        // Check if an item exists
+        // STATIC METHOD
         public static bool HasItem(string itemId)
         {
             if (instance == null || !instance.IsInitialized)
@@ -195,10 +167,8 @@ namespace CrabSystem
             return instance.definitionLookup.ContainsKey(itemId);
         }
 
-        /// <summary>
-        /// Get items by category
-        /// STATIC METHOD
-        /// </summary>
+        // Get items by category
+        // STATIC METHOD
         public static ItemDefinition[] GetItemsByCategory(ItemCategory category)
         {
             if (instance?.itemDefinitions == null)
@@ -220,10 +190,8 @@ namespace CrabSystem
             return results.ToArray();
         }
 
-        /// <summary>
-        /// Get items by subtype
-        /// STATIC METHOD
-        /// </summary>
+        // Get items by subtype
+        // STATIC METHOD
         public static ItemDefinition[] GetItemsBySubType(ItemSubType subType)
         {
             if (instance?.itemDefinitions == null)
@@ -245,10 +213,8 @@ namespace CrabSystem
             return results.ToArray();
         }
 
-        /// <summary>
-        /// Get items by tag
-        /// STATIC METHOD
-        /// </summary>
+        // Get items by tag
+        // STATIC METHOD
         public static ItemDefinition[] GetItemsByTag(string tag)
         {
             if (instance?.itemDefinitions == null)
@@ -270,10 +236,8 @@ namespace CrabSystem
             return results.ToArray();
         }
 
-        /// <summary>
-        /// Get all items (for debug/admin tools)
-        /// STATIC METHOD
-        /// </summary>
+        // Get all items (for debug/admin tools)
+        // STATIC METHOD
         public static ItemDefinition[] GetAllItems()
         {
             if (instance?.itemDefinitions == null)
@@ -282,10 +246,8 @@ namespace CrabSystem
             return instance.itemDefinitions;
         }
 
-        /// <summary>
-        /// Get all item IDs (for debugging)
-        /// STATIC METHOD
-        /// </summary>
+        // Get all item IDs (for debugging)
+        // STATIC METHOD
         public static string[] GetAllItemIds()
         {
             if (instance?.definitionLookup == null)
@@ -296,9 +258,7 @@ namespace CrabSystem
             return ids;
         }
 
-        /// <summary>
-        /// Get count of loaded items
-        /// </summary>
+        // Get count of loaded items
         public static int GetItemCount()
         {
             if (instance?.definitionLookup == null)
@@ -306,7 +266,5 @@ namespace CrabSystem
 
             return instance.definitionLookup.Count;
         }
-
-    #endregion
     }
 }

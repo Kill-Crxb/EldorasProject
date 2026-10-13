@@ -1,28 +1,26 @@
 using UnityEngine;
 
-/// <summary>
-/// EquipmentSlotDefinition - Defines where items can be equipped on character
-///
-/// Purpose: Replace hardcoded EquipmentSlot enum with data-driven system
-///
-/// Examples:
-/// - "Head" (helmet, circlet, headband)
-/// - "Weapon1" (main hand weapon)
-/// - "Weapon2" (off-hand weapon/shield)
-/// - "Chest" (armor, robes, shirts)
-/// - "Ring1", "Ring2" (jewelry slots)
-///
-/// Usage:
-/// - Create assets: Right-click → Items/Equipment Slot
-/// - Configure slot properties
-/// - Reference in ItemSubType for equipment binding
-///
-/// Benefits:
-/// - Add new equipment slots without code changes
-/// - Configure UI layout via displayOrder
-/// - Support multi-slot categories (Ring1, Ring2)
-/// - Visual customization per slot
-/// </summary>
+// EquipmentSlotDefinition - Defines where items can be equipped on character
+//
+// Purpose: Replace hardcoded EquipmentSlot enum with data-driven system
+//
+// Examples:
+// - "Head" (helmet, circlet, headband)
+// - "Weapon1" (main hand weapon)
+// - "Weapon2" (off-hand weapon/shield)
+// - "Chest" (armor, robes, shirts)
+// - "Ring1", "Ring2" (jewelry slots)
+//
+// Usage:
+// - Create assets: Right-click → Items/Equipment Slot
+// - Configure slot properties
+// - Reference in ItemSubType for equipment binding
+//
+// Benefits:
+// - Add new equipment slots without code changes
+// - Configure UI layout via displayOrder
+// - Support multi-slot categories (Ring1, Ring2)
+// - Visual customization per slot
 
 namespace CrabSystem
 {
@@ -89,9 +87,7 @@ namespace CrabSystem
         [TextArea(2, 3)]
         public string description;
 
-        /// <summary>
-        /// Check if an item can be equipped in this slot
-        /// </summary>
+        // Check if an item can be equipped in this slot
         public bool CanEquip(ItemDefinition item)
         {
             if (item == null) return false;
@@ -139,9 +135,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Validation helper
-        /// </summary>
+        // Validation helper
         public bool IsValid()
         {
             return !string.IsNullOrEmpty(slotId) && !string.IsNullOrEmpty(displayName);

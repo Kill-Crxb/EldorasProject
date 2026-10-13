@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 
-/// <summary>
-/// One page's bar contents as stored in the save.
-///
-/// Bars are a list keyed by barId rather than named fields, so adding a bar is authoring an
-/// ActionBarDefinition rather than editing switch statements. JsonUtility cannot serialise a
-/// dictionary but serialises a List of a [Serializable] class fine.
-/// </summary>
+// One page's bar contents as stored in the save.
+//
+// Bars are a list keyed by barId rather than named fields, so adding a bar is authoring an
+// ActionBarDefinition rather than editing switch statements. JsonUtility cannot serialise a
+// dictionary but serialises a List of a [Serializable] class fine.
 
 namespace CrabSystem
 {
@@ -34,11 +32,9 @@ namespace CrabSystem
             return null;
         }
 
-        /// <summary>
-        /// Folds the v2 named fields into the list. Idempotent — a bar already in the list wins, and
-        /// an empty slot list means the field was never written, which is what JsonUtility leaves
-        /// behind for a null reference type.
-        /// </summary>
+        // Folds the v2 named fields into the list. Idempotent — a bar already in the list wins, and
+        // an empty slot list means the field was never written, which is what JsonUtility leaves
+        // behind for a null reference type.
         public void MigrateNamedBars()
         {
             if (bars == null) bars = new List<ActionBarConfig>();
@@ -62,16 +58,14 @@ namespace CrabSystem
         }
     }
 
-    /// <summary>
-    /// Root object that gets JSON-serialised by HotbarSystem.
-    ///
-    /// v1 stored three bars at the root. v2 stored a list of pages, each with three named bars.
-    /// v3 stored a list of pages, each with a list of bars. v4 adds activeBarIds — which bars the
-    /// player has switched on. Older shapes are kept on the class and folded forward on load.
-    ///
-    /// ⚠ activeBarIds lives here and NOT on ActionBarDefinition. The asset is authored data shared by
-    /// every character; which bars are on is per-character runtime state.
-    /// </summary>
+    // Root object that gets JSON-serialised by HotbarSystem.
+    //
+    // v1 stored three bars at the root. v2 stored a list of pages, each with three named bars.
+    // v3 stored a list of pages, each with a list of bars. v4 adds activeBarIds — which bars the
+    // player has switched on. Older shapes are kept on the class and folded forward on load.
+    //
+    // ⚠ activeBarIds lives here and NOT on ActionBarDefinition. The asset is authored data shared by
+    // every character; which bars are on is per-character runtime state.
     [Serializable]
     public class HotbarSaveData
     {
@@ -81,17 +75,13 @@ namespace CrabSystem
 
         public List<HotbarPageState> pages = new List<HotbarPageState>();
 
-        /// <summary>
-        /// barIds the player has switched on.
-        /// </summary>
+        // barIds the player has switched on.
         public List<string> activeBarIds = new List<string>();
 
-        /// <summary>
-        /// False on a v3 save and on a fresh character, meaning "fill from each bar's defaultActive".
-        /// ⚠ This exists because an empty activeBarIds is ambiguous: it is also what you get when the
-        /// player deliberately switches every optional bar off. Without this flag that choice would
-        /// be silently undone on the next load.
-        /// </summary>
+        // False on a v3 save and on a fresh character, meaning "fill from each bar's defaultActive".
+        // ⚠ This exists because an empty activeBarIds is ambiguous: it is also what you get when the
+        // player deliberately switches every optional bar off. Without this flag that choice would
+        // be silently undone on the next load.
         public bool hasChosenBars;
 
         // ── v1 legacy — read on load, never written ───────────────────────────

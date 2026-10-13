@@ -1,20 +1,18 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// ItemCategory - Top-level item organization (Weapon, Armor, Consumable, etc.)
-/// 
-/// Purpose: Replace hardcoded ItemCategory enum with data-driven system
-/// 
-/// Usage:
-/// - Create assets: Right-click → Items/Category
-/// - Examples: "Weapon", "Armor", "Consumable", "Material", "Quest"
-/// - Reference in ItemDefinition to classify items
-/// 
-/// Benefits:
-/// - Add new categories without code changes
-/// - Designer-friendly category management
-/// - Visual customization per category
-/// </summary>
+// ItemCategory - Top-level item organization (Weapon, Armor, Consumable, etc.)
+//
+// Purpose: Replace hardcoded ItemCategory enum with data-driven system
+//
+// Usage:
+// - Create assets: Right-click → Items/Category
+// - Examples: "Weapon", "Armor", "Consumable", "Material", "Quest"
+// - Reference in ItemDefinition to classify items
+//
+// Benefits:
+// - Add new categories without code changes
+// - Designer-friendly category management
+// - Visual customization per category
 
 namespace CrabSystem
 {
@@ -52,9 +50,7 @@ namespace CrabSystem
         [Tooltip("Can items in this category be traded?")]
         public bool isTradeable = true;
 
-        /// <summary>
-        /// Validation helper
-        /// </summary>
+        // Validation helper
         public bool IsValid()
         {
             return !string.IsNullOrEmpty(categoryId) && !string.IsNullOrEmpty(displayName);

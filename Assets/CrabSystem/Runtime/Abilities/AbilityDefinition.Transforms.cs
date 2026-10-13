@@ -1,11 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Transformation fields added to AbilityDefinition via partial class.
-/// All lists are null by default — zero cost on abilities that don't use transforms.
-/// Author these fields on the SO in the Inspector; they drive SlotTransformationSystem at runtime.
-/// </summary>
+// Transformation fields added to AbilityDefinition via partial class.
+// All lists are null by default — zero cost on abilities that don't use transforms.
 
 namespace CrabSystem
 {

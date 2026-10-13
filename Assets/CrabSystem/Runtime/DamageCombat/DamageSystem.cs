@@ -8,10 +8,8 @@ namespace CrabSystem
 {
     public enum GuardOutcome { None, Blocked, Parried, Broken }
 
-    /// <summary>
-    /// Passed to OnDamageIntercept listeners while the defender is blocking. The guard (GuardModule)
-    /// says what it made of the hit; DamageSystem then resolves the damage for that outcome.
-    /// </summary>
+    // Passed to OnDamageIntercept listeners while the defender is blocking. The guard (GuardModule)
+    // says what it made of the hit; DamageSystem then resolves the damage for that outcome.
     public class DamageInterceptArgs
     {
         public GuardOutcome outcome;
@@ -26,10 +24,8 @@ namespace CrabSystem
         }
     }
 
-    /// <summary>
-    /// Handles damage calculation, damage reception, and death for any entity with a Brain.
-    /// Includes automatic hurtbox setup for clean damage detection.
-    /// </summary>
+    // Handles damage calculation, damage reception, and death for any entity with a Brain.
+    // Includes automatic hurtbox setup for clean damage detection.
     public class DamageSystem : MonoBehaviour, IBrainModule
     {
         public int InitOrder => 120;
@@ -214,10 +210,8 @@ namespace CrabSystem
             return packet;
         }
 
-        /// <summary>
-        /// Apply an incoming damage packet. The hit roll and soak run HERE, on the defender, using
-        /// this entity's own stats. Returns the damage actually applied to health.
-        /// </summary>
+        // Apply an incoming damage packet. The hit roll and soak run HERE, on the defender, using
+        // this entity's own stats. Returns the damage actually applied to health.
         public float TakeDamage(CombatDamagePacket packet)
         {
             LastHit = default;

@@ -4,8 +4,6 @@ namespace CrabSystem
 {
     public class NPCSpawner : MonoBehaviour
     {
-    #region Inspector
-
         [Header("Spawn Configuration")]
         [SerializeField] private NPCSpawnConfig spawnConfig;
 
@@ -26,25 +24,13 @@ namespace CrabSystem
         [Header("Debug")]
         [SerializeField] private bool debugMode = false;
 
-    #endregion
-
-    #region Private Fields
-
         private int currentSpawnCount = 0;
-
-    #endregion
-
-    #region Lifecycle
 
         private void Start()
         {
             if (spawnOnStart)
                 SpawnNPCs();
         }
-
-    #endregion
-
-    #region Public API
 
         public void SpawnNPCs()
         {
@@ -105,10 +91,6 @@ namespace CrabSystem
         {
             SpawnSingleNPC();
         }
-
-    #endregion
-
-    #region Spawning
 
         private System.Collections.IEnumerator SpawnMultipleNPCs()
         {
@@ -204,10 +186,6 @@ namespace CrabSystem
             return true;
         }
 
-    #endregion
-
-    #region Gizmos
-
         private void OnDrawGizmosSelected()
         {
             if (spawnPoint == null)
@@ -240,7 +218,5 @@ namespace CrabSystem
                 Gizmos.DrawWireSphere(spawnPoint.position, spawnRadius);
             }
         }
-
-    #endregion
     }
 }

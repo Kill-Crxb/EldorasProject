@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Binds every authored equipment socket beneath this view to the player's equipment.
-/// Sockets carry their own slot id, so adding or moving one needs no code change.
-/// </summary>
+// Binds every authored equipment socket beneath this view to the player's equipment.
+// Sockets carry their own slot id, so adding or moving one needs no code change.
 
 namespace CrabSystem
 {

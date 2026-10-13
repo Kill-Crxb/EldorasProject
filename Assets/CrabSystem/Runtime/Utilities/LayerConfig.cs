@@ -1,15 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// LayerConfig — ScriptableObject defining expected layers and physics collision matrix.
-///
-/// Used by LayerManagerWindow to validate and apply project layer settings.
-/// Create via: Assets → Create → CrabSystem → Layer Config
-///
-/// Data-driven: swap this SO per game/project for different layer setups.
-/// Version controlled alongside the project — no code changes needed to reconfigure.
-/// </summary>
+// LayerConfig — ScriptableObject defining expected layers and physics collision matrix.
+//
+// Used by LayerManagerWindow to validate and apply project layer settings.
+// Create via: Assets → Create → CrabSystem → Layer Config
+//
+// Data-driven: swap this SO per game/project for different layer setups.
+// Version controlled alongside the project — no code changes needed to reconfigure.
 
 namespace CrabSystem
 {

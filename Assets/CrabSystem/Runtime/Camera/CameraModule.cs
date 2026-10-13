@@ -27,14 +27,12 @@ namespace CrabSystem
             public float fovOffset = 0f;
         }
 
-        /// <summary>
-        /// A rule that says which mode to be in, and how strongly it wants it.
-        ///
-        /// This exists because SetMode(string) is last-caller-wins. Dialogue starting while you are
-        /// sprinting used to leave you stuck in dialogue framing once the sprint ended, because
-        /// nothing was left to call SetMode back. Rules are re-evaluated every frame, so a mode
-        /// stops applying the moment its condition stops holding — there is no release to forget.
-        /// </summary>
+        // A rule that says which mode to be in, and how strongly it wants it.
+        //
+        // This exists because SetMode(string) is last-caller-wins. Dialogue starting while you are
+        // sprinting used to leave you stuck in dialogue framing once the sprint ended, because
+        // nothing was left to call SetMode back. Rules are re-evaluated every frame, so a mode
+        // stops applying the moment its condition stops holding — there is no release to forget.
         [Serializable]
         public class CameraStateRule
         {
@@ -61,10 +59,8 @@ namespace CrabSystem
             public bool IsUsable => !string.IsNullOrEmpty(modeName) &&
                                     (!string.IsNullOrEmpty(factKey) || condition != null);
 
-            /// <summary>
-            /// A raw fact beats a condition asset. The fact is what something actually published;
-            /// a condition wrapping the same fact would only be a second, slower route to it.
-            /// </summary>
+            // A raw fact beats a condition asset. The fact is what something actually published;
+            // a condition wrapping the same fact would only be a second, slower route to it.
             public bool IsSatisfied(ControllerBrain brain, Blackboard blackboard)
             {
                 if (!string.IsNullOrEmpty(factKey))
@@ -322,10 +318,8 @@ namespace CrabSystem
             Cursor.visible = false;
         }
 
-        /// <summary>
-        /// The blackboard belongs to another module, so it is resolved here rather than in
-        /// Initialize — InitializeModules() runs before every module exists.
-        /// </summary>
+        // The blackboard belongs to another module, so it is resolved here rather than in
+        // Initialize — InitializeModules() runs before every module exists.
         public void LateInitialize()
         {
             blackboard = brain != null ? brain.Blackboard : null;
@@ -364,31 +358,25 @@ namespace CrabSystem
             TurnToLookTarget();
         }
 
-        /// <summary>
-        /// Switches to the named camera mode, blending distance/pivot/offset/sensitivity/pitch-clamp
-        /// over modeBlendDuration seconds. Called directly, or forwarded by a CameraEventListener
-        /// reacting to GameEvents.OnCameraModeChangeRequested.
-        /// </summary>
+        // Switches to the named camera mode, blending distance/pivot/offset/sensitivity/pitch-clamp
+        // over modeBlendDuration seconds. Called directly, or forwarded by a CameraEventListener
+        // reacting to GameEvents.OnCameraModeChangeRequested.
         public void SetMode(string modeName)
         {
             manualMode = modeName;
             ApplyMode(modeName);
         }
 
-        /// <summary>
-        /// Hand control back to the state rules after a manual SetMode — end of a cutscene, end of
-        /// a debug override. Without this a manual mode sticks forever, which is the old behaviour
-        /// and is deliberate: a cutscene must not be overruled by the player happening to sprint.
-        /// </summary>
+        // Hand control back to the state rules after a manual SetMode — end of a cutscene, end of
+        // a debug override. Without this a manual mode sticks forever, which is the old behaviour
+        // and is deliberate: a cutscene must not be overruled by the player happening to sprint.
         public void ClearManualMode()
         {
             manualMode = null;
         }
 
-        /// <summary>
-        /// Pick the mode the world currently calls for. Highest-priority satisfied rule wins; with
-        /// nothing satisfied it falls back to startingMode.
-        /// </summary>
+        // Pick the mode the world currently calls for. Highest-priority satisfied rule wins; with
+        // nothing satisfied it falls back to startingMode.
         private void ResolveStateMode()
         {
             if (manualMode != null) return;
@@ -585,16 +573,14 @@ namespace CrabSystem
                 targetCamera.fieldOfView = baseFieldOfView + fovOffset * fovEffectScale;
         }
 
-        /// <summary>
-        /// Choose which shoulder to sit on.
-        ///
-        /// Probes the candidate camera SEAT on each side, not the space around the body. The seat
-        /// is a mode's distance behind and its shoulder offset out, so a prop that obstructs it is
-        /// frequently nowhere near the character, and a wall the body is brushing frequently does
-        /// not obstruct it at all. ParkourAssistant answers the body question and is sized to the
-        /// body — it is the wrong volume for this one, and reusing it would both miss props behind
-        /// the character and swap for walls that never cross the lens.
-        /// </summary>
+        // Choose which shoulder to sit on.
+        //
+        // Probes the candidate camera SEAT on each side, not the space around the body. The seat
+        // is a mode's distance behind and its shoulder offset out, so a prop that obstructs it is
+        // frequently nowhere near the character, and a wall the body is brushing frequently does
+        // not obstruct it at all. ParkourAssistant answers the body question and is sized to the
+        // body — it is the wrong volume for this one, and reusing it would both miss props behind
+        // the character and swap for walls that never cross the lens.
         private void UpdateShoulderSide(Quaternion orbit, Vector3 basePivot)
         {
             // Seeded before the enabled check on purpose: the axis multiplies shoulderOffset, so a
@@ -667,21 +653,19 @@ namespace CrabSystem
             centeredWeight = Mathf.MoveTowards(centeredWeight, wantCentered, step);
         }
 
-        /// <summary>
-        /// How far ahead to probe.
-        ///
-        /// The base is one blend's worth of travel — the swap has to be FINISHED by the time the
-        /// prop reaches the seat — and the blend multipliers buy margin on top of that. Deriving
-        /// the base from the blend duration is what stops the lead going stale when the duration is
-        /// retuned, the way ParkourAssistant derives its reach from maxExpectedSpeed.
-        ///
-        /// AIR LEADS FURTHER, AND IN THREE DIMENSIONS. A grounded character can turn away and
-        /// cancel the swap, so deciding late costs nothing; in the air the trajectory is committed
-        /// and the swap has to be over before the landing. Vertical velocity is admitted only while
-        /// airborne, because on the ground the motor puts the body on top of a stair riser in a
-        /// single frame — a vertical lead there reads that teleport as approach and would swap the
-        /// shoulder for the ceiling above a staircase.
-        /// </summary>
+        // How far ahead to probe.
+        //
+        // The base is one blend's worth of travel — the swap has to be FINISHED by the time the
+        // prop reaches the seat — and the blend multipliers buy margin on top of that. Deriving
+        // the base from the blend duration is what stops the lead going stale when the duration is
+        // retuned, the way ParkourAssistant derives its reach from maxExpectedSpeed.
+        //
+        // AIR LEADS FURTHER, AND IN THREE DIMENSIONS. A grounded character can turn away and
+        // cancel the swap, so deciding late costs nothing; in the air the trajectory is committed
+        // and the swap has to be over before the landing. Vertical velocity is admitted only while
+        // airborne, because on the ground the motor puts the body on top of a stair riser in a
+        // single frame — a vertical lead there reads that teleport as approach and would swap the
+        // shoulder for the ceiling above a staircase.
         private Vector3 LookaheadOffset()
         {
             if (movement == null) return Vector3.zero;
@@ -696,16 +680,14 @@ namespace CrabSystem
             return Vector3.ClampMagnitude(lead, Mathf.Max(0f, maxLookahead));
         }
 
-        /// <summary>
-        /// Is the camera seat for this side reachable from the pivot without hitting the static
-        /// world? Swept as a sphere rather than a ray, because a ray threads railings and seams the
-        /// near plane does not.
-        ///
-        /// QueryTriggerInteraction.Ignore is passed explicitly. The project runs with
-        /// m_QueriesHitTriggers on, so inheriting the default would let interaction volumes and the
-        /// character's own hurtboxes count as obstructions — the same trap every CharacterMotor cast
-        /// sidesteps the same way.
-        /// </summary>
+        // Is the camera seat for this side reachable from the pivot without hitting the static
+        // world? Swept as a sphere rather than a ray, because a ray threads railings and seams the
+        // near plane does not.
+        //
+        // QueryTriggerInteraction.Ignore is passed explicitly. The project runs with
+        // m_QueriesHitTriggers on, so inheriting the default would let interaction volumes and the
+        // character's own hurtboxes count as obstructions — the same trap every CharacterMotor cast
+        // sidesteps the same way.
         private bool SeatClear(Vector3 pivot, Quaternion orbit, float side, float margin)
         {
             Vector3 seat = pivot
@@ -728,23 +710,21 @@ namespace CrabSystem
             if (swapReturnMargin < swapTriggerMargin) swapReturnMargin = swapTriggerMargin;
         }
 
-        /// <summary>
-        /// The body's position with its HEIGHT damped and its horizontal axes left rigid.
-        ///
-        /// CharacterMotor climbs a stair by placing the body on top of the riser in one frame — a
-        /// teleport, not a motion, and unavoidable in a sweep-based step-up. Pinned to that, the
-        /// camera makes the same instant jump and every step pops. Damping only the height keeps the
-        /// camera responsive to turning and strafing while the vertical settles over a few frames.
-        ///
-        /// Suspended while airborne: a jump or a fall IS genuine vertical motion and wants to read
-        /// 1:1. Damping it makes arcs feel mushy and disconnects the camera from the character at
-        /// exactly the moment the player is judging a landing. Landing re-enters damping with no
-        /// discontinuity, because the airborne branch has been tracking the body exactly.
-        ///
-        /// Note this hides the vertical half of a step-up only. The horizontal 0.19 m the motor also
-        /// jumps is real world motion and stays visible; if that reads badly it wants smoothing on
-        /// the MODEL, not here, or the camera stops answering the mouse honestly.
-        /// </summary>
+        // The body's position with its HEIGHT damped and its horizontal axes left rigid.
+        //
+        // CharacterMotor climbs a stair by placing the body on top of the riser in one frame — a
+        // teleport, not a motion, and unavoidable in a sweep-based step-up. Pinned to that, the
+        // camera makes the same instant jump and every step pops. Damping only the height keeps the
+        // camera responsive to turning and strafing while the vertical settles over a few frames.
+        //
+        // Suspended while airborne: a jump or a fall IS genuine vertical motion and wants to read
+        // 1:1. Damping it makes arcs feel mushy and disconnects the camera from the character at
+        // exactly the moment the player is judging a landing. Landing re-enters damping with no
+        // discontinuity, because the airborne branch has been tracking the body exactly.
+        //
+        // Note this hides the vertical half of a step-up only. The horizontal 0.19 m the motor also
+        // jumps is real world motion and stays visible; if that reads badly it wants smoothing on
+        // the MODEL, not here, or the camera stops answering the mouse honestly.
         private Vector3 FollowPoint()
         {
             Vector3 position = target.position;

@@ -4,21 +4,19 @@ using System.Linq;
 
 namespace CrabSystem.Factions
 {
-    /// <summary>
-    /// Asset-keyed faction relationship matrix.
-    ///
-    /// Entries reference FactionDefinition assets directly — no enum, no string
-    /// matching. Adding a faction to the game requires zero code changes:
-    /// create the FactionDefinition asset and author its rows here.
-    ///
-    /// Usage:
-    /// 1. Create asset: Right-click → Create → RPG/Factions/Faction Relationships
-    /// 2. Add entries: drag two FactionDefinition assets + pick a stance
-    /// 3. Assign to FactionManager on Manager_Brain
-    ///
-    /// Unlisted pairs fall back to defaultRelationship.
-    /// Same faction on both sides is always Friendly.
-    /// </summary>
+    // Asset-keyed faction relationship matrix.
+    //
+    // Entries reference FactionDefinition assets directly — no enum, no string
+    // matching. Adding a faction to the game requires zero code changes:
+    // create the FactionDefinition asset and author its rows here.
+    //
+    // Usage:
+    // 1. Create asset: Right-click → Create → RPG/Factions/Faction Relationships
+    // 2. Add entries: drag two FactionDefinition assets + pick a stance
+    // 3. Assign to FactionManager on Manager_Brain
+    //
+    // Unlisted pairs fall back to defaultRelationship.
+    // Same faction on both sides is always Friendly.
     [CreateAssetMenu(fileName = "FactionRelationships", menuName = "RPG/Factions/Faction Relationships")]
     public class FactionRelationshipConfig : ScriptableObject
     {
@@ -35,7 +33,7 @@ namespace CrabSystem.Factions
 
         private Dictionary<(FactionDefinition, FactionDefinition), FactionRelationshipEntry> entryCache;
 
-        /// <summary>Initialize the lookup cache. Called by FactionManager on startup.</summary>
+        // Initialize the lookup cache. Called by FactionManager on startup.
         public void Initialize()
         {
             BuildCache();
@@ -58,7 +56,7 @@ namespace CrabSystem.Factions
             }
         }
 
-        /// <summary>Stance between two factions. Null faction on either side → Neutral.</summary>
+        // Stance between two factions. Null faction on either side → Neutral.
         public FactionRelationship GetRelationship(FactionDefinition a, FactionDefinition b)
         {
             if (a == null || b == null)
@@ -77,7 +75,7 @@ namespace CrabSystem.Factions
             return defaultRelationship;
         }
 
-        /// <summary>Full entry for a pair (stance + modifiers), or null if unlisted.</summary>
+        // Full entry for a pair (stance + modifiers), or null if unlisted.
         public FactionRelationshipEntry GetEntry(FactionDefinition a, FactionDefinition b)
         {
             if (a == null || b == null)
@@ -90,7 +88,7 @@ namespace CrabSystem.Factions
             return entry;
         }
 
-        /// <summary>Damage multiplier for attacker → defender. 1.0 when unlisted or same faction.</summary>
+        // Damage multiplier for attacker → defender. 1.0 when unlisted or same faction.
         public float GetDamageMultiplier(FactionDefinition attacker, FactionDefinition defender)
         {
             var entry = GetEntry(attacker, defender);

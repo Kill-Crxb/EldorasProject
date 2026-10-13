@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Remembers which one-shot dialogue options this character has already taken, so they
-/// stop being offered. Lives on the player and saves as dialogue.json — the memory belongs
-/// to the character, not to the NPC, so a second character still gets the first-time reward.
-/// </summary>
+// Remembers which one-shot dialogue options this character has already taken, so they
+// stop being offered. Lives on the player and saves as dialogue.json — the memory belongs
+// to the character, not to the NPC, so a second character still gets the first-time reward.
 
 namespace CrabSystem
 {
@@ -36,15 +34,13 @@ namespace CrabSystem
             usedOptions.Add(key);
         }
 
-        /// <summary>Wipes a single memory. Handy for a quest reset or a debug button.</summary>
+        // Wipes a single memory. Handy for a quest reset or a debug button.
         public void Forget(string key)
         {
             if (!used.Remove(key)) return;
 
             usedOptions.Remove(key);
         }
-
-    #region ISaveable
 
         public string GetSaveId() => "dialogue";
 
@@ -72,8 +68,6 @@ namespace CrabSystem
                 if (used.Add(key)) usedOptions.Add(key);
             }
         }
-
-    #endregion
     }
 
     [System.Serializable]

@@ -3,18 +3,16 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// CharacterSlotUI
-///
-/// Attach to: CharacterSaveCard prefab root (which also has a Button component)
-///
-/// Inspector wiring:
-///   nameText          — TextMeshProUGUI  (character name)
-///   levelText         — TextMeshProUGUI  (e.g. "Lvl 1")
-///   creatorText       — TextMeshProUGUI  (account name)
-///   selectButton      — Button on this same GameObject
-///   selectedIndicator — GameObject (highlight, starts inactive)
-/// </summary>
+// CharacterSlotUI
+//
+// Attach to: CharacterSaveCard prefab root (which also has a Button component)
+//
+// Inspector wiring:
+//   nameText          — TextMeshProUGUI  (character name)
+//   levelText         — TextMeshProUGUI  (e.g. "Lvl 1")
+//   creatorText       — TextMeshProUGUI  (account name)
+//   selectButton      — Button on this same GameObject
+//   selectedIndicator — GameObject (highlight, starts inactive)
 
 namespace CrabSystem
 {

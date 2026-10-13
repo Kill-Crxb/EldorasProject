@@ -26,10 +26,8 @@ namespace CrabSystem
             statModifiers = modifiers;
         }
 
-        /// <summary>
-        /// Builds the tooltip for an item. One place, so a bag slot and an equipment
-        /// socket always describe the same item the same way.
-        /// </summary>
+        // Builds the tooltip for an item. One place, so a bag slot and an equipment
+        // socket always describe the same item the same way.
         public static ItemTooltipData For(ItemInstance item)
         {
             if (item == null || item.Definition == null) return null;

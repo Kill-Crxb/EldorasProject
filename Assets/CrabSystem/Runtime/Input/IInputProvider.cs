@@ -14,7 +14,7 @@ namespace CrabSystem
         bool BlockHeld { get; }
         bool ParryPressed { get; }
 
-        /// <summary>Sheathe/draw toggle — flips CombatStanceModule between armed and unarmed.</summary>
+        // Sheathe/draw toggle — flips CombatStanceModule between armed and unarmed.
         bool ToggleStancePressed { get; }
 
         // Ability Quickslots (Q, Z, X, C, V)

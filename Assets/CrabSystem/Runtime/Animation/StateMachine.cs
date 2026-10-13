@@ -1,12 +1,9 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Generic state machine container for managing a single state type.
-/// Handles transitions, events, and state tracking.
-/// This is the core building block - completely genre-agnostic.
-/// </summary>
-/// <typeparam name="T">Enum type representing states</typeparam>
+// Generic state machine container for managing a single state type.
+// Handles transitions, events, and state tracking.
+// This is the core building block - completely genre-agnostic.
 
 namespace CrabSystem
 {
@@ -30,9 +27,7 @@ namespace CrabSystem
         public T Previous => previousState;
         public float TimeInState => clock.Now - stateEnterTime;
 
-        /// <summary>
-        /// Constructor - initialize with starting state
-        /// </summary>
+        // Constructor - initialize with starting state
         public StateMachine(T initialState, EntityClock clock)
         {
             currentState = initialState;
@@ -41,9 +36,6 @@ namespace CrabSystem
             stateEnterTime = clock.Now;
         }
 
-        /// <summary>
-        /// Transition to a new state
-        /// </summary>
         public void TransitionTo(T newState)
         {
             // Check if already in this state
@@ -67,17 +59,13 @@ namespace CrabSystem
             OnStateChanged?.Invoke(previousState, currentState);
         }
 
-        /// <summary>
-        /// Check if currently in a specific state
-        /// </summary>
+        // Check if currently in a specific state
         public bool IsInState(T state)
         {
             return currentState.Equals(state);
         }
 
-        /// <summary>
-        /// Check if currently in any of the provided states
-        /// </summary>
+        // Check if currently in any of the provided states
         public bool IsInAnyState(params T[] states)
         {
             foreach (T state in states)
@@ -88,9 +76,7 @@ namespace CrabSystem
             return false;
         }
 
-        /// <summary>
-        /// Force set state without events (use sparingly - for initialization)
-        /// </summary>
+        // Force set state without events (use sparingly - for initialization)
         public void ForceSet(T state)
         {
             currentState = state;
@@ -98,25 +84,19 @@ namespace CrabSystem
             stateEnterTime = clock.Now;
         }
 
-        /// <summary>
-        /// Return to previous state
-        /// </summary>
+        // Return to previous state
         public void ReturnToPrevious()
         {
             TransitionTo(previousState);
         }
 
-        /// <summary>
-        /// Get state name as string
-        /// </summary>
+        // Get state name as string
         public string GetCurrentStateName()
         {
             return currentState.ToString();
         }
 
-        /// <summary>
-        /// Get previous state name as string
-        /// </summary>
+        // Get previous state name as string
         public string GetPreviousStateName()
         {
             return previousState.ToString();

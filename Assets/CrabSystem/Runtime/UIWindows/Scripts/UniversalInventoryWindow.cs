@@ -6,42 +6,36 @@ namespace CrabSystem
     using UnityEngine.EventSystems; // For dragging
     using TMPro; // Add TextMeshPro support
 
-    /// <summary>
-    /// UniversalInventoryWindow - Single window prefab for ALL inventory displays
-    /// 
-    /// Can be used for:
-    /// - Player inventory
-    /// - Chests/containers
-    /// - Stash
-    /// - Trade windows
-    /// - Crafting benches
-    /// - Any InventorySystem
-    /// 
-    /// Architecture:
-    /// - Window manager creates window from prefab
-    /// - Calls Open() with the inventory source
-    /// - Window creates/configures the grid
-    /// - Grid registers with GridTransferManager
-    /// - User can drag between any windows
-    /// 
-    /// Example Usage:
-    /// ```csharp
-    /// // Player inventory
-    /// window.OpenPlayerInventory(playerBrain);
-    /// 
-    /// // Container
-    /// window.OpenContainer(chestBrain, "Wooden Chest");
-    /// 
-    /// // Stash
-    /// window.OpenStash(stashSystem, "Personal Stash");
-    /// ```
-    /// 
-    /// Created: February 13, 2026
-    /// </summary>
+    // UniversalInventoryWindow - Single window prefab for ALL inventory displays
+    //
+    // Can be used for:
+    // - Player inventory
+    // - Chests/containers
+    // - Stash
+    // - Trade windows
+    // - Crafting benches
+    // - Any InventorySystem
+    //
+    // Architecture:
+    // - Window manager creates window from prefab
+    // - Calls Open() with the inventory source
+    // - Window creates/configures the grid
+    // - Grid registers with GridTransferManager
+    // - User can drag between any windows
+    //
+    // Example Usage:
+    // ```csharp
+    // // Player inventory
+    // window.OpenPlayerInventory(playerBrain);
+    //
+    // // Container
+    // window.OpenContainer(chestBrain, "Wooden Chest");
+    //
+    // // Stash
+    // window.OpenStash(stashSystem, "Personal Stash");
+    // ```
     public class UniversalInventoryWindow : MonoBehaviour, IBeginDragHandler, IDragHandler
     {
-    #region Inspector References
-
         [Header("Window Components")]
         [SerializeField] private RectTransform windowRect;
         [SerializeField] private RectTransform headerRect;
@@ -71,10 +65,6 @@ namespace CrabSystem
         [Tooltip("Close window when ESC key is pressed")]
         [SerializeField] private bool closeOnEscape = true;
 
-    #endregion
-
-    #region State
-
         private UniversalInventoryGrid currentGrid;
         private InventorySystem currentInventorySystem;
         private ControllerBrain currentOwner; // Player or container
@@ -84,10 +74,6 @@ namespace CrabSystem
 
         // Dragging state
         private Vector2 dragStartPos; // Local offset when drag begins
-
-    #endregion
-
-    #region Initialization
 
         private void Awake()
         {
@@ -161,13 +147,7 @@ namespace CrabSystem
             return null;
         }
 
-    #endregion
-
-    #region Open Methods
-
-        /// <summary>
-        /// Open this window for the player's inventory
-        /// </summary>
+        // Open this window for the player's inventory
         public void OpenPlayerInventory(ControllerBrain playerBrain)
         {
             if (playerBrain == null)
@@ -189,9 +169,7 @@ namespace CrabSystem
             Open(inventorySystem, playerBrain, title, isPlayerInv: true);
         }
 
-        /// <summary>
-        /// Open this window for a container (chest, crate, corpse, etc.)
-        /// </summary>
+        // Open this window for a container (chest, crate, corpse, etc.)
         public void OpenContainer(ControllerBrain containerBrain, string containerName = null)
         {
             if (containerBrain == null)
@@ -213,9 +191,7 @@ namespace CrabSystem
             Open(inventorySystem, containerBrain, title, isPlayerInv: false);
         }
 
-        /// <summary>
-        /// Open this window for any inventory system (generic)
-        /// </summary>
+        // Open this window for any inventory system (generic)
         public void OpenGeneric(InventorySystem system, string title, string id, bool isPlayer = false)
         {
             if (system == null)
@@ -228,9 +204,7 @@ namespace CrabSystem
             Open(system, null, title, isPlayer);
         }
 
-        /// <summary>
-        /// Core open method - all other open methods call this
-        /// </summary>
+        // Core open method - all other open methods call this
         private void Open(InventorySystem system, ControllerBrain owner, string title, bool isPlayerInv)
         {
             if (debugMode)
@@ -263,13 +237,7 @@ namespace CrabSystem
                 Debug.Log($"[UniversalInventoryWindow] {title} opened");
         }
 
-    #endregion
-
-    #region Helpers
-
-        /// <summary>
-        /// Set window title - supports both legacy Text and TextMeshPro
-        /// </summary>
+        // Set window title - supports both legacy Text and TextMeshPro
         private void SetTitle(string title)
         {
             if (titleTextTMP != null)
@@ -281,10 +249,6 @@ namespace CrabSystem
                 titleText.text = title;
             }
         }
-
-    #endregion
-
-    #region Grid Setup
 
         private void SetupGrid(InventorySystem system, string displayName, bool isPlayer)
         {
@@ -331,9 +295,7 @@ namespace CrabSystem
                 Debug.Log($"[UniversalInventoryWindow] Grid configured for {displayName}");
         }
 
-        /// <summary>
-        /// Sizes the grid container to fit the grid based on its dimensions
-        /// </summary>
+        // Sizes the grid container to fit the grid based on its dimensions
         private void SizeGridContainerToGrid()
         {
             if (gridContainer == null || currentGrid == null) return;
@@ -362,10 +324,6 @@ namespace CrabSystem
                 Debug.Log($"[UniversalInventoryWindow] Sized grid container to {gridPixelWidth}�{gridPixelHeight}");
         }
 
-    #endregion
-
-    #region Close
-
         public void Close()
         {
             if (!isOpen) return;
@@ -393,10 +351,6 @@ namespace CrabSystem
             currentInventorySystem = null;
             currentOwner = null;
         }
-
-    #endregion
-
-    #region Position Management
 
         private void RestorePosition()
         {
@@ -436,10 +390,6 @@ namespace CrabSystem
                 Debug.Log($"[UniversalInventoryWindow] Saved position: {windowRect.anchoredPosition}");
         }
 
-    #endregion
-
-    #region Dragging
-
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (windowRect == null) return;
@@ -473,15 +423,9 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Properties
-
         public bool IsOpen => isOpen;
         public string WindowId => windowId;
         public UniversalInventoryGrid Grid => currentGrid;
         public InventorySystem InventorySystem => currentInventorySystem;
-
-    #endregion
     }
 }

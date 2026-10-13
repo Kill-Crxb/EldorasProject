@@ -2,12 +2,10 @@
 using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// Which set of hands the entity is fighting with.
-/// Armed   — the weapon in weaponSlotId is drawn and drives damage, moveset and reach.
-/// Unarmed — the weapon is sheathed (still equipped, still in the slot) and the unarmed
-///           profile drives damage, moveset and reach.
-/// </summary>
+// Which set of hands the entity is fighting with.
+// Armed   — the weapon in weaponSlotId is drawn and drives damage, moveset and reach.
+// Unarmed — the weapon is sheathed (still equipped, still in the slot) and the unarmed
+//           profile drives damage, moveset and reach.
 
 namespace CrabSystem
 {
@@ -17,31 +15,29 @@ namespace CrabSystem
         Unarmed,
     }
 
-    /// <summary>
-    /// CombatStanceModule — owns the armed/unarmed toggle (default key: R).
-    ///
-    /// Nothing is unequipped when you go unarmed. The item stays in "mainwep", so stats,
-    /// tooltips, the paperdoll and the save file never see a stance change. What changes is:
-    ///
-    ///   1. Blackboard  — the "IsUnarmed" fact. This is the one that matters: SlotTransformation-
-    ///                    System.EvaluateBuffTransforms already swaps a hotbar slot's ability while
-    ///                    a named fact is true, so the unarmed moveset is authored on each attack
-    ///                    ability's buffTransforms list rather than swapped in code.
-    ///   2. Damage      — DamageEffect reads RollUnarmedDamage() instead of the weapon dice.
-    ///   3. Visual      — the weapon model reparents from the hand socket to the sheath socket.
-    ///   4. Reach       — strikes reach unarmedReach instead of the weapon's reach (StrikeHandler).
-    ///   5. Animator    — the "IsUnarmed" bool, for fist idle/locomotion.
-    ///
-    /// Equipping into the weapon slot draws the weapon; emptying the slot forces unarmed.
-    ///
-    /// Setup:
-    ///   1. Add this component next to the other brain modules.
-    ///   2. Author a DiceProfile asset for fists (1d4, flat bonus +2) and assign it.
-    ///   3. Add a "mainwep_sheathed" entry to ModelSocketProvider.namedSockets on each model,
-    ///      pointing at a back or hip bone. Without it the weapon just hides instead.
-    ///   4. On each armed attack ability, add a buffTransforms entry: blackboardKey "IsUnarmed",
-    ///      transformAbility = the unarmed variant. SlotTransformationSystem does the rest.
-    /// </summary>
+    // CombatStanceModule — owns the armed/unarmed toggle (default key: R).
+    //
+    // Nothing is unequipped when you go unarmed. The item stays in "mainwep", so stats,
+    // tooltips, the paperdoll and the save file never see a stance change. What changes is:
+    //
+    //   1. Blackboard  — the "IsUnarmed" fact. This is the one that matters: SlotTransformation-
+    //                    System.EvaluateBuffTransforms already swaps a hotbar slot's ability while
+    //                    a named fact is true, so the unarmed moveset is authored on each attack
+    //                    ability's buffTransforms list rather than swapped in code.
+    //   2. Damage      — DamageEffect reads RollUnarmedDamage() instead of the weapon dice.
+    //   3. Visual      — the weapon model reparents from the hand socket to the sheath socket.
+    //   4. Reach       — strikes reach unarmedReach instead of the weapon's reach (StrikeHandler).
+    //   5. Animator    — the "IsUnarmed" bool, for fist idle/locomotion.
+    //
+    // Equipping into the weapon slot draws the weapon; emptying the slot forces unarmed.
+    //
+    // Setup:
+    //   1. Add this component next to the other brain modules.
+    //   2. Author a DiceProfile asset for fists (1d4, flat bonus +2) and assign it.
+    //   3. Add a "mainwep_sheathed" entry to ModelSocketProvider.namedSockets on each model,
+    //      pointing at a back or hip bone. Without it the weapon just hides instead.
+    //   4. On each armed attack ability, add a buffTransforms entry: blackboardKey "IsUnarmed",
+    //      transformAbility = the unarmed variant. SlotTransformationSystem does the rest.
     public class CombatStanceModule : MonoBehaviour, IBrainModule
     {
         [Header("Unarmed Profile")]
@@ -102,13 +98,11 @@ namespace CrabSystem
 
         public event Action<CombatStance> OnStanceChanged;
 
-        /// <summary>Rolls the unarmed damage expression. Returns 0 if no profile is assigned.</summary>
+        // Rolls the unarmed damage expression. Returns 0 if no profile is assigned.
         public float RollUnarmedDamage() => unarmedWeapon != null ? unarmedWeapon.RollDamage() : 0f;
 
-        /// <summary>Tooltip label for the unarmed profile — e.g. "1d4 + 2".</summary>
+        // Tooltip label for the unarmed profile — e.g. "1d4 + 2".
         public string UnarmedDamageLabel() => unarmedWeapon != null ? unarmedWeapon.DamageLabel() : "—";
-
-    #region IBrainModule
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -148,14 +142,8 @@ namespace CrabSystem
             if (brain != null) brain.OnLoaded -= HandleLoaded;
         }
 
-    #endregion
-
-    #region Toggle
-
-        /// <summary>
-        /// Flips stance, playing the sheathe/draw ability if one is assigned and usable.
-        /// Refuses to draw when the weapon slot is empty.
-        /// </summary>
+        // Flips stance, playing the sheathe/draw ability if one is assigned and usable.
+        // Refuses to draw when the weapon slot is empty.
         public void ToggleStance()
         {
             SetStance(IsUnarmed ? CombatStance.Armed : CombatStance.Unarmed);
@@ -201,10 +189,8 @@ namespace CrabSystem
             abilities.UseAbility(ability.abilityId);
         }
 
-        /// <summary>
-        /// Commits the stance — moveset, visual, animator and blackboard. Public so a sheathe
-        /// or draw animation event can call it at the exact frame the hand meets the scabbard.
-        /// </summary>
+        // Commits the stance — moveset, visual, animator and blackboard. Public so a sheathe
+        // or draw animation event can call it at the exact frame the hand meets the scabbard.
         public void ApplyStance(CombatStance target)
         {
             transitionPending = false;
@@ -223,10 +209,6 @@ namespace CrabSystem
             if (debugLogging)
                 Debug.Log($"[CombatStance] {brain.EntityName} → {stance}");
         }
-
-    #endregion
-
-    #region Application
 
         private void ApplyVisual(bool sheathed)
         {
@@ -275,10 +257,6 @@ namespace CrabSystem
                 child.gameObject.SetActive(visible);
         }
 
-    #endregion
-
-    #region Equipment Sync
-
         private void HandleLoaded()
         {
             brain.OnLoaded -= HandleLoaded;
@@ -292,10 +270,8 @@ namespace CrabSystem
             SetStanceImmediate(item != null ? CombatStance.Armed : CombatStance.Unarmed);
         }
 
-        /// <summary>
-        /// Puts the stance where the equipment says it should be, skipping the transition
-        /// animation and the empty-slot guard. Used at load and on equip/unequip.
-        /// </summary>
+        // Puts the stance where the equipment says it should be, skipping the transition
+        // animation and the empty-slot guard. Used at load and on equip/unequip.
         private void SyncToEquippedWeapon()
         {
             SetStanceImmediate(GetEquippedWeaponItem() != null ? CombatStance.Armed : CombatStance.Unarmed);
@@ -315,7 +291,5 @@ namespace CrabSystem
             if (equipment == null) equipment = brain?.GetModule<EquipmentSystem>();
             return equipment?.GetEquippedItem(weaponSlotId);
         }
-
-    #endregion
     }
 }

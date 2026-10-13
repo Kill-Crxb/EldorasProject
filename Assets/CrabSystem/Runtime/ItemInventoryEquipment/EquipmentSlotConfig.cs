@@ -1,20 +1,16 @@
 using UnityEngine;
 
-/// <summary>
-/// EquipmentSlotConfig - Configuration for a single equipment slot
-/// 
-/// 100% DATA-DRIVEN - No enums!
-/// Uses EquipmentSlotDefinition ScriptableObject for all slot identity.
-/// 
-/// Example:
-/// - Slot Definition: Helmet_EquipmentSlotDef SO
-/// - Display Name: "Head"
-/// - Background Icon: Helmet silhouette
-/// - Allowed Categories: Armor
-/// - Allowed Subtypes: Helmet, Circlet
-/// 
-/// Created: February 18, 2026
-/// </summary>
+// EquipmentSlotConfig - Configuration for a single equipment slot
+//
+// 100% DATA-DRIVEN - No enums!
+// Uses EquipmentSlotDefinition ScriptableObject for all slot identity.
+//
+// Example:
+// - Slot Definition: Helmet_EquipmentSlotDef SO
+// - Display Name: "Head"
+// - Background Icon: Helmet silhouette
+// - Allowed Categories: Armor
+// - Allowed Subtypes: Helmet, Circlet
 
 namespace CrabSystem
 {
@@ -49,9 +45,7 @@ namespace CrabSystem
         [Tooltip("Is this a weapon slot? (uses 1x2 layout)")]
         public bool isWeaponSlot = false;
 
-        /// <summary>
-        /// Get display name (uses override if set, otherwise slot definition)
-        /// </summary>
+        // Get display name (uses override if set, otherwise slot definition)
         public string DisplayName
         {
             get
@@ -66,9 +60,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Get slot ID for dictionary/event keys
-        /// </summary>
+        // Get slot ID for dictionary/event keys
         public string SlotId
         {
             get
@@ -78,9 +70,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Check if an item can be equipped in this slot
-        /// </summary>
+        // Check if an item can be equipped in this slot
         public bool CanEquipItem(ItemInstance item)
         {
             // Guard clause: null item
@@ -131,9 +121,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Validate configuration
-        /// </summary>
+        // Validate configuration
         public bool IsValid()
         {
             if (slotDefinition == null)
@@ -151,9 +139,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Get user-friendly name for inspector display
-        /// </summary>
+        // Get user-friendly name for inspector display
         public override string ToString()
         {
             if (slotDefinition != null)

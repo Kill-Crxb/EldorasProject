@@ -2,18 +2,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Base for every grid-based item display — player inventory, container, stash, bench.
-/// Owns the visuals only: GridTransferManager owns drag logic, and contents come through
-/// the abstract data hooks so any storage can back a grid.
-/// </summary>
+// Base for every grid-based item display — player inventory, container, stash, bench.
+// Owns the visuals only: GridTransferManager owns drag logic, and contents come through
+// the abstract data hooks so any storage can back a grid.
 
 namespace CrabSystem
 {
     public abstract class UniversalGrid : MonoBehaviour
     {
-    #region Configuration
-
         [Header("Grid Identity")]
         [SerializeField] protected string gridName = "Unnamed Grid";
         [SerializeField] protected bool isPlayerInventory = false;
@@ -34,18 +30,10 @@ namespace CrabSystem
         [SerializeField] protected GameObject itemOverlayPrefab;
         [SerializeField] protected GameObject itemIconPrefab;
 
-    #endregion
-
-    #region State
-
         protected bool isInitialized = false;
         protected GridSlotBackground[,] backgrounds;
         protected Dictionary<string, ItemOverlayVisual> overlays = new Dictionary<string, ItemOverlayVisual>();
         protected Dictionary<string, ItemIconVisual> icons = new Dictionary<string, ItemIconVisual>();
-
-    #endregion
-
-    #region Unity Lifecycle
 
         protected virtual void OnEnable()
         {
@@ -66,10 +54,6 @@ namespace CrabSystem
             // UniversalInventoryGrid.SetInventorySource() will call Initialize() after configuration
             // This prevents "missing background references" errors when instantiated without setup
         }
-
-    #endregion
-
-    #region Initialization
 
         protected virtual void Initialize()
         {
@@ -117,43 +101,23 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Override this to connect to your data source (InventorySystem, etc.)
-        /// </summary>
+        // Override this to connect to your data source (InventorySystem, etc.)
         protected abstract void ConnectToDataSource();
 
-    #endregion
-
-    #region Abstract Data Interface
-
-        /// <summary>
-        /// Get all items that should be displayed in this grid
-        /// </summary>
+        // Get all items that should be displayed in this grid
         protected abstract ItemInstance[] GetItems();
 
-        /// <summary>
-        /// Add an item to the underlying data source
-        /// </summary>
+        // Add an item to the underlying data source
         protected abstract bool AddItemToData(ItemInstance item, int gridX, int gridY);
 
-        /// <summary>
-        /// Remove an item from the underlying data source
-        /// </summary>
+        // Remove an item from the underlying data source
         protected abstract bool RemoveItemFromData(string itemId);
 
-        /// <summary>
-        /// Move an item within the data source
-        /// </summary>
+        // Move an item within the data source
         protected abstract bool MoveItemInData(string itemId, int newX, int newY);
 
-        /// <summary>
-        /// Check if an item can be placed at a position in the data source
-        /// </summary>
+        // Check if an item can be placed at a position in the data source
         protected abstract bool CanPlaceInData(ItemInstance item, int gridX, int gridY, string excludeItemId = null);
-
-    #endregion
-
-    #region Public API - Called by GridTransferManager
 
         public bool IsPointOverGrid(Vector2 screenPos)
         {
@@ -294,10 +258,6 @@ namespace CrabSystem
             RefreshVisuals();
         }
 
-    #endregion
-
-    #region Visual Management
-
         public void RefreshVisuals()
         {
             ClearAllVisuals();
@@ -352,10 +312,8 @@ namespace CrabSystem
             icons[item.instanceId] = icon;
         }
 
-        /// <summary>
-        /// Uses the authored prefab so the look lives in the asset rather than in code,
-        /// and falls back to a bare Image so a grid with no art assigned still works.
-        /// </summary>
+        // Uses the authored prefab so the look lives in the asset rather than in code,
+        // and falls back to a bare Image so a grid with no art assigned still works.
         private GameObject InstantiateVisual(GameObject prefab, Transform layer, string objectName)
         {
             if (prefab != null)
@@ -389,10 +347,6 @@ namespace CrabSystem
             icons.Clear();
         }
 
-    #endregion
-
-    #region Tooltips
-
         public virtual void OnItemHoverEnter(string itemId, Vector2 pointerPosition)
         {
             var tooltip = ItemTooltipData.For(GetItemInstance(itemId));
@@ -402,7 +356,7 @@ namespace CrabSystem
             UniversalWindowManager.Instance?.ShowTooltip(tooltip, pointerPosition);
         }
 
-        /// <summary>Adds what only this grid knows about the item — a vendor shelf adds its price.</summary>
+        // Adds what only this grid knows about the item — a vendor shelf adds its price.
         protected virtual void DecorateTooltip(ItemTooltipData tooltip, ItemInstance item) { }
 
         public virtual void OnItemHoverExit()
@@ -415,18 +369,12 @@ namespace CrabSystem
         // Shift-click: move item to the most logical other grid (container ↔ inventory).
         public virtual void OnItemShiftClicked(string itemId) { }
 
-        /// <summary>
-        /// Get item instance by ID - must be implemented by subclass
-        /// </summary>
+        // Get item instance by ID - must be implemented by subclass
         protected virtual ItemInstance GetItemInstance(string itemId)
         {
             // Subclasses should override this to get items from their data source
             return null;
         }
-
-    #endregion
-
-    #region Properties
 
         public string GridName => gridName;
         public bool IsPlayerInventory => isPlayerInventory;
@@ -434,7 +382,5 @@ namespace CrabSystem
         public int GridHeight => gridHeight;
         public float SlotSize => slotSize;
         public float SlotSpacing => slotSpacing;
-
-    #endregion
     }
 }

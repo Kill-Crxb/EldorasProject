@@ -8,9 +8,7 @@ using UnityEngine;
 
 namespace CrabSystem.Factions
 {
-    /// <summary>
-    /// Defines the relationship between two factions.
-    /// </summary>
+    // Defines the relationship between two factions.
     public enum FactionRelationship
     {
         Friendly,       // Will not attack, may assist
@@ -18,10 +16,8 @@ namespace CrabSystem.Factions
         Hostile         // Will attack on sight
     }
 
-    /// <summary>
-    /// Relationship-based color coding for nameplates and UI elements.
-    /// Per-faction colors live on FactionDefinition.FactionColor.
-    /// </summary>
+    // Relationship-based color coding for nameplates and UI elements.
+    // Per-faction colors live on FactionDefinition.FactionColor.
     public static class FactionColors
     {
         public static readonly Color FriendlyColor = new Color(0.2f, 1f, 0.2f);      // Green

@@ -1,24 +1,22 @@
 using UnityEngine;
 
-/// <summary>
-/// Sprays decorative projectiles out of a volume while it lives — the visible half of a Stream.
-///
-/// THE SPLIT THIS EXISTS TO KEEP:
-/// A flamethrower built out of real projectiles shotguns. Stand close to a wide breath and you
-/// eat six bolts in a frame; stand at the edge and you eat one; the damage depends on how the
-/// particles happened to fall. So ProjectileAreaTicker does the damage — once per target per
-/// tick, regardless of what is on screen — and this fires the bolts people actually see, with
-/// ProjectileData.cosmeticOnly set so not one of them can touch anybody.
-///
-/// The two halves are tuned independently, which is the point: make the spray denser because it
-/// looks better, and the damage does not move.
-///
-/// A ParticleSystem on the volume's visualPrefab is usually the better tool for a fine spray
-/// and costs no code at all. This is for when the bolts want to be real objects — travelling at
-/// a readable speed, arcing, bouncing, or big enough that a player tracks them individually.
-///
-/// SETUP: add to the Base_Projectile archetype. Inert until emitData is assigned.
-/// </summary>
+// Sprays decorative projectiles out of a volume while it lives — the visible half of a Stream.
+//
+// THE SPLIT THIS EXISTS TO KEEP:
+// A flamethrower built out of real projectiles shotguns. Stand close to a wide breath and you
+// eat six bolts in a frame; stand at the edge and you eat one; the damage depends on how the
+// particles happened to fall. So ProjectileAreaTicker does the damage — once per target per
+// tick, regardless of what is on screen — and this fires the bolts people actually see, with
+// ProjectileData.cosmeticOnly set so not one of them can touch anybody.
+//
+// The two halves are tuned independently, which is the point: make the spray denser because it
+// looks better, and the damage does not move.
+//
+// A ParticleSystem on the volume's visualPrefab is usually the better tool for a fine spray
+// and costs no code at all. This is for when the bolts want to be real objects — travelling at
+// a readable speed, arcing, bouncing, or big enough that a player tracks them individually.
+//
+// SETUP: add to the Base_Projectile archetype. Inert until emitData is assigned.
 
 namespace CrabSystem
 {
@@ -100,10 +98,8 @@ namespace CrabSystem
             bolt.Launch(emitData, runtime, launch);
         }
 
-        /// <summary>
-        /// A direction inside the scatter cone. Uses Random rather than an even fan because a
-        /// spray wants to look uncounted — an evenly divided one reads as a mechanism.
-        /// </summary>
+        // A direction inside the scatter cone. Uses Random rather than an even fan because a
+        // spray wants to look uncounted — an evenly divided one reads as a mechanism.
         private Vector3 Scatter(Vector3 forward)
         {
             if (scatterAngle <= 0f) return forward;

@@ -1,22 +1,20 @@
 using UnityEngine;
 
-/// <summary>
-/// Momentum-first locomotion. Owns an explicit velocity vector and integrates it by hand.
-///
-/// You keep what you earn: only ACCELERATION is clamped, never total speed, so a lower wish speed
-/// stops the player gaining rather than taking away what they carried in. Friction does all the
-/// bleeding. This is the opposite of ARPGLocomotionHandler, which lerps toward a target velocity
-/// every frame and therefore erases momentum by design.
-///
-/// It deliberately does NOT call base.Initialize: that hard-errors without a CharacterController,
-/// which this handler replaces. It assigns movementSystem and rootTransform itself and overrides
-/// the properties anything upstream reads, which is what lets it drop into the existing
-/// MovementSystem socket with no edits to shared code.
-///
-/// MovementSystem drives ExecuteMovement from Update; integration runs in FixedUpdate. Input is
-/// latched in the first and consumed in the second, so movement steps at a fixed rate whatever the
-/// framerate is doing.
-/// </summary>
+// Momentum-first locomotion. Owns an explicit velocity vector and integrates it by hand.
+//
+// You keep what you earn: only ACCELERATION is clamped, never total speed, so a lower wish speed
+// stops the player gaining rather than taking away what they carried in. Friction does all the
+// bleeding. This is the opposite of ARPGLocomotionHandler, which lerps toward a target velocity
+// every frame and therefore erases momentum by design.
+//
+// It deliberately does NOT call base.Initialize: that hard-errors without a CharacterController,
+// which this handler replaces. It assigns movementSystem and rootTransform itself and overrides
+// the properties anything upstream reads, which is what lets it drop into the existing
+// MovementSystem socket with no edits to shared code.
+//
+// MovementSystem drives ExecuteMovement from Update; integration runs in FixedUpdate. Input is
+// latched in the first and consumed in the second, so movement steps at a fixed rate whatever the
+// framerate is doing.
 // What a jump press resolved into. Presentation reads it through OnMoveAction.
 
 namespace CrabSystem
@@ -119,20 +117,18 @@ namespace CrabSystem
         bool warnedSpeedClamped;
         bool wasGrounded;
 
-        /// <summary>
-        /// Speed along the ground normal below which the character counts as resting on the surface
-        /// rather than leaving it. Not a feel dial — it only has to sit above the overbounce residue
-        /// (thousandths) and below a real launch (jump is 8 m/s).
-        /// </summary>
+        // Speed along the ground normal below which the character counts as resting on the surface
+        // rather than leaving it. Not a feel dial — it only has to sit above the overbounce residue
+        // (thousandths) and below a real launch (jump is 8 m/s).
         const float GroundStickTolerance = 0.5f;
 
         bool Ready => motor != null && profile != null;
         float HorizontalSpeed => new Vector2(currentVelocity.x, currentVelocity.z).magnitude;
 
-        /// <summary>The tunables this handler is running on. For debug displays and editor tooling.</summary>
+        // The tunables this handler is running on. For debug displays and editor tooling.
         public MovementProfile Profile => profile;
 
-        /// <summary>The motor is the single grounding authority, so MovementSystem reads it through here.</summary>
+        // The motor is the single grounding authority, so MovementSystem reads it through here.
         public override bool ProvidesGrounding => true;
         public override bool IsGrounded => motor != null && motor.IsGrounded;
         public override bool IsMoving => currentVelocity.sqrMagnitude > 0.01f;
@@ -183,13 +179,11 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Latch only. Nothing is integrated here — Update runs at a variable rate and an acceleration
-        /// model stepped at a variable rate gives a different top speed on every machine.
-        ///
-        /// Guarded rather than relying on `enabled`: MovementSystem calls this directly on the
-        /// reference, and Unity's enabled flag only gates messages like FixedUpdate.
-        /// </summary>
+        // Latch only. Nothing is integrated here — Update runs at a variable rate and an acceleration
+        // model stepped at a variable rate gives a different top speed on every machine.
+        //
+        // Guarded rather than relying on `enabled`: MovementSystem calls this directly on the
+        // reference, and Unity's enabled flag only gates messages like FixedUpdate.
         public override void ExecuteMovement(MovementInput input)
         {
             if (!Ready) return;
@@ -219,13 +213,11 @@ namespace CrabSystem
             crouchHeld = input.CrouchHold;
         }
 
-        /// <summary>
-        /// The frame pipeline, in the order the base design doc fixes.
-        ///
-        /// The order is not cosmetic: wall running needs to change the wish direction, the friction
-        /// mode AND the gravity scale, all consumed before any single state-resolution step could run.
-        /// That is why state resolution is two passes, and the marked slots below are where they go.
-        /// </summary>
+        // The frame pipeline, in the order the base design doc fixes.
+        //
+        // The order is not cosmetic: wall running needs to change the wish direction, the friction
+        // mode AND the gravity scale, all consumed before any single state-resolution step could run.
+        // That is why state resolution is two passes, and the marked slots below are where they go.
         void FixedUpdate()
         {
             if (!Ready) return;
@@ -297,12 +289,10 @@ namespace CrabSystem
             UpdateAnimator(grounded);
         }
 
-        /// <summary>
-        /// Camera yaw, from the provider rather than MovementInput.LookDirection: that only carries
-        /// camera forward while the provider says it drives facing, and collapses to zero with no move
-        /// input, so the body would stop tracking the mouse the moment the player stood still.
-        /// LookDirection stays as the fallback for control sources with no camera, such as AI.
-        /// </summary>
+        // Camera yaw, from the provider rather than MovementInput.LookDirection: that only carries
+        // camera forward while the provider says it drives facing, and collapses to zero with no move
+        // input, so the body would stop tracking the mouse the moment the player stood still.
+        // LookDirection stays as the fallback for control sources with no camera, such as AI.
         void UpdateCameraBasis()
         {
             if (cameraProvider != null)
@@ -318,11 +308,9 @@ namespace CrabSystem
             cameraRight = Vector3.Cross(Vector3.up, cameraForward);
         }
 
-        /// <summary>
-        /// MoveDirection arrives already camera-relative and in world space from the control source, so
-        /// this is a reshape rather than a transform. Slice 2 projects the result onto a wall's tangent
-        /// plane here when a state asks for it.
-        /// </summary>
+        // MoveDirection arrives already camera-relative and in world space from the control source, so
+        // this is a reshape rather than a transform. Slice 2 projects the result onto a wall's tangent
+        // plane here when a state asks for it.
         Vector3 BuildWishDir(float dt, out float wishSpeed)
         {
             Vector3 direction = new Vector3(moveInput.x, 0f, moveInput.y);
@@ -364,7 +352,6 @@ namespace CrabSystem
             float sidestep = IsCrouching ? CrouchSpeed : WalkSpeed;
             wishSpeed = Mathf.Lerp(sidestep, ResolveWishSpeed(), forwardCommitment) * analog;
 
-
             Vector3 shaped = cameraForward * ahead + cameraRight * lateralSmoothed;
             if (shaped.sqrMagnitude < 0.0001f) return Vector3.zero;
 
@@ -376,18 +363,16 @@ namespace CrabSystem
             return shaped.normalized;
         }
 
-        /// <summary>
-        /// Gait is the player's; sprint is granted.
-        ///
-        /// The toggle key owns walk versus run and nothing else touches it. Sprint is a tag on the
-        /// blackboard that an ability, a status or a stat gate raises — this substitutes sprint speed
-        /// wherever RUN would have applied, and leaves walking alone. A grant cannot turn a walk into
-        /// a sprint; it upgrades a run. CannotSprint beats the grant (LocomotionHandler.SprintAvailable).
-        ///
-        /// Read at the point of use, never cached. The blackboard belongs to another module and is not
-        /// resolved until LateInitialize, which is after this handler's Initialize has already run —
-        /// and a grant that changes mid-stride is the entire point of putting it on the blackboard.
-        /// </summary>
+        // Gait is the player's; sprint is granted.
+        //
+        // The toggle key owns walk versus run and nothing else touches it. Sprint is a tag on the
+        // blackboard that an ability, a status or a stat gate raises — this substitutes sprint speed
+        // wherever RUN would have applied, and leaves walking alone. A grant cannot turn a walk into
+        // a sprint; it upgrades a run. CannotSprint beats the grant (LocomotionHandler.SprintAvailable).
+        //
+        // Read at the point of use, never cached. The blackboard belongs to another module and is not
+        // resolved until LateInitialize, which is after this handler's Initialize has already run —
+        // and a grant that changes mid-stride is the entire point of putting it on the blackboard.
         float ResolveWishSpeed()
         {
             switch (CurrentGait)
@@ -434,15 +419,13 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Crouch, slide, and standing back up.
-        ///
-        /// SPEED AT THE PRESS decides which one, not how long the key is held. A tap window cannot
-        /// resolve until release, so it would delay the crouch by the whole window and start the
-        /// slide late — and the slide is the half that is already bleeding the momentum it exists to
-        /// spend. "Hold while moving" is really "press while moving"; the moving part is the
-        /// discriminator.
-        /// </summary>
+        // Crouch, slide, and standing back up.
+        //
+        // SPEED AT THE PRESS decides which one, not how long the key is held. A tap window cannot
+        // resolve until release, so it would delay the crouch by the whole window and start the
+        // slide late — and the slide is the half that is already bleeding the momentum it exists to
+        // spend. "Hold while moving" is really "press while moving"; the moving part is the
+        // discriminator.
         void ResolveStance(bool grounded, float dt)
         {
             if (stateMachine == null || profile == null) return;
@@ -456,13 +439,11 @@ namespace CrabSystem
             ResizeCapsule(dt);
         }
 
-        /// <summary>
-        /// Crouch is a plain toggle: press to go down, press again to come back up.
-        ///
-        /// Sliding used to live here, entered on speed at the moment of the press. It was removed
-        /// deliberately — see the note on ApplyGravity. `PostureState.Sliding` and
-        /// `LowerBodyState.Sliding` still exist in the enums; nothing requests them.
-        /// </summary>
+        // Crouch is a plain toggle: press to go down, press again to come back up.
+        //
+        // Sliding used to live here, entered on speed at the moment of the press. It was removed
+        // deliberately — see the note on ApplyGravity. `PostureState.Sliding` and
+        // `LowerBodyState.Sliding` still exist in the enums; nothing requests them.
         void ToggleCrouch()
         {
             if (IsCrouching)
@@ -483,13 +464,11 @@ namespace CrabSystem
             RequestPosture(PostureState.Standing);
         }
 
-        /// <summary>
-        /// Ask the state machine, and say something the first time it says no.
-        ///
-        /// StatePermissionMatrix can refuse a posture — while stunned, rooted, mid-ability — which is
-        /// exactly what it is for. But a refusal is otherwise silent, and "crouch does nothing" with
-        /// no console output is a long afternoon.
-        /// </summary>
+        // Ask the state machine, and say something the first time it says no.
+        //
+        // StatePermissionMatrix can refuse a posture — while stunned, rooted, mid-ability — which is
+        // exactly what it is for. But a refusal is otherwise silent, and "crouch does nothing" with
+        // no console output is a long afternoon.
         bool RequestPosture(PostureState posture)
         {
             if (stateMachine.TryTransitionPosture(posture)) return true;
@@ -517,16 +496,14 @@ namespace CrabSystem
                                              bodyCapsule.center.z);
         }
 
-        /// <summary>Frame-rate independent exponential approach — fast first, settling after.</summary>
+        // Frame-rate independent exponential approach — fast first, settling after.
         static float Damp(float current, float target, float rate, float dt)
         {
             return Mathf.Lerp(current, target, 1f - Mathf.Exp(-rate * dt));
         }
 
-        /// <summary>
-        /// Grounded friction, or skipped. The third mode — along-wall, applied while AIRBORNE and
-        /// ramping over time-in-state — arrives with wall running.
-        /// </summary>
+        // Grounded friction, or skipped. The third mode — along-wall, applied while AIRBORNE and
+        // ramping over time-in-state — arrives with wall running.
         void ApplyFriction(bool grounded, float dt, Vector3 wishDir)
         {
             if (!grounded) return;
@@ -576,26 +553,22 @@ namespace CrabSystem
             currentVelocity.z = result.z;
         }
 
-        /// <summary>
-        /// Quake's friction curve as a scale factor. stopSpeed is a FLOOR on the control value, so
-        /// slow movement bleeds off in finite time instead of halving forever.
-        /// </summary>
+        // Quake's friction curve as a scale factor. stopSpeed is a FLOOR on the control value, so
+        // slow movement bleeds off in finite time instead of halving forever.
         float FrictionScale(float speed, float friction, float dt)
         {
             float control = Mathf.Max(speed, profile.stopSpeed);
             return Mathf.Max(speed - control * friction * dt, 0f) / speed;
         }
 
-        /// <summary>
-        /// The crux of the whole controller.
-        ///
-        /// It caps how much acceleration may add ALONG the requested direction, never total speed.
-        /// Moving perpendicular to current velocity leaves `current` near zero, so the full add lands —
-        /// momentum conservation and speed gain both fall out of this one clamp.
-        ///
-        /// Air is the same function with wish speed clamped low. That clamp is the entire difference
-        /// between ground and air acceleration.
-        /// </summary>
+        // The crux of the whole controller.
+        //
+        // It caps how much acceleration may add ALONG the requested direction, never total speed.
+        // Moving perpendicular to current velocity leaves `current` near zero, so the full add lands —
+        // momentum conservation and speed gain both fall out of this one clamp.
+        //
+        // Air is the same function with wish speed clamped low. That clamp is the entire difference
+        // between ground and air acceleration.
         void Accelerate(Vector3 wishDir, float wishSpeed, bool grounded, float dt)
         {
             if (wishSpeed <= 0f) return;
@@ -610,18 +583,16 @@ namespace CrabSystem
             currentVelocity += wishDir * Mathf.Min(accel * wishSpeed * dt, add);
         }
 
-        /// <summary>
-        /// Steer the airborne heading toward the camera, at a limited rate and only in proportion to
-        /// how far forward the player is pushing.
-        ///
-        /// Rotates horizontal velocity and leaves its length alone, so a mid-air turn neither costs nor
-        /// earns speed — the rate is the only thing limiting it, and that rate is the skill.
-        ///
-        /// Accelerate cannot do this job: airborne, `add = wishSpeed - current` goes negative as soon
-        /// as the player already exceeds airSpeedCap along the direction they are asking for, so aiming
-        /// thirty degrees off a 6 m/s heading does nothing at all. That is the "locked in the air"
-        /// feeling, and no airSpeedCap value fixes it.
-        /// </summary>
+        // Steer the airborne heading toward the camera, at a limited rate and only in proportion to
+        // how far forward the player is pushing.
+        //
+        // Rotates horizontal velocity and leaves its length alone, so a mid-air turn neither costs nor
+        // earns speed — the rate is the only thing limiting it, and that rate is the skill.
+        //
+        // Accelerate cannot do this job: airborne, `add = wishSpeed - current` goes negative as soon
+        // as the player already exceeds airSpeedCap along the direction they are asking for, so aiming
+        // thirty degrees off a 6 m/s heading does nothing at all. That is the "locked in the air"
+        // feeling, and no airSpeedCap value fixes it.
         void ApplyAirTurn(float dt)
         {
             float rate = AirTurn * forwardCommitment;
@@ -639,21 +610,19 @@ namespace CrabSystem
             currentVelocity.z = turned.z;
         }
 
-        /// <summary>
-        /// Shift the player sideways across their own heading, and let it straighten when released.
-        ///
-        /// The camera-right component of velocity is driven toward a target and back to zero through
-        /// the same call, so holding the key angles the trajectory off and letting go returns it. That
-        /// symmetry is the feel: a correction the player lays on and takes off, not a commitment.
-        ///
-        /// Works on the AXIS rather than through a wish direction, which is what makes it survive
-        /// forward input. Accelerate reads the projection of velocity onto the direction asked for, and
-        /// with forward held that projection sits far above airSpeedCap, so it refuses. Here forward
-        /// speed is not part of the question.
-        ///
-        /// Coming back is slower than going out: sideways speed carried into a jump is earned momentum
-        /// and must not be confiscated the instant the feet leave the ground.
-        /// </summary>
+        // Shift the player sideways across their own heading, and let it straighten when released.
+        //
+        // The camera-right component of velocity is driven toward a target and back to zero through
+        // the same call, so holding the key angles the trajectory off and letting go returns it. That
+        // symmetry is the feel: a correction the player lays on and takes off, not a commitment.
+        //
+        // Works on the AXIS rather than through a wish direction, which is what makes it survive
+        // forward input. Accelerate reads the projection of velocity onto the direction asked for, and
+        // with forward held that projection sits far above airSpeedCap, so it refuses. Here forward
+        // speed is not part of the question.
+        //
+        // Coming back is slower than going out: sideways speed carried into a jump is earned momentum
+        // and must not be confiscated the instant the feet leave the ground.
         void ApplyAirStrafe(float dt)
         {
             float strafe = AirStrafe;
@@ -669,11 +638,9 @@ namespace CrabSystem
             currentVelocity += cameraRight * (Mathf.MoveTowards(current, target, rate * dt) - current);
         }
 
-        /// <summary>
-        /// Variable jump height lives here, in two halves: velocity is cut once on release, and gravity
-        /// is heavier on the way down than on the way up. One arc with no expression is what you get
-        /// without both.
-        /// </summary>
+        // Variable jump height lives here, in two halves: velocity is cut once on release, and gravity
+        // is heavier on the way down than on the way up. One arc with no expression is what you get
+        // without both.
         void ApplyGravity(bool grounded, float dt)
         {
             // Gate on velocity along the GROUND NORMAL, never on world Y.
@@ -730,21 +697,17 @@ namespace CrabSystem
             currentVelocity.y -= profile.gravity * (heavy ? profile.fallGravityMultiplier : 1f) * dt;
         }
 
-
-        /// <summary>
-        /// Coyote time and jump buffering, both forgiveness rather than physics: the player who pressed
-        /// jump one frame after the ledge, or one frame before landing, meant to jump and gets to.
-        /// </summary>
-        /// <summary>
-        /// Up and over a ledge — a launch, not a state and not a jump.
-        ///
-        /// Works grounded and airborne alike, and deliberately spends NO jump budget: a mantle is
-        /// something the geometry affords you, not one of your jumps, so arriving at a wall with the
-        /// double jump already gone still gets you up it.
-        ///
-        /// Tried FIRST of the four claims on a jump press. Standing at a waist-high lip and pressing
-        /// jump should put you on top of it, not bonk you into its face.
-        /// </summary>
+        // Coyote time and jump buffering, both forgiveness rather than physics: the player who pressed
+        // jump one frame after the ledge, or one frame before landing, meant to jump and gets to.
+        //
+        // Up and over a ledge — a launch, not a state and not a jump.
+        //
+        // Works grounded and airborne alike, and deliberately spends NO jump budget: a mantle is
+        // something the geometry affords you, not one of your jumps, so arriving at a wall with the
+        // double jump already gone still gets you up it.
+        //
+        // Tried FIRST of the four claims on a jump press. Standing at a waist-high lip and pressing
+        // jump should put you on top of it, not bonk you into its face.
         bool TryMantle()
         {
             if (!profile.mantleEnabled || assistant == null) return false;
@@ -804,14 +767,12 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// One buffered press, three things it might mean, tried strongest-claim first.
-        ///
-        /// Ground before wall before air is not arbitrary. Standing next to a wall must give the
-        /// ordinary jump, or a player hugging a corner silently loses their normal one; and a wall
-        /// within reach should be preferred to spending the air jump, because the wall is free and
-        /// the air jump is a budget.
-        /// </summary>
+        // One buffered press, three things it might mean, tried strongest-claim first.
+        //
+        // Ground before wall before air is not arbitrary. Standing next to a wall must give the
+        // ordinary jump, or a player hugging a corner silently loses their normal one; and a wall
+        // within reach should be preferred to spending the air jump, because the wall is free and
+        // the air jump is a budget.
         void TryJump(bool grounded)
         {
             if (Time.time > lastJumpPressTime + profile.jumpBufferTime) return;
@@ -865,15 +826,13 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Kick off a nearby wall: up, away along its normal, and a little along the wall toward wherever
-        /// the camera is pointing.
-        ///
-        /// Vertical is ASSIGNED and horizontal is ADDED. Assigning vertical makes the kick a fixed
-        /// height whether you were still rising or already falling. Adding horizontal keeps whatever
-        /// you carried in — the motor has already clipped the component heading into the wall, so what
-        /// survives is along-wall speed, and a wall jump should reward arriving fast.
-        /// </summary>
+        // Kick off a nearby wall: up, away along its normal, and a little along the wall toward wherever
+        // the camera is pointing.
+        //
+        // Vertical is ASSIGNED and horizontal is ADDED. Assigning vertical makes the kick a fixed
+        // height whether you were still rising or already falling. Adding horizontal keeps whatever
+        // you carried in — the motor has already clipped the component heading into the wall, so what
+        // survives is along-wall speed, and a wall jump should reward arriving fast.
         bool TryWallJump()
         {
             if (assistant == null || WallJumps <= 0) return false;
@@ -922,10 +881,8 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// The double jump. Budget is the profile's base plus one if DoubleJumpGranted is raised, so
-        /// the move works today and still reads the grant channel statuses and abilities will use.
-        /// </summary>
+        // The double jump. Budget is the profile's base plus one if DoubleJumpGranted is raised, so
+        // the move works today and still reads the grant channel statuses and abilities will use.
         bool TryAirJump()
         {
             if (airJumpsUsed >= AirJumpBudget()) return false;
@@ -980,21 +937,17 @@ namespace CrabSystem
             return Mathf.Max(0, profile.airJumps + Mathf.RoundToInt(Dial(DialIds.AirJumps))) + (granted ? 1 : 0);
         }
 
-        /// <summary>
-        /// Budgets left this airtime, and whether a wall is close enough to kick. For the overlay —
-        /// all three are otherwise completely invisible while testing, which makes a wall jump that
-        /// silently found no wall indistinguishable from one that found a wall and did nothing.
-        /// </summary>
+        // Budgets left this airtime, and whether a wall is close enough to kick. For the overlay —
+        // all three are otherwise completely invisible while testing, which makes a wall jump that
+        // silently found no wall indistinguishable from one that found a wall and did nothing.
         public int AirJumpsLeft => profile == null ? 0 : Mathf.Max(AirJumpBudget() - airJumpsUsed, 0);
         public int WallJumpsLeft => profile == null ? 0 : Mathf.Max(WallJumps - wallJumpsUsed, 0);
         public int MantlesLeft => profile == null ? 0 : Mathf.Max(Mantles - mantlesUsed, 0);
         public bool WallInReach => assistant != null && NearestWall().Detected;
 
-        /// <summary>
-        /// Would a wall jump right now be the CLIMB variant rather than the kick? Mirrors the test in
-        /// TryWallJump. Worth surfacing: the climb cone is a feel number, and the only way to tune it
-        /// is to stand at the edge of it and see which side you are on.
-        /// </summary>
+        // Would a wall jump right now be the CLIMB variant rather than the kick? Mirrors the test in
+        // TryWallJump. Worth surfacing: the climb cone is a feel number, and the only way to tune it
+        // is to stand at the edge of it and see which side you are on.
         public bool WallClimbInReach
         {
             get
@@ -1012,7 +965,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>Closest wall the sensor can see. Ties do not matter; anything in reach will do.</summary>
+        // Closest wall the sensor can see. Ties do not matter; anything in reach will do.
         ParkourContact NearestWall()
         {
             ParkourContact best = default;
@@ -1030,7 +983,7 @@ namespace CrabSystem
             return best;
         }
 
-        /// <summary>Everything every jump does regardless of what it pushed off.</summary>
+        // Everything every jump does regardless of what it pushed off.
         void ConsumeJump()
         {
             lastJumpPressTime = Mathf.NegativeInfinity;
@@ -1043,17 +996,15 @@ namespace CrabSystem
                 animationProvider.SetTrigger(jumpTriggerParam);
         }
 
-        /// <summary>
-        /// The body faces the camera; only MovementSystem.FacingOverride (targeting) may turn it elsewhere.
-        ///
-        /// Never velocity: collide-and-slide clips velocity along walls, so a velocity-facing body
-        /// swings parallel to any wall it touches and the level ends up steering the player. It also
-        /// breaks the wall sensor, which derives left/right from Dot(toContact, body.right) — a head-on
-        /// approach would classify as a side contact within a frame or two.
-        ///
-        /// Handed to the motor rather than assigned here: the Rigidbody is the only thing that may
-        /// write this transform, and assigning rotation directly discards the queued MovePosition.
-        /// </summary>
+        // The body faces the camera; only MovementSystem.FacingOverride (targeting) may turn it elsewhere.
+        //
+        // Never velocity: collide-and-slide clips velocity along walls, so a velocity-facing body
+        // swings parallel to any wall it touches and the level ends up steering the player. It also
+        // breaks the wall sensor, which derives left/right from Dot(toContact, body.right) — a head-on
+        // approach would classify as a side contact within a frame or two.
+        //
+        // Handed to the motor rather than assigned here: the Rigidbody is the only thing that may
+        // write this transform, and assigning rotation directly discards the queued MovePosition.
         Quaternion ResolveFacing(float dt)
         {
             if (movementSystem.FacingLocked) return rootTransform.rotation;
@@ -1082,15 +1033,13 @@ namespace CrabSystem
             return new Vector3(currentVelocity.x, 0f, currentVelocity.z).sqrMagnitude < 0.01f;
         }
 
-        /// <summary>
-        /// Yaw the MODEL toward where the player is travelling while the body keeps facing the camera.
-        ///
-        /// Above walk speed the animator plays a single forward clip with no strafe blending, so the
-        /// lean carries the direction information StrafeX used to. It fades in as the strafe tree fades
-        /// out; overlap them and the same turn gets described twice.
-        ///
-        /// The MODEL only. Leaning the body would rotate `body.right`, which the wall sensor reads.
-        /// </summary>
+        // Yaw the MODEL toward where the player is travelling while the body keeps facing the camera.
+        //
+        // Above walk speed the animator plays a single forward clip with no strafe blending, so the
+        // lean carries the direction information StrafeX used to. It fades in as the strafe tree fades
+        // out; overlap them and the same turn gets described twice.
+        //
+        // The MODEL only. Leaning the body would rotate `body.right`, which the wall sensor reads.
         void UpdateModelLean(Vector3 wishDir, float dt)
         {
             Transform pivot = ResolveLeanPivot();
@@ -1111,17 +1060,15 @@ namespace CrabSystem
             modelRoot.localRotation = Quaternion.Euler(0f, modelLean, 0f) * modelBaseRotation;
         }
 
-        /// <summary>
-        /// Ease the model back up after a step-up, so a stair reads as a stride instead of a teleport.
-        ///
-        /// Runs per FRAME rather than per physics step, because this is the thing being looked at —
-        /// decaying it at 50 Hz would trade one visible stair-step for another.
-        ///
-        /// Purely cosmetic. The body, the capsule, grounding and velocity are all already where they
-        /// should be; only the mesh lags. That is deliberate — a step-up MUST resolve collision in one
-        /// step, and anything that spreads the real motion over several frames puts the collider
-        /// somewhere the physics did not agree to.
-        /// </summary>
+        // Ease the model back up after a step-up, so a stair reads as a stride instead of a teleport.
+        //
+        // Runs per FRAME rather than per physics step, because this is the thing being looked at —
+        // decaying it at 50 Hz would trade one visible stair-step for another.
+        //
+        // Purely cosmetic. The body, the capsule, grounding and velocity are all already where they
+        // should be; only the mesh lags. That is deliberate — a step-up MUST resolve collision in one
+        // step, and anything that spreads the real motion over several frames puts the collider
+        // somewhere the physics did not agree to.
         void LateUpdate()
         {
             if (modelRoot == null || profile == null) return;
@@ -1139,16 +1086,14 @@ namespace CrabSystem
             modelRoot.localPosition = modelBasePosition - rootTransform.InverseTransformDirection(stepSmooth);
         }
 
-        /// <summary>
-        /// The model instance ModelModule is currently showing, resolved every step because SwapModel
-        /// destroys the instance and builds a new one — a cached transform survives as a destroyed
-        /// reference and the lean stops silently the first time the character changes model.
-        ///
-        /// Never the entity root. Writing the root's transform assigns the interpolated Rigidbody's
-        /// pose directly and discards that step's MovePosition, which is stutter, not rotation.
-        /// Brain.ModelRoot is not trusted for exactly that reason — it falls back to the entity root
-        /// when it cannot find a child by name.
-        /// </summary>
+        // The model instance ModelModule is currently showing, resolved every step because SwapModel
+        // destroys the instance and builds a new one — a cached transform survives as a destroyed
+        // reference and the lean stops silently the first time the character changes model.
+        //
+        // Never the entity root. Writing the root's transform assigns the interpolated Rigidbody's
+        // pose directly and discards that step's MovePosition, which is stutter, not rotation.
+        // Brain.ModelRoot is not trusted for exactly that reason — it falls back to the entity root
+        // when it cannot find a child by name.
         Transform ResolveLeanPivot()
         {
             if (modelModule == null || modelModule.CurrentModel == null) return null;
@@ -1177,11 +1122,9 @@ namespace CrabSystem
             return Mathf.Clamp(angle, -profile.modelLeanMaxAngle, profile.modelLeanMaxAngle) * blend;
         }
 
-        /// <summary>
-        /// Speed states come from MovementSystem's hysteretic facts rather than being re-derived from
-        /// velocity with a second set of thresholds — that is how two systems end up disagreeing about
-        /// the same moment.
-        /// </summary>
+        // Speed states come from MovementSystem's hysteretic facts rather than being re-derived from
+        // velocity with a second set of thresholds — that is how two systems end up disagreeing about
+        // the same moment.
         void UpdateAnimator(bool grounded)
         {
             if (animationProvider == null) return;
@@ -1212,18 +1155,16 @@ namespace CrabSystem
             return 1;
         }
 
-        /// <summary>
-        /// Spend everything ApplyImpulse collected since the last physics step.
-        ///
-        /// It runs AFTER gravity, and after TryJump. After gravity because the grounded branch would
-        /// otherwise flatten any outward component against the ground normal in the same step, pinning
-        /// a launch to the floor for one frame. After TryJump because that ASSIGNS currentVelocity.y
-        /// and would erase the vertical half of an impulse arriving on the same step.
-        ///
-        /// Impulses ADD rather than replace, because this controller keeps what you earn — a knockback
-        /// taken at speed should carry the speed. An ability wanting a fixed distance regardless of
-        /// approach has to zero the velocity itself, deliberately.
-        /// </summary>
+        // Spend everything ApplyImpulse collected since the last physics step.
+        //
+        // It runs AFTER gravity, and after TryJump. After gravity because the grounded branch would
+        // otherwise flatten any outward component against the ground normal in the same step, pinning
+        // a launch to the floor for one frame. After TryJump because that ASSIGNS currentVelocity.y
+        // and would erase the vertical half of an impulse arriving on the same step.
+        //
+        // Impulses ADD rather than replace, because this controller keeps what you earn — a knockback
+        // taken at speed should carry the speed. An ability wanting a fixed distance regardless of
+        // approach has to zero the velocity itself, deliberately.
         // Last root-motion velocity, kept for steps that see no new animator frame (frames and physics
         // steps don't line up).
         Vector3 rootMotionVelocity;
@@ -1231,11 +1172,9 @@ namespace CrabSystem
         // Stops a root-motion move at the body it travels into, so a combo string can't carry through the target.
         RootMotionContact rootMotionContact;
 
-        /// <summary>
-        /// A useRootMotion move: this step's horizontal velocity is the clip's, averaged over the animator
-        /// frames since the last step. An override, so it runs first in the post-pass, before TryJump and
-        /// the impulses; gravity keeps the vertical. The motor still sweeps it, so a wall stops a lunge.
-        /// </summary>
+        // A useRootMotion move: this step's horizontal velocity is the clip's, averaged over the animator
+        // frames since the last step. An override, so it runs first in the post-pass, before TryJump and
+        // the impulses; gravity keeps the vertical. The motor still sweeps it, so a wall stops a lunge.
         void ApplyRootMotion()
         {
             Vector3 delta = TakeRootMotion(out float overTime);
@@ -1281,22 +1220,20 @@ namespace CrabSystem
                 snapSuppressedUntil = Time.time + profile.snapSuppressAfterJump;
         }
 
-        /// <summary>
-        /// The last word on this step's velocity, and a safety net rather than a design limit.
-        ///
-        /// Nothing else in this controller bounds total speed — that is the core law, and it is right
-        /// for speed the player EARNED. But the impulse channel adds without asking, air has no
-        /// friction at all, and Accelerate cannot take speed away above wishSpeed, so anything that
-        /// pushes repeatedly while airborne compounds with no sink. A dash chained into jumps was the
-        /// first thing to find that; it will not be the last.
-        ///
-        /// The ceilings exist because the MOTOR stops being correct above them, not because fast is
-        /// unfun: past ~17.5 m/s ground snapping cannot follow terrain between steps and the sweep
-        /// starts skipping. Set them high enough that normal play never touches them.
-        ///
-        /// Falling is deliberately unbounded. Gravity is not a runaway source, and a terminal velocity
-        /// is a feel decision that belongs in the gravity section if it is wanted at all.
-        /// </summary>
+        // The last word on this step's velocity, and a safety net rather than a design limit.
+        //
+        // Nothing else in this controller bounds total speed — that is the core law, and it is right
+        // for speed the player EARNED. But the impulse channel adds without asking, air has no
+        // friction at all, and Accelerate cannot take speed away above wishSpeed, so anything that
+        // pushes repeatedly while airborne compounds with no sink. A dash chained into jumps was the
+        // first thing to find that; it will not be the last.
+        //
+        // The ceilings exist because the MOTOR stops being correct above them, not because fast is
+        // unfun: past ~17.5 m/s ground snapping cannot follow terrain between steps and the sweep
+        // starts skipping. Set them high enough that normal play never touches them.
+        //
+        // Falling is deliberately unbounded. Gravity is not a runaway source, and a terminal velocity
+        // is a feel decision that belongs in the gravity section if it is wanted at all.
         void ClampSpeed()
         {
             ClampHorizontal();
@@ -1330,10 +1267,8 @@ namespace CrabSystem
             currentVelocity.y = profile.maxRiseSpeed;
         }
 
-        /// <summary>
-        /// Once per session, not once per frame. A clamp that fires fires every step while it holds,
-        /// and a warning that floods the console is a warning nobody reads.
-        /// </summary>
+        // Once per session, not once per frame. A clamp that fires fires every step while it holds,
+        // and a warning that floods the console is a warning nobody reads.
         void WarnClamped(string detail)
         {
             if (warnedSpeedClamped) return;
@@ -1344,17 +1279,15 @@ namespace CrabSystem
                              $"speed faster than anything removes it. Check impulse speed caps.");
         }
 
-        /// <summary>
-        /// Additive impulse channel — knockback, launches, air jumps, anything that adds to momentum
-        /// rather than replacing it. This is the design doc's IntegrateExternal, and what abilities
-        /// push through.
-        ///
-        /// ⚠ It QUEUES rather than writing velocity, because abilities fire from Update and this
-        /// handler integrates in FixedUpdate. Writing straight to currentVelocity means two Update
-        /// frames between physics steps apply the impulse twice, and one arriving just after a step
-        /// gets a full extra frame of gravity before anything consumes it. Neither is reproducible,
-        /// which is the worst kind of movement bug to chase.
-        /// </summary>
+        // Additive impulse channel — knockback, launches, air jumps, anything that adds to momentum
+        // rather than replacing it. This is the design doc's IntegrateExternal, and what abilities
+        // push through.
+        //
+        // ⚠ It QUEUES rather than writing velocity, because abilities fire from Update and this
+        // handler integrates in FixedUpdate. Writing straight to currentVelocity means two Update
+        // frames between physics steps apply the impulse twice, and one arriving just after a step
+        // gets a full extra frame of gravity before anything consumes it. Neither is reproducible,
+        // which is the worst kind of movement bug to chase.
         public override void ApplyImpulse(Vector3 direction, float force)
         {
             pendingImpulse += direction.normalized * force;
@@ -1370,13 +1303,11 @@ namespace CrabSystem
             frictionSuppressedUntil = 0f;
         }
 
-        /// <summary>
-        /// Hold ground friction off for a window, so an impulse survives long enough to be a dash.
-        ///
-        /// Takes the LATER of the two deadlines rather than overwriting, or a short holiday landing on
-        /// top of a long one would cut the long one short — the opposite of what stacking two mobility
-        /// effects should do.
-        /// </summary>
+        // Hold ground friction off for a window, so an impulse survives long enough to be a dash.
+        //
+        // Takes the LATER of the two deadlines rather than overwriting, or a short holiday landing on
+        // top of a long one would cut the long one short — the opposite of what stacking two mobility
+        // effects should do.
         public override void SuppressFriction(float seconds)
         {
             if (seconds <= 0f) return;
@@ -1384,7 +1315,7 @@ namespace CrabSystem
             frictionSuppressedUntil = Mathf.Max(frictionSuppressedUntil, Time.time + seconds);
         }
 
-        /// <summary>Is ground friction currently held off, and for how much longer. For the overlay.</summary>
+        // Is ground friction currently held off, and for how much longer. For the overlay.
         public bool FrictionSuppressed => Time.time < frictionSuppressedUntil;
         public float FrictionHolidayRemaining => Mathf.Max(frictionSuppressedUntil - Time.time, 0f);
     }

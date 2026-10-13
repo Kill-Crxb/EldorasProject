@@ -1,19 +1,13 @@
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-/// <summary>
-/// AbilityDefinition - Defense Partial
-/// Policy helpers for blocking, parrying, and counter-attack mechanics
-/// </summary>
+// AbilityDefinition - Defense Partial
+// Policy helpers for blocking, parrying, and counter-attack mechanics
 
 namespace CrabSystem
 {
     public partial class AbilityDefinition
     {
-        // ========================================
-        // DEFENSIVE MECHANICS (AbilityType.Defensive)
-        // ========================================
-
         [Header("Defense Mechanics (Defensive Abilities Only)")]
         [Tooltip("Damage reduction when blocking (0.7 = 70% reduction)")]
         [Range(0f, 1f)]
@@ -38,9 +32,7 @@ namespace CrabSystem
         [Tooltip("Startup time before defense becomes active")]
         public float blockStartupTime = 0.1f;
 
-        // ========================================
         // PARRY (an ordinary ability fired while a guard is up — LMB while blocking)
-        // ========================================
 
         [Header("Parry")]
         [Tooltip("Above 0 makes this a parry: using it opens a window this many frames long (60 fps). " +
@@ -50,14 +42,8 @@ namespace CrabSystem
 
         public bool IsParry => parryFrames > 0;
 
-        // ========================================
-        // POLICY HELPERS (Zero-allocation, side-effect-free)
-        // ========================================
-
-        /// <summary>
-        /// Can this ability block an incoming attack from the given direction?
-        /// Pure decision helper - no side effects
-        /// </summary>
+        // Can this ability block an incoming attack from the given direction?
+        // Pure decision helper - no side effects
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CanBlock(float incomingAngle)
         {
@@ -66,10 +52,8 @@ namespace CrabSystem
                 && incomingAngle <= blockAngle * 0.5f;
         }
 
-        /// <summary>
-        /// Can this ability block an incoming attack from the given direction?
-        /// Overload for Vector3 attack direction
-        /// </summary>
+        // Can this ability block an incoming attack from the given direction?
+        // Overload for Vector3 attack direction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CanBlock(Vector3 defenderForward, Vector3 attackDirection)
         {
@@ -80,10 +64,8 @@ namespace CrabSystem
             return angle <= blockAngle * 0.5f;
         }
 
-        /// <summary>
-        /// Is the defense in parry window (perfect block timing)?
-        /// Pure timing query - no state modification
-        /// </summary>
+        // Is the defense in parry window (perfect block timing)?
+        // Pure timing query - no state modification
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool CanParry(float timeSinceDefenseStart)
         {
@@ -92,10 +74,8 @@ namespace CrabSystem
                 && timeSinceDefenseStart <= blockStartupTime + parryWindowDuration;
         }
 
-        /// <summary>
-        /// Get damage reduction multiplier for current defense state
-        /// Returns: multiplier to apply to damage (0.5 = 50% reduction)
-        /// </summary>
+        // Get damage reduction multiplier for current defense state
+        // Returns: multiplier to apply to damage (0.5 = 50% reduction)
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetDefenseMultiplier(float timeSinceDefenseStart, bool withinBlockAngle)
         {
@@ -114,9 +94,6 @@ namespace CrabSystem
             return 1f;
         }
 
-        /// <summary>
-        /// Is this a defensive ability?
-        /// </summary>
         public bool IsDefensive => abilityType == AbilityType.Defensive;
     }
 }

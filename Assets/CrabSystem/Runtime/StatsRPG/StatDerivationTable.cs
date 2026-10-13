@@ -4,17 +4,15 @@ using UnityEngine;
 
 namespace CrabSystem.Stats
 {
-    /// <summary>
-    /// What each core stat gives you as it rises. One entry per core stat, holding the
-    /// thresholds it passes and what each one grants.
-    ///
-    /// Cumulative: every threshold reached keeps paying, so a character at Spirit 14 holds
-    /// everything Spirit 5, 7, 10 and 14 gave them.
-    ///
-    /// Rewards are assets, so a breakpoint can grant a stat bonus, a per-point rate, a
-    /// talent point or extra dice — and the same reward can be reused by a talent node.
-    /// This is balance data, not code.
-    /// </summary>
+    // What each core stat gives you as it rises. One entry per core stat, holding the
+    // thresholds it passes and what each one grants.
+    //
+    // Cumulative: every threshold reached keeps paying, so a character at Spirit 14 holds
+    // everything Spirit 5, 7, 10 and 14 gave them.
+    //
+    // Rewards are assets, so a breakpoint can grant a stat bonus, a per-point rate, a
+    // talent point or extra dice — and the same reward can be reused by a talent node.
+    // This is balance data, not code.
     [CreateAssetMenu(fileName = "New Derivation Table", menuName = "CrabSystem/Stats/Stat Derivation Table")]
     public class StatDerivationTable : ScriptableObject
     {

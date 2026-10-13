@@ -3,18 +3,16 @@
 #if UNITY_EDITOR
 using UnityEngine;
 
-/// <summary>
-/// On-screen movement readout for the parkour controller. OnGUI, so it needs no canvas.
-///
-/// ⚠ This was previously bound to ARPGLocomotionHandler with a hard cast, so the moment slice 1
-/// swapped the handler the cast returned null and OnGUI returned before drawing anything. It had
-/// been silently blank ever since. It now reads the systems rather than one concrete handler, so
-/// swapping handlers again degrades it to fewer rows instead of switching it off.
-///
-/// The point of this is not to admire the numbers. Every row exists to answer a question that has
-/// actually cost time: does the gait reach its wish speed, which slope band am I in, and — the one
-/// that is otherwise invisible — WHY is a posture change being refused.
-/// </summary>
+// On-screen movement readout for the parkour controller. OnGUI, so it needs no canvas.
+//
+// ⚠ This was previously bound to ARPGLocomotionHandler with a hard cast, so the moment slice 1
+// swapped the handler the cast returned null and OnGUI returned before drawing anything. It had
+// been silently blank ever since. It now reads the systems rather than one concrete handler, so
+// swapping handlers again degrades it to fewer rows instead of switching it off.
+//
+// The point of this is not to admire the numbers. Every row exists to answer a question that has
+// actually cost time: does the gait reach its wish speed, which slope band am I in, and — the one
+// that is otherwise invisible — WHY is a posture change being refused.
 
 namespace CrabSystem
 {
@@ -137,7 +135,7 @@ namespace CrabSystem
 
         // ── Rows ──────────────────────────────────────────────────────────────────────────────
 
-        /// <summary>One label/value line. Replaces a method per row — they were identical but six.</summary>
+        // One label/value line. Replaces a method per row — they were identical but six.
         void Row(string label, string value, Color color)
         {
             labelStyle.normal.textColor = Color.white;
@@ -233,11 +231,9 @@ namespace CrabSystem
             Row("Capsule", $"height {capsule.height:F2}   centre {capsule.center.y:F2}   underside {bottom:F3}", idleColor);
         }
 
-        /// <summary>
-        /// Whether ground friction is currently held off. The one row that tells you a dash actually
-        /// fired: an impulse alone is nearly invisible at these speeds, but the holiday is unambiguous,
-        /// and if Speed does not hold flat while this counts down, the impulse never landed.
-        /// </summary>
+        // Whether ground friction is currently held off. The one row that tells you a dash actually
+        // fired: an impulse alone is nearly invisible at these speeds, but the holiday is unambiguous,
+        // and if Speed does not hold flat while this counts down, the impulse never landed.
         void DrawFriction()
         {
             if (parkour == null) return;
@@ -248,13 +244,11 @@ namespace CrabSystem
             Row("Friction", value, held ? okColor : idleColor);
         }
 
-        /// <summary>
-        /// Jump budgets and whether a wall is kickable right now.
-        ///
-        /// WALL lights up from the sensor, not from having jumped — so if it never lights while you
-        /// are against a wall, the problem is the ParkourAssistant's reach or probe layers, not the
-        /// jump code. That distinction is otherwise invisible and costs an afternoon.
-        /// </summary>
+        // Jump budgets and whether a wall is kickable right now.
+        //
+        // WALL lights up from the sensor, not from having jumped — so if it never lights while you
+        // are against a wall, the problem is the ParkourAssistant's reach or probe layers, not the
+        // jump code. That distinction is otherwise invisible and costs an afternoon.
         void DrawJumps()
         {
             if (parkour == null) return;
@@ -303,7 +297,6 @@ namespace CrabSystem
             Row("Crouch key", held ? "HELD" : "up", held ? okColor : idleColor);
         }
 
-
         void DrawCrouchDiagnosis()
         {
             if (stateMachine == null) return;
@@ -327,10 +320,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Two bands only. Grip means the surface behaves exactly like flat floor; no grip means the
-        /// body is falling down it. The threshold is CharacterMotor.maxSlopeAngle, with hysteresis.
-        /// </summary>
+        // Two bands only. Grip means the surface behaves exactly like flat floor; no grip means the
+        // body is falling down it. The threshold is CharacterMotor.maxSlopeAngle, with hysteresis.
         string SlopeBand(MovementProfile profile, float angle)
         {
             return movementSystem.IsGrounded ? "grip" : "NO GRIP — falling";
@@ -384,6 +375,5 @@ namespace CrabSystem
             Gizmos.DrawLine(start, start + motor.GroundNormal);
         }
     }
-
 }
 #endif

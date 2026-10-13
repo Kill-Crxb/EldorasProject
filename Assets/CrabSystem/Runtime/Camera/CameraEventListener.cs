@@ -1,10 +1,8 @@
 using UnityEngine;
 
-/// <summary>
-/// Bridges GameEvents to a CameraModule. Other systems (dialogue, cutscenes, interactions, etc.)
-/// call GameEvents.CameraModeChangeRequested("Dialogue") without needing a direct reference to the
-/// camera; this listener forwards the request to the CameraModule on the same brain.
-/// </summary>
+// Bridges GameEvents to a CameraModule. Other systems (dialogue, cutscenes, interactions, etc.)
+// call GameEvents.CameraModeChangeRequested("Dialogue") without needing a direct reference to the
+// camera; this listener forwards the request to the CameraModule on the same brain.
 
 namespace CrabSystem
 {

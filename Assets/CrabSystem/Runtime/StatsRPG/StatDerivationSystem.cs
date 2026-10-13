@@ -3,14 +3,12 @@ using CrabSystem.Progression;
 using CrabSystem.Stats;
 using UnityEngine;
 
-/// <summary>
-/// Grants what the core stats have earned. Every threshold a stat has passed applies its
-/// rewards; anything below the current value is taken back.
-///
-/// Re-evaluated whenever a driving stat changes, so a per-point reward keeps up as the
-/// stat rises and a lost point removes what it paid for. Rewards apply under a key that
-/// names the breakpoint, so re-applying replaces rather than stacks.
-/// </summary>
+// Grants what the core stats have earned. Every threshold a stat has passed applies its
+// rewards; anything below the current value is taken back.
+//
+// Re-evaluated whenever a driving stat changes, so a per-point reward keeps up as the
+// stat rises and a lost point removes what it paid for. Rewards apply under a key that
+// names the breakpoint, so re-applying replaces rather than stacks.
 
 namespace CrabSystem
 {

@@ -1,26 +1,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// ModelSocketProvider — mapping of equipment slot assets to bone transforms.
-/// 
-/// Architecture:
-/// - Takes EquipmentSlotDefinition assets as input
-/// - Maps each slot to a bone transform on the model rig
-/// - Provides O(1) lookup for sockets by slot ID
-/// 
-/// Setup:
-/// 1. Add this component to model prefab root (next to Animator)
-/// 2. For each slot that needs visual rendering, add an entry to slotSockets
-/// 3. Drag the EquipmentSlotDefinition SO into the "slot" field
-/// 4. Drag the bone transform into the "socket" field
-/// 
-/// Example:
-/// - Slot: Slot_MainWeapon
-/// - Socket: Armature|Spine|Chest|Shoulder.R|Arm.R|Hand.R (the right hand bone)
-/// 
-/// If a slot isn't in this list, it won't render (e.g., rings, storage, amulets without visuals).
-/// </summary>
+// ModelSocketProvider — mapping of equipment slot assets to bone transforms.
+//
+// Architecture:
+// - Takes EquipmentSlotDefinition assets as input
+// - Maps each slot to a bone transform on the model rig
+// - Provides O(1) lookup for sockets by slot ID
+//
+// Setup:
+// 1. Add this component to model prefab root (next to Animator)
+// 2. For each slot that needs visual rendering, add an entry to slotSockets
+// 3. Drag the EquipmentSlotDefinition SO into the "slot" field
+// 4. Drag the bone transform into the "socket" field
+//
+// Example:
+// - Slot: Slot_MainWeapon
+// - Socket: Armature|Spine|Chest|Shoulder.R|Arm.R|Hand.R (the right hand bone)
+//
+// If a slot isn't in this list, it won't render (e.g., rings, storage, amulets without visuals).
 
 namespace CrabSystem
 {
@@ -61,10 +59,8 @@ namespace CrabSystem
         private bool isCached = false;
         private bool isNamedCached = false;
 
-        /// <summary>
-        /// Returns all sockets as a dictionary keyed by slot ID.
-        /// Caches the result on first call.
-        /// </summary>
+        // Returns all sockets as a dictionary keyed by slot ID.
+        // Caches the result on first call.
         public Dictionary<string, Transform> GetAllSockets()
         {
             if (isCached)
@@ -84,9 +80,7 @@ namespace CrabSystem
             return socketCache;
         }
 
-        /// <summary>
-        /// Returns a non-slot socket by its free-form id. Caches on first call.
-        /// </summary>
+        // Returns a non-slot socket by its free-form id. Caches on first call.
         public Transform GetNamedSocket(string socketId)
         {
             if (string.IsNullOrEmpty(socketId))
@@ -116,10 +110,8 @@ namespace CrabSystem
             isNamedCached = true;
         }
 
-        /// <summary>
-        /// Gets a socket by slot ID.
-        /// Returns null if slot not found.
-        /// </summary>
+        // Gets a socket by slot ID.
+        // Returns null if slot not found.
         public Transform GetSocket(string slotId)
         {
             if (string.IsNullOrEmpty(slotId))
@@ -132,10 +124,8 @@ namespace CrabSystem
             return null;
         }
 
-        /// <summary>
-        /// Gets a socket by EquipmentSlotDefinition asset.
-        /// Returns null if slot not in mappings.
-        /// </summary>
+        // Gets a socket by EquipmentSlotDefinition asset.
+        // Returns null if slot not in mappings.
         public Transform GetSocket(EquipmentSlotDefinition slot)
         {
             if (slot == null)

@@ -1,36 +1,33 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Defines the semantic facts available for a specific entity type.
-/// Designer creates one schema per entity archetype (Ninja, Wolf, Mage, etc.)
-/// 
-/// Architecture:
-/// - ScriptableObject asset (data-driven, no code changes)
-/// - Each entity type has unique semantic facts
-/// - Shared facts use same key names across schemas
-/// 
-/// Example Schemas:
-/// 
-/// NinjaBlackboardSchema.asset:
-/// - IsWounded (Bool) - "Health below 25%"
-/// - CanDodge (Bool) - "Stamina above 20"
-/// - LowStamina (Bool) - "Stamina below 30%"
-/// 
-/// WolfBlackboardSchema.asset:
-/// - IsWounded (Bool) - "Health below 25%"
-/// - IsHungry (Bool) - "Not recently fed"
-/// - ScentFound (Bool) - "Prey detected via smell"
-/// 
-/// Usage:
-/// 1. Create schema asset in Project window
-/// 2. Define keys with names, types, defaults
-/// 3. Assign to entity's BlackboardSystem
-/// 4. Generate code constants via editor tool
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 18, 2026
-/// </summary>
+// Defines the semantic facts available for a specific entity type.
+// Designer creates one schema per entity archetype (Ninja, Wolf, Mage, etc.)
+//
+// Architecture:
+// - ScriptableObject asset (data-driven, no code changes)
+// - Each entity type has unique semantic facts
+// - Shared facts use same key names across schemas
+//
+// Example Schemas:
+//
+// NinjaBlackboardSchema.asset:
+// - IsWounded (Bool) - "Health below 25%"
+// - CanDodge (Bool) - "Stamina above 20"
+// - LowStamina (Bool) - "Stamina below 30%"
+//
+// WolfBlackboardSchema.asset:
+// - IsWounded (Bool) - "Health below 25%"
+// - IsHungry (Bool) - "Not recently fed"
+// - ScentFound (Bool) - "Prey detected via smell"
+//
+// Usage:
+// 1. Create schema asset in Project window
+// 2. Define keys with names, types, defaults
+// 3. Assign to entity's BlackboardSystem
+// 4. Generate code constants via editor tool
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -55,9 +52,7 @@ namespace CrabSystem
             public float defaultFloat;
             public int defaultInt;
 
-            /// <summary>
-            /// Get typed default value based on fact type
-            /// </summary>
+            // Get typed default value based on fact type
             public object GetDefaultValue()
             {
                 switch (type)
@@ -78,9 +73,7 @@ namespace CrabSystem
         [Tooltip("List of facts this entity type can have")]
         public List<KeyDefinition> keys = new List<KeyDefinition>();
 
-        /// <summary>
-        /// Get key definition by name (O(n) - use sparingly)
-        /// </summary>
+        // Get key definition by name (O(n) - use sparingly)
         public KeyDefinition GetKey(string keyName)
         {
             if (string.IsNullOrEmpty(keyName)) return null;
@@ -94,9 +87,7 @@ namespace CrabSystem
             return null;
         }
 
-        /// <summary>
-        /// Validate schema for common issues
-        /// </summary>
+        // Validate schema for common issues
         public bool Validate(out string error)
         {
             if (string.IsNullOrEmpty(schemaId))
@@ -143,9 +134,7 @@ namespace CrabSystem
 #endif
     }
 
-    /// <summary>
-    /// Supported blackboard value types
-    /// </summary>
+    // Supported blackboard value types
     public enum BlackboardValueType
     {
         Bool,   // True/false semantic facts (IsWounded, CanDodge)

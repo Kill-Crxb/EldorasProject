@@ -7,10 +7,6 @@ namespace CrabSystem
 {
     public partial class AbilityDefinition
     {
-        // ========================================
-        // ANIMATION CONTROL
-        // ========================================
-
         [Header("Animation Control")]
         [Tooltip("The clip's Cue(n) that releases this ability's effects, spell or projectile. 0 = as the ability " +
                  "starts (or its cast ends), with no clip event.")]
@@ -42,10 +38,6 @@ namespace CrabSystem
                  "lunge's distance without editing the clip. A move still stops at the body it travels into " +
                  "(MovementProfile.rootMotionContactGap).")]
         [Min(0f)] public float rootMotionScale = 1f;
-
-        // ========================================
-        // ANIMATION & VFX
-        // ========================================
 
         [Header("Animation & VFX")]
         [Tooltip("Animation trigger parameter name")]

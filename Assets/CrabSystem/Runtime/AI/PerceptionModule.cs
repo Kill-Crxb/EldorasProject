@@ -2,16 +2,14 @@
 using System.Collections.Generic;
 using CrabSystem.Factions;
 
-/// <summary>
-/// Perception Module - Advanced target detection for AI
-/// 
-/// Features:
-/// - Vision cone (field of view)
-/// - Line of sight checking
-/// - Faction-based filtering
-/// - Memory (remember last known position)
-/// - Performance optimized with detection throttling
-/// </summary>
+// Perception Module - Advanced target detection for AI
+//
+// Features:
+// - Vision cone (field of view)
+// - Line of sight checking
+// - Faction-based filtering
+// - Memory (remember last known position)
+// - Performance optimized with detection throttling
 
 namespace CrabSystem
 {
@@ -74,42 +72,25 @@ namespace CrabSystem
         private float nextDetectionTime;
         private float detectionInterval = 0.2f; // Check every 0.2s instead of every frame
 
-    #region Properties
-
         public bool IsEnabled
         {
             get => isEnabled;
             set => isEnabled = value;
         }
 
-        /// <summary>
-        /// Current detected target
-        /// </summary>
+        // Current detected target
         public Transform CurrentTarget => currentTarget;
 
-        /// <summary>
-        /// Has a target in sight right now
-        /// </summary>
+        // Has a target in sight right now
         public bool HasTarget => currentTarget != null;
 
-        /// <summary>
-        /// Last known position of target (even if lost sight)
-        /// </summary>
+        // Last known position of target (even if lost sight)
         public Vector3 LastKnownPosition => hasMemory ? lastKnownPosition : (currentTarget != null ? currentTarget.position : Vector3.zero);
 
-        /// <summary>
-        /// Has a memory of where target was
-        /// </summary>
+        // Has a memory of where target was
         public bool HasMemory => hasMemory && Now - lastSeenTime < memoryDuration;
 
-        /// <summary>
-        /// Vision range
-        /// </summary>
         public float VisionRange => visionRange;
-
-    #endregion
-
-    #region IBrainModule Implementation
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -165,10 +146,6 @@ namespace CrabSystem
         {
             // Cleanup if needed
         }
-
-    #endregion
-
-    #region Detection Logic
 
         private void DetectTargets()
         {
@@ -388,10 +365,6 @@ namespace CrabSystem
             return true;
         }
 
-    #endregion
-
-    #region Public Methods
-
         // A target this AI didn't see itself (an ally's call for help). Memory holds it for Memory Duration,
         // long enough to close in and see it for real.
         public void SetTarget(Transform target)
@@ -428,10 +401,6 @@ namespace CrabSystem
         {
             visionAngle = Mathf.Clamp(angle, 0f, 360f);
         }
-
-    #endregion
-
-    #region Debug Visualization
 
         private void OnDrawGizmos()
         {
@@ -494,7 +463,5 @@ namespace CrabSystem
             Gizmos.color = Color.blue;
             Gizmos.DrawWireSphere(transform.position + Vector3.up * eyeHeight, 0.2f);
         }
-
-    #endregion
     }
 }

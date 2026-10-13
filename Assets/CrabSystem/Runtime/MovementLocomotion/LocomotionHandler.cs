@@ -1,20 +1,18 @@
 using UnityEngine;
 
-/// <summary>
-/// Base Locomotion Handler - Defines movement execution
-/// 
-/// This is the "HOW to move" layer - it defines your game's movement style.
-/// Subclass this to create different game genres:
-/// - RPGLocomotionHandler (third-person action RPG)
-/// - MilSimLocomotionHandler (tactical FPS)
-/// - VehicleLocomotionHandler (racing game)
-/// 
-/// INTERCHANGEABLE: Swap this to change your game's movement feel.
-/// UNIVERSAL: Same handler used by both player and NPC entities.
-/// 
-/// The handler receives MovementInput (world-space, already transformed)
-/// and executes movement via CharacterController.
-/// </summary>
+// Base Locomotion Handler - Defines movement execution
+//
+// This is the "HOW to move" layer - it defines your game's movement style.
+// Subclass this to create different game genres:
+// - RPGLocomotionHandler (third-person action RPG)
+// - MilSimLocomotionHandler (tactical FPS)
+// - VehicleLocomotionHandler (racing game)
+//
+// INTERCHANGEABLE: Swap this to change your game's movement feel.
+// UNIVERSAL: Same handler used by both player and NPC entities.
+//
+// The handler receives MovementInput (world-space, already transformed)
+// and executes movement via CharacterController.
 // The movement tier the player has chosen or been granted — not how fast they happen to be going.
 // None means the handler has no gait concept, and MovementSystem falls back to measured speed.
 
@@ -45,14 +43,8 @@ namespace CrabSystem
         protected Vector3 currentVelocity;
         protected Vector3 verticalVelocity;
 
-        // ========================================
-        // Initialization
-        // ========================================
-
-        /// <summary>
-        /// Initialize the locomotion handler
-        /// Called by MovementSystem during setup
-        /// </summary>
+        // Initialize the locomotion handler
+        // Called by MovementSystem during setup
         public virtual void Initialize(MovementSystem system)
         {
             movementSystem = system;
@@ -73,28 +65,16 @@ namespace CrabSystem
                 Debug.Log($"[{GetType().Name}] Initialized on {rootTransform.name}");
         }
 
-        // ========================================
-        // Main Execution (Override in subclasses)
-        // ========================================
-
-        /// <summary>
-        /// Execute movement for this frame
-        /// 
-        /// This is the main method that defines your game's movement style.
-        /// Subclasses override this to implement their specific movement feel.
-        /// 
-        /// Input is already in world space - no transformation needed.
-        /// </summary>
+        // Execute movement for this frame
+        //
+        // This is the main method that defines your game's movement style.
+        // Subclasses override this to implement their specific movement feel.
+        //
+        // Input is already in world space - no transformation needed.
         public abstract void ExecuteMovement(MovementInput input);
 
-        // ========================================
-        // Common Helpers (Available to subclasses)
-        // ========================================
-
-        /// <summary>
-        /// Apply gravity to vertical velocity
-        /// Call this in your ExecuteMovement implementation
-        /// </summary>
+        // Apply gravity to vertical velocity
+        // Call this in your ExecuteMovement implementation
         protected virtual void ApplyGravity()
         {
             if (characterController.isGrounded && verticalVelocity.y < 0f)
@@ -107,9 +87,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Apply rotation to face a direction
-        /// </summary>
+        // Apply rotation to face a direction
         protected virtual void ApplyRotation(Vector2 lookDirection, float rotationSpeed)
         {
             if (lookDirection.magnitude < 0.1f) return;
@@ -124,18 +102,14 @@ namespace CrabSystem
             );
         }
 
-        /// <summary>
-        /// Move the CharacterController
-        /// </summary>
+        // Move the CharacterController
         protected virtual void MoveCharacterController(Vector3 movement)
         {
             Vector3 rootMotion = TakeRootMotion(out _);
             characterController.Move(movement * Time.deltaTime + rootMotion);
         }
 
-        // ========================================
         // Root motion — moves that travel as animated
-        // ========================================
 
         // Collected from RootMotionRelay (the model's OnAnimatorMove) and spent by the handler's own move
         // while MovementSystem.RootMotionDriven is up. Dropped otherwise: locomotion clips travel too,
@@ -143,16 +117,16 @@ namespace CrabSystem
         protected Vector3 pendingRootMotion;
         protected float pendingRootMotionTime;
 
-        /// <summary>The clip's travel over one animator frame, in world space. Only XZ is kept: gravity
-        /// and grounding stay the handler's.</summary>
+        // The clip's travel over one animator frame, in world space. Only XZ is kept: gravity
+        // and grounding stay the handler's.
         public void AddRootMotion(Vector3 worldDelta, float deltaTime)
         {
             pendingRootMotion += new Vector3(worldDelta.x, 0f, worldDelta.z);
             pendingRootMotionTime += deltaTime;
         }
 
-        /// <summary>The travel collected since the last call and the time it covers; zero travel when no
-        /// root-motion move is playing.</summary>
+        // The travel collected since the last call and the time it covers; zero travel when no
+        // root-motion move is playing.
         protected Vector3 TakeRootMotion(out float overTime)
         {
             Vector3 delta = pendingRootMotion;
@@ -164,32 +138,24 @@ namespace CrabSystem
             return driven ? delta : Vector3.zero;
         }
 
-        // ========================================
-        // External Motion — the ability channel
-        // ========================================
-
-        /// <summary>
-        /// Additive impulse: knockback, launches, air jumps — anything that ADDS to momentum rather
-        /// than replacing it. This is the design doc's IntegrateExternal, and the only way an ability
-        /// is allowed to change velocity. Nothing outside a handler writes currentVelocity, and nothing
-        /// outside a motor writes the root transform.
-        ///
-        /// ⚠ Virtual on the BASE deliberately. MovementEffect and KnockbackEffect used to reach this
-        /// through `Locomotion as ARPGLocomotionHandler`, so the moment slice 1 swapped the handler the
-        /// cast returned null and every knockback, launch, dash and teleport on the player became a
-        /// silent no-op — the same failure that blanked MovementDebugDisplay for a whole slice. Call it
-        /// through LocomotionHandler. Do not cast to a concrete handler.
-        /// </summary>
+        // Additive impulse: knockback, launches, air jumps — anything that ADDS to momentum rather
+        // than replacing it. This is the design doc's IntegrateExternal, and the only way an ability
+        // is allowed to change velocity. Nothing outside a handler writes currentVelocity, and nothing
+        // outside a motor writes the root transform.
+        //
+        // ⚠ Virtual on the BASE deliberately. MovementEffect and KnockbackEffect used to reach this
+        // through `Locomotion as ARPGLocomotionHandler`, so the moment slice 1 swapped the handler the
+        // cast returned null and every knockback, launch, dash and teleport on the player became a
+        // silent no-op — the same failure that blanked MovementDebugDisplay for a whole slice. Call it
+        // through LocomotionHandler. Do not cast to a concrete handler.
         public virtual void ApplyImpulse(Vector3 direction, float force)
         {
             currentVelocity += direction.normalized * force;
         }
 
-        /// <summary>
-        /// Instant position change. This default is the CharacterController path, which has to be
-        /// disabled across the write or it immediately fights it. Handlers owning their own motor
-        /// override it and go through the motor instead.
-        /// </summary>
+        // Instant position change. This default is the CharacterController path, which has to be
+        // disabled across the write or it immediately fights it. Handlers owning their own motor
+        // override it and go through the motor instead.
         public virtual void TeleportTo(Vector3 position)
         {
             if (characterController == null || rootTransform == null) return;
@@ -202,41 +168,31 @@ namespace CrabSystem
             verticalVelocity = Vector3.zero;
         }
 
-        /// <summary>
-        /// Timed velocity override — a dash that OWNS locomotion for a duration rather than nudging it.
-        /// Returns false when the handler has no such mode, so a caller can say so out loud instead of
-        /// silently doing nothing.
-        ///
-        /// ParkourLocomotionHandler returns false on purpose. A dash there belongs to a LowerBodyState
-        /// plus an impulse, not to a coroutine that hides velocity from friction, gravity and collision
-        /// for its whole duration. See Movement_Ability_Interface.md, channel 4.
-        /// </summary>
+        // Timed velocity override — a dash that OWNS locomotion for a duration rather than nudging it.
+        // Returns false when the handler has no such mode, so a caller can say so out loud instead of
+        // silently doing nothing.
+        //
+        // ParkourLocomotionHandler returns false on purpose. A dash there belongs to a LowerBodyState
+        // plus an impulse, not to a coroutine that hides velocity from friction, gravity and collision
+        // for its whole duration. See Movement_Ability_Interface.md, channel 4.
         public virtual bool BeginDash(Vector3 direction, float speed, float duration) => false;
 
-        /// <summary>
-        /// Hold ground friction off for a moment. Paired with ApplyImpulse this is what separates a
-        /// dash from a shove: friction decays velocity with a time constant of 1/groundFriction, so at
-        /// friction 5 an unprotected impulse is 63% gone in 0.2s and a big one buys barely a metre.
-        ///
-        /// Deliberately NOT a parameter on ApplyImpulse. An ability may want one without the other —
-        /// an ice patch suppresses friction with no impulse, knockback wants an impulse with no
-        /// holiday — and a combined signature would force every caller to answer both questions.
-        ///
-        /// No-op on the base: friction is a concept of the handler that has one. ARPGLocomotionHandler
-        /// lerps toward a target velocity and has no friction term to suspend.
-        /// </summary>
+        // Hold ground friction off for a moment. Paired with ApplyImpulse this is what separates a
+        // dash from a shove: friction decays velocity with a time constant of 1/groundFriction, so at
+        // friction 5 an unprotected impulse is 63% gone in 0.2s and a big one buys barely a metre.
+        //
+        // Deliberately NOT a parameter on ApplyImpulse. An ability may want one without the other —
+        // an ice patch suppresses friction with no impulse, knockback wants an impulse with no
+        // holiday — and a combined signature would force every caller to answer both questions.
+        //
+        // No-op on the base: friction is a concept of the handler that has one. ARPGLocomotionHandler
+        // lerps toward a target velocity and has no friction term to suspend.
         public virtual void SuppressFriction(float seconds) { }
 
-        // ========================================
-        // Public Properties
-        // ========================================
-
-        /// <summary>
-        /// True when this handler owns grounding and MovementSystem should read IsGrounded from it
-        /// instead of from a FeetDetectionModule trigger volume. Sweep-based handlers set this; the
-        /// CharacterController-based ones leave it false and the trigger volume stays authoritative.
-        /// Two answers to "am I grounded" is one too many, and this is which one wins.
-        /// </summary>
+        // True when this handler owns grounding and MovementSystem should read IsGrounded from it
+        // instead of from a FeetDetectionModule trigger volume. Sweep-based handlers set this; the
+        // CharacterController-based ones leave it false and the trigger volume stays authoritative.
+        // Two answers to "am I grounded" is one too many, and this is which one wins.
         public virtual bool ProvidesGrounding => false;
 
         public virtual bool IsGrounded => characterController?.isGrounded ?? false;
@@ -262,10 +218,6 @@ namespace CrabSystem
         public virtual Vector3 VerticalVelocity => verticalVelocity;
         public CharacterController CharacterController => characterController;
         public MovementSystem MovementSystem => movementSystem;
-
-        // ========================================
-        // Debug Visualization
-        // ========================================
 
         protected virtual void OnDrawGizmos()
         {

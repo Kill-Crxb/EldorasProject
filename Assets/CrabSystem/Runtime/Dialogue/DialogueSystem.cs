@@ -95,7 +95,7 @@ namespace CrabSystem
                 Memory()?.MarkUsed(option.ResolveMemoryKey(database));
         }
 
-        /// <summary>False once a one-shot option has been taken by this actor.</summary>
+        // False once a one-shot option has been taken by this actor.
         public bool IsOptionAvailable(DialogueOptionData option)
         {
             if (option == null) return false;

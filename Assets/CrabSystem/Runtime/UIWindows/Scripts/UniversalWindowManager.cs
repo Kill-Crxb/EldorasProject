@@ -1,25 +1,21 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// UniversalWindowManager - Central UI hub.
-///
-/// Owns:
-/// - Named canvas layer references (Overlay, UI, Dialogue, Effect, BG)
-/// - Tooltip lifecycle (prefab, instantiation, show/hide)
-/// - All inventory/equipment window lifecycle
-///
-/// TooltipManager has been fully absorbed into this class.
-/// External callers use UniversalWindowManager.Instance.ShowTooltip / HideTooltip.
-/// No script should ever search for a Canvas or call FindObjectOfType for UI.
-/// </summary>
+// UniversalWindowManager - Central UI hub.
+//
+// Owns:
+// - Named canvas layer references (Overlay, UI, Dialogue, Effect, BG)
+// - Tooltip lifecycle (prefab, instantiation, show/hide)
+// - All inventory/equipment window lifecycle
+//
+// TooltipManager has been fully absorbed into this class.
+// External callers use UniversalWindowManager.Instance.ShowTooltip / HideTooltip.
+// No script should ever search for a Canvas or call FindObjectOfType for UI.
 
 namespace CrabSystem
 {
     public class UniversalWindowManager : MonoBehaviour
     {
-    #region Inspector — Canvas Layers
-
         [Header("Canvas Layers")]
         [SerializeField] private Canvas overlayCanvas;
         [SerializeField] private Canvas uiCanvas;
@@ -27,16 +23,8 @@ namespace CrabSystem
         [SerializeField] private Canvas effectCanvas;
         [SerializeField] private Canvas bgCanvas;
 
-    #endregion
-
-    #region Inspector — Tooltip
-
         [Header("Tooltip")]
         [SerializeField] private ItemTooltip tooltipPrefab;
-
-    #endregion
-
-    #region Inspector — Windows
 
         [Header("Window Prefabs")]
         [SerializeField] private GameObject universalWindowPrefab;
@@ -49,10 +37,6 @@ namespace CrabSystem
         [Header("Settings")]
         [SerializeField] private bool closeOtherWindowsOnOpen = false;
         [SerializeField] private bool debugMode = false;
-
-    #endregion
-
-    #region Singleton
 
         private static UniversalWindowManager instance;
         public static UniversalWindowManager Instance
@@ -96,19 +80,11 @@ namespace CrabSystem
             CloseAllWindows();
         }
 
-    #endregion
-
-    #region Canvas Accessors
-
         public Canvas OverlayCanvas => overlayCanvas;
         public Canvas UICanvas => uiCanvas;
         public Canvas DialogueCanvas => dialogueCanvas;
         public Canvas EffectCanvas => effectCanvas;
         public Canvas BGCanvas => bgCanvas;
-
-    #endregion
-
-    #region Tooltip
 
         private ItemTooltip currentTooltip;
 
@@ -132,17 +108,9 @@ namespace CrabSystem
             currentTooltip?.Hide();
         }
 
-    #endregion
-
-    #region State
-
         private Dictionary<string, UniversalInventoryWindow> activeWindows = new Dictionary<string, UniversalInventoryWindow>();
         private UniversalInventoryWindow playerInventoryWindow;
         private bool isDialogueOpen;
-
-    #endregion
-
-    #region Player Inventory
 
         public void OpenPlayerInventory(ControllerBrain playerBrain)
         {
@@ -173,10 +141,6 @@ namespace CrabSystem
             else
                 OpenPlayerInventory(playerBrain);
         }
-
-    #endregion
-
-    #region Container Windows
 
         public UniversalInventoryWindow OpenContainerWindow(ControllerBrain playerBrain, ControllerBrain containerBrain)
         {
@@ -234,10 +198,6 @@ namespace CrabSystem
                 Debug.Log($"[UniversalWindowManager] Closed {toRemove.Count} container windows");
         }
 
-    #endregion
-
-    #region Dialogue Window
-
         // Placeholder open/close — just toggles the reserved canvas layer. Actual dialogue
         // content (text, options) is a separate pass; this exists so DialogueSystem has a
         // real, testable hook and IsAnyWindowOpen() unlocks the cursor correctly.
@@ -260,10 +220,6 @@ namespace CrabSystem
 
             if (debugMode) Debug.Log("[UniversalWindowManager] Closed dialogue window");
         }
-
-    #endregion
-
-    #region Window Factory
 
         private UniversalInventoryWindow CreateWindow(string windowId)
         {
@@ -326,10 +282,6 @@ namespace CrabSystem
             return window;
         }
 
-    #endregion
-
-    #region Cleanup
-
         public void CloseAllWindows()
         {
             if (playerInventoryWindow != null)
@@ -345,10 +297,6 @@ namespace CrabSystem
             activeWindows.Clear();
             CloseDialogueWindow();
         }
-
-    #endregion
-
-    #region Queries
 
         public bool IsAnyWindowOpen()
         {
@@ -367,10 +315,6 @@ namespace CrabSystem
             return count;
         }
 
-    #endregion
-
-    #region Debug
-
         [ContextMenu("Print Active Windows")]
         private void PrintActiveWindows()
         {
@@ -382,7 +326,5 @@ namespace CrabSystem
                 sb.AppendLine($"  - {kvp.Key} ({(kvp.Value != null && kvp.Value.IsOpen ? "OPEN" : "CLOSED")})");
             Debug.Log(sb.ToString());
         }
-
-    #endregion
     }
 }

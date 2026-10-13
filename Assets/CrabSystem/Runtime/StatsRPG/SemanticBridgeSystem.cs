@@ -1,51 +1,48 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Semantic Bridge System - Single source of truth for interpreting numbers â†’ meaning.
-/// Evaluates conditions and writes semantic facts to blackboard.
-/// 
-/// Core Philosophy:
-/// "Gameplay systems must not interpret raw numbers. All meaning is derived once, centrally."
-/// 
-/// Responsibilities:
-/// - Evaluate BlackboardConditions against entity state
-/// - Write semantic facts to Blackboard
-/// - Update on pulse (not every frame)
-/// 
-/// NOT Responsible For:
-/// - Storing facts (Blackboard does this)
-/// - Reading facts (systems query Blackboard)
-/// - Acting on facts (GOAP, UI, etc. consume facts)
-/// 
-/// Architecture Pattern:
-/// 
-/// BAD (Duplicated Logic):
-///   GOAP: if (health% < 25%) flee();
-///   UI: if (health% < 25%) showWarning();
-///   Ability: if (target.health% < 25%) enableFinisher();
-/// 
-/// GOOD (Single Source):
-///   SemanticBridge: if (health% < 25%) blackboard.Set(IsWounded, true);
-///   GOAP: if (blackboard.Get(IsWounded)) flee();
-///   UI: if (blackboard.Get(IsWounded)) showWarning();
-///   Ability: if (target.blackboard.Get(IsWounded)) enableFinisher();
-/// 
-/// Performance:
-/// - Pulse-based updates (default 10Hz, not 60Hz)
-/// - Hashed integer keys (no string comparisons)
-/// - Only evaluates enabled conditions
-/// - Zero allocations in hot path
-/// 
-/// Example Setup:
-/// 1. Create condition assets (IsWounded, CanDodge, LowMana)
-/// 2. Assign conditions to SemanticBridge.conditions list
-/// 3. Bridge evaluates every updateInterval seconds
-/// 4. Results written to blackboard automatically
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 18, 2026
-/// </summary>
+// Semantic Bridge System - Single source of truth for interpreting numbers â†’ meaning.
+// Evaluates conditions and writes semantic facts to blackboard.
+//
+// Core Philosophy:
+// "Gameplay systems must not interpret raw numbers. All meaning is derived once, centrally."
+//
+// Responsibilities:
+// - Evaluate BlackboardConditions against entity state
+// - Write semantic facts to Blackboard
+// - Update on pulse (not every frame)
+//
+// NOT Responsible For:
+// - Storing facts (Blackboard does this)
+// - Reading facts (systems query Blackboard)
+// - Acting on facts (GOAP, UI, etc. consume facts)
+//
+// Architecture Pattern:
+//
+// BAD (Duplicated Logic):
+//   GOAP: if (health% < 25%) flee();
+//   UI: if (health% < 25%) showWarning();
+//   Ability: if (target.health% < 25%) enableFinisher();
+//
+// GOOD (Single Source):
+//   SemanticBridge: if (health% < 25%) blackboard.Set(IsWounded, true);
+//   GOAP: if (blackboard.Get(IsWounded)) flee();
+//   UI: if (blackboard.Get(IsWounded)) showWarning();
+//   Ability: if (target.blackboard.Get(IsWounded)) enableFinisher();
+//
+// Performance:
+// - Pulse-based updates (default 10Hz, not 60Hz)
+// - Hashed integer keys (no string comparisons)
+// - Only evaluates enabled conditions
+// - Zero allocations in hot path
+//
+// Example Setup:
+// 1. Create condition assets (IsWounded, CanDodge, LowMana)
+// 2. Assign conditions to SemanticBridge.conditions list
+// 3. Bridge evaluates every updateInterval seconds
+// 4. Results written to blackboard automatically
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -80,15 +77,11 @@ namespace CrabSystem
         public bool UsesLibrary => conditionLibrary != null;
         public int ConditionCount => GetActiveConditions()?.Count ?? 0;
 
-        /// <summary>
-        /// Get the active condition list (library or entity-specific)
-        /// </summary>
+        // Get the active condition list (library or entity-specific)
         private List<BlackboardCondition> GetActiveConditions()
         {
             return conditionLibrary != null ? conditionLibrary.conditions : conditions;
         }
-
-    #region IBrainModule Implementation
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -148,13 +141,7 @@ namespace CrabSystem
             EvaluateAllConditions();
         }
 
-    #endregion
-
-    #region Condition Evaluation
-
-        /// <summary>
-        /// Evaluate all enabled conditions and write results to blackboard
-        /// </summary>
+        // Evaluate all enabled conditions and write results to blackboard
         private void EvaluateAllConditions()
         {
             var activeConditions = GetActiveConditions();
@@ -171,9 +158,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Evaluate single condition and write to blackboard
-        /// </summary>
+        // Evaluate single condition and write to blackboard
         private void EvaluateCondition(BlackboardCondition condition)
         {
             // Guard clauses
@@ -193,14 +178,7 @@ namespace CrabSystem
             }
         }
 
-
-    #endregion
-
-    #region Validation
-
-        /// <summary>
-        /// Validate all conditions on initialization
-        /// </summary>
+        // Validate all conditions on initialization
         private void ValidateConditions()
         {
             // Check which source we're using
@@ -260,13 +238,7 @@ namespace CrabSystem
             // Null checking happens at runtime in Initialize() and EvaluateAllConditions()
         }
 
-    #endregion
-
-    #region Debug Helpers
-
-        /// <summary>
-        /// Force immediate evaluation of all conditions (debug only)
-        /// </summary>
+        // Force immediate evaluation of all conditions (debug only)
         [ContextMenu("Force Evaluate All")]
         public void ForceEvaluateAll()
         {
@@ -281,9 +253,7 @@ namespace CrabSystem
             EvaluateAllConditions();
         }
 
-        /// <summary>
-        /// Print readable condition descriptions (debug only)
-        /// </summary>
+        // Print readable condition descriptions (debug only)
         [ContextMenu("Print All Conditions")]
         public void PrintAllConditions()
         {
@@ -307,7 +277,5 @@ namespace CrabSystem
                 Debug.Log($"  {status} {condition.name}: {desc}");
             }
         }
-
-    #endregion
     }
 }

@@ -2,13 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// ActionBarView — renders one bar's slots.
-///
-/// It is told what it is. It no longer holds a barId string, and no longer finds the player:
-/// HotbarHud spawns it and calls Bind. That is what removes the whole class of failures where a
-/// typo'd or missing string left a bar silently blank.
-/// </summary>
+// ActionBarView — renders one bar's slots.
+//
+// It is told what it is. It no longer holds a barId string, and no longer finds the player:
+// HotbarHud spawns it and calls Bind. That is what removes the whole class of failures where a
+// typo'd or missing string left a bar silently blank.
 
 namespace CrabSystem
 {
@@ -43,10 +41,8 @@ namespace CrabSystem
             Unsubscribe();
         }
 
-        /// <summary>
-        /// Called by HotbarHud immediately after instantiation. Everything this view needs arrives
-        /// here — there is no other entry point and no self-discovery.
-        /// </summary>
+        // Called by HotbarHud immediately after instantiation. Everything this view needs arrives
+        // here — there is no other entry point and no self-discovery.
         public void Bind(ActionBarDefinition barDefinition,
                          HotbarSystem hotbar,
                          SlotTransformationSystem transforms,
@@ -146,9 +142,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Pages can differ in slot count, so this is a full rebuild rather than a per-slot refresh.
-        /// </summary>
+        // Pages can differ in slot count, so this is a full rebuild rather than a per-slot refresh.
         private void HandlePageChanged(string pageId)
         {
             Refresh();

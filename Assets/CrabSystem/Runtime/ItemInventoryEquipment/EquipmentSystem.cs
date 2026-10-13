@@ -35,8 +35,6 @@ namespace CrabSystem
         public event Action<ISaveable> Dirty;
         public event Action<EquipmentSlotDefinition, ItemInstance> OnEquipmentVisual;
 
-    #region IBrainModule
-
         public bool IsEnabled
         {
             get => enabled;
@@ -87,10 +85,6 @@ namespace CrabSystem
                 Debug.LogError($"[EquipmentSystem] Exception in BroadcastVisuals: {ex.Message}\n{ex.StackTrace}");
             }
         }
-
-    #endregion
-
-    #region ISaveable
 
         public string GetSaveId() => "equipment";
         public int GetSaveVersion() => 1;
@@ -161,10 +155,6 @@ namespace CrabSystem
             public string slotId;
         }
 
-    #endregion
-
-    #region Equipment Operations
-
         public bool EquipItem(ItemInstance item, EquipmentSlotDefinition slot)
         {
             if (item == null)
@@ -196,11 +186,9 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Equips an item that is currently in this entity's inventory, taking it out of the bag
-        /// and putting anything already in the slot back. Use this for anything player-driven —
-        /// plain EquipItem leaves the item in the inventory as well, which duplicates it.
-        /// </summary>
+        // Equips an item that is currently in this entity's inventory, taking it out of the bag
+        // and putting anything already in the slot back. Use this for anything player-driven —
+        // plain EquipItem leaves the item in the inventory as well, which duplicates it.
         public bool EquipFromInventory(ItemInstance item, EquipmentSlotDefinition slot)
         {
             if (item == null || slot == null) return false;
@@ -235,7 +223,7 @@ namespace CrabSystem
             return false;
         }
 
-        /// <summary>Empties a slot. The item goes nowhere — callers that want it back use UnequipItemToInventory.</summary>
+        // Empties a slot. The item goes nowhere — callers that want it back use UnequipItemToInventory.
         public bool UnequipItem(EquipmentSlotDefinition slot)
         {
             if (slot == null) return false;
@@ -253,7 +241,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>Moves the equipped item back into the bag. Stays equipped if there is no room.</summary>
+        // Moves the equipped item back into the bag. Stays equipped if there is no room.
         public bool UnequipItemToInventory(EquipmentSlotDefinition slot)
         {
             if (slot == null) return false;
@@ -272,14 +260,14 @@ namespace CrabSystem
             return UnequipItem(slot);
         }
 
-        /// <summary>Resolve a slot id ("helmet", "mainwep") to its definition.</summary>
+        // Resolve a slot id ("helmet", "mainwep") to its definition.
         public EquipmentSlotDefinition GetSlotDefinition(string slotId)
         {
             if (string.IsNullOrEmpty(slotId)) return null;
             return slotLookup.GetValueOrDefault(slotId);
         }
 
-        /// <summary>Slot ids this entity has definitions for. Useful when a socket id does not match.</summary>
+        // Slot ids this entity has definitions for. Useful when a socket id does not match.
         public IEnumerable<string> GetSlotIds() => slotLookup.Keys;
 
         public ItemInstance GetEquippedItem(EquipmentSlotDefinition slot)
@@ -296,11 +284,9 @@ namespace CrabSystem
             return item;
         }
 
-        /// <summary>
-        /// Returns the DiceProfile for the item in the given slot, or null if the slot
-        /// is empty or the equipped item has no DiceProfile assigned.
-        /// Used by DamageEffect to resolve dice damage at hit time.
-        /// </summary>
+        // Returns the DiceProfile for the item in the given slot, or null if the slot
+        // is empty or the equipped item has no DiceProfile assigned.
+        // Used by DamageEffect to resolve dice damage at hit time.
         public DiceProfile GetEquippedWeapon(string slotId)
         {
             var item = GetEquippedItem(slotId);
@@ -316,15 +302,9 @@ namespace CrabSystem
         public Dictionary<string, ItemInstance> GetAllEquippedItems()
             => new Dictionary<string, ItemInstance>(equipment);
 
-    #endregion
-
-    #region Visual Broadcast
-
-        /// <summary>
-        /// Fires OnEquipmentVisual for every occupied slot.
-        /// Called from LateInitialize so all brain modules are subscribed first.
-        /// Slots with no matching SO in slotLookup are skipped with a warning.
-        /// </summary>
+        // Fires OnEquipmentVisual for every occupied slot.
+        // Called from LateInitialize so all brain modules are subscribed first.
+        // Slots with no matching SO in slotLookup are skipped with a warning.
         private void BroadcastVisuals()
         {
             foreach (var kvp in equipment)
@@ -341,10 +321,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Builds a slotId → EquipmentSlotDefinition lookup from the inspector list.
-        /// Called once on Initialize.
-        /// </summary>
+        // Builds a slotId → EquipmentSlotDefinition lookup from the inspector list.
+        // Called once on Initialize.
         private void BuildSlotLookup()
         {
             slotLookup.Clear();
@@ -355,10 +333,6 @@ namespace CrabSystem
                 slotLookup[slotDef.slotId] = slotDef;
             }
         }
-
-    #endregion
-
-    #region Stat Application
 
         // An item's stats go on as contributions keyed by its instance, so taking it off removes exactly
         // what it gave (roadmap N5).
@@ -382,10 +356,6 @@ namespace CrabSystem
 
         private static string StatKey(ItemInstance item) => "item:" + item.instanceId;
 
-    #endregion
-
-    #region Natural Weapons (NPCs)
-
         private void EquipNaturalWeapon()
         {
             var weaponInstance = new ItemInstance(naturalWeaponItemId, ItemRarity.Common);
@@ -404,10 +374,6 @@ namespace CrabSystem
 
             EquipItem(weaponInstance, naturalWeaponSlot);
         }
-
-    #endregion
-
-    #region Serialization (Inspector Visibility)
 
         [Serializable]
         public class EquippedSlotData
@@ -440,8 +406,5 @@ namespace CrabSystem
                 });
             }
         }
-
-    #endregion
-
     }
 }

@@ -7,14 +7,8 @@ namespace CrabSystem
 {
     public class ResourceManager : MonoBehaviour, IGameManager, IManagerDependency, IHotReloadable
     {
-    #region Singleton
-
         private static ResourceManager instance;
         public static ResourceManager Instance => instance;
-
-    #endregion
-
-    #region IGameManager
 
         public string ManagerName => "Resource Manager";
         public int InitializationPriority => 10;
@@ -88,10 +82,6 @@ namespace CrabSystem
         private static readonly Type[] dependencies = new[] { typeof(StatsManager) };
         public IEnumerable<Type> DependsOn => dependencies;
 
-    #endregion
-
-    #region Inspector
-
         [Header("Resource Definitions")]
         [SerializeField] private List<ResourceDefinition> resourceDefinitions = new();
 
@@ -101,15 +91,7 @@ namespace CrabSystem
         [Header("Debug")]
         [SerializeField] private bool debugLogging = false;
 
-    #endregion
-
-    #region Lookups
-
         private readonly Dictionary<string, ResourceDefinition> resourceById = new();
-
-    #endregion
-
-    #region Build & Validation
 
         private void BuildResourceLookup()
         {
@@ -150,10 +132,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Queries
-
         public ResourceDefinition Get(string resourceId)
         {
             if (!resourceById.TryGetValue(resourceId, out var def))
@@ -171,10 +149,6 @@ namespace CrabSystem
         {
             return resourceById.Values;
         }
-
-    #endregion
-
-    #region Runtime Registration
 
         public void RegisterResource(ResourceDefinition def)
         {
@@ -198,7 +172,5 @@ namespace CrabSystem
             BuildResourceLookup();
             ConfigVersion++;
         }
-
-    #endregion
     }
 }

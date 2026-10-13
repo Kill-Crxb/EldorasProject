@@ -1,55 +1,41 @@
 using UnityEngine;
 
-/// <summary>
-/// Interface for pluggable movement control sources
-/// 
-/// Control sources provide input to the movement system.
-/// They answer the question: "WHO is controlling this entity?"
-/// 
-/// Examples:
-/// - PlayerControlSource: Reads keyboard/gamepad input
-/// - AIControlSource: Reads PathfindingModule waypoints
-/// - AdminControlSource: Admin possession for debugging
-/// - NetworkControlSource: Reads network packets
-/// - ScriptedControlSource: Follows predefined waypoint paths
-/// </summary>
+// Interface for pluggable movement control sources
+//
+// Control sources provide input to the movement system.
+// They answer the question: "WHO is controlling this entity?"
+//
+// Examples:
+// - PlayerControlSource: Reads keyboard/gamepad input
+// - AIControlSource: Reads PathfindingModule waypoints
+// - AdminControlSource: Admin possession for debugging
+// - NetworkControlSource: Reads network packets
+// - ScriptedControlSource: Follows predefined waypoint paths
 
 namespace CrabSystem
 {
     public interface IMovementControlSource
     {
-        /// <summary>
-        /// Get movement input for this frame
-        /// Called by MovementSystem every frame
-        /// </summary>
+        // Get movement input for this frame
+        // Called by MovementSystem every frame
         MovementInput GetMovementInput();
 
-        /// <summary>
-        /// Called when this control source becomes active
-        /// Setup references, subscribe to events, etc.
-        /// </summary>
+        // Called when this control source becomes active
+        // Setup references, subscribe to events, etc.
         void OnActivated();
 
-        /// <summary>
-        /// Called when this control source is deactivated
-        /// Cleanup, unsubscribe from events, etc.
-        /// </summary>
+        // Called when this control source is deactivated
+        // Cleanup, unsubscribe from events, etc.
         void OnDeactivated();
 
-        /// <summary>
-        /// Called every frame while this source is active
-        /// Use for any per-frame updates the source needs
-        /// </summary>
+        // Called every frame while this source is active
+        // Use for any per-frame updates the source needs
         void UpdateSource();
 
-        /// <summary>
-        /// Is this control source currently active?
-        /// </summary>
+        // Is this control source currently active?
         bool IsActive { get; }
 
-        /// <summary>
-        /// Name of this control source (for debugging/UI)
-        /// </summary>
+        // Name of this control source (for debugging/UI)
         string SourceName { get; }
     }
 }

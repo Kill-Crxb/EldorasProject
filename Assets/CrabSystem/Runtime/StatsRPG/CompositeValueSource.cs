@@ -1,44 +1,41 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// Value source that combines multiple sources using math operations.
-/// Enables complex conditions without code changes.
-/// 
-/// Use Cases:
-/// - Total resources: health% + mana% + stamina%
-/// - Average defense: (armor + resistance) / 2
-/// - Combined threat: distance * damage * enemyCount
-/// 
-/// Operations:
-/// - Add: source1 + source2 + ...
-/// - Multiply: source1 * source2 * ...
-/// - Average: (source1 + source2 + ...) / count
-/// - Min: minimum of all sources
-/// - Max: maximum of all sources
-/// 
-/// Example Configurations:
-/// 
-/// TotalResources.asset (Add):
-///   sources: [Health_Pct, Mana_Pct, Stamina_Pct]
-///   operation: Add
-///   Result: 0.5 + 0.3 + 0.8 = 1.6
-/// 
-/// AverageDefense.asset (Average):
-///   sources: [Armor_Stat, Resistance_Stat]
-///   operation: Average
-///   Result: (50 + 30) / 2 = 40
-/// 
-/// Usage in Condition:
-/// BlackboardCondition "LowResources":
-///   valueSource: TotalResources.asset
-///   comparison: LessThan
-///   threshold: 1.5 (all resources combined < 150%)
-///   outputFactKey: "LowResources"
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 18, 2026
-/// </summary>
+// Value source that combines multiple sources using math operations.
+// Enables complex conditions without code changes.
+//
+// Use Cases:
+// - Total resources: health% + mana% + stamina%
+// - Average defense: (armor + resistance) / 2
+// - Combined threat: distance * damage * enemyCount
+//
+// Operations:
+// - Add: source1 + source2 + ...
+// - Multiply: source1 * source2 * ...
+// - Average: (source1 + source2 + ...) / count
+// - Min: minimum of all sources
+// - Max: maximum of all sources
+//
+// Example Configurations:
+//
+// TotalResources.asset (Add):
+//   sources: [Health_Pct, Mana_Pct, Stamina_Pct]
+//   operation: Add
+//   Result: 0.5 + 0.3 + 0.8 = 1.6
+//
+// AverageDefense.asset (Average):
+//   sources: [Armor_Stat, Resistance_Stat]
+//   operation: Average
+//   Result: (50 + 30) / 2 = 40
+//
+// Usage in Condition:
+// BlackboardCondition "LowResources":
+//   valueSource: TotalResources.asset
+//   comparison: LessThan
+//   threshold: 1.5 (all resources combined < 150%)
+//   outputFactKey: "LowResources"
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -194,9 +191,7 @@ namespace CrabSystem
         }
     }
 
-    /// <summary>
-    /// How to combine multiple value sources
-    /// </summary>
+    // How to combine multiple value sources
     public enum CompositeOperation
     {
         Add,        // Sum all values

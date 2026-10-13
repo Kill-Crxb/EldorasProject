@@ -2,29 +2,21 @@
 
 namespace CrabSystem.Factions
 {
-    /// <summary>
-    /// Global faction service on Manager_Brain.
-    ///
-    /// Two jobs:
-    /// 1. Stance queries — GetStance(a, b) against the FactionRelationships matrix.
-    /// 2. Save-id resolution — Resolve("faction_x") → FactionDefinition asset,
-    ///    via the FactionDefinitionDatabase. Strings exist ONLY at persistence
-    ///    boundaries (save files, CharacterConfigData); runtime code passes
-    ///    FactionDefinition references.
-    ///
-    /// Display name/color queries were removed — read DisplayName / FactionColor
-    /// directly off the FactionDefinition you hold.
-    /// </summary>
+    // Global faction service on Manager_Brain.
+    //
+    // Two jobs:
+    // 1. Stance queries — GetStance(a, b) against the FactionRelationships matrix.
+    // 2. Save-id resolution — Resolve("faction_x") → FactionDefinition asset,
+    //    via the FactionDefinitionDatabase. Strings exist ONLY at persistence
+    //    boundaries (save files, CharacterConfigData); runtime code passes
+    //    FactionDefinition references.
+    //
+    // Display name/color queries were removed — read DisplayName / FactionColor
+    // directly off the FactionDefinition you hold.
     public class FactionManager : MonoBehaviour, IGameManager
     {
-        #region Singleton
-
         private static FactionManager _instance;
         public static FactionManager Instance => _instance;
-
-        #endregion
-
-        #region IGameManager Implementation
 
         public string ManagerName => "Faction Manager";
         public int InitializationPriority => 15;
@@ -74,17 +66,9 @@ namespace CrabSystem.Factions
             return result;
         }
 
-        #endregion
-
-        #region Inspector Fields
-
         [Header("Configuration")]
         [SerializeField] private FactionRelationshipConfig relationshipConfig;
         [SerializeField] private FactionDefinitionDatabase factionDatabase;
-
-        #endregion
-
-        #region Stance Queries
 
         public static FactionRelationship GetStance(FactionDefinition a, FactionDefinition b)
         {
@@ -103,7 +87,7 @@ namespace CrabSystem.Factions
         public static bool IsNeutral(FactionDefinition a, FactionDefinition b)
             => GetStance(a, b) == FactionRelationship.Neutral;
 
-        /// <summary>Damage multiplier for attacker → defender, from the relationship entry. 1.0 by default.</summary>
+        // Damage multiplier for attacker → defender, from the relationship entry. 1.0 by default.
         public static float GetDamageModifier(FactionDefinition attacker, FactionDefinition defender)
         {
             if (Instance == null || Instance.relationshipConfig == null)
@@ -112,11 +96,7 @@ namespace CrabSystem.Factions
             return Instance.relationshipConfig.GetDamageMultiplier(attacker, defender);
         }
 
-        #endregion
-
-        #region Persistence Resolution
-
-        /// <summary>Resolve a saved faction id to its asset. Null if unknown or database missing.</summary>
+        // Resolve a saved faction id to its asset. Null if unknown or database missing.
         public static FactionDefinition Resolve(string factionId)
         {
             if (string.IsNullOrEmpty(factionId))
@@ -134,7 +114,5 @@ namespace CrabSystem.Factions
 
             return faction;
         }
-
-        #endregion
     }
 }

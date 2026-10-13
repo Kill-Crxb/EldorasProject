@@ -1,20 +1,18 @@
 using UnityEngine;
 
-/// <summary>
-/// Value source that reads how fast an entity is actually moving, so conditions can be authored
-/// against real speed instead of against a boolean somebody else already decided.
-///
-/// WHY THIS AND NOT StateValueSource:
-/// StateValueSource.Sprinting answers "is the sprint state on", which is MovementSystem's own
-/// hysteretic verdict — useful, but already decided. This returns the NUMBER, so a condition can
-/// pick its own threshold in metres per second, which is what a designer can actually reason
-/// about in the inspector. "HorizontalSpeed >= 11" is legible; "SpeedBlend >= 0.74" is not.
-///
-/// Do not use this to re-derive IsRunning or IsSprinting. Those facts are published directly by
-/// MovementSystem, and a condition writing the same OutputFactKey would give the blackboard two
-/// writers for one key. Use it for facts that do not exist yet — "MovingFastEnoughToVault",
-/// "TooFastToCast".
-/// </summary>
+// Value source that reads how fast an entity is actually moving, so conditions can be authored
+// against real speed instead of against a boolean somebody else already decided.
+//
+// WHY THIS AND NOT StateValueSource:
+// StateValueSource.Sprinting answers "is the sprint state on", which is MovementSystem's own
+// hysteretic verdict — useful, but already decided. This returns the NUMBER, so a condition can
+// pick its own threshold in metres per second, which is what a designer can actually reason
+// about in the inspector. "HorizontalSpeed >= 11" is legible; "SpeedBlend >= 0.74" is not.
+//
+// Do not use this to re-derive IsRunning or IsSprinting. Those facts are published directly by
+// MovementSystem, and a condition writing the same OutputFactKey would give the blackboard two
+// writers for one key. Use it for facts that do not exist yet — "MovingFastEnoughToVault",
+// "TooFastToCast".
 
 namespace CrabSystem
 {
@@ -54,23 +52,21 @@ namespace CrabSystem
         public override string GetDisplayName() => $"Movement: {property}";
     }
 
-    /// <summary>
-    /// Movement quantities a condition can be built from.
-    ///
-    /// Appended, never inserted — serialized by index on every asset that uses it.
-    /// </summary>
+    // Movement quantities a condition can be built from.
+    //
+    // Appended, never inserted — serialized by index on every asset that uses it.
     public enum MovementValueProperty
     {
-        /// <summary>Speed across the ground in m/s, ignoring vertical motion.</summary>
+        // Speed across the ground in m/s, ignoring vertical motion.
         HorizontalSpeed,
 
-        /// <summary>Signed vertical speed in m/s. Negative is falling.</summary>
+        // Signed vertical speed in m/s. Negative is falling.
         VerticalSpeed,
 
-        /// <summary>0 at the run threshold, 1 at the sprint threshold, damped.</summary>
+        // 0 at the run threshold, 1 at the sprint threshold, damped.
         SpeedBlend,
 
-        /// <summary>1 when grounded, 0 in the air.</summary>
+        // 1 when grounded, 0 in the air.
         Grounded,
     }
 }

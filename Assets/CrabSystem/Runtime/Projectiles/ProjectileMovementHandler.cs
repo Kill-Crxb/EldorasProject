@@ -1,34 +1,32 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Moves the projectile and finds what it crosses.
-///
-/// Travel comes from ProjectileData.movement — this handler holds no movement logic of its
-/// own. Collision is a SPHERECAST FROM LAST POSITION TO NEW POSITION, not a trigger, and
-/// that distinction is the reason this class exists: a shuriken at 25 m/s covers 0.4m in a
-/// frame, so a trigger that only tests where the object IS is a coin flip against a thin
-/// hurtbox, and worse at low framerate. A sweep tests the whole path.
-///
-/// It also makes hitscan nearly free — one very long sweep resolved on the first frame.
-///
-/// The root Collider is never a detector — this class has no OnTriggerEnter. It is RESIZED
-/// FROM THE DATA at launch and left enabled for a future projectile parry (the Projectile ↔ Hitbox
-/// rule LayerConfigFactory reserves). Melee strikes don't look for projectiles (Combat_Framework §2.5).
-/// Sweep size comes from ProjectileData.collisionRadius, not from the collider.
-/// </summary>
+// Moves the projectile and finds what it crosses.
+//
+// Travel comes from ProjectileData.movement — this handler holds no movement logic of its
+// own. Collision is a SPHERECAST FROM LAST POSITION TO NEW POSITION, not a trigger, and
+// that distinction is the reason this class exists: a shuriken at 25 m/s covers 0.4m in a
+// frame, so a trigger that only tests where the object IS is a coin flip against a thin
+// hurtbox, and worse at low framerate. A sweep tests the whole path.
+//
+// It also makes hitscan nearly free — one very long sweep resolved on the first frame.
+//
+// The root Collider is never a detector — this class has no OnTriggerEnter. It is RESIZED
+// FROM THE DATA at launch and left enabled for a future projectile parry (the Projectile ↔ Hitbox
+// rule LayerConfigFactory reserves). Melee strikes don't look for projectiles (Combat_Framework §2.5).
+// Sweep size comes from ProjectileData.collisionRadius, not from the collider.
 
 namespace CrabSystem
 {
     [RequireComponent(typeof(ProjectileBrain))]
     public class ProjectileMovementHandler : MonoBehaviour, IProjectileModule
     {
-        /// <summary>Contacts resolved per frame. Guards against a pass-through loop stalling.</summary>
+        // Contacts resolved per frame. Guards against a pass-through loop stalling.
         private const int MaxSweepSteps = 4;
 
         private const float MinStepDistance = 0.0001f;
 
-        /// <summary>Shared cast buffer — SphereCastNonAlloc keeps the sweep allocation-free.</summary>
+        // Shared cast buffer — SphereCastNonAlloc keeps the sweep allocation-free.
         private static readonly RaycastHit[] CastBuffer = new RaycastHit[32];
 
         private ProjectileBrain brain;
@@ -82,11 +80,9 @@ namespace CrabSystem
 
         // ── Hitscan ───────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Not a separate code path — one very long sweep resolved on the first frame instead of
-        /// a little at a time, so conditions, pass-through, pierce and payload all behave as they
-        /// do for a travelling shot. The linger exists only to give a trail time to render.
-        /// </summary>
+        // Not a separate code path — one very long sweep resolved on the first frame instead of
+        // a little at a time, so conditions, pass-through, pierce and payload all behave as they
+        // do for a travelling shot. The linger exists only to give a trail time to render.
         private void UpdateHitscan(ProjectileMovement movement)
         {
             if (!hitscanResolved)
@@ -106,11 +102,9 @@ namespace CrabSystem
 
         // ── Sweep ─────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Walk to <paramref name="target"/>, stopping at each contact to let the brain decide.
-        /// A contact the brain does not count is added to the ignore set and the sweep continues,
-        /// so a filtered target does not swallow the shot.
-        /// </summary>
+        // Walk to target, stopping at each contact to let the brain decide.
+        // A contact the brain does not count is added to the ignore set and the sweep continues,
+        // so a filtered target does not swallow the shot.
         private void SweepTo(Vector3 target)
         {
             Vector3 from = transform.position;
@@ -139,7 +133,7 @@ namespace CrabSystem
             transform.position = target;
         }
 
-        /// <summary>Nearest collider along the path that is not already ignored.</summary>
+        // Nearest collider along the path that is not already ignored.
         private bool TryFindHit(Vector3 origin, Vector3 direction, float distance, out RaycastHit result)
         {
             result = default;
@@ -191,10 +185,8 @@ namespace CrabSystem
 
         // ── Setup ─────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// The thrower's own hurtbox is on a layer we hit and starts inside the sweep radius.
-        /// Ignore everything under the source root for the whole flight.
-        /// </summary>
+        // The thrower's own hurtbox is on a layer we hit and starts inside the sweep radius.
+        // Ignore everything under the source root for the whole flight.
         private void IgnoreSourceColliders()
         {
             if (brain.Source == null) return;
@@ -205,16 +197,14 @@ namespace CrabSystem
                 ignored.Add(sourceColliders[i]);
         }
 
-        /// <summary>
-        /// Shapes the physical collider from the data, so ONE archetype prefab serves every
-        /// projectile in the game — a shuriken and a bolt come off the same Base_Projectile.
-        ///
-        /// A CapsuleCollider covers both: at collisionLength 0 its height equals its diameter and
-        /// it IS a sphere; above 0 it stretches along Z, which is the direction of travel.
-        ///
-        /// This affects the physical collider only. Hit detection uses collisionRadius directly,
-        /// because a body travelling along its own long axis sweeps the same volume either way.
-        /// </summary>
+        // Shapes the physical collider from the data, so ONE archetype prefab serves every
+        // projectile in the game — a shuriken and a bolt come off the same Base_Projectile.
+        //
+        // A CapsuleCollider covers both: at collisionLength 0 its height equals its diameter and
+        // it IS a sphere; above 0 it stretches along Z, which is the direction of travel.
+        //
+        // This affects the physical collider only. Hit detection uses collisionRadius directly,
+        // because a body travelling along its own long axis sweeps the same volume either way.
         private void ResizeCollider()
         {
             if (shape == null) return;

@@ -10,8 +10,6 @@ namespace CrabSystem.Factions
 
         private Dictionary<string, FactionDefinition> factionLookup;
 
-        #region Initialization
-
         public void Initialize()
         {
             factionLookup = new Dictionary<string, FactionDefinition>();
@@ -21,10 +19,6 @@ namespace CrabSystem.Factions
                     factionLookup[faction.FactionId] = faction;
             }
         }
-
-        #endregion
-
-        #region Queries
 
         public FactionDefinition GetFaction(string factionId)
         {
@@ -46,7 +40,5 @@ namespace CrabSystem.Factions
             var faction = GetFaction(factionId);
             return faction != null ? faction.FactionColor : Color.white;
         }
-
-        #endregion
     }
 }

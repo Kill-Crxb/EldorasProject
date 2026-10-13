@@ -1,34 +1,31 @@
 using UnityEngine;
 
-/// <summary>
-/// Value source that queries a ResourceDefinition through IResourceProvider.
-/// Type-safe: Can only reference ResourceDefinition assets.
-/// 
-/// Use Cases:
-/// - Health percentage for "IsWounded" condition
-/// - Mana percentage for "LowMana" condition
-/// - Stamina current for "CanDodge" condition
-/// 
-/// Properties:
-/// - Current: Raw current value (75 health)
-/// - Max: Maximum capacity (100 health)
-/// - Percentage: Ratio 0-1 (0.75 = 75%)
-/// 
-/// Example Configuration:
-/// Health_Percentage.asset:
-///   resource: Health.asset (ResourceDefinition)
-///   property: Percentage
-///   
-/// Usage in Condition:
-/// BlackboardCondition "IsWounded":
-///   valueSource: Health_Percentage.asset
-///   comparison: LessThan
-///   threshold: 0.25
-///   outputFactKey: "IsWounded"
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 18, 2026
-/// </summary>
+// Value source that queries a ResourceDefinition through IResourceProvider.
+// Type-safe: Can only reference ResourceDefinition assets.
+//
+// Use Cases:
+// - Health percentage for "IsWounded" condition
+// - Mana percentage for "LowMana" condition
+// - Stamina current for "CanDodge" condition
+//
+// Properties:
+// - Current: Raw current value (75 health)
+// - Max: Maximum capacity (100 health)
+// - Percentage: Ratio 0-1 (0.75 = 75%)
+//
+// Example Configuration:
+// Health_Percentage.asset:
+//   resource: Health.asset (ResourceDefinition)
+//   property: Percentage
+//
+// Usage in Condition:
+// BlackboardCondition "IsWounded":
+//   valueSource: Health_Percentage.asset
+//   comparison: LessThan
+//   threshold: 0.25
+//   outputFactKey: "IsWounded"
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -87,9 +84,7 @@ namespace CrabSystem
         }
     }
 
-    /// <summary>
-    /// Which resource property to query
-    /// </summary>
+    // Which resource property to query
     public enum ResourceValueProperty
     {
         Current,    // Raw current value (75 health)

@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// NPC combat/behavior archetype
-/// Determines combat style and abilities
-/// </summary>
+// NPC combat/behavior archetype
+// Determines combat style and abilities
 
 namespace CrabSystem
 {
@@ -24,10 +22,8 @@ namespace CrabSystem
         Boss = 99           // Boss encounter
     }
 
-    /// <summary>
-    /// NPC power tier
-    /// Determines stats, equipment quality, and threat level
-    /// </summary>
+    // NPC power tier
+    // Determines stats, equipment quality, and threat level
     public enum NPCImportance
     {
         Civilian = 0,       // Non-combatant (merchants, etc.)

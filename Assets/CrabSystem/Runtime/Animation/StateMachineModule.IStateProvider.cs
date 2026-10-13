@@ -1,74 +1,62 @@
 using UnityEngine;
 
-/// <summary>
-/// StateMachineModule - IStateProvider Implementation
-/// 
-/// This is a PARTIAL CLASS extension to add IStateProvider interface
-/// to your existing StateMachineModule.
-/// 
-/// INSTALLATION:
-/// 1. Add this file to your project alongside StateMachineModule.cs
-/// 2. Add "IStateProvider" to the StateMachineModule class declaration:
-///    public class StateMachineModule : MonoBehaviour, IStateProvider
-/// 3. Done! No other changes needed to existing code.
-/// 
-/// FIXES APPLIED:
-/// - Proper enum usage (PostureState vs LowerBodyState separation)
-/// - IsAirborne includes wall-running
-/// - Head bob speed based on state, not physics
-/// - All flags use correct enum types
-/// 
-/// EDGE CASES ADDRESSED:
-/// - IsGrounded vs IsAirborne mutual exclusivity documented
-/// - AllowsAirControl uses whitelist pattern (safer for future states)
-/// - Forced state checks centralized for maintainability
-/// - Strafe head bob speed documented as design dial
-/// </summary>
+// StateMachineModule - IStateProvider Implementation
+//
+// This is a PARTIAL CLASS extension to add IStateProvider interface
+// to your existing StateMachineModule.
+//
+// INSTALLATION:
+// 1. Add this file to your project alongside StateMachineModule.cs
+// 2. Add "IStateProvider" to the StateMachineModule class declaration:
+//    public class StateMachineModule : MonoBehaviour, IStateProvider
+// 3. Done! No other changes needed to existing code.
+//
+// FIXES APPLIED:
+// - Proper enum usage (PostureState vs LowerBodyState separation)
+// - IsAirborne includes wall-running
+// - Head bob speed based on state, not physics
+// - All flags use correct enum types
+//
+// EDGE CASES ADDRESSED:
+// - IsGrounded vs IsAirborne mutual exclusivity documented
+// - AllowsAirControl uses whitelist pattern (safer for future states)
+// - Forced state checks centralized for maintainability
+// - Strafe head bob speed documented as design dial
 
 namespace CrabSystem
 {
     public partial class StateMachineModule : IStateProvider
     {
-    #region IStateProvider - State Queries
-
         BrainState IStateProvider.BrainState => GetBrainState();
         UpperBodyState IStateProvider.UpperBodyState => GetUpperBodyState();
         LowerBodyState IStateProvider.LowerBodyState => GetLowerBodyState();
         PostureState IStateProvider.PostureState => GetPostureState();
 
-    #endregion
-
-    #region IStateProvider - Core Derived Flags
-
-        /// <summary>
-        /// Is entity grounded?
-        /// Derived from PostureState (Standing, Crouching, Prone, etc.)
-        /// 
-        /// MUTUAL EXCLUSIVITY:
-        /// IsGrounded and IsAirborne are MUTUALLY EXCLUSIVE.
-        /// - Wall-running: IsAirborne = true, IsGrounded = false
-        /// - Sliding: IsGrounded = true, IsAirborne = false
-        /// - Jumping: IsAirborne = true, IsGrounded = false
-        /// 
-        /// This prevents downstream issues with IK, footsteps, landing detection.
-        /// </summary>
+        // Is entity grounded?
+        // Derived from PostureState (Standing, Crouching, Prone, etc.)
+        //
+        // MUTUAL EXCLUSIVITY:
+        // IsGrounded and IsAirborne are MUTUALLY EXCLUSIVE.
+        // - Wall-running: IsAirborne = true, IsGrounded = false
+        // - Sliding: IsGrounded = true, IsAirborne = false
+        // - Jumping: IsAirborne = true, IsGrounded = false
+        //
+        // This prevents downstream issues with IK, footsteps, landing detection.
         bool IStateProvider.IsGrounded => IsGrounded; // Uses base StateMachineModule implementation
 
-        /// <summary>
-        /// Is entity airborne?
-        /// Derived from LowerBodyState.
-        /// 
-        /// INCLUDES:
-        /// - Jumping, Falling, DoubleJump, AirStrafing
-        /// - WallRunningLeft, WallRunningRight (airborne on wall)
-        /// 
-        /// EXCLUDES:
-        /// - Standing, Walking, Running, Sprinting, Sliding
-        /// 
-        /// MUTUAL EXCLUSIVITY:
-        /// IsAirborne and IsGrounded are MUTUALLY EXCLUSIVE.
-        /// Wall-running is airborne (not grounded).
-        /// </summary>
+        // Is entity airborne?
+        // Derived from LowerBodyState.
+        //
+        // INCLUDES:
+        // - Jumping, Falling, DoubleJump, AirStrafing
+        // - WallRunningLeft, WallRunningRight (airborne on wall)
+        //
+        // EXCLUDES:
+        // - Standing, Walking, Running, Sprinting, Sliding
+        //
+        // MUTUAL EXCLUSIVITY:
+        // IsAirborne and IsGrounded are MUTUALLY EXCLUSIVE.
+        // Wall-running is airborne (not grounded).
         bool IStateProvider.IsAirborne
         {
             get
@@ -84,10 +72,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Is entity in any parkour state?
-        /// Parkour states are special movement modes requiring environmental interaction.
-        /// </summary>
+        // Is entity in any parkour state?
+        // Parkour states are special movement modes requiring environmental interaction.
         bool IStateProvider.IsParkour
         {
             get
@@ -103,14 +89,8 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region IStateProvider - Camera Flags
-
-        /// <summary>
-        /// Should camera process player input?
-        /// False during states where player doesn't control view.
-        /// </summary>
+        // Should camera process player input?
+        // False during states where player doesn't control view.
         bool IStateProvider.AllowsCameraInput
         {
             get
@@ -140,15 +120,13 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Should head bob be active?
-        /// Only during normal grounded movement (standing/crouching + walking/running/sprinting).
-        /// 
-        /// DESIGN DIAL:
-        /// Strafing currently uses walking-speed bob.
-        /// Some FPS games reduce bob during strafing for aim clarity.
-        /// Adjust in HeadBobSpeed if needed.
-        /// </summary>
+        // Should head bob be active?
+        // Only during normal grounded movement (standing/crouching + walking/running/sprinting).
+        //
+        // DESIGN DIAL:
+        // Strafing currently uses walking-speed bob.
+        // Some FPS games reduce bob during strafing for aim clarity.
+        // Adjust in HeadBobSpeed if needed.
         bool IStateProvider.AllowsHeadBob
         {
             get
@@ -197,15 +175,13 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Head bob speed multiplier based on LowerBodyState.
-        /// STATE-DRIVEN: Speed comes from state, not physics velocity.
-        /// 
-        /// DESIGN DIAL:
-        /// - Strafing uses walk speed (0.5x) for aim stability
-        /// - Some games use 0.3x for strafing or disable it entirely
-        /// - Tweak these values to match your game feel
-        /// </summary>
+        // Head bob speed multiplier based on LowerBodyState.
+        // STATE-DRIVEN: Speed comes from state, not physics velocity.
+        //
+        // DESIGN DIAL:
+        // - Strafing uses walk speed (0.5x) for aim stability
+        // - Some games use 0.3x for strafing or disable it entirely
+        // - Tweak these values to match your game feel
         float IStateProvider.HeadBobSpeed
         {
             get
@@ -240,10 +216,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Camera roll angle for wall-run tilt (degrees).
-        /// Negative = left wall, Positive = right wall, Zero = normal.
-        /// </summary>
+        // Camera roll angle for wall-run tilt (degrees).
+        // Negative = left wall, Positive = right wall, Zero = normal.
         float IStateProvider.CameraRoll
         {
             get
@@ -262,10 +236,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Camera pitch clamp override for specific states.
-        /// Returns null if no override needed.
-        /// </summary>
+        // Camera pitch clamp override for specific states.
+        // Returns null if no override needed.
         Vector2? IStateProvider.CameraPitchClampOverride
         {
             get
@@ -285,14 +257,8 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region IStateProvider - Movement Flags
-
-        /// <summary>
-        /// Should horizontal movement input be processed?
-        /// False during states that lock player control.
-        /// </summary>
+        // Should horizontal movement input be processed?
+        // False during states that lock player control.
         bool IStateProvider.AllowsHorizontalInput
         {
             get
@@ -316,10 +282,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Should vertical input (jump) be processed?
-        /// False during states that prevent jumping.
-        /// </summary>
+        // Should vertical input (jump) be processed?
+        // False during states that prevent jumping.
         bool IStateProvider.AllowsVerticalInput
         {
             get
@@ -342,14 +306,12 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Does entity have air control?
-        /// 
-        /// SAFER PATTERN:
-        /// Uses WHITELIST approach (explicit states that have control).
-        /// Adding new forced states (knockback, cinematic falls, grapple)
-        /// will default to NO control, which is safer.
-        /// </summary>
+        // Does entity have air control?
+        //
+        // SAFER PATTERN:
+        // Uses WHITELIST approach (explicit states that have control).
+        // Adding new forced states (knockback, cinematic falls, grapple)
+        // will default to NO control, which is safer.
         bool IStateProvider.AllowsAirControl
         {
             get
@@ -385,18 +347,12 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Helper Methods (Centralized State Checks)
-
-        /// <summary>
-        /// Is this a forced lower body state?
-        /// Centralized check for states that lock player control.
-        /// 
-        /// MAINTAINABILITY:
-        /// Add new forced states here instead of repeating checks everywhere.
-        /// Examples: Knockback, Zipline, Grappled, CinematicFall
-        /// </summary>
+        // Is this a forced lower body state?
+        // Centralized check for states that lock player control.
+        //
+        // MAINTAINABILITY:
+        // Add new forced states here instead of repeating checks everywhere.
+        // Examples: Knockback, Zipline, Grappled, CinematicFall
         private bool IsForcedLowerBodyState(LowerBodyState state)
         {
             switch (state)
@@ -416,10 +372,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Is this a forced posture state?
-        /// Centralized check for postures that lock control.
-        /// </summary>
+        // Is this a forced posture state?
+        // Centralized check for postures that lock control.
         private bool IsForcedPostureState(PostureState state)
         {
             switch (state)
@@ -434,13 +388,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Future-Proofing Notes
-
-        // ========================================
-        // FUTURE OPTIMIZATION (Not needed now):
-        // ========================================
         // If profiling shows derived flag recomputation is expensive,
         // you can cache flags and recompute only on state changes:
         //
@@ -456,9 +403,6 @@ namespace CrabSystem
         //
         // But current approach is clearer during development.
 
-        // ========================================
-        // FUTURE REFACTOR (6 months from now):
-        // ========================================
         // Consider grouping camera flags into a CameraProfile struct:
         //
         // struct CameraProfile {
@@ -472,7 +416,5 @@ namespace CrabSystem
         //
         // But don't do this yet - current approach is easier to understand
         // while the system is still growing.
-
-    #endregion
     }
 }

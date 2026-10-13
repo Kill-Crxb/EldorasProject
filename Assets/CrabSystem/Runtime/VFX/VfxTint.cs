@@ -1,36 +1,32 @@
 using UnityEngine;
 
-/// <summary>
-/// Recolouring an effect to a school's colour, wherever that effect lives.
-///
-/// Extracted from ProjectileVisual the moment a second thing needed it. There are three places
-/// a colour can hide in a Unity effect and getting any of them wrong makes a tint silently do
-/// nothing:
-///
-///   Renderer        MaterialPropertyBlock, never renderer.material — the latter instances a
-///                   material per object and leaks under pooling.
-///   ParticleSystem  main.startColor. A particle shader multiplies by VERTEX colour, so a
-///                   MaterialPropertyBlock on a ParticleSystemRenderer usually does nothing at
-///                   all. This is where a VFX asset's colour actually lives.
-///   Light           light.color, straight.
-/// </summary>
+// Recolouring an effect to a school's colour, wherever that effect lives.
+//
+// Extracted from ProjectileVisual the moment a second thing needed it. There are three places
+// a colour can hide in a Unity effect and getting any of them wrong makes a tint silently do
+// nothing:
+//
+//   Renderer        MaterialPropertyBlock, never renderer.material — the latter instances a
+//                   material per object and leaks under pooling.
+//   ParticleSystem  main.startColor. A particle shader multiplies by VERTEX colour, so a
+//                   MaterialPropertyBlock on a ParticleSystemRenderer usually does nothing at
+//                   all. This is where a VFX asset's colour actually lives.
+//   Light           light.color, straight.
 
 namespace CrabSystem
 {
     public static class VfxTint
     {
-        /// <summary>
-        /// Take the HUE and SATURATION from the tint, keep the original's BRIGHTNESS and its
-        /// relative saturation.
-        ///
-        /// A flat replace would work, and it would look wrong. A fireball is not one orange — it is
-        /// a near-white core inside saturated embers inside dark smoke, and that brightness ladder
-        /// is what makes it read as fire rather than as a coloured blob. Replacing every layer with
-        /// the same blue flattens it into a sticker.
-        ///
-        /// Keeping V means the core stays the brightest thing; scaling the original's S by the
-        /// tint's means a pale centre stays pale. The shape survives, only the colour moves.
-        /// </summary>
+        // Take the HUE and SATURATION from the tint, keep the original's BRIGHTNESS and its
+        // relative saturation.
+        //
+        // A flat replace would work, and it would look wrong. A fireball is not one orange — it is
+        // a near-white core inside saturated embers inside dark smoke, and that brightness ladder
+        // is what makes it read as fire rather than as a coloured blob. Replacing every layer with
+        // the same blue flattens it into a sticker.
+        //
+        // Keeping V means the core stays the brightest thing; scaling the original's S by the
+        // tint's means a pale centre stays pale. The shape survives, only the colour moves.
         public static Color Recolor(Color original, Color tint)
         {
             Color.RGBToHSV(original, out _, out float originalS, out float originalV);
@@ -42,14 +38,12 @@ namespace CrabSystem
             return result;
         }
 
-        /// <summary>
-        /// Tint a freshly instantiated effect and forget about it. For spawn-and-destroy VFX, where
-        /// the instance is new so its current colours ARE the prefab's.
-        ///
-        /// Do not call this repeatedly on the same instance — tinting an already-tinted result
-        /// compounds, and a pooled object would drift to black. Pooled things cache their base
-        /// colours and use the per-type methods below.
-        /// </summary>
+        // Tint a freshly instantiated effect and forget about it. For spawn-and-destroy VFX, where
+        // the instance is new so its current colours ARE the prefab's.
+        //
+        // Do not call this repeatedly on the same instance — tinting an already-tinted result
+        // compounds, and a pooled object would drift to black. Pooled things cache their base
+        // colours and use the per-type methods below.
         public static void ApplyOnce(GameObject root, Color tint, string colorProperty)
         {
             if (root == null) return;
@@ -87,9 +81,7 @@ namespace CrabSystem
             }
         }
 
-        // =========================================================================
         // Cached forms — for pooled objects that re-tint every reuse
-        // =========================================================================
 
         public static void TintRenderers(Renderer[] renderers, MaterialPropertyBlock block,
                                          Color tint, string colorProperty)
@@ -107,7 +99,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>Base colours are the PREFAB's, captured once — never the last tint applied.</summary>
+        // Base colours are the PREFAB's, captured once — never the last tint applied.
         public static void TintParticles(ParticleSystem[] particles, Color[] baseColors, Color tint)
         {
             if (particles == null || baseColors == null) return;
@@ -136,7 +128,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>The flat start colour of each system, for capturing at build time.</summary>
+        // The flat start colour of each system, for capturing at build time.
         public static Color[] CaptureParticleColors(ParticleSystem[] particles)
         {
             if (particles == null) return new Color[0];

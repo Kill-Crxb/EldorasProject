@@ -2,19 +2,13 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-/// <summary>
-/// AbilityDefinition - Blackboard Partial
-/// Semantic requirement checking with optimized category defaults
-/// </summary>
+// AbilityDefinition - Blackboard Partial
+// Semantic requirement checking with optimized category defaults
 
 namespace CrabSystem
 {
     public partial class AbilityDefinition
     {
-        // ========================================
-        // BLACKBOARD REQUIREMENTS
-        // ========================================
-
         [Header("Blackboard Requirements")]
         [Tooltip("Additional required facts (ANY logic - ability usable if ANY fact is true)")]
         [IdRef(IdKind.Fact)] public List<string> requiredFactsAny = new List<string>();
@@ -34,10 +28,6 @@ namespace CrabSystem
         [Tooltip("Custom forbidden facts (when overriding defaults)")]
         [IdRef(IdKind.Fact)] public List<string> customForbiddenFacts = new List<string>();
 
-        // ========================================
-        // CATEGORY DEFAULT CACHE (Hot-path optimization)
-        // ========================================
-
         private static readonly Dictionary<AbilityCategory, string[]> CategoryForbiddenCache =
             new Dictionary<AbilityCategory, string[]>
             {
@@ -49,15 +39,9 @@ namespace CrabSystem
                 { AbilityCategory.Utility, new[] { "CannotAct" } }
             };
 
-        // ========================================
-        // POLICY HELPERS
-        // ========================================
-
-        /// <summary>
-        /// Get blackboard requirements for this ability (includes category defaults)
-        /// OPTIMIZED: Returns cached arrays where possible, minimizes allocations
-        /// Returns: (requiredFactsAny, requiredFactsAll, forbiddenFactsAll)
-        /// </summary>
+        // Get blackboard requirements for this ability (includes category defaults)
+        // OPTIMIZED: Returns cached arrays where possible, minimizes allocations
+        // Returns: (requiredFactsAny, requiredFactsAll, forbiddenFactsAll)
         public (List<string> requiredAny, List<string> requiredAll, List<string> forbiddenAll) GetBlackboardRequirements()
         {
             // If overriding defaults, use custom requirements only
@@ -85,10 +69,8 @@ namespace CrabSystem
             return (requiredAny, requiredAll, forbiddenAll);
         }
 
-        /// <summary>
-        /// Get default forbidden facts for this ability's category
-        /// OPTIMIZED: Returns cached readonly array - zero allocation
-        /// </summary>
+        // Get default forbidden facts for this ability's category
+        // OPTIMIZED: Returns cached readonly array - zero allocation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private string[] GetCategoryDefaultForbiddenFacts()
         {
@@ -97,10 +79,8 @@ namespace CrabSystem
                 : System.Array.Empty<string>();
         }
 
-        /// <summary>
-        /// Fast check if ability is blocked by a specific fact
-        /// Useful for AI evaluation without full requirement check
-        /// </summary>
+        // Fast check if ability is blocked by a specific fact
+        // Useful for AI evaluation without full requirement check
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBlockedBy(string fact)
         {

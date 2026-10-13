@@ -2,27 +2,25 @@ using UnityEngine;
 
 namespace CrabSystem.Magic
 {
-    /// <summary>
-    /// Everything slot 2 (Form) decides: how the spell is delivered, and HOW BIG THE DIE IS.
-    ///
-    /// SIX ASSETS, one per element. Fire is a Cone, Air is a Projectile, Aether is a Beam.
-    ///
-    /// WHY FORM SETS THE TIER:
-    /// Form already decides how many instances and how many ticks a cast produces — which IS the
-    /// per-instance magnitude. A Stream that ticks ten times obviously cannot roll d8 per tick;
-    /// a Beam that lands once, instantly, precisely, should hit hardest. Authoring the base tier
-    /// here just makes explicit something the Form already implies.
-    ///
-    /// Fire in slot 2 still MEANS Cone. The d6 is a consequence of Cone, not a second meaning the
-    /// player has to memorise — which is what keeps the one-concept-per-element rule intact.
-    ///
-    ///   Beam       one hit, instant, precise      Greater  (d10)
-    ///   Projectile one hit, travels               Standard (d8)
-    ///   Burst      one hit, area                  Standard (d8)
-    ///   Cone       several targets at once        Lesser   (d6)
-    ///   Stream     ticks while channelled         Faint    (d4)
-    ///   Field      ticks while it lingers         Faint    (d4)
-    /// </summary>
+    // Everything slot 2 (Form) decides: how the spell is delivered, and HOW BIG THE DIE IS.
+    //
+    // SIX ASSETS, one per element. Fire is a Cone, Air is a Projectile, Aether is a Beam.
+    //
+    // WHY FORM SETS THE TIER:
+    // Form already decides how many instances and how many ticks a cast produces — which IS the
+    // per-instance magnitude. A Stream that ticks ten times obviously cannot roll d8 per tick;
+    // a Beam that lands once, instantly, precisely, should hit hardest. Authoring the base tier
+    // here just makes explicit something the Form already implies.
+    //
+    // Fire in slot 2 still MEANS Cone. The d6 is a consequence of Cone, not a second meaning the
+    // player has to memorise — which is what keeps the one-concept-per-element rule intact.
+    //
+    //   Beam       one hit, instant, precise      Greater  (d10)
+    //   Projectile one hit, travels               Standard (d8)
+    //   Burst      one hit, area                  Standard (d8)
+    //   Cone       several targets at once        Lesser   (d6)
+    //   Stream     ticks while channelled         Faint    (d4)
+    //   Field      ticks while it lingers         Faint    (d4)
     [CreateAssetMenu(fileName = "Form_", menuName = "CrabSystem/Magic/Form Definition")]
     public class FormDefinition : ScriptableObject
     {
@@ -54,10 +52,8 @@ namespace CrabSystem.Magic
         [Min(1)]
         public int naturalCount = 1;
 
-        /// <summary>
-        /// True when this Form has nothing to fire. Checked at cast time so a half-authored
-        /// grammar reports which Form is missing instead of silently doing nothing.
-        /// </summary>
+        // True when this Form has nothing to fire. Checked at cast time so a half-authored
+        // grammar reports which Form is missing instead of silently doing nothing.
         public bool IsBuildable => projectileData != null;
     }
 }

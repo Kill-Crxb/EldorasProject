@@ -1,21 +1,19 @@
 using UnityEngine;
 
-/// <summary>
-/// NPCSpawnConfig - defines which prefab + which archetype = a spawnable NPC type.
-/// This is the "template" for an NPC. Separates structure from behavior.
-/// 
-/// Example:
-///   - Prefab: NatureSpirit_Base (sphere + particles)
-///   - Archetype: Archetype_NatureSpirit (behavior config)
-///   - Result: A nature spirit NPC that can be spawned anywhere
-/// 
-/// Alternative: Archer_Female (model)
-///   - Prefab: Archer_Female (humanoid with sockets)
-///   - Archetype: Archetype_ArcherSoldier (stats, abilities, combat)
-///   - Result: An archer soldier NPC
-/// 
-/// Create in editor: Right-click > Create > RPG/NPC/Spawn Config
-/// </summary>
+// NPCSpawnConfig - defines which prefab + which archetype = a spawnable NPC type.
+// This is the "template" for an NPC. Separates structure from behavior.
+//
+// Example:
+//   - Prefab: NatureSpirit_Base (sphere + particles)
+//   - Archetype: Archetype_NatureSpirit (behavior config)
+//   - Result: A nature spirit NPC that can be spawned anywhere
+//
+// Alternative: Archer_Female (model)
+//   - Prefab: Archer_Female (humanoid with sockets)
+//   - Archetype: Archetype_ArcherSoldier (stats, abilities, combat)
+//   - Result: An archer soldier NPC
+//
+// Create in editor: Right-click > Create > RPG/NPC/Spawn Config
 
 namespace CrabSystem
 {

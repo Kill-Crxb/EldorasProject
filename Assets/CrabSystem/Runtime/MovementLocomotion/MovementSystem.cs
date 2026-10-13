@@ -2,20 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 
-/// <summary>
-/// Universal Movement System - Works for all entities
-/// 
-/// Architecture:
-/// - ONE LocomotionHandler (defines game's movement style - interchangeable)
-/// - ONE active ControlSource (defines who controls - switchable at runtime)
-/// - Universal handlers (animation, constraints - same for all)
-/// 
-/// This system enables:
-/// - Player and NPC using same movement code
-/// - Swapping locomotion style between games (RPG → MilSim)
-/// - Runtime control switching (possession, pets, cutscenes)
-/// - Zero code duplication
-/// </summary>
+// Universal Movement System - Works for all entities
+//
+// Architecture:
+// - ONE LocomotionHandler (defines game's movement style - interchangeable)
+// - ONE active ControlSource (defines who controls - switchable at runtime)
+// - Universal handlers (animation, constraints - same for all)
+//
+// This system enables:
+// - Player and NPC using same movement code
+// - Swapping locomotion style between games (RPG → MilSim)
+// - Runtime control switching (possession, pets, cutscenes)
+// - Zero code duplication
 
 namespace CrabSystem
 {
@@ -78,10 +76,6 @@ namespace CrabSystem
         private IMovementControlSource activeControlSource;
         private List<IMovementControlSource> availableControlSources;
 
-        // ========================================
-        // Properties
-        // ========================================
-
         public bool IsEnabled
         {
             get => isEnabled;
@@ -92,7 +86,7 @@ namespace CrabSystem
         public IMovementControlSource ActiveControlSource => activeControlSource;
         public ControllerBrain Brain => brain;
 
-        /// <summary>Does the current upper-body state allow this movement? True with no state machine.</summary>
+        // Does the current upper-body state allow this movement? True with no state machine.
         public bool Permits(LowerBodyState state) => stateMachine == null || stateMachine.CanPerformMovement(state);
 
         // A sweep-based handler that owns grounding is authoritative: it knows the ground normal, and a trigger volume
@@ -105,10 +99,8 @@ namespace CrabSystem
         public bool IsMoving => locomotionHandler?.IsMoving ?? false;
         public Vector3 Velocity => locomotionHandler?.Velocity ?? Vector3.zero;
 
-        /// <summary>
-        /// Horizontal speed in m/s. Vertical motion is excluded deliberately — falling is not
-        /// sprinting, and including Y would trip every speed state off a long drop.
-        /// </summary>
+        // Horizontal speed in m/s. Vertical motion is excluded deliberately — falling is not
+        // sprinting, and including Y would trip every speed state off a long drop.
         public float Speed
         {
             get
@@ -119,28 +111,20 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// In the run or sprint gait AND moving. Gait is what the player chose (or was granted), not
-        /// how fast momentum is carrying them — a jump burst at walk gait is not running. Falls back to
-        /// speed hysteresis for a handler with no gait.
-        /// </summary>
+        // In the run or sprint gait AND moving. Gait is what the player chose (or was granted), not
+        // how fast momentum is carrying them — a jump burst at walk gait is not running. Falls back to
+        // speed hysteresis for a handler with no gait.
         public bool IsRunning => isRunning;
 
-        /// <summary>In the sprint gait AND moving. A player with no sprint grant never sprints.</summary>
+        // In the sprint gait AND moving. A player with no sprint grant never sprints.
         public bool IsSprinting => isSprinting;
 
-        /// <summary>
-        /// 0 at the run threshold, 1 at the sprint threshold, damped asymmetrically.
-        ///
-        /// This is the CONTINUOUS half of the same information the two bools carry. Anything that
-        /// fades — camera FOV, speed lines, wind audio — reads this rather than building its own
-        /// ramp from a boolean, which is how two effects end up disagreeing about the same moment.
-        /// </summary>
+        // 0 at the run threshold, 1 at the sprint threshold, damped asymmetrically.
+        //
+        // This is the CONTINUOUS half of the same information the two bools carry. Anything that
+        // fades — camera FOV, speed lines, wind audio — reads this rather than building its own
+        // ramp from a boolean, which is how two effects end up disagreeing about the same moment.
         public float SpeedBlend => speedBlend;
-
-        // ========================================
-        // IBrainModule Implementation
-        // ========================================
 
         public void Initialize(ControllerBrain brain)
         {
@@ -180,10 +164,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// The blackboard belongs to another module, so it is resolved here rather than in
-        /// Initialize — InitializeModules() runs before every module exists.
-        /// </summary>
+        // The blackboard belongs to another module, so it is resolved here rather than in
+        // Initialize — InitializeModules() runs before every module exists.
         public void LateInitialize()
         {
             blackboard = brain != null ? brain.Blackboard : null;
@@ -269,18 +251,16 @@ namespace CrabSystem
             return input;
         }
 
-        /// <summary>
-        /// Derive the speed states and publish them.
-        ///
-        /// THIS IS THE ONLY PLACE SPEED THRESHOLDS LIVE. The camera, the speed lines and anything
-        /// else that reacts to going fast read the facts or the blend rather than re-deriving them
-        /// from Velocity with their own numbers, which is how they drift apart.
-        ///
-        /// The facts are written DIRECTLY rather than authored as BlackboardConditions. A condition
-        /// would give SemanticBridgeSystem a second writer for the same key and the two would fight
-        /// every frame. MovementValueSource exists so conditions can still read speed as an INPUT
-        /// and produce their own, different facts.
-        /// </summary>
+        // Derive the speed states and publish them.
+        //
+        // THIS IS THE ONLY PLACE SPEED THRESHOLDS LIVE. The camera, the speed lines and anything
+        // else that reacts to going fast read the facts or the blend rather than re-deriving them
+        // from Velocity with their own numbers, which is how they drift apart.
+        //
+        // The facts are written DIRECTLY rather than authored as BlackboardConditions. A condition
+        // would give SemanticBridgeSystem a second writer for the same key and the two would fight
+        // every frame. MovementValueSource exists so conditions can still read speed as an INPUT
+        // and produce their own, different facts.
         private void UpdateSpeedState()
         {
             float speed = Speed;
@@ -318,29 +298,21 @@ namespace CrabSystem
             blackboard.SetFloat(BlackboardKey.SpeedBlend, speedBlend);
         }
 
-        /// <summary>
-        /// Two thresholds, not one: rising past `enter` turns it on, and it only turns off once the
-        /// value falls back below `exit`. The gap between them is what stops the chatter.
-        /// </summary>
+        // Two thresholds, not one: rising past `enter` turns it on, and it only turns off once the
+        // value falls back below `exit`. The gap between them is what stops the chatter.
         private static bool Hysteresis(bool current, float value, float enter, float exit)
         {
             return current ? value > exit : value >= enter;
         }
 
-        /// <summary>
-        /// Maps a MovementInput to the most appropriate LowerBodyState for permission checking.
-        /// The state machine uses this to decide whether the current upper body / posture allows it.
-        /// </summary>
+        // Maps a MovementInput to the most appropriate LowerBodyState for permission checking.
+        // The state machine uses this to decide whether the current upper body / posture allows it.
         private LowerBodyState ResolveLowerBodyState(MovementInput input)
         {
             if (input.Dash) return LowerBodyState.Dashing;
             if (locomotionHandler.CurrentGait == Gait.Sprint) return LowerBodyState.Sprinting;
             return LowerBodyState.Running;
         }
-
-        // ========================================
-        // Control Source Management
-        // ========================================
 
         private void SetupControlSources()
         {
@@ -384,10 +356,8 @@ namespace CrabSystem
             Debug.LogWarning($"[MovementSystem] No enabled control source found on {brain.EntityName}");
         }
 
-        /// <summary>
-        /// Switch to a different control source at runtime
-        /// This enables possession, pets, cutscenes, etc.
-        /// </summary>
+        // Switch to a different control source at runtime
+        // This enables possession, pets, cutscenes, etc.
         public void SetControlSource(IMovementControlSource newSource)
         {
             if (newSource == activeControlSource) return;
@@ -413,18 +383,12 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Get control source by type
-        /// Useful for possession system: SetControlSource(GetControlSource<AdminControlSource>())
-        /// </summary>
+        // Get control source by type
+        // Useful for possession system: SetControlSource(GetControlSource<AdminControlSource>())
         public T GetControlSource<T>() where T : class, IMovementControlSource
         {
             return availableControlSources.OfType<T>().FirstOrDefault();
         }
-
-        // ========================================
-        // Debug Info
-        // ========================================
 
 #if UNITY_EDITOR
         private void OnGUI()

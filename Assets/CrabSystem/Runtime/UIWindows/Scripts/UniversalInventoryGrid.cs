@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Grid backed by an entity's InventorySystem — the player's bag or a container's.</summary>
+// Grid backed by an entity's InventorySystem — the player's bag or a container's.
 
 namespace CrabSystem
 {

@@ -3,10 +3,8 @@ using UnityEngine;
 
 namespace CrabSystem.Stats
 {
-    /// <summary>
-    /// A named set of stat definitions. Entities load one or more schemas by asset name.
-    /// A stat is a plain number with an authored range — no formulas, no derivation.
-    /// </summary>
+    // A named set of stat definitions. Entities load one or more schemas by asset name.
+    // A stat is a plain number with an authored range — no formulas, no derivation.
     [CreateAssetMenu(fileName = "New Stat Schema", menuName = "CrabSystem/Stats/Stat Schema")]
     public class StatSchema : ScriptableObject
     {
@@ -35,9 +33,7 @@ namespace CrabSystem.Stats
         }
     }
 
-    /// <summary>
-    /// One stat. Range is authored per entry so no limits are baked into code.
-    /// </summary>
+    // One stat. Range is authored per entry so no limits are baked into code.
     [System.Serializable]
     public class StatEntry
     {

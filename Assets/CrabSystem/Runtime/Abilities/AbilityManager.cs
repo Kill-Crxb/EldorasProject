@@ -1,13 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Global registry of every ability that exists. Definitions come from the inspector array
-/// and from any Resources/AbilityDatabase folder.
-///
-/// Entities still hold their own AbilityDefinition references — this registry is for the
-/// places that only have an id: saved hotbar slots, granted abilities, debug tools.
-/// </summary>
+// Global registry of every ability that exists. Definitions come from the inspector array
+// and from any Resources/AbilityDatabase folder.
+//
+// Entities still hold their own AbilityDefinition references — this registry is for the
+// places that only have an id: saved hotbar slots, granted abilities, debug tools.
 
 namespace CrabSystem
 {
@@ -25,8 +23,6 @@ namespace CrabSystem
         [SerializeField] private AbilityDefinition[] abilityDefinitions;
 
         private readonly Dictionary<string, AbilityDefinition> definitionLookup = new();
-
-    #region IGameManager
 
         public string ManagerName => "Ability Manager";
         public int InitializationPriority => 7; // After Items (5), before Resources (10)
@@ -62,10 +58,6 @@ namespace CrabSystem
             return result;
         }
 
-    #endregion
-
-    #region Loading
-
         private void LoadAbilities()
         {
             definitionLookup.Clear();
@@ -80,11 +72,9 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Adds definitions to the lookup, skipping anything unusable. Returns how many landed.
-        /// Called once for the inspector array and once for the database folder, so an asset
-        /// listed in both is silently ignored the second time rather than reported as a clash.
-        /// </summary>
+        // Adds definitions to the lookup, skipping anything unusable. Returns how many landed.
+        // Called once for the inspector array and once for the database folder, so an asset
+        // listed in both is silently ignored the second time rather than reported as a clash.
         private int Register(AbilityDefinition[] definitions)
         {
             if (definitions == null) return 0;
@@ -115,10 +105,6 @@ namespace CrabSystem
 
             return count;
         }
-
-    #endregion
-
-    #region Public API
 
         public static AbilityDefinition GetDefinition(string abilityId)
         {
@@ -163,7 +149,5 @@ namespace CrabSystem
         }
 
         public static int GetAbilityCount() => instance != null ? instance.definitionLookup.Count : 0;
-
-    #endregion
     }
 }

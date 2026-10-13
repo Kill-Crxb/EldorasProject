@@ -2,17 +2,13 @@ using CrabSystem.Stats;
 using TMPro;
 using UnityEngine;
 
-/// <summary>
-/// One stat row. The stat it shows is authored on the instance, not in code,
-/// so adding or reordering rows never needs a script change.
-/// </summary>
+// One stat row. The stat it shows is authored on the instance, not in code,
+// so adding or reordering rows never needs a script change.
 
 namespace CrabSystem
 {
     public class StatEntryView : MonoBehaviour
     {
-    #region Inspector
-
         [Header("Binding")]
         [Tooltip("Stat id this row displays, e.g. 'core.body'.")]
         [IdRef(IdKind.Stat)] [SerializeField] private string statId;
@@ -28,14 +24,10 @@ namespace CrabSystem
         [Tooltip("Numeric format passed to float.ToString.")]
         [SerializeField] private string valueFormat = "F0";
 
-    #endregion
-
         public string StatId => statId;
 
-        /// <summary>
-        /// Writes the label from the schema and the value from the provider.
-        /// Returns false when the stat is missing so the panel can report it once.
-        /// </summary>
+        // Writes the label from the schema and the value from the provider.
+        // Returns false when the stat is missing so the panel can report it once.
         public bool Bind(IStatProvider stats)
         {
             if (string.IsNullOrEmpty(statId)) return false;

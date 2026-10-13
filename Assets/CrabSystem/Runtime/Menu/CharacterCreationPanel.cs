@@ -5,48 +5,46 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// CharacterCreationPanel
-///
-/// Attach to: CharacterCreationPanel root GameObject (child of MenuUI)
-///
-/// Name entry plus a rolled statline. There is no manual allocation — the six core
-/// stats are rolled from a fixed pool with a guaranteed minimum each, and the player
-/// rerolls until they like what they see.
-///
-/// Randomize is the seam for the rest of character generation. Starting passives,
-/// class and family each become another Roll* call inside Randomize(), so the button
-/// keeps meaning "give me a whole new character" as those systems land.
-///
-/// Inspector wiring:
-///
-///   [Input Fields]
-///   nameInputField        — TMP_InputField
-///
-///   [Stat Display]
-///   mindText … insightText — TextMeshProUGUI, one per core stat
-///   pointsText            — TextMeshProUGUI, shows the rolled total
-///
-///   [Navigation]
-///   randomizeButton       — Button (reroll)
-///   finaliseButton        — Button (write saves + return to select)
-///   cancelButton          — Button (discard + return to select)
-///
-///   [Feedback]
-///   feedbackText          — TextMeshProUGUI
-///
-///   [Config]
-///   minPerStat            — Every stat is guaranteed at least this (default 3)
-///   statPointPool         — Total points across all six stats (default 30)
-///   minNameLength / maxNameLength
-///   defaultModelId        — The model the panel opens on (and the only one if no database is set)
-///
-///   [Appearance]
-///   modelDatabase         — Offers every model marked Playable
-///   rowPrefab             — AppearanceRowView: label, value, previous / next buttons
-///   rowParent             — Holds the rows; give it a Vertical Layout Group
-///   preview               — CreationPreview (optional); Tools → Characters → Build Creation Preview sets it up
-/// </summary>
+// CharacterCreationPanel
+//
+// Attach to: CharacterCreationPanel root GameObject (child of MenuUI)
+//
+// Name entry plus a rolled statline. There is no manual allocation — the six core
+// stats are rolled from a fixed pool with a guaranteed minimum each, and the player
+// rerolls until they like what they see.
+//
+// Randomize is the seam for the rest of character generation. Starting passives,
+// class and family each become another Roll* call inside Randomize(), so the button
+// keeps meaning "give me a whole new character" as those systems land.
+//
+// Inspector wiring:
+//
+//   [Input Fields]
+//   nameInputField        — TMP_InputField
+//
+//   [Stat Display]
+//   mindText … insightText — TextMeshProUGUI, one per core stat
+//   pointsText            — TextMeshProUGUI, shows the rolled total
+//
+//   [Navigation]
+//   randomizeButton       — Button (reroll)
+//   finaliseButton        — Button (write saves + return to select)
+//   cancelButton          — Button (discard + return to select)
+//
+//   [Feedback]
+//   feedbackText          — TextMeshProUGUI
+//
+//   [Config]
+//   minPerStat            — Every stat is guaranteed at least this (default 3)
+//   statPointPool         — Total points across all six stats (default 30)
+//   minNameLength / maxNameLength
+//   defaultModelId        — The model the panel opens on (and the only one if no database is set)
+//
+//   [Appearance]
+//   modelDatabase         — Offers every model marked Playable
+//   rowPrefab             — AppearanceRowView: label, value, previous / next buttons
+//   rowParent             — Holds the rows; give it a Vertical Layout Group
+//   preview               — CreationPreview (optional); Tools → Characters → Build Creation Preview sets it up
 
 namespace CrabSystem
 {
@@ -168,24 +166,20 @@ namespace CrabSystem
 
         // ── Public API ────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Activate the panel and register the callback fired on finalise or cancel.
-        /// Called by CharacterSelectScreen.
-        /// </summary>
+        // Activate the panel and register the callback fired on finalise or cancel.
+        // Called by CharacterSelectScreen.
         public void Open(Action onCompleteCallback)
         {
             onComplete = onCompleteCallback;
             gameObject.SetActive(true);
         }
 
-        /// <summary>
-        /// Rolls a fresh character. Every stat starts on the minimum and the leftover
-        /// points are dealt out one at a time, so results cluster around the average
-        /// instead of producing one maxed stat and five floors.
-        ///
-        /// Public so the Randomize button can call it directly, and so later generation
-        /// steps (passives, class, family) have one obvious place to hang off.
-        /// </summary>
+        // Rolls a fresh character. Every stat starts on the minimum and the leftover
+        // points are dealt out one at a time, so results cluster around the average
+        // instead of producing one maxed stat and five floors.
+        //
+        // Public so the Randomize button can call it directly, and so later generation
+        // steps (passives, class, family) have one obvious place to hang off.
         public void Randomize()
         {
             RollStats();

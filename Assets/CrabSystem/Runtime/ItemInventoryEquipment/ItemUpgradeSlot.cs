@@ -1,26 +1,24 @@
 using UnityEngine;
 
-/// <summary>
-/// ItemUpgradeSlot - Individual upgrade slot configuration for an item
-/// 
-/// Purpose: Define specific upgrade slots for each item (0-N slots)
-/// 
-/// Examples:
-/// - Helmet with 3 slots: [Reinforcement, Underlay, Trinket]
-/// - Unique weapon with 1 slot: [Legendary Rune]
-/// - Basic armor with 0 slots: []
-/// 
-/// Usage:
-/// - Add to ItemDefinition.upgradeSlots array
-/// - Each slot references UpgradeSlotDefinition (what it accepts)
-/// - ItemInstance tracks what's actually slotted
-/// 
-/// Benefits:
-/// - Each item can have unique slot configuration
-/// - Slots define what upgrades they accept
-/// - Supports locked/unlockable slots
-/// - UI display order via slotIndex
-/// </summary>
+// ItemUpgradeSlot - Individual upgrade slot configuration for an item
+//
+// Purpose: Define specific upgrade slots for each item (0-N slots)
+//
+// Examples:
+// - Helmet with 3 slots: [Reinforcement, Underlay, Trinket]
+// - Unique weapon with 1 slot: [Legendary Rune]
+// - Basic armor with 0 slots: []
+//
+// Usage:
+// - Add to ItemDefinition.upgradeSlots array
+// - Each slot references UpgradeSlotDefinition (what it accepts)
+// - ItemInstance tracks what's actually slotted
+//
+// Benefits:
+// - Each item can have unique slot configuration
+// - Slots define what upgrades they accept
+// - Supports locked/unlockable slots
+// - UI display order via slotIndex
 
 namespace CrabSystem
 {
@@ -49,9 +47,7 @@ namespace CrabSystem
         [Tooltip("Override slot color (uses slotDefinition.slotColor if default)")]
         public Color customSlotColor = Color.white;
 
-        /// <summary>
-        /// Check if this slot can accept an upgrade item
-        /// </summary>
+        // Check if this slot can accept an upgrade item
         public bool CanAcceptUpgrade(ItemDefinition upgradeItem)
         {
             // Guard clause - no definition
@@ -64,9 +60,7 @@ namespace CrabSystem
             return slotDefinition.CanAccept(upgradeItem);
         }
 
-        /// <summary>
-        /// Get the icon to display for this slot
-        /// </summary>
+        // Get the icon to display for this slot
         public Sprite GetDisplayIcon()
         {
             // Use custom icon if provided
@@ -79,9 +73,7 @@ namespace CrabSystem
             return null;
         }
 
-        /// <summary>
-        /// Get the color to display for this slot
-        /// </summary>
+        // Get the color to display for this slot
         public Color GetDisplayColor()
         {
             // Use custom color if not default white
@@ -94,9 +86,7 @@ namespace CrabSystem
             return Color.white;
         }
 
-        /// <summary>
-        /// Validation helper
-        /// </summary>
+        // Validation helper
         public bool IsValid()
         {
             return slotDefinition != null && slotDefinition.IsValid();

@@ -2,18 +2,14 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-/// <summary>
-/// A titled block of rows. Rows are authored as children in the prefab; this only supplies
-/// the heading and hands its rows to the panel. A group may hold stat rows, resource rows
-/// or both — the Resources group is the one that mixes them.
-/// </summary>
+// A titled block of rows. Rows are authored as children in the prefab; this only supplies
+// the heading and hands its rows to the panel. A group may hold stat rows, resource rows
+// or both — the Resources group is the one that mixes them.
 
 namespace CrabSystem
 {
     public class StatGroupView : MonoBehaviour
     {
-    #region Inspector
-
         [Header("Heading")]
         [SerializeField] private string title = "Stats";
         [SerializeField] private TMP_Text titleLabel;
@@ -25,8 +21,6 @@ namespace CrabSystem
         [Header("Behaviour")]
         [Tooltip("Hide the whole group when none of its rows resolve to a live stat or resource.")]
         [SerializeField] private bool hideWhenEmpty = true;
-
-    #endregion
 
         public string Title => title;
 

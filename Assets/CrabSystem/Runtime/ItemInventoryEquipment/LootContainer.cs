@@ -2,9 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
-/// <summary>
-/// Loot container component (attach to prefab).
-/// </summary>
+// Loot container component (attach to prefab).
 
 namespace CrabSystem
 {

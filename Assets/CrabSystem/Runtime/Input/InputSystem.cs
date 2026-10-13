@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Which set of physical keys a bar can claim.
-///
-/// Sets are validated by the physical keys they claim, not by enum equality, because two
-/// different sets can want the same key — QuickslotQ and ShiftCtrlQ both want Q. The first bar
-/// listed in keybindRoutes keeps the key and the later one is demoted to None with a warning.
-/// </summary>
+// Which set of physical keys a bar can claim.
+//
+// Sets are validated by the physical keys they claim, not by enum equality, because two
+// different sets can want the same key — QuickslotQ and ShiftCtrlQ both want Q. The first bar
+// listed in keybindRoutes keeps the key and the later one is demoted to None with a warning.
 
 namespace CrabSystem
 {
@@ -25,11 +23,9 @@ namespace CrabSystem
         ShiftCtrlQ,     // Shift=slot0  Ctrl=slot1  Q=slot2   (the vertical focus bar)
     }
 
-    /// <summary>
-    /// One bar's claim on a set of physical keys. heldTime is the per-slot charge timer and is
-    /// deliberately not serialised — it is runtime state that belongs with the route it measures,
-    /// which is what keeps the bridge from needing a per-bar array field.
-    /// </summary>
+    // One bar's claim on a set of physical keys. heldTime is the per-slot charge timer and is
+    // deliberately not serialised — it is runtime state that belongs with the route it measures,
+    // which is what keeps the bridge from needing a per-bar array field.
     [Serializable]
     public class BarKeybindRoute
     {
@@ -47,12 +43,10 @@ namespace CrabSystem
         }
     }
 
-    /// <summary>
-    /// Serialised form of the keybind routing config. Stored as "inputProfile" in the character save.
-    ///
-    /// v1 stored three enum values, one per named bar. v2 stores a list of routes, so a bar added
-    /// later carries its own binding. The v1 fields are kept for migration and never written.
-    /// </summary>
+    // Serialised form of the keybind routing config. Stored as "inputProfile" in the character save.
+    //
+    // v1 stored three enum values, one per named bar. v2 stores a list of routes, so a bar added
+    // later carries its own binding. The v1 fields are kept for migration and never written.
     [Serializable]
     public class InputProfileSaveData
     {
@@ -67,9 +61,7 @@ namespace CrabSystem
         public HotbarKeybindSet bottomRightKeybinds;
     }
 
-    /// <summary>
-    /// Input Mode - Determines how InputSystem interprets control
-    /// </summary>
+    // Input Mode - Determines how InputSystem interprets control
     public enum InputMode
     {
         Player,     // Read Unity Input System (keyboard/gamepad)
@@ -78,23 +70,21 @@ namespace CrabSystem
         Test        // Automated test sequences
     }
 
-    /// <summary>
-    /// Universal Input System - Central control source for all entities.
-    ///
-    /// Roles:
-    ///   1. Raw input state provider     (IInputProvider)
-    ///   2. Movement control source      (IMovementControlSource)
-    ///   3. Ability control source       (IAbilityControlSource)
-    ///   4. Keybind routing config owner (ISaveable → "inputProfile")
-    ///
-    /// Keybind routing:
-    ///   Each bar on HotbarSystem can claim one HotbarKeybindSet, listed in keybindRoutes.
-    ///   Assignment is inspector-configurable and persisted per character via ISaveable.
-    ///   Routes are validated by physical key, first listed wins, loser demoted to None.
-    ///
-    ///   All player ability input reaches abilities through BridgeBarInput → HotbarSystem.
-    ///   AbilityLoadoutModule receives no player input.
-    /// </summary>
+    // Universal Input System - Central control source for all entities.
+    //
+    // Roles:
+    //   1. Raw input state provider     (IInputProvider)
+    //   2. Movement control source      (IMovementControlSource)
+    //   3. Ability control source       (IAbilityControlSource)
+    //   4. Keybind routing config owner (ISaveable → "inputProfile")
+    //
+    // Keybind routing:
+    //   Each bar on HotbarSystem can claim one HotbarKeybindSet, listed in keybindRoutes.
+    //   Assignment is inspector-configurable and persisted per character via ISaveable.
+    //   Routes are validated by physical key, first listed wins, loser demoted to None.
+    //
+    //   All player ability input reaches abilities through BridgeBarInput → HotbarSystem.
+    //   AbilityLoadoutModule receives no player input.
     public class InputSystem : MonoBehaviour,
         IBrainModule,
         IInputProvider,
@@ -255,10 +245,8 @@ namespace CrabSystem
             ValidateKeybindRouting();
         }
 
-        /// <summary>
-        /// A saved route only overwrites a bar this entity still has. Bars the save does not mention
-        /// keep whatever the prefab authored, which is how a bar added since the save gets its keys.
-        /// </summary>
+        // A saved route only overwrites a bar this entity still has. Bars the save does not mention
+        // keep whatever the prefab authored, which is how a bar added since the save gets its keys.
         private void ApplySavedRoutes(List<BarKeybindRoute> saved)
         {
             foreach (var entry in saved)
@@ -279,11 +267,9 @@ namespace CrabSystem
             SetRouteFromLegacy("bottomRight", data.bottomRightKeybinds);
         }
 
-        /// <summary>
-        /// v1 saves can hand a bar QuickslotQ, which the modifier bar now claims. Left alone, that bar
-        /// would win the key by list order and take the whole ShiftCtrlQ set down with it, so Q is
-        /// dropped at migration rather than at validation.
-        /// </summary>
+        // v1 saves can hand a bar QuickslotQ, which the modifier bar now claims. Left alone, that bar
+        // would win the key by list order and take the whole ShiftCtrlQ set down with it, so Q is
+        // dropped at migration rather than at validation.
         private void SetRouteFromLegacy(string barId, HotbarKeybindSet set)
         {
             var route = FindRoute(barId);
@@ -313,11 +299,9 @@ namespace CrabSystem
 
         // Keybind Routing Validation
 
-        /// <summary>
-        /// Enforces one owner per physical key. Routes are checked in list order, so the bar listed
-        /// first keeps a contested key and the later one is demoted to None.
-        /// Called at Initialize and after LoadSaveData.
-        /// </summary>
+        // Enforces one owner per physical key. Routes are checked in list order, so the bar listed
+        // first keeps a contested key and the later one is demoted to None.
+        // Called at Initialize and after LoadSaveData.
         private void ValidateKeybindRouting()
         {
             claimedKeys.Clear();
@@ -353,10 +337,8 @@ namespace CrabSystem
             return null;
         }
 
-        /// <summary>
-        /// The physical keys a set occupies. Names are labels for the warning, not control paths —
-        /// the actual bindings live on PlayerInputControls.
-        /// </summary>
+        // The physical keys a set occupies. Names are labels for the warning, not control paths —
+        // the actual bindings live on PlayerInputControls.
         private static string[] KeysClaimedBy(HotbarKeybindSet set)
         {
             switch (set)
@@ -507,11 +489,9 @@ namespace CrabSystem
 
         // Hotbar Bridge
 
-        /// <summary>
-        /// Routes one bar's keybind set to its slots.
-        /// Handles charge-hold logic: waits for release on charge-ability slots,
-        /// fires charge variant if held past chargeThreshold, otherwise fires base.
-        /// </summary>
+        // Routes one bar's keybind set to its slots.
+        // Handles charge-hold logic: waits for release on charge-ability slots,
+        // fires charge variant if held past chargeThreshold, otherwise fires base.
         private void BridgeBarInput(BarKeybindRoute route)
         {
             if (route == null || route.keybinds == HotbarKeybindSet.None) return;
@@ -582,7 +562,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>Returns true while the physical button for slot i is held.</summary>
+        // Returns true while the physical button for slot i is held.
         private bool GetIsPressed(HotbarKeybindSet set, int i)
         {
             switch (set)
@@ -645,7 +625,7 @@ namespace CrabSystem
             return false;
         }
 
-        /// <summary>Returns true on the frame the physical button for slot i was pressed.</summary>
+        // Returns true on the frame the physical button for slot i was pressed.
         private bool GetWasPressed(HotbarKeybindSet set, int i)
         {
             switch (set)
@@ -790,10 +770,8 @@ namespace CrabSystem
 
         // Keybind Routing Query
 
-        /// <summary>
-        /// Returns the keybind set assigned to the given bar.
-        /// Used by ActionBarView to generate per-slot key labels.
-        /// </summary>
+        // Returns the keybind set assigned to the given bar.
+        // Used by ActionBarView to generate per-slot key labels.
         public HotbarKeybindSet GetKeybindSetForBar(string barId)
         {
             var route = FindRoute(barId);

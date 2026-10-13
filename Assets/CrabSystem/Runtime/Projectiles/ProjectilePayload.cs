@@ -1,21 +1,19 @@
 using UnityEngine;
 
-/// <summary>
-/// What happens to whatever the projectile hits. Reactive — driven by
-/// ProjectileBrain.ReportHit, not per frame.
-///
-/// Two stages: decide whether the contact counts, then apply the firing ability's damage.
-///
-/// The return value matters. False means the contact did not count, and the brain treats it
-/// as a pass-through rather than an impact — which is what stops an ally standing in a
-/// doorway from eating a shuriken meant for the guard behind them.
-///
-/// DAMAGE COMES FROM THE ABILITY. This applies the same DamageEffect list StrikeHandler
-/// applies for melee, so an attack is authored once whether it arrives by blade or through
-/// the air. Weapon dice, mitigation, damage numbers, hit reactions and hit procs all
-/// come with it. The projectile's own DiceProfile supplies the dice, because a thrown weapon
-/// is the weapon — a shuriken must not roll the katana still in the main-hand slot.
-/// </summary>
+// What happens to whatever the projectile hits. Reactive — driven by
+// ProjectileBrain.ReportHit, not per frame.
+//
+// Two stages: decide whether the contact counts, then apply the firing ability's damage.
+//
+// The return value matters. False means the contact did not count, and the brain treats it
+// as a pass-through rather than an impact — which is what stops an ally standing in a
+// doorway from eating a shuriken meant for the guard behind them.
+//
+// DAMAGE COMES FROM THE ABILITY. This applies the same DamageEffect list StrikeHandler
+// applies for melee, so an attack is authored once whether it arrives by blade or through
+// the air. Weapon dice, mitigation, damage numbers, hit reactions and hit procs all
+// come with it. The projectile's own DiceProfile supplies the dice, because a thrown weapon
+// is the weapon — a shuriken must not roll the katana still in the main-hand slot.
 
 namespace CrabSystem
 {
@@ -31,7 +29,7 @@ namespace CrabSystem
 
         public void UpdateModule() { }
 
-        /// <summary>True when the contact counted. False tells the brain to keep flying.</summary>
+        // True when the contact counted. False tells the brain to keep flying.
         public bool Resolve(ProjectileHitInfo hit)
         {
             // A decorative projectile is not a weapon. It passes through everything, counts no
@@ -66,11 +64,9 @@ namespace CrabSystem
 
         // ── Filtering ─────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Whether this contact counts. The stance comes from the RUNTIME, not the asset, so a
-        /// spell composed at cast time decides who its projectile is for.
-        /// Legacy props have no faction and are always valid targets.
-        /// </summary>
+        // Whether this contact counts. The stance comes from the RUNTIME, not the asset, so a
+        // spell composed at cast time decides who its projectile is for.
+        // Legacy props have no faction and are always valid targets.
         private bool Accepts(ProjectileHitInfo hit)
         {
             if (hit.isEnvironment) return brain.Data.hitEnvironment;
@@ -81,15 +77,13 @@ namespace CrabSystem
 
         // ── Brain entities ────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Apply this projectile to one entity, with no contact involved.
-        ///
-        /// The seam a VOLUME resolves through. A ticking area has no collision — it found its
-        /// targets by overlapping them — but everything after that point must be identical to a
-        /// contact hit: the same stance rule, the same arrival handler, the same dice, the same
-        /// hit procs. Sharing this method is what guarantees a Field burns exactly like a fireball
-        /// rather than approximately like one.
-        /// </summary>
+        // Apply this projectile to one entity, with no contact involved.
+        //
+        // The seam a VOLUME resolves through. A ticking area has no collision — it found its
+        // targets by overlapping them — but everything after that point must be identical to a
+        // contact hit: the same stance rule, the same arrival handler, the same dice, the same
+        // hit procs. Sharing this method is what guarantees a Field burns exactly like a fireball
+        // rather than approximately like one.
         public void ResolveOnBrain(ControllerBrain target, Vector3 point)
         {
             if (target == null) return;
@@ -181,10 +175,8 @@ namespace CrabSystem
 
         // ── Shared ────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// The no-damageEffects path. Rolls the projectile's own dice when it has any, so a
-        /// shuriken authored with 1d4 still rolls on an ability with nothing configured.
-        /// </summary>
+        // The no-damageEffects path. Rolls the projectile's own dice when it has any, so a
+        // shuriken authored with 1d4 still rolls on an ability with nothing configured.
         private CombatAttackData BuildAttack(DamageSystem sourceDamage, ProjectileHitInfo hit, float weaponMultiplier)
         {
             ProjectileData data = brain.Data;
@@ -207,10 +199,8 @@ namespace CrabSystem
             };
         }
 
-        /// <summary>
-        /// Where a damage number appears. Matches DamageEffect, which uses the target's Overhead
-        /// anchor rather than the contact point, so numbers land in the same place on both paths.
-        /// </summary>
+        // Where a damage number appears. Matches DamageEffect, which uses the target's Overhead
+        // anchor rather than the contact point, so numbers land in the same place on both paths.
         private Vector3 NumberPoint(ControllerBrain target, Vector3 fallback)
         {
             VFXSystem vfx = target != null ? target.GetModule<VFXSystem>() : null;
@@ -218,10 +208,8 @@ namespace CrabSystem
             return vfx != null ? vfx.GetAnchorPosition(VFXAnchor.Overhead) : fallback;
         }
 
-        /// <summary>
-        /// Spawns through the ATTACKER'S VFXSystem, matching StrikeHandler — the effect belongs to
-        /// the attack, not to the thing being hit.
-        /// </summary>
+        // Spawns through the ATTACKER'S VFXSystem, matching StrikeHandler — the effect belongs to
+        // the attack, not to the thing being hit.
         private void SpawnAbilityHitVfx(ControllerBrain source, Vector3 point)
         {
             GameObject prefab = brain.SourceAbility?.hitEffectPrefab;

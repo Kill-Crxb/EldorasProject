@@ -2,17 +2,13 @@ using System.Collections.Generic;
 using CrabSystem.Stats;
 using UnityEngine;
 
-/// <summary>
-/// Global registry of stat schemas. Loads every schema once at startup and answers
-/// "which stats exist" for entities and for cross-manager validation.
-/// </summary>
+// Global registry of stat schemas. Loads every schema once at startup and answers
+// "which stats exist" for entities and for cross-manager validation.
 
 namespace CrabSystem
 {
     public class StatsManager : MonoBehaviour, IGameManager
     {
-    #region Inspector
-
         // Any folder named "Resources" anywhere under Assets is a resources root, so the
         // database folder is found by this name alone, wherever it sits in the project.
         private const string DatabaseFolder = CrabResources.Stats;
@@ -21,10 +17,6 @@ namespace CrabSystem
         [Tooltip("Optional. Everything in Resources/StatDatabase is registered regardless.")]
         [SerializeField] private List<StatSchema> globalSchemas = new();
 
-    #endregion
-
-    #region State
-
         private static StatsManager instance;
         public static StatsManager Instance => instance;
 
@@ -32,10 +24,6 @@ namespace CrabSystem
         private readonly Dictionary<string, StatEntry> entriesById = new();
         // Old id -> current id, from each entry's formerIds.
         private readonly Dictionary<string, string> currentIdByFormer = new();
-
-    #endregion
-
-    #region IGameManager
 
         public string ManagerName => "Stats Manager";
         public int InitializationPriority => 0;
@@ -83,10 +71,6 @@ namespace CrabSystem
             return result;
         }
 
-    #endregion
-
-    #region Cache
-
         private void BuildCaches()
         {
             schemasByName.Clear();
@@ -103,10 +87,8 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Called once for the inspector list and once for the database folder, so a schema in
-        /// both is silently ignored the second time rather than reported as a clash.
-        /// </summary>
+        // Called once for the inspector list and once for the database folder, so a schema in
+        // both is silently ignored the second time rather than reported as a clash.
         private void Register(IReadOnlyList<StatSchema> schemas)
         {
             if (schemas == null) return;
@@ -147,10 +129,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Queries
-
         public StatSchema GetSchema(string schemaName)
         {
             return schemasByName.GetValueOrDefault(schemaName);
@@ -173,7 +151,5 @@ namespace CrabSystem
         public IEnumerable<string> GetSchemaNames() => schemasByName.Keys;
 
         public IEnumerable<string> GetStatIds() => entriesById.Keys;
-
-    #endregion
     }
 }

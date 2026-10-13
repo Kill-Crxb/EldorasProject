@@ -1,28 +1,26 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// UpgradeSlotDefinition - Defines what types of upgrades a slot can accept
-/// 
-/// Purpose: Replace hardcoded UpgradeSlotType enum with flexible data-driven system
-/// 
-/// Examples:
-/// - "Reinforcement" → Accepts: Armor plating, weapon sharpening
-/// - "Underlay" → Accepts: Stat-boosting gems, enchantments
-/// - "Trinket" → Accepts: Special effect items, charms
-/// - "Rune" → Accepts: Magic runes (jewelry slots)
-/// - "Socket" → Accepts: Gemstones (ring slots)
-/// 
-/// Usage:
-/// - Create assets: Right-click → Items/Upgrade Slot Definition
-/// - Configure what categories/types can be inserted
-/// - Reference in ItemUpgradeSlot to define item's upgrade slots
-/// 
-/// Benefits:
-/// - Add new upgrade types without code changes
-/// - Flexible filtering (by category, subtype, or tags)
-/// - Visual customization per slot type
-/// </summary>
+// UpgradeSlotDefinition - Defines what types of upgrades a slot can accept
+//
+// Purpose: Replace hardcoded UpgradeSlotType enum with flexible data-driven system
+//
+// Examples:
+// - "Reinforcement" → Accepts: Armor plating, weapon sharpening
+// - "Underlay" → Accepts: Stat-boosting gems, enchantments
+// - "Trinket" → Accepts: Special effect items, charms
+// - "Rune" → Accepts: Magic runes (jewelry slots)
+// - "Socket" → Accepts: Gemstones (ring slots)
+//
+// Usage:
+// - Create assets: Right-click → Items/Upgrade Slot Definition
+// - Configure what categories/types can be inserted
+// - Reference in ItemUpgradeSlot to define item's upgrade slots
+//
+// Benefits:
+// - Add new upgrade types without code changes
+// - Flexible filtering (by category, subtype, or tags)
+// - Visual customization per slot type
 
 namespace CrabSystem
 {
@@ -67,9 +65,7 @@ namespace CrabSystem
         [TextArea(2, 4)]
         public string description;
 
-        /// <summary>
-        /// Check if an item can be inserted into this slot type
-        /// </summary>
+        // Check if an item can be inserted into this slot type
         public bool CanAccept(ItemDefinition item)
         {
             // Guard clause - null check
@@ -130,9 +126,7 @@ namespace CrabSystem
             return true;
         }
 
-        /// <summary>
-        /// Validation helper
-        /// </summary>
+        // Validation helper
         public bool IsValid()
         {
             return !string.IsNullOrEmpty(slotId) && !string.IsNullOrEmpty(displayName);

@@ -4,22 +4,20 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// AnimatorDebugger
-/// 
-/// Attach to your player entity (or any GameObject with an Animator in children).
-/// Shows in the Inspector and as an on-screen overlay:
-///   - Which Animator is being read
-///   - All parameter values live
-///   - Active state per layer
-///   - Whether key bones are actually moving (position delta per frame)
-/// 
-/// Usage:
-///   1. Add to your player entity root
-///   2. Assign the Animator (or leave null to auto-find in children)
-///   3. Optionally add bone transforms to track in BonesToTrack
-///   4. Enable showOnScreen for in-game overlay
-/// </summary>
+// AnimatorDebugger
+//
+// Attach to your player entity (or any GameObject with an Animator in children).
+// Shows in the Inspector and as an on-screen overlay:
+//   - Which Animator is being read
+//   - All parameter values live
+//   - Active state per layer
+//   - Whether key bones are actually moving (position delta per frame)
+//
+// Usage:
+//   1. Add to your player entity root
+//   2. Assign the Animator (or leave null to auto-find in children)
+//   3. Optionally add bone transforms to track in BonesToTrack
+//   4. Enable showOnScreen for in-game overlay
 
 namespace CrabSystem
 {
@@ -236,6 +234,5 @@ namespace CrabSystem
             Debug.Log(onScreenText.Replace("<b>", "").Replace("</b>", ""));
         }
     }
-
 }
 #endif

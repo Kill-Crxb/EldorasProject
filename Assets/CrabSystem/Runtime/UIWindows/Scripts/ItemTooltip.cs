@@ -3,22 +3,20 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Displays a richly formatted item tooltip.
-///
-/// Prefab setup (everything on the ROOT object):
-///   Root RectTransform
-///     - Pivot: (0, 1)  Anchors: Min (0,1) Max (0,1)  — top-left, no stretch
-///     - Vertical Layout Group (child force expand width ON, height OFF)
-///     - Content Size Fitter (Horizontal = Preferred Size, Vertical = Preferred Size)
-///   ├── Background  Image — anchors stretch (0,0,1,1), send to back
-///   ├── NameText        TMP ~18pt bold
-///   ├── TypeText        TMP ~11pt
-///   ├── DividerTop      Image 1px height
-///   ├── DescriptionText TMP ~13pt word-wrap
-///   ├── DividerStats    Image 1px — DISABLED by default
-///   └── StatsContainer  empty GO + Vertical Layout Group spacing 2
-/// </summary>
+// Displays a richly formatted item tooltip.
+//
+// Prefab setup (everything on the ROOT object):
+//   Root RectTransform
+//     - Pivot: (0, 1)  Anchors: Min (0,1) Max (0,1)  — top-left, no stretch
+//     - Vertical Layout Group (child force expand width ON, height OFF)
+//     - Content Size Fitter (Horizontal = Preferred Size, Vertical = Preferred Size)
+//   ├── Background  Image — anchors stretch (0,0,1,1), send to back
+//   ├── NameText        TMP ~18pt bold
+//   ├── TypeText        TMP ~11pt
+//   ├── DividerTop      Image 1px height
+//   ├── DescriptionText TMP ~13pt word-wrap
+//   ├── DividerStats    Image 1px — DISABLED by default
+//   └── StatsContainer  empty GO + Vertical Layout Group spacing 2
 
 namespace CrabSystem
 {

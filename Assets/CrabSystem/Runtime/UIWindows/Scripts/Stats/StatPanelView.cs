@@ -1,14 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Binds every row beneath this view to the player.
-///
-/// Two kinds of row, two sources. Stat rows read the stat store, which holds ceilings and
-/// core values. Resource rows read the resource pools, which hold the live current values
-/// and exist nowhere in the stat store. Both subscribe once and dispatch by key, so rows
-/// stay passive.
-/// </summary>
+// Binds every row beneath this view to the player.
+//
+// Two kinds of row, two sources. Stat rows read the stat store, which holds ceilings and
+// core values. Resource rows read the resource pools, which hold the live current values
+// and exist nowhere in the stat store. Both subscribe once and dispatch by key, so rows
+// stay passive.
 
 namespace CrabSystem
 {
@@ -55,7 +53,7 @@ namespace CrabSystem
             Bind(ready.Stats, ready.Resources);
         }
 
-        /// <summary>Stats only. Kept for callers that predate resource rows.</summary>
+        // Stats only. Kept for callers that predate resource rows.
         public void Bind(IStatProvider statProvider) => Bind(statProvider, null);
 
         public void Bind(IStatProvider statProvider, IResourceProvider resourceProvider)
@@ -151,10 +149,8 @@ namespace CrabSystem
             for (int i = 0; i < bucket.Count; i++) bucket[i].SetValue(newValue);
         }
 
-        /// <summary>
-        /// The row re-reads both halves rather than taking the value from the event, because a
-        /// ceiling change fires this too and the ratio is what the row draws.
-        /// </summary>
+        // The row re-reads both halves rather than taking the value from the event, because a
+        // ceiling change fires this too and the ratio is what the row draws.
         private void HandleResourceChanged(ResourceDefinition def, float current)
         {
             if (def == null) return;

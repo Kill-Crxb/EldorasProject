@@ -1,8 +1,6 @@
 // Shared enums for the inventory and combat systems.
 
-/// <summary>
-/// Item rarity levels affecting visual appearance and gameplay value
-/// </summary>
+// Item rarity levels affecting visual appearance and gameplay value
 
 namespace CrabSystem
 {

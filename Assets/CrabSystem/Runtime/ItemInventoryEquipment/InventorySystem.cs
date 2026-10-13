@@ -3,10 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-/// <summary>
-/// Grid-based inventory system for containers.
-/// Optional module - not all entities need inventory (e.g., wolves).
-/// </summary>
+// Grid-based inventory system for containers.
+// Optional module - not all entities need inventory (e.g., wolves).
 
 namespace CrabSystem
 {
@@ -39,8 +37,6 @@ namespace CrabSystem
         private bool restoring;
         public event Action<ItemInstance> OnItemRemoved;
 
-    #region IBrainModule
-
         public bool IsEnabled
         {
             get => enabled;
@@ -68,10 +64,6 @@ namespace CrabSystem
         public void UpdateModule() { }
 
         public void Shutdown() { }
-
-    #endregion
-
-    #region ISaveable
 
         public string GetSaveId() => "inventory";
         public int GetSaveVersion() => 1;
@@ -132,10 +124,6 @@ namespace CrabSystem
             public int version;
             public List<ItemRecord> items;
         }
-
-    #endregion
-
-    #region Item Management
 
         public bool AddItem(ItemInstance item)
         {
@@ -198,10 +186,6 @@ namespace CrabSystem
             RaiseChanged();
         }
 
-    #endregion
-
-    #region Grid Placement
-
         private bool TryPlaceInAnyContainer(ItemInstance item)
         {
             // If item already has a valid position, honour it
@@ -256,10 +240,6 @@ namespace CrabSystem
             return true;
         }
 
-    #endregion
-
-    #region Contents Management
-
         public void LoadFromContents(ContainerContents contents)
         {
             if (contents == null)
@@ -302,17 +282,13 @@ namespace CrabSystem
 
         public ContainerContents GetCurrentContents() => currentContents;
 
-        /// <summary>Whose inventory this is — a vendor's shelf is found through it.</summary>
+        // Whose inventory this is — a vendor's shelf is found through it.
         public ControllerBrain Brain => brain;
 
-        /// <summary>Authored layout used before any contents exist. Grids read their size from it.</summary>
+        // Authored layout used before any contents exist. Grids read their size from it.
         public ContainerData DefaultContainer => containers != null && containers.Length > 0 ? containers[0] : null;
 
         public void SetContents(ContainerContents contents) { currentContents = contents; }
-
-    #endregion
-
-    #region IInventoryProvider
 
         bool IInventoryProvider.HasItem(string itemId)
             => inventoryItems.Any(i => i.definitionId == itemId);
@@ -343,7 +319,5 @@ namespace CrabSystem
         }
 
         void IInventoryProvider.ClearInventory() => ClearInventory();
-
-    #endregion
     }
 }

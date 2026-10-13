@@ -21,10 +21,8 @@ namespace CrabSystem
                  "set it if you expect to reword the option later and want it to stay used.")]
         public string onceOnlyId;
 
-        /// <summary>
-        /// Keyed on the database, so two NPCs sharing one dialogue asset share the memory.
-        /// Give them their own asset if they should be remembered separately.
-        /// </summary>
+        // Keyed on the database, so two NPCs sharing one dialogue asset share the memory.
+        // Give them their own asset if they should be remembered separately.
         public string ResolveMemoryKey(DialogueDatabase database)
         {
             string id = string.IsNullOrEmpty(onceOnlyId) ? optionText : onceOnlyId;

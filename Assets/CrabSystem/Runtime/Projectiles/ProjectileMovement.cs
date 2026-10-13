@@ -1,61 +1,47 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// How a projectile is delivered. One block with toggles rather than a class per behaviour —
-/// travel, gravity, spin, homing and hitscan are all the same shape with different switches.
-///
-/// Lives INLINE on ProjectileData, not as its own asset. Once behaviour is toggles rather
-/// than subclasses there is nothing left to swap polymorphically, so an extra asset per
-/// projectile only buys indirection.
-///
-/// STILL SHARED. One ProjectileData serves every in-flight copy at once, so this block must
-/// stay stateless — velocity, direction and target all live on ProjectileBrain. Reading
-/// brain.Runtime here is fine; writing a field on this class is not.
-///
-/// The modifiable stats (speed, gravity, homingStrength) come from ProjectileRuntime, so a
-/// modifier can turn a straight fireball into a seeking one by raising homingStrength alone.
-/// Everything in this block is authoring-time tuning.
-///
-/// Pointing and target acquisition live in ProjectileAim, not here — this block is only
-/// concerned with how the thing flies once it has been aimed.
-/// </summary>
+// How a projectile is delivered. One block with toggles rather than a class per behaviour —
+// travel, gravity, spin, homing and hitscan are all the same shape with different switches.
+//
+// Lives INLINE on ProjectileData, not as its own asset. Once behaviour is toggles rather
+// than subclasses there is nothing left to swap polymorphically, so an extra asset per
+// projectile only buys indirection.
+//
+// STILL SHARED. One ProjectileData serves every in-flight copy at once, so this block must
+// stay stateless — velocity, direction and target all live on ProjectileBrain. Reading
+// brain.Runtime here is fine; writing a field on this class is not.
+//
+// The modifiable stats (speed, gravity, homingStrength) come from ProjectileRuntime, so a
+// modifier can turn a straight fireball into a seeking one by raising homingStrength alone.
+// Everything in this block is authoring-time tuning.
+//
+// Pointing and target acquisition live in ProjectileAim, not here — this block is only
+// concerned with how the thing flies once it has been aimed.
 
 namespace CrabSystem
 {
     public enum ProjectileMode
     {
-        /// <summary>Spawns and flies. The sweep resolves hits along the way.</summary>
+        // Spawns and flies. The sweep resolves hits along the way.
         Travel,
 
-        /// <summary>Resolves instantly along the aim line, then lingers only to show a tracer.</summary>
+        // Resolves instantly along the aim line, then lingers only to show a tracer.
         Hitscan,
     }
 
     [Serializable]
     public class ProjectileMovement
     {
-        // =========================================================================
-        // Mode
-        // =========================================================================
-
         [Header("Mode")]
         [Tooltip("Travel flies through the world. Hitscan skips travel entirely and resolves " +
                  "along the aim line on the first frame.")]
         public ProjectileMode mode = ProjectileMode.Travel;
 
-        // =========================================================================
-        // Travel
-        // =========================================================================
-
         [Header("Travel")]
         [Tooltip("Degrees per second the Visual child spins around its own forward axis. Cosmetic " +
                  "only — the root's rotation is the travel direction. Shuriken wants ~720, a bolt 0.")]
         public float spinDegreesPerSecond = 0f;
-
-        // =========================================================================
-        // Hitscan
-        // =========================================================================
 
         [Header("Hitscan")]
         [Tooltip("How far the instant resolve reaches.")]
@@ -64,10 +50,6 @@ namespace CrabSystem
         [Tooltip("Seconds the object stays alive after resolving, so a trail or beam has time to " +
                  "render. 0 releases the same frame.")]
         public float hitscanLingerTime = 0f;
-
-        // =========================================================================
-        // Homing
-        // =========================================================================
 
         [Header("Homing")]
         [Tooltip("Maximum degrees per second at homingStrength 1. Scaled down by the runtime value, " +
@@ -85,15 +67,9 @@ namespace CrabSystem
         [Tooltip("Stop steering once this close. Prevents the corkscrew orbit at point blank.")]
         public float minSteerDistance = 0.5f;
 
-        // =========================================================================
-        // Travel Step
-        // =========================================================================
-
-        /// <summary>
-        /// Where this projectile should be after deltaTime. Collision is NOT done here —
-        /// ProjectileMovementHandler sweeps between the old and new position, so every
-        /// configuration gets non-tunnelling hit detection for free.
-        /// </summary>
+        // Where this projectile should be after deltaTime. Collision is NOT done here —
+        // ProjectileMovementHandler sweeps between the old and new position, so every
+        // configuration gets non-tunnelling hit detection for free.
         public Vector3 Step(ProjectileBrain brain, Vector3 currentPosition, float deltaTime)
         {
             Vector3 velocity = brain.Velocity;
@@ -123,12 +99,10 @@ namespace CrabSystem
             return currentPosition + velocity * deltaTime;
         }
 
-        /// <summary>
-        /// Three independent conditions, all of which must hold:
-        ///   strength  — homingStrength above 0 (a runtime stat, so a modifier can grant it)
-        ///   target    — something was actually acquired; a shot at empty air never tracks
-        ///   time      — homingDelay has elapsed, for a missile that flies out before turning
-        /// </summary>
+        // Three independent conditions, all of which must hold:
+        //   strength  — homingStrength above 0 (a runtime stat, so a modifier can grant it)
+        //   target    — something was actually acquired; a shot at empty air never tracks
+        //   time      — homingDelay has elapsed, for a missile that flies out before turning
         public bool IsHoming(ProjectileBrain brain)
         {
             if (brain.Runtime.homingStrength <= 0f) return false;
@@ -154,9 +128,7 @@ namespace CrabSystem
             return steered * brain.Runtime.speed;
         }
 
-        /// <summary>
-        /// Spins the Visual child, never the root — the root's rotation is the travel direction.
-        /// </summary>
+        // Spins the Visual child, never the root — the root's rotation is the travel direction.
         private void ApplySpin(ProjectileBrain brain, float deltaTime)
         {
             if (Mathf.Approximately(spinDegreesPerSecond, 0f)) return;
@@ -166,6 +138,5 @@ namespace CrabSystem
 
             visual.Rotate(Vector3.forward, spinDegreesPerSecond * deltaTime, Space.Self);
         }
-
     }
 }

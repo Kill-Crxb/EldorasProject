@@ -4,10 +4,8 @@ namespace CrabSystem
 {
     public enum ViewSpan { Half, Full }
 
-    /// <summary>
-    /// A swappable screen inside a slot. Bind data in OnShown and release it in OnHidden —
-    /// a view is shown and hidden repeatedly as the player switches tabs.
-    /// </summary>
+    // A swappable screen inside a slot. Bind data in OnShown and release it in OnHidden —
+    // a view is shown and hidden repeatedly as the player switches tabs.
     public class UIPanelView : MonoBehaviour
     {
         [Header("Identity")]

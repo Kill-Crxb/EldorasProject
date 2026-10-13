@@ -2,15 +2,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Displays one resource (health, mana, stamina…) as a Radial360 filled image.
-/// Resolves IResourceProvider via SaveManager.PlayerBrain on load completion —
-/// consistent with every other HUD system that defers until data is ready.
-///
-/// Inspector setup:
-///   resourceDef — assign the ResourceDefinition SO (e.g. Health.asset)
-///   fillImage   — set Image Type = Filled, Fill Method = Radial360, Origin = Bottom
-/// </summary>
+// Displays one resource (health, mana, stamina…) as a Radial360 filled image.
+// Resolves IResourceProvider via SaveManager.PlayerBrain on load completion —
+// consistent with every other HUD system that defers until data is ready.
+//
+// Inspector setup:
+//   resourceDef — assign the ResourceDefinition SO (e.g. Health.asset)
+//   fillImage   — set Image Type = Filled, Fill Method = Radial360, Origin = Bottom
 
 namespace CrabSystem
 {

@@ -1,39 +1,36 @@
 using UnityEngine;
 
-/// <summary>
-/// Blackboard system module - per-entity semantic fact storage.
-/// Integrates Blackboard runtime with ControllerBrain architecture.
-/// 
-/// Responsibilities:
-/// - Initialize blackboard with schema
-/// - Expose blackboard to other modules
-/// - Handle debug visualization
-/// 
-/// NOT Responsible For:
-/// - Evaluating conditions (SemanticBridge does this)
-/// - Calculating fact values (SemanticBridge does this)
-/// - Interpreting thresholds (SemanticBridge does this)
-/// 
-/// Architecture Pattern:
-/// - IBrainModule (standard module interface)
-/// - Provides blackboard access via brain.Blackboard
-/// - Each entity type uses different schema
-/// 
-/// Usage:
-/// 1. Add BlackboardSystem to entity prefab
-/// 2. Assign appropriate schema (NinjaSchema, WolfSchema, etc.)
-/// 3. Access via: brain.Blackboard.GetBool(key)
-/// 
-/// Integration:
-/// Other systems query facts:
-///   if (brain.Blackboard.GetBool(BlackboardKey.IsWounded)) { ... }
-/// 
-/// SemanticBridge writes facts:
-///   brain.Blackboard.SetBool(BlackboardKey.IsWounded, true);
-/// 
-/// Phase 1.3: Semantic Bridge System
-/// Created: January 18, 2026
-/// </summary>
+// Blackboard system module - per-entity semantic fact storage.
+// Integrates Blackboard runtime with ControllerBrain architecture.
+//
+// Responsibilities:
+// - Initialize blackboard with schema
+// - Expose blackboard to other modules
+// - Handle debug visualization
+//
+// NOT Responsible For:
+// - Evaluating conditions (SemanticBridge does this)
+// - Calculating fact values (SemanticBridge does this)
+// - Interpreting thresholds (SemanticBridge does this)
+//
+// Architecture Pattern:
+// - IBrainModule (standard module interface)
+// - Provides blackboard access via brain.Blackboard
+// - Each entity type uses different schema
+//
+// Usage:
+// 1. Add BlackboardSystem to entity prefab
+// 2. Assign appropriate schema (NinjaSchema, WolfSchema, etc.)
+// 3. Access via: brain.Blackboard.GetBool(key)
+//
+// Integration:
+// Other systems query facts:
+//   if (brain.Blackboard.GetBool(BlackboardKey.IsWounded)) { ... }
+//
+// SemanticBridge writes facts:
+//   brain.Blackboard.SetBool(BlackboardKey.IsWounded, true);
+//
+// Phase 1.3: Semantic Bridge System
 
 namespace CrabSystem
 {
@@ -58,8 +55,6 @@ namespace CrabSystem
         // Public access
         public Blackboard Blackboard => blackboard;
         public BlackboardSchema Schema => schema;
-
-    #region IBrainModule Implementation
 
         public void Initialize(ControllerBrain controllerBrain)
         {
@@ -101,13 +96,7 @@ namespace CrabSystem
             // No per-frame logic needed here
         }
 
-    #endregion
-
-    #region Debug Helpers
-
-        /// <summary>
-        /// Log all current facts (debug only)
-        /// </summary>
+        // Log all current facts (debug only)
         [ContextMenu("Print All Facts")]
         public void PrintAllFacts()
         {
@@ -149,9 +138,7 @@ namespace CrabSystem
             }
         }
 
-        /// <summary>
-        /// Clear all facts to defaults (debug only)
-        /// </summary>
+        // Clear all facts to defaults (debug only)
         [ContextMenu("Clear All Facts")]
         public void ClearAllFacts()
         {
@@ -169,10 +156,6 @@ namespace CrabSystem
                 Debug.Log($"[BlackboardSystem] Cleared all facts on {name}");
         }
 
-    #endregion
-
-    #region Validation
-
         private void OnValidate()
         {
             if (schema == null) return;
@@ -182,7 +165,5 @@ namespace CrabSystem
                 Debug.LogWarning($"[BlackboardSystem] Schema validation failed: {error}", this);
             }
         }
-
-    #endregion
     }
 }

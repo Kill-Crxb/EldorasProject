@@ -3,10 +3,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-/// <summary>
-/// Draggable icon for one item in a UniversalGrid. Drag state belongs to
-/// GridTransferManager — this moves the visual and reports what the pointer did.
-/// </summary>
+// Draggable icon for one item in a UniversalGrid. Drag state belongs to
+// GridTransferManager — this moves the visual and reports what the pointer did.
 
 namespace CrabSystem
 {
@@ -73,8 +71,6 @@ namespace CrabSystem
                                          area.height * slotSize + (area.height - 1) * slotSpacing);
         }
 
-    #region Drag
-
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (string.IsNullOrEmpty(itemInstanceId)) return;
@@ -126,10 +122,6 @@ namespace CrabSystem
             GridTransferManager.Instance.EndDrag(eventData.position);
         }
 
-    #endregion
-
-    #region Pointer
-
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (isDragging) return;
@@ -162,7 +154,5 @@ namespace CrabSystem
             var keyboard = Keyboard.current;
             return keyboard != null && keyboard.shiftKey.isPressed;
         }
-
-    #endregion
     }
 }

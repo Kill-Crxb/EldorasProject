@@ -97,6 +97,5 @@ namespace CrabSystem
             Debug.Log($"[FootIKDebugger] Left foot pivot sits {foot.position.y - hit.point.y:0.000} m above '{hit.collider.name}'. Use that as footHeight.");
         }
     }
-
 }
 #endif

@@ -1,15 +1,13 @@
 using UnityEngine;
 
-/// <summary>
-/// Complete damage information sent from DamageOut to DamageIn.
-/// Contains all data needed for damage application and feedback.
-/// 
-/// Design:
-/// - Includes both calculated damage AND contextual information
-/// - Supports damage types (physical, magical, true)
-/// - Contains hit location data for feedback systems
-/// - Immutable after creation (all fields are readonly)
-/// </summary>
+// Complete damage information sent from DamageOut to DamageIn.
+// Contains all data needed for damage application and feedback.
+//
+// Design:
+// - Includes both calculated damage AND contextual information
+// - Supports damage types (physical, magical, true)
+// - Contains hit location data for feedback systems
+// - Immutable after creation (all fields are readonly)
 
 namespace CrabSystem
 {
@@ -45,9 +43,7 @@ namespace CrabSystem
         // Set by the attacker (a riposte, GuardModule.TakeRiposte); the defender rolls the d20 twice.
         public readonly bool advantage;
 
-        /// <summary>
-        /// Constructor - creates an immutable damage packet
-        /// </summary>
+        // Constructor - creates an immutable damage packet
         public CombatDamagePacket(
             float baseDamage,
             float finalDamage,
@@ -80,7 +76,7 @@ namespace CrabSystem
             this.advantage = advantage;
         }
 
-        /// <summary>Create a simple damage packet for testing</summary>
+        // Create a simple damage packet for testing
         public static CombatDamagePacket CreateSimple(float damage, Transform attacker, Vector3 hitPoint)
         {
             Vector3 direction = Vector3.zero;

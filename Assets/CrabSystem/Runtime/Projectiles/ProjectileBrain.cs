@@ -1,29 +1,27 @@
 using UnityEngine;
 
-/// <summary>
-/// The root controller of a projectile — a thin coordinator that discovers its modules,
-/// drives them, and holds the state everything else reads. Mirrors ControllerBrain one
-/// level down.
-///
-/// Root GameObject is the logic tier, same reasoning as e_Root. The Visual child is the
-/// presentation tier, same reasoning as m_Root, and holds no gameplay logic.
-///
-/// Lifecycle, pooling-aware:
-///   Awake     — discover and Initialize modules once per GameObject
-///   Launch    — per shot: take data, runtime and context, reset, OnLaunch modules
-///   ReportHit — the movement handler calls this for every contact its sweep finds
-///   Release   — OnRelease modules, back to the pool
-///
-/// The prefab is PURELY STRUCTURAL — one Base_Projectile serves every projectile in the game.
-/// It carries no data reference: the ability names a ProjectileData, and that names this
-/// archetype. Collider size and shape are resized from the data at launch, so a shuriken and
-/// a bolt come off the same prefab.
-///
-/// Prefab setup:
-///   Root: trigger Collider (resized at launch), ProjectileBrain, ProjectileMovementHandler,
-///   ProjectilePayload. Layer = Projectile.
-///   Child "Visual" with ProjectileVisual, assigned below.
-/// </summary>
+// The root controller of a projectile — a thin coordinator that discovers its modules,
+// drives them, and holds the state everything else reads. Mirrors ControllerBrain one
+// level down.
+//
+// Root GameObject is the logic tier, same reasoning as e_Root. The Visual child is the
+// presentation tier, same reasoning as m_Root, and holds no gameplay logic.
+//
+// Lifecycle, pooling-aware:
+//   Awake     — discover and Initialize modules once per GameObject
+//   Launch    — per shot: take data, runtime and context, reset, OnLaunch modules
+//   ReportHit — the movement handler calls this for every contact its sweep finds
+//   Release   — OnRelease modules, back to the pool
+//
+// The prefab is PURELY STRUCTURAL — one Base_Projectile serves every projectile in the game.
+// It carries no data reference: the ability names a ProjectileData, and that names this
+// archetype. Collider size and shape are resized from the data at launch, so a shuriken and
+// a bolt come off the same prefab.
+//
+// Prefab setup:
+//   Root: trigger Collider (resized at launch), ProjectileBrain, ProjectileMovementHandler,
+//   ProjectilePayload. Layer = Projectile.
+//   Child "Visual" with ProjectileVisual, assigned below.
 
 namespace CrabSystem
 {
@@ -37,45 +35,39 @@ namespace CrabSystem
         private ProjectilePayload payload;
         private int piercesLeft;
 
-        /// <summary>The shared asset this shot is running. Read-only — never write through it.</summary>
+        // The shared asset this shot is running. Read-only — never write through it.
         public ProjectileData Data { get; private set; }
 
-        /// <summary>This shot's numbers, resolved by the launcher. Nothing in flight changes it.</summary>
+        // This shot's numbers, resolved by the launcher. Nothing in flight changes it.
         public ProjectileRuntime Runtime { get; private set; }
 
         public ControllerBrain Source { get; private set; }
         public AbilityDefinition SourceAbility { get; private set; }
 
-        /// <summary>
-        /// The dice THIS shot rolls, supplied by the launcher. Null falls back to the asset's
-        /// weaponData, so an ordinary thrown weapon is unaffected.
-        /// </summary>
+        // The dice THIS shot rolls, supplied by the launcher. Null falls back to the asset's
+        // weaponData, so an ordinary thrown weapon is unaffected.
         public DiceProfile Dice { get; private set; }
 
-        /// <summary>
-        /// What decides this shot's meaning on arrival, resolved by the launcher. Null for an
-        /// ordinary projectile — the payload then applies its normal damage.
-        /// </summary>
+        // What decides this shot's meaning on arrival, resolved by the launcher. Null for an
+        // ordinary projectile — the payload then applies its normal damage.
         public IProjectileArrivalHandler Arrival { get; private set; }
 
-        /// <summary>Optional homing target supplied at launch.</summary>
+        // Optional homing target supplied at launch.
         public Transform Target { get; private set; }
 
-        /// <summary>The Visual child. Cosmetic spin goes here, never on the root.</summary>
+        // The Visual child. Cosmetic spin goes here, never on the root.
         public Transform VisualRoot => visual != null ? visual.transform : null;
 
-        /// <summary>Current travel direction, normalised. Movement updates this.</summary>
+        // Current travel direction, normalised. Movement updates this.
         public Vector3 Direction { get; private set; }
 
-        /// <summary>
-        /// Current velocity. Lives here rather than on ProjectileMovement because that block is
-        /// a shared asset and must stay stateless.
-        /// </summary>
+        // Current velocity. Lives here rather than on ProjectileMovement because that block is
+        // a shared asset and must stay stateless.
         public Vector3 Velocity { get; set; }
 
         public float ElapsedTime { get; private set; }
 
-        /// <summary>False once released. The movement handler checks this to stop mid-sweep.</summary>
+        // False once released. The movement handler checks this to stop mid-sweep.
         public bool IsAlive { get; private set; }
 
         private void Awake()
@@ -111,10 +103,8 @@ namespace CrabSystem
 
         // ── Launch ────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Start a shot. Called by ProjectileLauncher straight after pulling this instance from
-        /// the pool. Everything per-cast arrives here — nothing is read from the scene.
-        /// </summary>
+        // Start a shot. Called by ProjectileLauncher straight after pulling this instance from
+        // the pool. Everything per-cast arrives here — nothing is read from the scene.
         public void Launch(ProjectileData data, ProjectileRuntime runtime, ProjectileLaunch launch)
         {
             Data = data;
@@ -145,15 +135,13 @@ namespace CrabSystem
                 modules[i].OnLaunch();
         }
 
-        /// <summary>
-        /// Rides the caster — position AND facing. What makes a Stream a breath rather than a
-        /// cloud: turning your head has to sweep the cone, so the direction is re-read every frame
-        /// instead of being fixed at launch.
-        ///
-        /// Uses the entity root rather than the launch anchor, because the anchor is resolved once
-        /// by the launcher and this needs a live transform. Silently does nothing if the caster
-        /// died mid-stream, leaving the volume to finish where it stands.
-        /// </summary>
+        // Rides the caster — position AND facing. What makes a Stream a breath rather than a
+        // cloud: turning your head has to sweep the cone, so the direction is re-read every frame
+        // instead of being fixed at launch.
+        //
+        // Uses the entity root rather than the launch anchor, because the anchor is resolved once
+        // by the launcher and this needs a live transform. Silently does nothing if the caster
+        // died mid-stream, leaving the volume to finish where it stands.
         private void FollowSource()
         {
             if (Data == null || !Data.followSource) return;
@@ -165,16 +153,14 @@ namespace CrabSystem
             transform.rotation = root.rotation;
         }
 
-        /// <summary>
-        /// Grows or shrinks the projectile as it travels, from the data's curve.
-        ///
-        /// On the ROOT, so the collider grows with the visual — a cone that looked wide but hit
-        /// narrow would be the worst kind of lie. The collider is a trigger resized at launch and
-        /// the sweep uses Runtime values, so scaling the root scales what it touches too.
-        ///
-        /// Runtime.scale is this cast's size — asset scale x tier x amplifiers — and the curve
-        /// multiplies it, so a Grand-tier cone is a bigger cone rather than a differently-shaped one.
-        /// </summary>
+        // Grows or shrinks the projectile as it travels, from the data's curve.
+        //
+        // On the ROOT, so the collider grows with the visual — a cone that looked wide but hit
+        // narrow would be the worst kind of lie. The collider is a trigger resized at launch and
+        // the sweep uses Runtime values, so scaling the root scales what it touches too.
+        //
+        // Runtime.scale is this cast's size — asset scale x tier x amplifiers — and the curve
+        // multiplies it, so a Grand-tier cone is a bigger cone rather than a differently-shaped one.
         private void ApplyLifetimeScale()
         {
             if (Data == null) return;
@@ -186,7 +172,7 @@ namespace CrabSystem
             transform.localScale = Vector3.one * scale;
         }
 
-        /// <summary>Movement calls this when it steers. Keeps facing in sync with travel.</summary>
+        // Movement calls this when it steers. Keeps facing in sync with travel.
         public void SetDirection(Vector3 direction)
         {
             if (direction.sqrMagnitude < 0.0001f) return;
@@ -197,13 +183,11 @@ namespace CrabSystem
 
         // ── Hits ──────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Returns true when the projectile stopped here. The handler uses that to decide whether
-        /// to keep sweeping through the collider.
-        ///
-        /// Geometry always stops it. A target only stops it when the payload's conditions passed —
-        /// a filtered target is a pass-through, so a friendly in the way does not eat the shot.
-        /// </summary>
+        // Returns true when the projectile stopped here. The handler uses that to decide whether
+        // to keep sweeping through the collider.
+        //
+        // Geometry always stops it. A target only stops it when the payload's conditions passed —
+        // a filtered target is a pass-through, so a friendly in the way does not eat the shot.
         public bool ReportHit(ProjectileHitInfo hit)
         {
             if (!IsAlive) return false;
@@ -240,7 +224,7 @@ namespace CrabSystem
 
         // ── Release ───────────────────────────────────────────────────────────
 
-        /// <summary>Return to the pool. Safe to call more than once.</summary>
+        // Return to the pool. Safe to call more than once.
         public void Release()
         {
             if (!IsAlive) return;

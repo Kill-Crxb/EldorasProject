@@ -5,25 +5,17 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-/// <summary>
-/// Resource System Debug Display - Performance-optimized OnGUI display.
-/// Shows resource state, system status, and stat integration.
-/// </summary>
+// Resource System Debug Display - Performance-optimized OnGUI display.
+// Shows resource state, system status, and stat integration.
 
 namespace CrabSystem
 {
     public class ResourceDebugDisplay : MonoBehaviour
     {
-    #region Constants
-
         private const float FIND_PLAYER_INTERVAL = 1f;
         private const float DEBUG_WINDOW_WIDTH = 380f;
         private const float DEBUG_WINDOW_PADDING = 10f;
         private const int HINT_FONT_SIZE_REDUCTION = 4;
-
-    #endregion
-
-    #region Inspector
 
         [Header("References")]
         [Tooltip("ControllerBrain to monitor (leave null to auto-find player)")]
@@ -49,10 +41,6 @@ namespace CrabSystem
         [SerializeField] private Color errorColor = Color.red;
         [SerializeField] private Color backgroundColor = new Color(0, 0, 0, 0.7f);
 
-    #endregion
-
-    #region State
-
         private InputSystem inputSystem;
         private GUIStyle labelStyle;
         private GUIStyle headerStyle;
@@ -61,10 +49,6 @@ namespace CrabSystem
 
         private Texture2D backgroundTexture;
         private float findPlayerCooldown = 0f;
-
-    #endregion
-
-    #region Unity Lifecycle
 
         void Start()
         {
@@ -134,10 +118,6 @@ namespace CrabSystem
             }
         }
 
-    #endregion
-
-    #region Player Finding
-
         void FindPlayer()
         {
             if (brain == null)
@@ -158,10 +138,6 @@ namespace CrabSystem
                 inputSystem = brain.GetModule<InputSystem>();
             }
         }
-
-    #endregion
-
-    #region Drawing Methods
 
         void DrawHeader(ref float x, ref float y)
         {
@@ -328,10 +304,6 @@ namespace CrabSystem
             labelStyle.fontStyle = FontStyle.Normal;
         }
 
-    #endregion
-
-    #region Helper Methods
-
         int CalculateLineCount(List<ResourceDefinition> allResources)
         {
             int count = 2; // Header + blank
@@ -384,10 +356,6 @@ namespace CrabSystem
             return result;
         }
 
-    #endregion
-
-    #region Context Menu Actions
-
         [ContextMenu("Toggle Display")]
         void ToggleDisplay()
         {
@@ -434,9 +402,6 @@ namespace CrabSystem
                 Debug.Log("[ResourceDebugDisplay] Healed all resources to max");
             }
         }
-
-    #endregion
     }
-
 }
 #endif

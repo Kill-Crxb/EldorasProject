@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// The button bar that decides what the bottom window is showing. A page is a set of
-/// slots: Bag shows inventory and stats together, Spellbook shows the spellbook alone.
-///
-/// The directory owns these slots outright — they are deliberately NOT listed in
-/// UIPanel.slots, because the panel activates every slot it owns when it opens and the
-/// two would fight over the same objects.
-/// </summary>
+// The button bar that decides what the bottom window is showing. A page is a set of
+// slots: Bag shows inventory and stats together, Spellbook shows the spellbook alone.
+//
+// The directory owns these slots outright — they are deliberately NOT listed in
+// UIPanel.slots, because the panel activates every slot it owns when it opens and the
+// two would fight over the same objects.
 
 namespace CrabSystem
 {

@@ -1,30 +1,24 @@
 using UnityEngine;
 
-/// <summary>
-/// The shared, immutable half of a projectile's configuration.
-///
-/// One asset per "kind" of projectile — Shuriken, Fireball, Iceball. Several assets can
-/// share one archetype prefab: the prefab defines structure (collider shape, which modules
-/// are present), the asset defines everything that can vary without changing how the object
-/// physically behaves.
-///
-/// Rule of thumb:
-///   Different collider shape or module set  → new archetype prefab
-///   Only numbers, visuals or effects differ → same prefab, new ProjectileData
-///
-/// NEVER mutated at runtime. Per-cast variation lives in ProjectileRuntime, which is a
-/// struct copied by value at launch. Nothing in flight can reach this asset.
-/// </summary>
+// The shared, immutable half of a projectile's configuration.
+//
+// One asset per "kind" of projectile — Shuriken, Fireball, Iceball. Several assets can
+// share one archetype prefab: the prefab defines structure (collider shape, which modules
+// are present), the asset defines everything that can vary without changing how the object
+// physically behaves.
+//
+// Rule of thumb:
+//   Different collider shape or module set  → new archetype prefab
+//   Only numbers, visuals or effects differ → same prefab, new ProjectileData
+//
+// NEVER mutated at runtime. Per-cast variation lives in ProjectileRuntime, which is a
+// struct copied by value at launch. Nothing in flight can reach this asset.
 
 namespace CrabSystem
 {
     [CreateAssetMenu(fileName = "ProjectileData_", menuName = "CrabSystem/Projectile Data")]
     public class ProjectileData : ScriptableObject
     {
-        // =========================================================================
-        // Core
-        // =========================================================================
-
         // Core is EXACTLY what ProjectileRuntime copies at launch — the values a
         // modifier can adjust per cast. Everything below it is authoring-time tuning.
 
@@ -58,13 +52,11 @@ namespace CrabSystem
                  "existed behaves exactly as it did.")]
         public AnimationCurve scaleOverLifetime = AnimationCurve.Constant(0f, 1f, 1f);
 
-        /// <summary>
-        /// The scale multiplier at a normalised point in the projectile's life.
-        ///
-        /// Guarded rather than trusting the curve: an asset serialized before this field existed
-        /// deserializes an EMPTY curve, and Evaluate on an empty curve returns 0 — which would
-        /// shrink every existing projectile in the game to nothing on its first frame.
-        /// </summary>
+        // The scale multiplier at a normalised point in the projectile's life.
+        //
+        // Guarded rather than trusting the curve: an asset serialized before this field existed
+        // deserializes an EMPTY curve, and Evaluate on an empty curve returns 0 — which would
+        // shrink every existing projectile in the game to nothing on its first frame.
         public float ScaleAt(float normalisedTime)
         {
             if (scaleOverLifetime == null || scaleOverLifetime.length == 0) return 1f;
@@ -82,19 +74,11 @@ namespace CrabSystem
                  "so the same projectile serves damage and healing.")]
         public TargetStance targetStance = TargetStance.Hostile;
 
-        // =========================================================================
-        // Archetype
-        // =========================================================================
-
         [Header("Archetype")]
         [Tooltip("The prefab this projectile is built from — normally Base_Projectile. It is purely " +
                  "structural: the components and the collider, nothing else. Several ProjectileData " +
                  "assets share one archetype and therefore share one pool.")]
         public GameObject archetypePrefab;
-
-        // =========================================================================
-        // Behaviour blocks
-        // =========================================================================
 
         [Header("Spawn")]
         [Tooltip("Where the projectile comes into the world — a brain anchor, a model socket, or overhead.")]
@@ -107,10 +91,6 @@ namespace CrabSystem
         [Header("Movement")]
         [Tooltip("Travel vs hitscan, spin, and homing tuning — one block of toggles.")]
         public ProjectileMovement movement = new ProjectileMovement();
-
-        // =========================================================================
-        // Volume — Stream and Field
-        // =========================================================================
 
         // A Stream and a Field are the same object with two settings different, which is why
         // neither got its own system: a volume that sits somewhere and ticks everything inside it.
@@ -151,10 +131,6 @@ namespace CrabSystem
                  "split you get shotgunning, where a wide breath deals its damage once per bolt.")]
         public bool cosmeticOnly = false;
 
-        // =========================================================================
-        // Collision
-        // =========================================================================
-
         [Header("Collision")]
         [Tooltip("Layers the sweep tests against. Include Hurtbox for entities, plus whatever layer your " +
                  "walls and floors use so the projectile stops on geometry.")]
@@ -174,9 +150,7 @@ namespace CrabSystem
                  "through the world.")]
         public bool hitEnvironment = true;
 
-        // =========================================================================
         // Damage — where the numbers come from, in the order they are consulted
-        // =========================================================================
 
         [Header("Damage")]
         [Tooltip("Dice for this projectile, used when the firing ability's DamageEffect has " +
@@ -191,10 +165,6 @@ namespace CrabSystem
 
         [Tooltip("Damage type for the fallback path, and for hits on legacy destructibles.")]
         [IdRef(IdKind.DamageType)] public string fallbackDamageType = DamageTypeIds.Physical;
-
-        // =========================================================================
-        // Presentation
-        // =========================================================================
 
         [Header("Presentation")]
         [Tooltip("Spawned under the archetype's Visual child at launch. This is what makes one orb " +
@@ -215,17 +185,9 @@ namespace CrabSystem
         [Tooltip("Seconds before the impact VFX instance is destroyed.")]
         public float impactVfxLifetime = 3f;
 
-        // =========================================================================
-        // Pooling
-        // =========================================================================
-
         [Header("Pooling")]
         [Tooltip("Instances created up front the first time this projectile is fired.")]
         public int prewarmCount = 8;
-
-        // =========================================================================
-        // Validation
-        // =========================================================================
 
         private void OnValidate()
         {

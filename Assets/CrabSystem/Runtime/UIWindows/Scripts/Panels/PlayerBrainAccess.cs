@@ -1,9 +1,7 @@
 using UnityEngine;
 
-/// <summary>
-/// Single way for UI to reach the player. SaveManager knows first; the scene search
-/// is the fallback for scenes that start without going through character select.
-/// </summary>
+// Single way for UI to reach the player. SaveManager knows first; the scene search
+// is the fallback for scenes that start without going through character select.
 
 namespace CrabSystem
 {

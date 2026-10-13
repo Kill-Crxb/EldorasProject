@@ -35,6 +35,5 @@ namespace CrabSystem
             if (controller != null) controller.LogLayerBindings();
         }
     }
-
 }
 #endif

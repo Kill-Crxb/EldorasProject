@@ -46,8 +46,6 @@ namespace CrabSystem
 
         public void UpdateModule() { }
 
-    #region Collision Detection
-
         void OnTriggerEnter(Collider other)
         {
             if (brain == null) return;
@@ -65,10 +63,6 @@ namespace CrabSystem
             if (brain == null) return;
             if (GetContactTypeByLayer(other) == FeetContactType.Ground) groundContacts.Remove(other);
         }
-
-    #endregion
-
-    #region Layer-Based Classification
 
         private FeetContactType GetContactTypeByLayer(Collider other)
         {
@@ -94,7 +88,5 @@ namespace CrabSystem
         {
             return ((1 << layer) & mask) != 0;
         }
-
-    #endregion
     }
 }

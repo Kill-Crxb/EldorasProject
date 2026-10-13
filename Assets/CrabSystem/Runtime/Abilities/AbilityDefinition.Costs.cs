@@ -1,19 +1,13 @@
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-/// <summary>
-/// AbilityDefinition - Costs Partial
-/// Resource costs, cooldowns, and cast time management
-/// </summary>
+// AbilityDefinition - Costs Partial
+// Resource costs, cooldowns, and cast time management
 
 namespace CrabSystem
 {
     public partial class AbilityDefinition
     {
-        // ========================================
-        // COSTS & COOLDOWN
-        // ========================================
-
         [Header("Costs & Cooldown")]
         [Tooltip("Resource costs (can have multiple - mana + stamina, etc.)")]
         public ResourceCostEntry[] resourceCosts = new ResourceCostEntry[0];
@@ -24,13 +18,7 @@ namespace CrabSystem
         [Tooltip("Cast time before execution (0 = instant)")]
         public float castTime = 0f;
 
-        // ========================================
-        // POLICY HELPERS
-        // ========================================
-
-        /// <summary>
-        /// Get total resource cost for a specific resource
-        /// </summary>
+        // Get total resource cost for a specific resource
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetResourceCost(ResourceDefinition resource)
         {
@@ -45,9 +33,7 @@ namespace CrabSystem
             return 0f;
         }
 
-        /// <summary>
-        /// Check if this ability uses a specific resource
-        /// </summary>
+        // Check if this ability uses a specific resource
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool UsesResource(ResourceDefinition resource)
         {
@@ -62,19 +48,13 @@ namespace CrabSystem
             return false;
         }
 
-        /// <summary>
-        /// Does this ability have a cast time?
-        /// </summary>
+        // Does this ability have a cast time?
         public bool HasCastTime => castTime > 0f;
 
-        /// <summary>
-        /// Is this an instant-cast ability?
-        /// </summary>
+        // Is this an instant-cast ability?
         public bool IsInstant => castTime <= 0f;
 
-        /// <summary>
-        /// Does this ability have a cooldown?
-        /// </summary>
+        // Does this ability have a cooldown?
         public bool HasCooldown => cooldown > 0f;
     }
 }

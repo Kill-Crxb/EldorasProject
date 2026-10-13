@@ -1,35 +1,33 @@
 
 using UnityEngine;
 
-/// <summary>
-/// ProjectileLauncher — the bridge between an ability and a projectile. Lives on the
-/// CHARACTER brain, not on the projectile.
-///
-/// Listens to AbilitySystem.OnMoveEvent and fires on the clip's Cue(n) that matches the
-/// executing ability's effectCue, so a throw releases exactly on the animation frame you place
-/// the event on.
-///
-/// Auto-discovered: ControllerBrain.CacheModuleArrays walks GetComponentsInChildren
-/// &lt;IBrainModule&gt;, so this needs NO serialized field on ControllerBrain and no edit to it.
-///
-/// Works identically for player and NPC. Q routes through
-/// HotbarKeybindSet.QuickslotQ → HotbarSystem.TriggerSlot → AbilitySystem.UseAbility;
-/// GOAP routes through AbilitySystem.UseAbility directly. Neither path knows this exists.
-///
-/// AIM is configured per-projectile in ProjectileData.aim (direction mode + target sources)
-/// and executed here, because the character-side lookups — target lock, perception — only
-/// exist on this side. Even that needs no IsPlayer check: TargetLock is null on NPCs and
-/// PerceptionModule is null on the player, so each falls through to what it actually has.
-///
-/// SETUP: add this component to the Component_Brain GameObject (or any child of it).
-///
-/// The ability points at a ProjectileData, which points at its archetype prefab — so one
-/// Base_Projectile serves every projectile, and its collider is resized from the data.
-///
-/// GOTCHA: the ability's effectCue MUST be 1 or more, and its clip must raise that Cue. With 0,
-/// AbilitySystem.ExecuteAbility applies effects directly, no Cue arrives, and nothing spawns —
-/// silently.
-/// </summary>
+// ProjectileLauncher — the bridge between an ability and a projectile. Lives on the
+// CHARACTER brain, not on the projectile.
+//
+// Listens to AbilitySystem.OnMoveEvent and fires on the clip's Cue(n) that matches the
+// executing ability's effectCue, so a throw releases exactly on the animation frame you place
+// the event on.
+//
+// Auto-discovered: ControllerBrain.CacheModuleArrays walks GetComponentsInChildren
+// <IBrainModule>, so this needs NO serialized field on ControllerBrain and no edit to it.
+//
+// Works identically for player and NPC. Q routes through
+// HotbarKeybindSet.QuickslotQ → HotbarSystem.TriggerSlot → AbilitySystem.UseAbility;
+// GOAP routes through AbilitySystem.UseAbility directly. Neither path knows this exists.
+//
+// AIM is configured per-projectile in ProjectileData.aim (direction mode + target sources)
+// and executed here, because the character-side lookups — target lock, perception — only
+// exist on this side. Even that needs no IsPlayer check: TargetLock is null on NPCs and
+// PerceptionModule is null on the player, so each falls through to what it actually has.
+//
+// SETUP: add this component to the Component_Brain GameObject (or any child of it).
+//
+// The ability points at a ProjectileData, which points at its archetype prefab — so one
+// Base_Projectile serves every projectile, and its collider is resized from the data.
+//
+// GOTCHA: the ability's effectCue MUST be 1 or more, and its clip must raise that Cue. With 0,
+// AbilitySystem.ExecuteAbility applies effects directly, no Cue arrives, and nothing spawns —
+// silently.
 
 namespace CrabSystem
 {
@@ -171,7 +169,7 @@ namespace CrabSystem
                 Spawn(prefab, data, plan, launch, Fan(launch.direction, plan.spreadDegrees, i, count));
         }
 
-        /// <summary>One instance. Everything it needs is already resolved; this only pulls and launches.</summary>
+        // One instance. Everything it needs is already resolved; this only pulls and launches.
         private void Spawn(GameObject prefab, ProjectileData data, ProjectileLaunchPlan plan,
                            ProjectileLaunch launch, Vector3 direction)
         {
@@ -193,11 +191,9 @@ namespace CrabSystem
             projectile.Launch(data, plan.runtime, launch);
         }
 
-        /// <summary>
-        /// Spreads a volley evenly across the fan, around world up. Two instances sit at the
-        /// edges, three put one dead centre. A single projectile, or a spread of zero, is
-        /// untouched — which is every non-split shot in the game.
-        /// </summary>
+        // Spreads a volley evenly across the fan, around world up. Two instances sit at the
+        // edges, three put one dead centre. A single projectile, or a spread of zero, is
+        // untouched — which is every non-split shot in the game.
         private static Vector3 Fan(Vector3 direction, float spreadDegrees, int index, int count)
         {
             if (count <= 1) return direction;
@@ -211,16 +207,14 @@ namespace CrabSystem
 
         // ── Aim ───────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Where it starts, which way it points, and what it may track.
-        ///
-        /// The order is not obvious and matters. Two would-be circular dependencies: the aim
-        /// probe needs an origin but an AboveTarget origin needs the target, and TowardTarget
-        /// needs a target but the probe needs a direction. Both dissolve by probing from the
-        /// ANCHOR rather than the eventual spawn point — a probe comes from the caster's chest
-        /// regardless of where the projectile appears. Sky-dropped meteors are still aimed by
-        /// the person casting them.
-        /// </summary>
+        // Where it starts, which way it points, and what it may track.
+        //
+        // The order is not obvious and matters. Two would-be circular dependencies: the aim
+        // probe needs an origin but an AboveTarget origin needs the target, and TowardTarget
+        // needs a target but the probe needs a direction. Both dissolve by probing from the
+        // ANCHOR rather than the eventual spawn point — a probe comes from the caster's chest
+        // regardless of where the projectile appears. Sky-dropped meteors are still aimed by
+        // the person casting them.
         private ProjectileLaunch ResolveLaunch(ProjectileData data, AbilityDefinition ability,
                                                TargetStance stance)
         {

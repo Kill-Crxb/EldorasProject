@@ -1,11 +1,9 @@
 using System;
 
-/// <summary>
-/// Serialisable state for one slot in an action bar.
-/// abilitySlotId holds the asset name of the AbilitySlotData SO assigned to this slot,
-/// or empty when the slot is unassigned.
-/// keybindKey is reserved for a future per-player remapping pass and is always "" for now.
-/// </summary>
+// Serialisable state for one slot in an action bar.
+// abilitySlotId holds the asset name of the AbilitySlotData SO assigned to this slot,
+// or empty when the slot is unassigned.
+// keybindKey is reserved for a future per-player remapping pass and is always "" for now.
 
 namespace CrabSystem
 {

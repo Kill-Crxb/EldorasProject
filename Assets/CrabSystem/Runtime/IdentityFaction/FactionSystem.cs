@@ -2,22 +2,18 @@ using UnityEngine;
 
 namespace CrabSystem.Factions
 {
-    /// <summary>
-    /// Per-entity faction module. Holds a FactionDefinition asset reference —
-    /// the single runtime representation of "what faction am I".
-    ///
-    /// Consumers ask stance questions here (IsHostileTo / GetStanceTo) and the
-    /// module delegates to FactionManager's relationship matrix.
-    ///
-    /// Strings appear only at the persistence boundary: CurrentFactionId
-    /// (used by saves and CharacterConfigData) resolves through
-    /// FactionManager.Resolve on set.
-    /// </summary>
+    // Per-entity faction module. Holds a FactionDefinition asset reference —
+    // the single runtime representation of "what faction am I".
+    //
+    // Consumers ask stance questions here (IsHostileTo / GetStanceTo) and the
+    // module delegates to FactionManager's relationship matrix.
+    //
+    // Strings appear only at the persistence boundary: CurrentFactionId
+    // (used by saves and CharacterConfigData) resolves through
+    // FactionManager.Resolve on set.
     public class FactionSystem : MonoBehaviour, IBrainModule, ISaveable
     {
         public int InitOrder => 10;
-
-        #region Inspector
 
         [Header("Module Settings")]
         [SerializeField] private bool isEnabled = true;
@@ -26,15 +22,7 @@ namespace CrabSystem.Factions
         [Tooltip("This entity's faction. Drag a FactionDefinition asset here for scene-placed entities; spawned NPCs get it from their archetype.")]
         [SerializeField] private FactionDefinition currentFaction;
 
-        #endregion
-
-        #region Private Fields
-
         private ControllerBrain brain;
-
-        #endregion
-
-        #region Properties
 
         public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
 
@@ -44,20 +32,18 @@ namespace CrabSystem.Factions
             set => currentFaction = value;
         }
 
-        /// <summary>
-        /// String id view of the faction — persistence boundary only.
-        /// Setting resolves the id to its asset via FactionManager.
-        ///
-        /// An id that does NOT resolve leaves the current faction alone. This used to assign
-        /// the null straight through, so one stale or misspelled id anywhere upstream did not
-        /// merely fail to set a faction — it WIPED the one configured on the prefab, silently
-        /// turning that entity factionless. Everything downstream then reads as non-friendly,
-        /// because ProjectileAim.IsFriendly and StrikeHandler both treat "no faction" as "not an
-        /// ally", so heals and buffs quietly stop finding anyone.
-        ///
-        /// LoadSaveData below already guarded against exactly this for save data. The setter is
-        /// the same boundary and needed the same rule.
-        /// </summary>
+        // String id view of the faction — persistence boundary only.
+        // Setting resolves the id to its asset via FactionManager.
+        //
+        // An id that does NOT resolve leaves the current faction alone. This used to assign
+        // the null straight through, so one stale or misspelled id anywhere upstream did not
+        // merely fail to set a faction — it WIPED the one configured on the prefab, silently
+        // turning that entity factionless. Everything downstream then reads as non-friendly,
+        // because ProjectileAim.IsFriendly and StrikeHandler both treat "no faction" as "not an
+        // ally", so heals and buffs quietly stop finding anyone.
+        //
+        // LoadSaveData below already guarded against exactly this for save data. The setter is
+        // the same boundary and needed the same rule.
         public string CurrentFactionId
         {
             get => currentFaction != null ? currentFaction.FactionId : "";
@@ -74,10 +60,6 @@ namespace CrabSystem.Factions
         public Color CurrentFactionColor
             => currentFaction != null ? currentFaction.FactionColor : Color.white;
 
-        #endregion
-
-        #region IBrainModule Implementation
-
         public void Initialize(ControllerBrain controllerBrain)
         {
             brain = controllerBrain;
@@ -91,10 +73,6 @@ namespace CrabSystem.Factions
         {
         }
 
-        #endregion
-
-        #region Stance Queries
-
         public FactionRelationship GetStanceTo(FactionDefinition other)
             => FactionManager.GetStance(currentFaction, other);
 
@@ -107,13 +85,9 @@ namespace CrabSystem.Factions
         public bool IsFriendlyTo(ControllerBrain other)
             => GetStanceTo(other) == FactionRelationship.Friendly;
 
-        /// <summary>Damage multiplier when this entity attacks the target. 1.0 by default.</summary>
+        // Damage multiplier when this entity attacks the target. 1.0 by default.
         public float GetDamageMultiplierAgainst(ControllerBrain target)
             => FactionManager.GetDamageModifier(currentFaction, target?.Faction?.CurrentFaction);
-
-        #endregion
-
-        #region ISaveable Implementation
 
         public string GetSaveId() => "faction";
 
@@ -146,7 +120,5 @@ namespace CrabSystem.Factions
         }
 
         public int GetSaveVersion() => 1;
-
-        #endregion
     }
 }

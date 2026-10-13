@@ -4,27 +4,25 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// CharacterSelectScreen
-///
-/// Attach to: CharacterList GameObject
-///
-/// Inspector wiring:
-///
-///   [Character List]
-///   Character List Container  — Transform cards spawn into (vertical layout group)
-///   Character Slot Prefab     — CharacterSaveCard prefab
-///
-///   [Character Menu]
-///   New Character Button      — New button (loads new character creation panel)
-///   Delete Button             — Del button (deletes currently selected character)
-///
-///   [Main Buttons]
-///   Play Button               — JoinGameButton
-///
-///   [Feedback]
-///   Feedback Text             — TextMeshProUGUI
-/// </summary>
+// CharacterSelectScreen
+//
+// Attach to: CharacterList GameObject
+//
+// Inspector wiring:
+//
+//   [Character List]
+//   Character List Container  — Transform cards spawn into (vertical layout group)
+//   Character Slot Prefab     — CharacterSaveCard prefab
+//
+//   [Character Menu]
+//   New Character Button      — New button (loads new character creation panel)
+//   Delete Button             — Del button (deletes currently selected character)
+//
+//   [Main Buttons]
+//   Play Button               — JoinGameButton
+//
+//   [Feedback]
+//   Feedback Text             — TextMeshProUGUI
 
 namespace CrabSystem
 {

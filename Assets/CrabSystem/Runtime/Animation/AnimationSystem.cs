@@ -141,12 +141,10 @@ namespace CrabSystem
             animator.SetLayerWeight(layerIndex, weight);
         }
 
-        /// <summary>
-        /// Smoothly blends a layer's weight to <paramref name="targetWeight"/> over
-        /// <paramref name="duration"/> seconds. The layer's current clip keeps playing
-        /// while the weight fades, so recovery frames blend out instead of snapping.
-        /// A direct SetLayerWeight call (e.g. a new ability starting) cancels the fade.
-        /// </summary>
+        // Smoothly blends a layer's weight to targetWeight over
+        // duration seconds. The layer's current clip keeps playing
+        // while the weight fades, so recovery frames blend out instead of snapping.
+        // A direct SetLayerWeight call (e.g. a new ability starting) cancels the fade.
         public void FadeLayerWeight(int layerIndex, float targetWeight, float duration)
         {
             if (!IsEnabled || animator == null || layerIndex < 0 || layerIndex >= animator.layerCount) return;

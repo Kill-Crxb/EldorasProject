@@ -1,17 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// HotbarHud — spawns the player's active bars into their anchors, and is the one thing that
-/// knows the full set of bars that should be on screen.
-///
-/// That last part is the point. Before this existed, each ActionBarView was hand-placed and
-/// found the player itself, so nothing anywhere could tell that a bar had no view: it simply
-/// did not appear, with no error. Here, every active bar is accounted for or logged.
-///
-/// One of these per canvas. It also owns the AbilityPickerPanel reference, so the bar prefab
-/// carries no scene references and stays a clean prefab.
-/// </summary>
+// HotbarHud — spawns the player's active bars into their anchors, and is the one thing that
+// knows the full set of bars that should be on screen.
+//
+// That last part is the point. Before this existed, each ActionBarView was hand-placed and
+// found the player itself, so nothing anywhere could tell that a bar had no view: it simply
+// did not appear, with no error. Here, every active bar is accounted for or logged.
+//
+// One of these per canvas. It also owns the AbilityPickerPanel reference, so the bar prefab
+// carries no scene references and stays a clean prefab.
 
 namespace CrabSystem
 {
@@ -67,11 +65,9 @@ namespace CrabSystem
             Rebuild();
         }
 
-        /// <summary>
-        /// Tears down every spawned bar and rebuilds from the active list. A full rebuild rather
-        /// than a diff because the active list changes rarely — on load, and when the player
-        /// toggles a bar — and a diff would have to reason about anchor ordering anyway.
-        /// </summary>
+        // Tears down every spawned bar and rebuilds from the active list. A full rebuild rather
+        // than a diff because the active list changes rarely — on load, and when the player
+        // toggles a bar — and a diff would have to reason about anchor ordering anyway.
         public void Rebuild()
         {
             DespawnAll();

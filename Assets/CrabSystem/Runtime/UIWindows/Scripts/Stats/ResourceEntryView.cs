@@ -1,21 +1,17 @@
 using TMPro;
 using UnityEngine;
 
-/// <summary>
-/// One resource row. Shows a live pool as "18 / 30" rather than a stat value, which is the
-/// difference between this and StatEntryView: character.max_stamina is the ceiling, and the
-/// only place the current value exists is ResourceSystem.
-///
-/// The resource it shows is authored on the instance, so adding or reordering rows never
-/// needs a script change.
-/// </summary>
+// One resource row. Shows a live pool as "18 / 30" rather than a stat value, which is the
+// difference between this and StatEntryView: character.max_stamina is the ceiling, and the
+// only place the current value exists is ResourceSystem.
+//
+// The resource it shows is authored on the instance, so adding or reordering rows never
+// needs a script change.
 
 namespace CrabSystem
 {
     public class ResourceEntryView : MonoBehaviour
     {
-    #region Inspector
-
         [Header("Binding")]
         [Tooltip("Resource this row displays, e.g. StaminaDefinition.")]
         [SerializeField] private ResourceDefinition resource;
@@ -34,14 +30,10 @@ namespace CrabSystem
         [Tooltip("Tint the value by the resource's authored colour.")]
         [SerializeField] private bool useResourceColor;
 
-    #endregion
-
         public ResourceDefinition Resource => resource;
 
-        /// <summary>
-        /// Writes the label from the definition and the value from the provider.
-        /// Returns false when there is nothing to show, so the panel can report it once.
-        /// </summary>
+        // Writes the label from the definition and the value from the provider.
+        // Returns false when there is nothing to show, so the panel can report it once.
         public bool Bind(IResourceProvider provider)
         {
             if (resource == null) return false;

@@ -1,25 +1,23 @@
 ﻿using UnityEngine;
 
-/// <summary>
-/// ItemSubType - Specific item types under categories
-/// 
-/// Purpose: Replace hardcoded EquipmentSlot/ItemType enums with data-driven system
-/// 
-/// Examples:
-/// - Category: Weapon → SubTypes: Katana, Longsword, Bow, Staff
-/// - Category: Armor → SubTypes: Helmet, Chestplate, Gloves, Boots
-/// - Category: Consumable → SubTypes: Health Potion, Mana Potion, Buff Scroll
-/// 
-/// Usage:
-/// - Create assets: Right-click → Items/SubType
-/// - Assign parent category
-/// - Configure equipment binding if applicable
-/// 
-/// Benefits:
-/// - Add new item types without code changes
-/// - Each subtype can have unique properties
-/// - Flexible equipment slot assignment
-/// </summary>
+// ItemSubType - Specific item types under categories
+//
+// Purpose: Replace hardcoded EquipmentSlot/ItemType enums with data-driven system
+//
+// Examples:
+// - Category: Weapon → SubTypes: Katana, Longsword, Bow, Staff
+// - Category: Armor → SubTypes: Helmet, Chestplate, Gloves, Boots
+// - Category: Consumable → SubTypes: Health Potion, Mana Potion, Buff Scroll
+//
+// Usage:
+// - Create assets: Right-click → Items/SubType
+// - Assign parent category
+// - Configure equipment binding if applicable
+//
+// Benefits:
+// - Add new item types without code changes
+// - Each subtype can have unique properties
+// - Flexible equipment slot assignment
 
 namespace CrabSystem
 {
@@ -56,9 +54,7 @@ namespace CrabSystem
         [Tooltip("Tags for filtering/sorting (e.g., 'two_handed', 'magical', 'heavy_armor')")]
         public string[] tags;
 
-        /// <summary>
-        /// Validation helper
-        /// </summary>
+        // Validation helper
         public bool IsValid()
         {
             if (string.IsNullOrEmpty(subTypeId) || string.IsNullOrEmpty(displayName))
