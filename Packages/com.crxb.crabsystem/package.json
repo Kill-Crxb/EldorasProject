@@ -2,7 +2,7 @@
   "name": "com.crxb.crabsystem",
   "displayName": "CrabSystem",
   "version": "0.2.0",
-  "unity": "6000.0",
+  "unity": "6000.6",
   "description": "Modular character systems: a ControllerBrain with auto-discovered modules for stats, resources, abilities, combat, status, AI, inventory, persistence and UI.",
   "author": {
     "name": "Crxb",
