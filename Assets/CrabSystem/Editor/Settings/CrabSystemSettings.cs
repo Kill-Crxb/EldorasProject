@@ -12,6 +12,9 @@ namespace CrabSystem
     [FilePath("ProjectSettings/CrabSystemSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     public class CrabSystemSettings : ScriptableSingleton<CrabSystemSettings>
     {
+        [Tooltip("Where Project Setup creates starter data (stat schema, damage types, damage config).")]
+        public string dataFolder = "Assets/Data";
+
         [Tooltip("Where the item tools create item definitions. Keep it under a Resources folder named " +
                  "CrabResources.Items so ItemManager finds them, or assign them on Manager_Brain.")]
         public string itemFolder = "Assets/Resources/" + CrabResources.Items;

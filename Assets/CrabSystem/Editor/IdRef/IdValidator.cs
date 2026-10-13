@@ -172,13 +172,14 @@ namespace CrabSystem
         private static int CheckConstants(Type holder, IdKind kind, List<Finding> findings)
         {
             int count = 0;
-            foreach (FieldInfo field in holder.GetFields(BindingFlags.Public | BindingFlags.Static))
-            {
-                if (!field.IsLiteral || field.FieldType != typeof(string)) continue;
+            foreach (FieldInfo field in Constants(holder))
                 count += CheckIds(field.GetValue(null), kind, $"{holder.Name}.{field.Name}", null, findings);
-            }
             return count;
         }
+
+        // The string constants of an id holder (StatIds, DialIds, CrabLayers); Project Setup reads them too.
+        public static IEnumerable<FieldInfo> Constants(Type holder) =>
+            holder.GetFields(BindingFlags.Public | BindingFlags.Static).Where(field => field.IsLiteral && field.FieldType == typeof(string));
 
         // A type is walked only if it, or something it holds, has an [IdRef] field. Cached per type,
         // so third-party components cost one check each.

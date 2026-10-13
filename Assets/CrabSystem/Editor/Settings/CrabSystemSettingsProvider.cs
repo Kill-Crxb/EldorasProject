@@ -20,6 +20,7 @@ namespace CrabSystem
             var serialized = new SerializedObject(settings);
 
             root.Add(new Label("CrabSystem") { style = { fontSize = 19, unityFontStyleAndWeight = UnityEngine.FontStyle.Bold, marginLeft = 10, marginTop = 2, marginBottom = 8 } });
+            AddField(root, serialized, nameof(CrabSystemSettings.dataFolder));
             AddField(root, serialized, nameof(CrabSystemSettings.itemFolder));
             AddField(root, serialized, nameof(CrabSystemSettings.talentFolder));
             AddField(root, serialized, nameof(CrabSystemSettings.stagingFolder));

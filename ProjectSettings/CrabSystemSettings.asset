@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d5c204b11324ab0932bb926a99421ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CrabSystem.Editor::CrabSystem.CrabSystemSettings
+  dataFolder: Assets/Database/Config
   itemFolder: Assets/Database/Resources/ItemDatabase
   talentFolder: Assets/Database/Talents
   stagingFolder: Assets/_Staging

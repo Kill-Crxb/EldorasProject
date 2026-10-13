@@ -19,9 +19,9 @@ namespace CrabSystem
 
         // Folders where a rule doesn't apply. Editor code may log and search; diagnostics may log;
         // presentation may read wall-clock time and unseeded randomness.
-        static readonly string[] EditorFolders = { "/Editor/" };
-        static readonly string[] DiagnosticFolders = { "/Editor/", "/DebugTools/", "/Debugging/" };
-        static readonly string[] PresentationFolders = { "/Editor/", "/DebugTools/", "/Debugging/", "/UIWindows/", "/Juice/", "/VFX/", "/Rendering/", "/Animation/CharacterFeel/", "/DamageNumbers/" };
+        static readonly string[] EditorFolders = { "/Editor/", "/Tests/" };
+        static readonly string[] DiagnosticFolders = { "/Editor/", "/Tests/", "/DebugTools/", "/Debugging/" };
+        static readonly string[] PresentationFolders = { "/Editor/", "/Tests/", "/DebugTools/", "/Debugging/", "/UIWindows/", "/Juice/", "/VFX/", "/Rendering/", "/Animation/CharacterFeel/", "/DamageNumbers/" };
 
         // Physics-step movement and the camera stay on Time by design (EntityClock); views animate on real time.
         static readonly string[] ClockExemptFolders = PresentationFolders.Concat(new[] { "/MovementLocomotion/", "/Camera/", "/Hotbar/" }).ToArray();

@@ -28,6 +28,9 @@ namespace CrabSystem
 
         private static void ClearRenames() => statRenames = null;
 
+        // A tool that just created a defining asset asks again without waiting for projectChanged.
+        public static void Invalidate() => cache.Clear();
+
         // A stat's former id -> its current id (StatEntry.formerIds); null when the id was never a stat's.
         public static string RenamedStat(string id)
         {
