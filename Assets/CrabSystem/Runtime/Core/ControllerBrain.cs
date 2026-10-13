@@ -72,10 +72,12 @@ public class ControllerBrain : MonoBehaviour
     public bool IsGrounded => feetDetection != null && feetDetection.IsGrounded;
 
     // Gameplay time for this character; modules read it instead of Time (EntityClock).
-    public EntityClock Clock { get; } = new EntityClock(UnityEngine.Time.time);
+    // Built in Awake: Unity forbids Time in field initializers.
+    public EntityClock Clock { get; private set; }
 
     void Awake()
     {
+        Clock = new EntityClock(UnityEngine.Time.time);
         ResolveRootReferences();
         CacheModuleArrays();
         CreatePlayerInput();
