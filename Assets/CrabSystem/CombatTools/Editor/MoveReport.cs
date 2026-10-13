@@ -21,7 +21,7 @@ using UnityEngine;
 public class MoveReport : EditorWindow
 {
     const float Fps = MoveClipReader.Fps;
-    const string DefaultController = "Assets/Database/3d/Humanoid/HumanoidAnimator_v2.controller";
+    const string DefaultController = "Assets/Database/Animation/Humanoid/HumanoidAnimator_v2.controller";
 
     class Row
     {

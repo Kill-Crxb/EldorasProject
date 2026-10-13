@@ -105,10 +105,10 @@ public static class LayerConfigFactory
             R(13, 14, false, "Trigger ↔ Interactable — no interaction"),
         };
 
-        string path = "Assets/CrabSystem/Configs/NinjaGameLayerConfig.asset";
+        string path = "Assets/Database/Config/Layers/NinjaGameLayerConfig.asset";
 
         // Ensure directory exists
-        System.IO.Directory.CreateDirectory("Assets/CrabSystem/Configs");
+        System.IO.Directory.CreateDirectory("Assets/Database/Config/Layers");
         AssetDatabase.CreateAsset(config, path);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();

@@ -8,10 +8,10 @@ using UnityEngine;
 // No content inspection, no heuristics. Extension in -> category root out.
 public class AssetTypeSorter : EditorWindow
 {
-    const string Root2D = "Assets/Database/Assets/2D Database";
-    const string Root3D = "Assets/Database/Assets/3D Database";
-    const string RootUI = "Assets/Database/Assets/UIDatabase";
-    const string RootSound = "Assets/Database/Assets/Sound";
+    const string Root2D = "Assets/Database/Art/2D";
+    const string Root3D = "Assets/Database/Art/3D";
+    const string RootUI = "Assets/Database/Art/UI";
+    const string RootSound = "Assets/Database/Audio/Library";
 
     const string PrefGroup = "NinjaGame_Sorter_GroupByParent";
     const string PrefResources = "NinjaGame_Sorter_SkipResources";

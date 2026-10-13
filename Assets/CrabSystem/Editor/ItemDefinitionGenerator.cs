@@ -18,7 +18,7 @@ using UnityEngine;
 public class ItemDefinitionGenerator : EditorWindow
 {
     private const string OutputRoot =
-        "Assets/CrabSystem/ItemInventoryEquipment/Inventory/Items/Resources/ItemDatabase";
+        "Assets/Database/Resources/ItemDatabase";
 
     // Order matters — specific words before generic ones.
     private static readonly (string slot, string[] words)[] SlotWords =
