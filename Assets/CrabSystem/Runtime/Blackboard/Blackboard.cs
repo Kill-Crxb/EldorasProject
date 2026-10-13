@@ -103,9 +103,6 @@ namespace CrabSystem
                         break;
                 }
             }
-
-            if (debugLogging)
-                Debug.Log($"[Blackboard] Initialized for {ownerName}: {boolCount} bools, {floatCount} floats, {intCount} ints");
         }
 
         // Get boolean fact value (returns false if not found)
@@ -127,9 +124,6 @@ namespace CrabSystem
 
             bools[key] = value;
             OnBoolChanged?.Invoke(key, value);
-
-            if (debugLogging)
-                Debug.Log($"[Blackboard:{ownerName}] Bool changed - Key:{key} Value:{value}");
         }
 
         // Get float fact value (returns 0 if not found)
@@ -151,9 +145,6 @@ namespace CrabSystem
 
             floats[key] = value;
             OnFloatChanged?.Invoke(key, value);
-
-            if (debugLogging)
-                Debug.Log($"[Blackboard:{ownerName}] Float changed - Key:{key} Value:{value:F2}");
         }
 
         // Get int fact value (returns 0 if not found)
@@ -175,9 +166,6 @@ namespace CrabSystem
 
             ints[key] = value;
             OnIntChanged?.Invoke(key, value);
-
-            if (debugLogging)
-                Debug.Log($"[Blackboard:{ownerName}] Int changed - Key:{key} Value:{value}");
         }
 
         // Clear all facts to defaults (useful for entity respawn/reset)
@@ -187,9 +175,6 @@ namespace CrabSystem
             if (floats != null) floats.Clear();
             if (ints != null) ints.Clear();
             claims.Clear();
-
-            if (debugLogging)
-                Debug.Log($"[Blackboard:{ownerName}] Cleared all facts");
         }
 
         // Check if a key exists in the blackboard

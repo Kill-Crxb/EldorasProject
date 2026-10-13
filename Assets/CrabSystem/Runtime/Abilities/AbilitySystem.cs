@@ -24,10 +24,6 @@ namespace CrabSystem
                  "clip's ChainOpen. A whiff waits for ChainOpen or Unlocked.")]
         [SerializeField] private bool hitConfirmCancel = false;
 
-        [Header("Debug")]
-        [Tooltip("Log move events and forwarder binding.")]
-        [SerializeField] private bool debugLogging = false;
-
         private class AbilityState
         {
             public AbilityDefinition definition;
@@ -402,8 +398,6 @@ namespace CrabSystem
             }
 
             eventForwarder.OnMoveEvent += HandleMoveEvent;
-            if (debugLogging)
-                Debug.Log($"[AbilitySystem] Subscribed to AnimationEventForwarder on {eventForwarder.name}");
         }
 
         private void BuildAbilityLookup()
@@ -864,9 +858,6 @@ namespace CrabSystem
         // flight is the tail of a clip still fading out, and is ignored.
         private void HandleMoveEvent(MoveEvent evt, int value)
         {
-            if (debugLogging)
-                Debug.Log($"[AbilitySystem] {evt}({value}) (currentAbility: {currentAbility?.abilityId ?? "null"})");
-
             OnMoveEvent?.Invoke(evt, value);
             if (currentAbility == null) return;
 

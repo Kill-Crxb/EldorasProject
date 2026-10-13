@@ -118,10 +118,6 @@ namespace CrabSystem
             if (debugLogging)
             {
                 string source = UsesLibrary ? $"library '{conditionLibrary.name}'" : "entity-specific list";
-                Debug.Log($"[SemanticBridge] Initialized on {brain.EntityName}");
-                Debug.Log($"  Source: {source}");
-                Debug.Log($"  Conditions: {ConditionCount}");
-                Debug.Log($"  Update interval: {updateInterval}s ({1f / updateInterval}Hz)");
             }
         }
 
@@ -171,11 +167,6 @@ namespace CrabSystem
             // Write to blackboard
             int factHash = BlackboardKey.Hash(condition.OutputFactKey);
             blackboard.SetBool(factHash, result);
-
-            if (debugLogging)
-            {
-                Debug.Log($"[SemanticBridge:{brain.EntityName}] {condition.name} = {result}");
-            }
         }
 
         // Validate all conditions on initialization
@@ -191,10 +182,6 @@ namespace CrabSystem
                     return;
                 }
 
-                if (debugLogging)
-                {
-                    Debug.Log($"[SemanticBridge] Using library '{conditionLibrary.name}' with {conditionLibrary.ConditionCount} conditions");
-                }
                 return;
             }
 
@@ -225,11 +212,6 @@ namespace CrabSystem
 
                 validCount++;
             }
-
-            if (debugLogging || invalidCount > 0)
-            {
-                Debug.Log($"[SemanticBridge] Entity-specific validation: {validCount} valid, {invalidCount} invalid conditions");
-            }
         }
 
         private void OnValidate()
@@ -249,7 +231,6 @@ namespace CrabSystem
             }
 
             string source = UsesLibrary ? $"library '{conditionLibrary.name}'" : "entity-specific list";
-            Debug.Log($"[SemanticBridge] Force evaluating {ConditionCount} conditions from {source}...");
             EvaluateAllConditions();
         }
 
@@ -260,13 +241,10 @@ namespace CrabSystem
             var activeConditions = GetActiveConditions();
             if (activeConditions == null || activeConditions.Count == 0)
             {
-                Debug.Log("[SemanticBridge] No conditions assigned");
                 return;
             }
 
             string source = UsesLibrary ? $"Library: {conditionLibrary.name}" : "Entity-Specific";
-            Debug.Log($"=== Semantic Bridge Conditions ({brain?.name ?? name}) ===");
-            Debug.Log($"Source: {source} ({activeConditions.Count} conditions)");
 
             foreach (var condition in activeConditions)
             {
@@ -274,7 +252,6 @@ namespace CrabSystem
 
                 string status = condition.IsEnabled ? "✓" : "✗";
                 string desc = condition.GetReadableDescription();
-                Debug.Log($"  {status} {condition.name}: {desc}");
             }
         }
     }

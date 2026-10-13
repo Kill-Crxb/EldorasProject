@@ -155,13 +155,6 @@ namespace CrabSystem
 
             // Activate default control source
             ActivateDefaultControlSource();
-
-            if (showDebugInfo)
-            {
-                Debug.Log($"[MovementSystem] Initialized on {brain.EntityName}");
-                Debug.Log($"  Locomotion: {locomotionHandler.GetType().Name}");
-                Debug.Log($"  Active Control: {activeControlSource?.SourceName ?? "NONE"}");
-            }
         }
 
         // The blackboard belongs to another module, so it is resolved here rather than in
@@ -330,10 +323,8 @@ namespace CrabSystem
 
             if (showDebugInfo)
             {
-                Debug.Log($"[MovementSystem] Found {availableControlSources.Count} control sources:");
                 foreach (var source in availableControlSources)
                 {
-                    Debug.Log($"  - {source.SourceName}");
                 }
             }
         }
@@ -366,9 +357,6 @@ namespace CrabSystem
             if (activeControlSource != null)
             {
                 activeControlSource.OnDeactivated();
-
-                if (showDebugInfo)
-                    Debug.Log($"[MovementSystem] Deactivated: {activeControlSource.SourceName}");
             }
 
             // Activate new source
@@ -377,9 +365,6 @@ namespace CrabSystem
             if (activeControlSource != null)
             {
                 activeControlSource.OnActivated();
-
-                if (showDebugInfo)
-                    Debug.Log($"[MovementSystem] Activated: {activeControlSource.SourceName}");
             }
         }
 

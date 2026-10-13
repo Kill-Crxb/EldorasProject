@@ -34,9 +34,6 @@ namespace CrabSystem
         [Header("Navigation")]
         [SerializeField] private GameObject characterSelectPanel;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         private AccountManager accountManager;
         private bool isBusy = false;
 
@@ -92,9 +89,6 @@ namespace CrabSystem
 
             if (success)
             {
-                if (debugLogging)
-                    Debug.Log($"[LoginScreen] Login successful: {usernameField.text.Trim()}");
-
                 ShowCharacterSelect();
             }
             else
@@ -116,9 +110,6 @@ namespace CrabSystem
 
             if (success)
             {
-                if (debugLogging)
-                    Debug.Log($"[LoginScreen] Account created: {usernameField.text.Trim()}");
-
                 // Auto-login after registration
                 bool loginSuccess = await accountManager.Login(usernameField.text.Trim(), passwordField.text);
 

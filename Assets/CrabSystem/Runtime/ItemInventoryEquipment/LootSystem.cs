@@ -54,9 +54,6 @@ namespace CrabSystem
             }
 
             isInitialized = true;
-
-            if (debugLoot)
-                Debug.Log($"[LootSystem] Initialized for {brain.EntityName}");
         }
 
         public void LateInitialize() { }
@@ -105,10 +102,6 @@ namespace CrabSystem
             {
                 SpawnLootContainer(position, lootedItems);
             }
-            else if (debugLoot)
-            {
-                Debug.Log($"[LootSystem] {brain.EntityName} dropped no loot");
-            }
         }
 
         private void AddPoolLoot(List<ItemInstance> lootedItems, Vector3 position)
@@ -155,9 +148,6 @@ namespace CrabSystem
                 if (DiceRoll.Value() > equipmentDropChance) continue;
 
                 lootedItems.Add(item);
-
-                if (debugLoot)
-                    Debug.Log($"[LootSystem] Equipment dropped: {item.Definition.displayName}");
             }
         }
 
@@ -174,9 +164,6 @@ namespace CrabSystem
                 if (DiceRoll.Value() > inventoryDropChance) continue;
 
                 lootedItems.Add(item);
-
-                if (debugLoot)
-                    Debug.Log($"[LootSystem] Inventory dropped: {item.Definition.displayName}");
             }
         }
 
@@ -204,9 +191,6 @@ namespace CrabSystem
 
             lootComponent.Initialize(items);
             OnLootGenerated?.Invoke(lootComponent);
-
-            if (debugLoot)
-                Debug.Log($"[LootSystem] Spawned loot container with {items.Count} items");
         }
 
         private void SpawnItemsOnGround(Vector3 center, List<ItemInstance> items)
@@ -228,7 +212,6 @@ namespace CrabSystem
         private void DebugForceDropLoot()
         {
             GenerateLoot(brain.transform.position);
-            Debug.Log("[LootSystem] Forced loot drop");
         }
     }
 

@@ -75,7 +75,6 @@ namespace CrabSystem
             if (debugMode)
             {
                 string levelInfo = spawnLevel > 0 ? $" at level {spawnLevel}" : $" (base level {config.archetype.baseLevel})";
-                Debug.Log($"[NPCSpawner] Spawned {config.displayName}{levelInfo} at {position} (Total: {currentSpawnCount})");
             }
 
             return spawnedNPC;
@@ -131,18 +130,12 @@ namespace CrabSystem
             if (brain.IsInitialized)
             {
                 CharacterConfigurationHandler.Apply(brain, configData);
-
-                if (debugMode)
-                    Debug.Log($"[NPCSpawner] Configured {spawnedNPC.name} with archetype '{config.archetype.archetypeName}' (immediate)");
             }
             else
             {
                 brain.OnInitialized += (b) =>
                 {
                     CharacterConfigurationHandler.Apply(b, configData);
-
-                    if (debugMode)
-                        Debug.Log($"[NPCSpawner] Configured {spawnedNPC.name} with archetype '{config.archetype.archetypeName}' (deferred)");
                 };
             }
 

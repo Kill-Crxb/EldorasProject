@@ -58,11 +58,6 @@ namespace CrabSystem
             }
 
             IsInitialized = true;
-
-            if (debugLogging)
-            {
-                Debug.Log($"[{ManagerName}] Initialized with active config: {(activeConfig != null ? activeConfig.name : "None")}");
-            }
         }
 
         public void LateInitialize()
@@ -73,8 +68,6 @@ namespace CrabSystem
 
         public void Shutdown()
         {
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Shutdown complete");
         }
 
         // IManagerDependency implementation
@@ -114,9 +107,6 @@ namespace CrabSystem
         [Tooltip("Currently active damage config")]
         [SerializeField] private DamageCalculationConfig activeConfig;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         public DamageCalculationConfig ActiveConfig => activeConfig;
 
         // Set the active damage config (e.g., switch between PvE and PvP configs)
@@ -129,11 +119,6 @@ namespace CrabSystem
             }
 
             activeConfig = config;
-
-            if (debugLogging)
-            {
-                Debug.Log($"[DamageManager] Active config changed to: {config.name}");
-            }
 
             // Revalidate after config change
             if (IsInitialized)
@@ -171,8 +156,6 @@ namespace CrabSystem
                 return;
             }
 
-            bool allValid = true;
-
             foreach (var damageType in activeConfig.damageTypes)
             {
                 if (damageType == null) continue;
@@ -186,7 +169,6 @@ namespace CrabSystem
                     {
                         Debug.LogError($"[{ManagerName}] {damageType.id} damage " +
                                      $"references unknown attacker stat: {statId}");
-                        allValid = false;
                     }
                 }
 
@@ -199,14 +181,8 @@ namespace CrabSystem
                     {
                         Debug.LogError($"[{ManagerName}] {damageType.id} mitigation " +
                                      $"references unknown defender stat: {statId}");
-                        allValid = false;
                     }
                 }
-            }
-
-            if (allValid && debugLogging)
-            {
-                Debug.Log($"[{ManagerName}] All damage formula stat references validated");
             }
         }
 

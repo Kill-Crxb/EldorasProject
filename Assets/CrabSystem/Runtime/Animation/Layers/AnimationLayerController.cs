@@ -384,8 +384,6 @@ namespace CrabSystem
                 string ownerName = claim.Owner != null ? claim.Owner.GetType().Name : "?";
                 report += $"    claim: layer {claim.LayerIndex}  weight {claim.Weight:0.00}  priority {claim.Priority}  by {ownerName}\n";
             }
-
-            Debug.Log(report, this);
         }
     }
 }

@@ -59,9 +59,7 @@ namespace CrabSystem
         [ContextMenu("Validate Configuration")]
         private void ValidateConfiguration()
         {
-            if (Validate(out string error))
-                Debug.Log($"[AbilityDefinition] {abilityName} is valid");
-            else
+            if (!Validate(out string error))
                 Debug.LogError($"[AbilityDefinition] {abilityName} validation failed: {error}");
         }
     }

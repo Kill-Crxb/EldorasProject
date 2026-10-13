@@ -16,9 +16,6 @@ namespace CrabSystem
     {
         public int InitOrder => 180;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         // ── Cached refs ───────────────────────────────────────────────────────
 
         private ControllerBrain brain;
@@ -196,10 +193,6 @@ namespace CrabSystem
             };
 
             OnOverrideChanged?.Invoke(barId, index);
-
-            if (debugLogging)
-                Debug.Log($"[STS] Override applied — {barId}[{index}] → {ability.abilityName} " +
-                          $"(type:{type} pri:{priority} dur:{duration})");
         }
 
         // Drops every active override. Called when HotbarSystem swaps pages — override keys carry
@@ -217,9 +210,6 @@ namespace CrabSystem
                 ParseKey(key, out var barId, out var index);
                 OnOverrideChanged?.Invoke(barId, index);
             }
-
-            if (debugLogging)
-                Debug.Log($"[STS] Cleared {cleared.Count} override(s) — page switch");
         }
 
         public void ClearOverride(string barId, int index)
@@ -228,9 +218,6 @@ namespace CrabSystem
             if (!activeOverrides.Remove(key)) return;
 
             OnOverrideChanged?.Invoke(barId, index);
-
-            if (debugLogging)
-                Debug.Log($"[STS] Override cleared — {barId}[{index}]");
         }
 
         // ── Expiry ────────────────────────────────────────────────────────────

@@ -37,9 +37,6 @@ namespace CrabSystem.Factions
         public void Initialize()
         {
             BuildCache();
-
-            if (showDebugLogs)
-                Debug.Log($"[FactionRelationshipConfig] Initialized with {relationships.Count} relationship entries");
         }
 
         private void BuildCache()
@@ -104,8 +101,6 @@ namespace CrabSystem.Factions
         [ContextMenu("Validate Relationships")]
         private void ValidateRelationships()
         {
-            Debug.Log("=== Faction Relationship Validation ===");
-
             int nullRefs = relationships.Count(r => r == null || r.faction1 == null || r.faction2 == null);
             if (nullRefs > 0)
                 Debug.LogWarning($"{nullRefs} entries have missing FactionDefinition references");
@@ -123,29 +118,8 @@ namespace CrabSystem.Factions
             var selfRefs = relationships.Count(r => r != null && r.faction1 != null && r.faction1 == r.faction2);
             if (selfRefs > 0)
                 Debug.LogWarning($"Found {selfRefs} self-referencing entries (same faction always Friendly — remove them)");
-
-            Debug.Log($"Total relationships: {relationships.Count}");
         }
 
-        [ContextMenu("Debug: Print All Relationships")]
-        private void DebugPrintAllRelationships()
-        {
-            BuildCache();
-
-            Debug.Log("=== ALL FACTION RELATIONSHIPS ===");
-            foreach (var entry in relationships)
-            {
-                if (entry == null || entry.faction1 == null || entry.faction2 == null) continue;
-
-                string color = entry.relationship switch
-                {
-                    FactionRelationship.Friendly => "green",
-                    FactionRelationship.Hostile => "red",
-                    _ => "yellow"
-                };
-                Debug.Log($"<color={color}>{entry.faction1.name} ↔ {entry.faction2.name}: {entry.relationship}</color> (dmg ×{entry.damageMultiplier})");
-            }
-        }
 #endif
     }
 

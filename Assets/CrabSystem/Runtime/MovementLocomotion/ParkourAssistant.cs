@@ -110,7 +110,6 @@ namespace CrabSystem
 
         [Header("Debug")]
         [SerializeField] private bool drawGizmos = true;
-        [SerializeField] private bool debugLogging = false;
 
         public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
 
@@ -632,13 +631,6 @@ namespace CrabSystem
             sensor.center = transform.InverseTransformPoint(worldCenter);
             sensor.height = bodyCapsule.height;
             sensor.radius = bodyCapsule.radius + reach;
-
-            if (debugLogging)
-            {
-                Debug.Log($"[ParkourAssistant] Sensor fitted — body radius {bodyCapsule.radius:F2} " +
-                          $"+ reach {reach:F2} = {sensor.radius:F2} " +
-                          $"({maxExpectedSpeed:F0} m/s at {1f / Time.fixedDeltaTime:F0} Hz)");
-            }
         }
 
         private bool InMask(int layer)
@@ -676,9 +668,6 @@ namespace CrabSystem
             slot = next;
 
             if (!changed) return;
-
-            if (debugLogging)
-                Debug.Log($"[ParkourAssistant] {surface} → {(next.Detected ? next.Tag : "clear")}");
 
             OnContactChanged?.Invoke(surface, next);
         }

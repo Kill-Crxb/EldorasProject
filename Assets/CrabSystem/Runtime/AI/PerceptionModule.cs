@@ -53,7 +53,6 @@ namespace CrabSystem
         [SerializeField] private float memoryDuration = 5f;
 
         [Header("Debug")]
-        [SerializeField] private bool debugMode = false;
         [SerializeField] private bool drawGizmos = true;
 
         // References
@@ -106,15 +105,6 @@ namespace CrabSystem
             {
                 Debug.LogWarning($"[PerceptionModule] Faction detection enabled but no FactionSystem found on {brain.EntityName}");
             }
-
-            if (debugMode)
-            {
-                Debug.Log($"[PerceptionModule] Initialized on {brain.EntityName}");
-                Debug.Log($"  Detection Layers: {detectionLayers.value}");
-                Debug.Log($"  Obstacle Layers: {obstacleLayers.value}");
-                Debug.Log($"  Vision Range: {visionRange}m, FOV: {visionAngle}°");
-                Debug.Log($"  Faction Detection: {useFactionDetection}");
-            }
         }
 
         public void UpdateModule()
@@ -124,9 +114,6 @@ namespace CrabSystem
             // Throttle detection checks for performance
             if (Now < nextDetectionTime) return;
             nextDetectionTime = Now + detectionInterval;
-
-            if (debugMode)
-                Debug.Log($"[PerceptionModule] Running detection scan (interval: {detectionInterval}s)");
 
             // Detect targets
             DetectTargets();
@@ -158,9 +145,6 @@ namespace CrabSystem
                 QueryTriggerInteraction.Ignore  // CharacterControllers are never triggers; hitboxes and sensors filled the buffer
             );
 
-            if (debugMode)
-                Debug.Log($"[PerceptionModule] OverlapSphere found {hitCount} colliders");
-
             Transform bestTarget = null;
             float closestDistance = float.MaxValue;
 
@@ -169,91 +153,57 @@ namespace CrabSystem
             {
                 Collider hit = detectionBuffer[i];
 
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] Checking collider: {hit.name}");
-
                 // Only detect CharacterControllers (skip trigger colliders like hitboxes/feet detection)
                 CharacterController charController = hit.GetComponent<CharacterController>();
                 if (charController == null)
                 {
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Not a CharacterController");
                     continue;
                 }
 
                 // Skip if this is self
                 if (hit.transform == transform || hit.transform.IsChildOf(transform))
                 {
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Is self or child");
                     continue;
                 }
 
                 // Get brain (CharacterController is usually on root, brain on child)
                 ControllerBrain targetBrain = hit.GetComponentInChildren<ControllerBrain>();
 
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] Brain search result: {(targetBrain != null ? targetBrain.name : "NULL")}");
-
                 if (targetBrain == null)
                 {
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - No ControllerBrain found");
                     continue;
                 }
 
                 if (targetBrain == brain)
                 {
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Is own brain");
                     continue;
                 }
 
                 if (!IsAlive(targetBrain))
                 {
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Dead");
                     continue;
                 }
 
                 // Validate faction
                 if (useFactionDetection)
                 {
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] Checking faction...");
-
                     if (!IsValidFaction(targetBrain))
                     {
-                        if (debugMode)
-                            Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Invalid faction (not hostile)");
                         continue;
                     }
-
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] PASSED - Valid hostile faction");
                 }
 
                 // Check vision cone
                 if (!IsInVisionCone(hit.transform.position))
                 {
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Outside vision cone");
                     continue;
                 }
-
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] [{i}] PASSED - Inside vision cone");
 
                 // Check line of sight
                 if (requireLineOfSight && !HasLineOfSight(hit.transform.position))
                 {
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] SKIPPED - Line of sight blocked");
                     continue;
                 }
-
-                if (debugMode && requireLineOfSight)
-                    Debug.Log($"[PerceptionModule] [{i}] PASSED - Line of sight clear");
 
                 // Track closest valid target
                 float distance = Vector3.Distance(transform.position, hit.transform.position);
@@ -261,9 +211,6 @@ namespace CrabSystem
                 {
                     closestDistance = distance;
                     bestTarget = targetBrain.transform;
-
-                    if (debugMode)
-                        Debug.Log($"[PerceptionModule] [{i}] NEW BEST TARGET - Distance: {distance:F2}m");
                 }
             }
 
@@ -277,14 +224,6 @@ namespace CrabSystem
             // Update current target
             if (bestTarget != currentTarget)
             {
-                if (debugMode)
-                {
-                    if (bestTarget != null)
-                        Debug.Log($"[PerceptionModule] TARGET ACQUIRED: {bestTarget.name}");
-                    else if (currentTarget != null)
-                        Debug.Log($"[PerceptionModule] TARGET LOST: {currentTarget.name}");
-                }
-
                 currentTarget = bestTarget;
             }
 
@@ -310,26 +249,16 @@ namespace CrabSystem
             // If no faction system, can't filter by faction
             if (factionSystem == null)
             {
-                if (debugMode)
-                    Debug.LogWarning($"[PerceptionModule] No faction system - cannot filter by faction");
                 return true;
             }
 
             // Get target's faction system
             if (targetBrain.Faction == null)
             {
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] Target {targetBrain.name} has no faction system - skipping");
                 return false;
             }
 
             FactionRelationship relationship = factionSystem.GetStanceTo(targetBrain);
-
-            if (debugMode)
-                Debug.Log($"[PerceptionModule] Faction check: My={factionSystem.CurrentFactionName}, Their={targetBrain.Faction.CurrentFactionName} → {relationship}");
-
-            if (debugMode)
-                Debug.Log($"[PerceptionModule] Relationship: {relationship}");
 
             if (onlyDetectHostiles)
             {
@@ -357,8 +286,6 @@ namespace CrabSystem
             if (Physics.Raycast(eyePosition, directionToTarget.normalized, out RaycastHit hit, distanceToTarget, obstacleLayers, QueryTriggerInteraction.Ignore))
             {
                 // Hit an obstacle before reaching target
-                if (debugMode)
-                    Debug.Log($"[PerceptionModule] LOS blocked by {hit.collider.name} at {hit.distance:F2}m");
                 return false;
             }
 

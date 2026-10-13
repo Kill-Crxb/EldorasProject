@@ -77,9 +77,6 @@ namespace CrabSystem
         [Tooltip("Blackboard fact set to true while unarmed. Leave empty to skip.")]
         [IdRef(IdKind.Fact)] [SerializeField] private string blackboardFact = "IsUnarmed";
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         private ControllerBrain brain;
         private EquipmentSystem equipment;
         private AbilitySystem abilities;
@@ -156,8 +153,6 @@ namespace CrabSystem
 
             if (target == CombatStance.Armed && GetEquippedWeaponItem() == null)
             {
-                if (debugLogging)
-                    Debug.Log($"[CombatStance] Cannot draw — '{weaponSlotId}' is empty.");
                 return;
             }
 
@@ -205,9 +200,6 @@ namespace CrabSystem
             ApplyAnimator(unarmed);
 
             OnStanceChanged?.Invoke(stance);
-
-            if (debugLogging)
-                Debug.Log($"[CombatStance] {brain.EntityName} → {stance}");
         }
 
         private void ApplyVisual(bool sheathed)

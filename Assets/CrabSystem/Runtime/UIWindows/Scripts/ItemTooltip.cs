@@ -45,9 +45,6 @@ namespace CrabSystem
         [SerializeField] private Color statNegativeColor = new Color(0.90f, 0.30f, 0.30f);
         [SerializeField] private Color statScalingColor = new Color(0.55f, 0.78f, 1.00f);
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = true;
-
         private RectTransform rectTransform;
         private Canvas canvas;
         private bool isVisible;
@@ -65,61 +62,8 @@ namespace CrabSystem
             {
                 Debug.LogError("[ItemTooltip] Must be under a Canvas!");
             }
-            else if (debugLogging)
-            {
-                Debug.Log($"[ItemTooltip] Awake — canvas: '{canvas.name}', renderMode: {canvas.renderMode}, sortingOrder: {canvas.sortingOrder}");
-
-                // Log root RectTransform setup
-                Debug.Log($"[ItemTooltip] Root RectTransform — pivot: {rectTransform.pivot}, " +
-                          $"anchorMin: {rectTransform.anchorMin}, anchorMax: {rectTransform.anchorMax}, " +
-                          $"sizeDelta: {rectTransform.sizeDelta}, rect.size: {rectTransform.rect.size}");
-
-                // Check for ContentSizeFitter
-                var csf = GetComponent<ContentSizeFitter>();
-                if (csf != null)
-                    Debug.Log($"[ItemTooltip] ContentSizeFitter — H: {csf.horizontalFit}, V: {csf.verticalFit}");
-                else
-                    Debug.LogWarning("[ItemTooltip] No ContentSizeFitter on root!");
-
-                // Check for VerticalLayoutGroup
-                var vlg = GetComponent<VerticalLayoutGroup>();
-                if (vlg != null)
-                    Debug.Log($"[ItemTooltip] VerticalLayoutGroup — controlWidth: {vlg.childControlWidth}, controlHeight: {vlg.childControlHeight}, " +
-                              $"forceExpandWidth: {vlg.childForceExpandWidth}, forceExpandHeight: {vlg.childForceExpandHeight}, " +
-                              $"padding: {vlg.padding.left}/{vlg.padding.right}/{vlg.padding.top}/{vlg.padding.bottom}, spacing: {vlg.spacing}");
-                else
-                    Debug.LogWarning("[ItemTooltip] No VerticalLayoutGroup on root!");
-
-                // Check for LayoutElement (needed to set preferred width)
-                var le = GetComponent<LayoutElement>();
-                if (le != null)
-                    Debug.Log($"[ItemTooltip] LayoutElement — preferredWidth: {le.preferredWidth}, preferredHeight: {le.preferredHeight}, " +
-                              $"minWidth: {le.minWidth}, flexibleWidth: {le.flexibleWidth}");
-                else
-                    Debug.LogWarning("[ItemTooltip] No LayoutElement on root — tooltip may have zero width!");
-
-                // Log child text references
-                LogTextRef("nameText", nameText);
-                LogTextRef("typeText", typeText);
-                LogTextRef("descriptionText", descriptionText);
-            }
 
             Hide();
-        }
-
-        private void LogTextRef(string label, TextMeshProUGUI tmp)
-        {
-            if (tmp == null)
-            {
-                Debug.LogWarning($"[ItemTooltip] '{label}' is NOT assigned!");
-                return;
-            }
-            var rt = tmp.GetComponent<RectTransform>();
-            var le = tmp.GetComponent<LayoutElement>();
-            Debug.Log($"[ItemTooltip] '{label}' — fontSize: {tmp.fontSize}, " +
-                      $"anchorMin: {rt.anchorMin}, anchorMax: {rt.anchorMax}, " +
-                      $"sizeDelta: {rt.sizeDelta}, " +
-                      $"layoutElement: {(le != null ? $"preferredWidth={le.preferredWidth}, flexH={le.flexibleHeight}" : "none")}");
         }
 
         private void Update()
@@ -157,25 +101,6 @@ namespace CrabSystem
             // Let layout calculate size, then position correctly
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-
-            if (debugLogging)
-            {
-                // Log sizes AFTER layout rebuild — this is the key diagnostic
-                Debug.Log($"[ItemTooltip] Show() after layout rebuild — " +
-                          $"rect.size: {rectTransform.rect.size}, " +
-                          $"sizeDelta: {rectTransform.sizeDelta}, " +
-                          $"screenPosition: {screenPosition}");
-
-                // If size is near zero, layout isn't working
-                if (rectTransform.rect.size.x < 10f || rectTransform.rect.size.y < 10f)
-                    Debug.LogWarning("[ItemTooltip] Tooltip size is near zero after layout rebuild! " +
-                                     "Check ContentSizeFitter (should be PreferredSize), " +
-                                     "LayoutElement preferredWidth, and VerticalLayoutGroup controlWidth/Height.");
-
-                // Log canvas rect so we can see what we're clamping against
-                Rect canvasRect = (canvas.transform as RectTransform).rect;
-                Debug.Log($"[ItemTooltip] Canvas rect: {canvasRect}");
-            }
 
             UpdatePosition(screenPosition);
         }
@@ -277,9 +202,6 @@ namespace CrabSystem
 
             Vector2 clamped = ClampToCanvas(local);
 
-            if (debugLogging)
-                Debug.Log($"[ItemTooltip] UpdatePosition — screenPos: {screenPos}, local (pre-clamp): {local}, clamped: {clamped}");
-
             rectTransform.anchoredPosition = clamped;
         }
 
@@ -307,8 +229,6 @@ namespace CrabSystem
             // Guard: if layout hasn't run yet, skip clamping to avoid snapping to edge
             if (size.x < 1f || size.y < 1f)
             {
-                if (debugLogging)
-                    Debug.LogWarning("[ItemTooltip] ClampToCanvas called with near-zero tooltip size — skipping clamp. Layout may not have run yet.");
                 return local;
             }
 

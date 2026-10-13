@@ -28,9 +28,6 @@ namespace CrabSystem
         [IdRef(IdKind.Scene)] [SerializeField] private string gameSceneName = "Game";
         [IdRef(IdKind.Scene)] [SerializeField] private string mainMenuSceneName = "MainMenu";
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -45,9 +42,6 @@ namespace CrabSystem
                 Debug.LogError("[SceneLoader] LoadGameScene called with empty characterId!");
                 return;
             }
-
-            if (debugLogging)
-                Debug.Log($"[SceneLoader] Loading game scene for character: {characterId}");
 
             // Broadcast selection — SaveManager stores it before scene unloads
             GameEvents.CharacterSelected(characterId);

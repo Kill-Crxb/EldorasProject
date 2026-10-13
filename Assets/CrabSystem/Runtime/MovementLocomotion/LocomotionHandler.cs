@@ -60,9 +60,6 @@ namespace CrabSystem
             }
 
             rootTransform = characterController.transform;
-
-            if (showDebugInfo)
-                Debug.Log($"[{GetType().Name}] Initialized on {rootTransform.name}");
         }
 
         // Execute movement for this frame

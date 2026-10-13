@@ -335,7 +335,6 @@ namespace CrabSystem.Magic
 
             if (problems.Count == 0)
             {
-                Debug.Log($"[SpellGrammar] '{name}' validated clean.", this);
                 return;
             }
 

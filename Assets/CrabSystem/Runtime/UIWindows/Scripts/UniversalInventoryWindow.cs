@@ -54,7 +54,6 @@ namespace CrabSystem
 
         [Header("Settings")]
         [SerializeField] private bool savePosition = true;
-        [SerializeField] private bool debugMode = false;
         [SerializeField] private Vector2 defaultPositionOffset = new Vector2(100, -100);
 
         [Header("Container Settings (Only for Containers)")]
@@ -126,9 +125,6 @@ namespace CrabSystem
 
             if (distance > maxInteractionDistance)
             {
-                if (debugMode)
-                    Debug.Log($"[UniversalInventoryWindow] Player too far ({distance:F1}m > {maxInteractionDistance}m), closing container");
-
                 Close();
             }
         }
@@ -207,9 +203,6 @@ namespace CrabSystem
         // Core open method - all other open methods call this
         private void Open(InventorySystem system, ControllerBrain owner, string title, bool isPlayerInv)
         {
-            if (debugMode)
-                Debug.Log($"[UniversalInventoryWindow] Opening: {title}");
-
             currentInventorySystem = system;
             currentOwner = owner;
             isPlayerInventory = isPlayerInv;
@@ -232,9 +225,6 @@ namespace CrabSystem
             // Show window
             gameObject.SetActive(true);
             isOpen = true;
-
-            if (debugMode)
-                Debug.Log($"[UniversalInventoryWindow] {title} opened");
         }
 
         // Set window title - supports both legacy Text and TextMeshPro
@@ -290,9 +280,6 @@ namespace CrabSystem
 
             // Configure the grid
             currentGrid.SetInventorySource(system, displayName, isPlayer, isPlayer ? currentOwner : null);
-
-            if (debugMode)
-                Debug.Log($"[UniversalInventoryWindow] Grid configured for {displayName}");
         }
 
         // Sizes the grid container to fit the grid based on its dimensions
@@ -319,17 +306,11 @@ namespace CrabSystem
             layoutElement.preferredHeight = gridPixelHeight;
             layoutElement.minWidth = gridPixelWidth;
             layoutElement.minHeight = gridPixelHeight;
-
-            if (debugMode)
-                Debug.Log($"[UniversalInventoryWindow] Sized grid container to {gridPixelWidth}�{gridPixelHeight}");
         }
 
         public void Close()
         {
             if (!isOpen) return;
-
-            if (debugMode)
-                Debug.Log($"[UniversalInventoryWindow] Closing {windowId}");
 
             // Save position if enabled
             if (savePosition)
@@ -363,17 +344,11 @@ namespace CrabSystem
                 float x = PlayerPrefs.GetFloat(key + "_x");
                 float y = PlayerPrefs.GetFloat(key + "_y");
                 windowRect.anchoredPosition = new Vector2(x, y);
-
-                if (debugMode)
-                    Debug.Log($"[UniversalInventoryWindow] Restored position: {x}, {y}");
             }
             else
             {
                 // First time opening - use default offset
                 windowRect.anchoredPosition = defaultPositionOffset;
-
-                if (debugMode)
-                    Debug.Log($"[UniversalInventoryWindow] Using default position: {defaultPositionOffset}");
             }
         }
 
@@ -385,9 +360,6 @@ namespace CrabSystem
             PlayerPrefs.SetFloat(key + "_x", windowRect.anchoredPosition.x);
             PlayerPrefs.SetFloat(key + "_y", windowRect.anchoredPosition.y);
             PlayerPrefs.Save();
-
-            if (debugMode)
-                Debug.Log($"[UniversalInventoryWindow] Saved position: {windowRect.anchoredPosition}");
         }
 
         public void OnBeginDrag(PointerEventData eventData)

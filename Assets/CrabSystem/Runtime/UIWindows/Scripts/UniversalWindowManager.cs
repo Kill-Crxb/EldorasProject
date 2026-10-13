@@ -36,7 +36,6 @@ namespace CrabSystem
 
         [Header("Settings")]
         [SerializeField] private bool closeOtherWindowsOnOpen = false;
-        [SerializeField] private bool debugMode = false;
 
         private static UniversalWindowManager instance;
         public static UniversalWindowManager Instance
@@ -121,8 +120,6 @@ namespace CrabSystem
                 playerInventoryWindow = CreateWindow("PlayerInventory");
 
             playerInventoryWindow.OpenPlayerInventory(playerBrain);
-
-            if (debugMode) Debug.Log("[UniversalWindowManager] Opened player inventory");
         }
 
         public void ClosePlayerInventory()
@@ -130,7 +127,6 @@ namespace CrabSystem
             if (playerInventoryWindow != null && playerInventoryWindow.IsOpen)
             {
                 playerInventoryWindow.Close();
-                if (debugMode) Debug.Log("[UniversalWindowManager] Closed player inventory");
             }
         }
 
@@ -165,7 +161,6 @@ namespace CrabSystem
 
             if (playerBrain != null) OpenPlayerInventory(playerBrain);
 
-            if (debugMode) Debug.Log($"[UniversalWindowManager] Opened container window: {containerName}");
             return window;
         }
 
@@ -179,8 +174,6 @@ namespace CrabSystem
             var window = activeWindows[windowId];
             if (window != null) { window.Close(); Destroy(window.gameObject); }
             activeWindows.Remove(windowId);
-
-            if (debugMode) Debug.Log($"[UniversalWindowManager] Closed container window: {windowId}");
         }
 
         public void CloseAllContainerWindows()
@@ -193,9 +186,6 @@ namespace CrabSystem
                 toRemove.Add(kvp.Key);
             }
             foreach (var key in toRemove) activeWindows.Remove(key);
-
-            if (debugMode && toRemove.Count > 0)
-                Debug.Log($"[UniversalWindowManager] Closed {toRemove.Count} container windows");
         }
 
         // Placeholder open/close — just toggles the reserved canvas layer. Actual dialogue
@@ -207,8 +197,6 @@ namespace CrabSystem
 
             dialogueCanvas.gameObject.SetActive(true);
             isDialogueOpen = true;
-
-            if (debugMode) Debug.Log($"[UniversalWindowManager] Opened dialogue window: {npcBrain?.name}");
         }
 
         public void CloseDialogueWindow()
@@ -217,8 +205,6 @@ namespace CrabSystem
 
             dialogueCanvas.gameObject.SetActive(false);
             isDialogueOpen = false;
-
-            if (debugMode) Debug.Log("[UniversalWindowManager] Closed dialogue window");
         }
 
         private UniversalInventoryWindow CreateWindow(string windowId)
@@ -313,18 +299,6 @@ namespace CrabSystem
             foreach (var window in activeWindows.Values)
                 if (window != null && window.IsOpen) count++;
             return count;
-        }
-
-        [ContextMenu("Print Active Windows")]
-        private void PrintActiveWindows()
-        {
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[UniversalWindowManager] Active windows: {activeWindows.Count + 1}");
-            if (playerInventoryWindow != null)
-                sb.AppendLine($"  - Player Inventory (Open: {playerInventoryWindow.IsOpen})");
-            foreach (var kvp in activeWindows)
-                sb.AppendLine($"  - {kvp.Key} ({(kvp.Value != null && kvp.Value.IsOpen ? "OPEN" : "CLOSED")})");
-            Debug.Log(sb.ToString());
         }
     }
 }

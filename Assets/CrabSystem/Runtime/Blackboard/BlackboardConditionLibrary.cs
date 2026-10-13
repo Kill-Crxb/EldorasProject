@@ -118,37 +118,9 @@ namespace CrabSystem
             {
                 Debug.LogWarning($"[ConditionLibrary:{name}] Validation failed:\n{error}", this);
             }
-            else if (debugLogging)
-            {
-                Debug.Log($"[ConditionLibrary:{name}] Validated {ConditionCount} conditions");
-            }
         }
 
         // Print all conditions in the library (debug)
-        [ContextMenu("Print All Conditions")]
-        private void PrintAllConditions()
-        {
-            if (conditions == null || conditions.Count == 0)
-            {
-                Debug.Log($"[ConditionLibrary:{name}] No conditions defined");
-                return;
-            }
-
-            Debug.Log($"=== Condition Library: {name} ({ConditionCount} conditions) ===");
-
-            foreach (var condition in conditions)
-            {
-                if (condition == null)
-                {
-                    Debug.Log("  ✗ NULL CONDITION");
-                    continue;
-                }
-
-                string status = condition.IsEnabled ? "✓" : "✗";
-                string desc = condition.GetReadableDescription();
-                Debug.Log($"  {status} {condition.name}: {desc}");
-            }
-        }
 
         // Validate all conditions (debug)
         [ContextMenu("Validate All Conditions")]
@@ -156,7 +128,6 @@ namespace CrabSystem
         {
             if (Validate(out string error))
             {
-                Debug.Log($"[ConditionLibrary:{name}] ✓ All {ConditionCount} conditions valid");
             }
             else
             {
@@ -165,38 +136,5 @@ namespace CrabSystem
         }
 
         // Count conditions by type (debug)
-        [ContextMenu("Print Statistics")]
-        private void PrintStatistics()
-        {
-            if (conditions == null || conditions.Count == 0)
-            {
-                Debug.Log($"[ConditionLibrary:{name}] No conditions defined");
-                return;
-            }
-
-            int enabledCount = 0;
-            int disabledCount = 0;
-            int nullCount = 0;
-
-            foreach (var condition in conditions)
-            {
-                if (condition == null)
-                {
-                    nullCount++;
-                    continue;
-                }
-
-                if (condition.IsEnabled)
-                    enabledCount++;
-                else
-                    disabledCount++;
-            }
-
-            Debug.Log($"=== Condition Library Statistics: {name} ===\n" +
-                      $"  Total: {ConditionCount}\n" +
-                      $"  Enabled: {enabledCount}\n" +
-                      $"  Disabled: {disabledCount}\n" +
-                      $"  Null: {nullCount}");
-        }
     }
 }

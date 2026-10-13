@@ -82,10 +82,6 @@ namespace CrabSystem.Magic
                  "height and forward of the body — not the hand, but not nowhere.")]
         [SerializeField] private VFXAnchor drawFallbackAnchor = VFXAnchor.CastOrigin;
 
-        [Header("Debug")]
-        [Tooltip("Log every compose: the sequence, the resolved name, the tier and the cost.")]
-        [SerializeField] private bool debugLogging = false;
-
         private ControllerBrain brain;
 
         private float Now => brain.Clock.Now;
@@ -494,20 +490,12 @@ namespace CrabSystem.Magic
 
             abilities.UseAbility(cast.abilityId);
 
-            if (debugLogging)
-                Debug.Log($"[SpellcraftSystem] {CurrentKey} → {spell.DisplayName} " +
-                          $"({spell.tierRow.displayName}, {DiceLabel(spell)}, x{spell.instanceCount}) " +
-                          $"cost {spell.cost:F1}", this);
-
             OnSpellCast?.Invoke(spell);
             ConsumeSequence();
         }
 
         private void Fail(string reason)
         {
-            if (debugLogging)
-                Debug.Log($"[SpellcraftSystem] cast refused — {reason}", this);
-
             OnCastFailed?.Invoke(reason);
         }
 

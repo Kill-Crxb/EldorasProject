@@ -42,9 +42,6 @@ namespace CrabSystem
         [SerializeField] private int movesetSlotIndex = 0;
         [SerializeField] private int blockSlotIndex = 1;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         private ControllerBrain brain;
 
         private float Now => brain.Clock.Now;
@@ -170,8 +167,6 @@ namespace CrabSystem
 
             if (!active && def.alwaysOn)
             {
-                if (debugLogging)
-                    Debug.Log($"[HotbarSystem] '{barId}' is alwaysOn and cannot be switched off.");
                 return;
             }
 
@@ -180,9 +175,6 @@ namespace CrabSystem
 
             hasChosenBars = true;
             OnActiveBarsChanged?.Invoke();
-
-            if (debugLogging)
-                Debug.Log($"[HotbarSystem] Bar '{barId}' {(active ? "on" : "off")}.");
         }
 
         private bool AddActive(string barId)
@@ -233,9 +225,6 @@ namespace CrabSystem
 
             NotifyAllBarsChanged();
             OnPageChanged?.Invoke(ActivePageId);
-
-            if (debugLogging)
-                Debug.Log($"[HotbarSystem] Page → {ActivePageId}");
         }
 
         private HotbarPageDefinition PickPage()
@@ -566,9 +555,6 @@ namespace CrabSystem
             if (state.bars.Count == 0) return;
 
             pages.Add(state);
-
-            if (debugLogging)
-                Debug.Log("[HotbarSystem] Migrated v1 bars into the default page.");
         }
 
         // The config a bar currently reads and writes: the active page's copy when that page

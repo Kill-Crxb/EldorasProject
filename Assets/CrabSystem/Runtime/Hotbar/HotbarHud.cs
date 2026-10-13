@@ -19,9 +19,6 @@ namespace CrabSystem
         [Tooltip("Handed to each spawned bar. Optional — bars without a picker button ignore it.")]
         [SerializeField] private AbilityPickerPanel abilityPickerPanel;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         private ControllerBrain playerBrain;
         private HotbarSystem hotbarSystem;
         private SlotTransformationSystem transformSystem;
@@ -76,9 +73,6 @@ namespace CrabSystem
 
             foreach (var def in SortedActiveBars())
                 Spawn(def);
-
-            if (debugLogging)
-                Debug.Log($"[HotbarHud] Rebuilt — {spawned.Count} bar(s) on screen.");
         }
 
         private List<ActionBarDefinition> SortedActiveBars()

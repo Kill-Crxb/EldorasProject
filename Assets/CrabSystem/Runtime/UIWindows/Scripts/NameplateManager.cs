@@ -21,9 +21,6 @@ namespace CrabSystem
         [SerializeField] private GameObject nameplatePrefab;
         [SerializeField] private Transform worldSpaceParent;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         private ControllerBrain playerBrain;
         private readonly List<NPCNameplate> registeredNameplates = new List<NPCNameplate>();
 
@@ -57,9 +54,6 @@ namespace CrabSystem
 
             Register(nameplate);
             nameplate.Initialize(npcBrain, playerBrain);
-
-            if (debugLogging)
-                Debug.Log($"[NameplateManager] Spawned: {npcBrain.name}");
         }
 
         public void ResolvePlayerBrain()
@@ -95,17 +89,6 @@ namespace CrabSystem
         {
             foreach (var nameplate in registeredNameplates)
                 if (nameplate != null) nameplate.UpdateDisplay();
-        }
-
-        [ContextMenu("Print Registered Nameplates")]
-        private void PrintRegistered()
-        {
-            if (!Application.isPlaying) return;
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[NameplateManager] {registeredNameplates.Count} nameplate(s) | Player: {(playerBrain != null ? playerBrain.name : "NONE")}");
-            foreach (var n in registeredNameplates)
-                sb.AppendLine(n != null ? $"  • {n.EntityName} (Lv.{n.EntityLevel})" : "  • [destroyed]");
-            Debug.Log(sb.ToString());
         }
     }
 }

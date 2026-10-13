@@ -174,7 +174,6 @@ namespace CrabSystem
                 if (result.Errors != null) errors.AddRange(result.Errors.Select(e => $"  [{manager.ManagerName}] {e}"));
             }
 
-            if (passed.Count > 0) Debug.Log($"[ManagerBrain] ✓ Managers ready ({passed.Count}): {string.Join(" | ", passed)}", this);
             if (warnings.Count > 0) Debug.LogWarning($"[ManagerBrain] Warnings:\n{string.Join("\n", warnings)}", this);
             if (errors.Count > 0) Debug.LogError($"[ManagerBrain] Errors:\n{string.Join("\n", errors)}", this);
             if (anyFatal) Debug.LogError("[ManagerBrain] Fatal validation errors, see above.", this);

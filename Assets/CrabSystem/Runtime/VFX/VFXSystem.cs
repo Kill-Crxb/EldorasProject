@@ -58,9 +58,6 @@ namespace CrabSystem
         public void Initialize(ControllerBrain controllerBrain)
         {
             brain = controllerBrain;
-
-            if (debugVFX)
-                Debug.Log($"[VFXSystem] Initialized on {brain.EntityName}");
         }
 
         public void UpdateModule() { }
@@ -185,9 +182,6 @@ namespace CrabSystem
             }
 
             Destroy(instance, destroyDelay);
-
-            if (debugVFX)
-                Debug.Log($"[VFXSystem] Spawned '{prefab.name}' (destroy in {destroyDelay:F1}s)");
         }
     }
 }

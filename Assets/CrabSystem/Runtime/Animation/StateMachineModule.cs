@@ -41,7 +41,6 @@ namespace CrabSystem
 
         [Header("Debug")]
         [SerializeField] private bool debugStateMachine = false;
-        [SerializeField] private bool debugTransitions = true;
         [SerializeField] private bool showDebugUI = true;
 
         // The 4 state machines
@@ -93,15 +92,6 @@ namespace CrabSystem
             postureState.OnStateChanged += (old, newState) => OnPostureStateChanged?.Invoke(old, newState);
 
             IsInitialized = true;
-
-            if (debugStateMachine)
-            {
-                Debug.Log($"[StateMachineModule] Initialized on {brain.EntityName}");
-                Debug.Log($"  Brain: {brainState.Current}");
-                Debug.Log($"  UpperBody: {upperBodyState.Current}");
-                Debug.Log($"  LowerBody: {lowerBodyState.Current}");
-                Debug.Log($"  Posture: {postureState.Current}");
-            }
         }
 
         // ===== STATE QUERIES =====
@@ -202,9 +192,6 @@ namespace CrabSystem
         {
             brainState.TransitionTo(newState);
 
-            if (debugTransitions)
-                Debug.Log($"[StateMachine] Brain: {brainState.Previous} → {newState}");
-
             return true;
         }
 
@@ -218,15 +205,10 @@ namespace CrabSystem
             // Check permissions
             if (!CanPerformUpperBodyAction(newState))
             {
-                if (debugTransitions)
-                    Debug.Log($"[StateMachine] UpperBody transition to {newState} BLOCKED by permissions");
                 return false;
             }
 
             upperBodyState.TransitionTo(newState);
-
-            if (debugTransitions)
-                Debug.Log($"[StateMachine] UpperBody: {upperBodyState.Previous} → {newState}");
 
             return true;
         }
@@ -241,15 +223,10 @@ namespace CrabSystem
             // Check permissions
             if (!CanPerformMovement(newState))
             {
-                if (debugTransitions)
-                    Debug.Log($"[StateMachine] LowerBody transition to {newState} BLOCKED by permissions");
                 return false;
             }
 
             lowerBodyState.TransitionTo(newState);
-
-            if (debugTransitions)
-                Debug.Log($"[StateMachine] LowerBody: {lowerBodyState.Previous} → {newState}");
 
             return true;
         }
@@ -264,15 +241,10 @@ namespace CrabSystem
             // Check permissions
             if (!CanChangePosture(newState))
             {
-                if (debugTransitions)
-                    Debug.Log($"[StateMachine] Posture transition to {newState} BLOCKED by permissions");
                 return false;
             }
 
             postureState.TransitionTo(newState);
-
-            if (debugTransitions)
-                Debug.Log($"[StateMachine] Posture: {postureState.Previous} → {newState}");
 
             return true;
         }
@@ -283,33 +255,21 @@ namespace CrabSystem
         public void ForceTransitionBrain(BrainState newState)
         {
             brainState.TransitionTo(newState);
-
-            if (debugTransitions)
-                Debug.Log($"[StateMachine] Brain FORCED: {brainState.Previous} → {newState}");
         }
 
         public void ForceTransitionUpperBody(UpperBodyState newState)
         {
             upperBodyState.TransitionTo(newState);
-
-            if (debugTransitions)
-                Debug.Log($"[StateMachine] UpperBody FORCED: {upperBodyState.Previous} → {newState}");
         }
 
         public void ForceTransitionLowerBody(LowerBodyState newState)
         {
             lowerBodyState.TransitionTo(newState);
-
-            if (debugTransitions)
-                Debug.Log($"[StateMachine] LowerBody FORCED: {lowerBodyState.Previous} → {newState}");
         }
 
         public void ForceTransitionPosture(PostureState newState)
         {
             postureState.TransitionTo(newState);
-
-            if (debugTransitions)
-                Debug.Log($"[StateMachine] Posture FORCED: {postureState.Previous} → {newState}");
         }
 
         // ===== DEBUG VISUALIZATION =====

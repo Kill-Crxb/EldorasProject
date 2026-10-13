@@ -23,9 +23,6 @@ namespace CrabSystem
         [Header("Module Config")]
         [SerializeField] private bool isEnabled = true;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugStatuses = false;
-
         [Tooltip("Live view of what is currently on this entity. Read-only — editing does nothing.")]
         [SerializeField] private List<string> activeDebug = new();
 
@@ -246,9 +243,6 @@ namespace CrabSystem
             UpdateFlags(instance, 0, instance.Stacks);
             RefreshDebugList();
 
-            if (debugStatuses)
-                Debug.Log($"[StatusSystem] +{definition.id} on {transform.root.name} ({instance.Remaining:F2}s)");
-
             OnStatusApplied?.Invoke(instance);
             return instance;
         }
@@ -271,9 +265,6 @@ namespace CrabSystem
             WriteContributions(instance);
             UpdateFlags(instance, previous, instance.Stacks);
             RefreshDebugList();
-
-            if (debugStatuses)
-                Debug.Log($"[StatusSystem] {instance.Id} x{instance.Stacks} on {transform.root.name}");
 
             OnStacksChanged?.Invoke(instance);
         }
@@ -379,9 +370,6 @@ namespace CrabSystem
 
             UpdateFlags(instance, instance.Stacks, 0);
             RefreshDebugList();
-
-            if (debugStatuses)
-                Debug.Log($"[StatusSystem] -{instance.Id} on {transform.root.name}");
 
             OnStatusRemoved?.Invoke(instance);
         }

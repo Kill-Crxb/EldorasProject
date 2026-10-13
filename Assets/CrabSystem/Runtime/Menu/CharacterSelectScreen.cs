@@ -46,9 +46,6 @@ namespace CrabSystem
         [Tooltip("The CharacterCreationPanel — activated when New is clicked, deactivated on confirm/cancel.")]
         [SerializeField] private CharacterCreationPanel characterCreationPanel;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         private AccountManager accountManager;
         private SaveManager saveManager;
         private List<CharacterMetadata> characters = new();
@@ -115,9 +112,6 @@ namespace CrabSystem
 
             SetBusy(false);
             ClearFeedback();
-
-            if (debugLogging)
-                Debug.Log($"[CharacterSelectScreen] Loaded {characters.Count} character(s)");
         }
 
         private void SpawnSlot(CharacterMetadata metadata)
@@ -163,9 +157,6 @@ namespace CrabSystem
             SetPlayInteractable(true);
             SetDeleteInteractable(true);
             ClearFeedback();
-
-            if (debugLogging)
-                Debug.Log($"[CharacterSelectScreen] Selected: {metadata.characterName}");
         }
 
         // ── Play ──────────────────────────────────────────────────────────────
@@ -179,9 +170,6 @@ namespace CrabSystem
                 SetFeedback("You must be logged in to play.", isError: true);
                 return;
             }
-
-            if (debugLogging)
-                Debug.Log($"[CharacterSelectScreen] Playing: {selectedCharacter.characterName}");
 
             SceneLoader.Instance?.LoadGameScene(selectedCharacter.characterId);
         }
@@ -198,9 +186,6 @@ namespace CrabSystem
                 return;
             }
 
-            if (debugLogging)
-                Debug.Log("[CharacterSelectScreen] Opening character creation panel");
-
             // Suppress the OnEnable refresh that fires when this panel reactivates —
             // OnCreationComplete handles the refresh explicitly after creation.
             suppressNextRefresh = true;
@@ -213,9 +198,6 @@ namespace CrabSystem
         {
             gameObject.SetActive(true);
             _ = RefreshCharacterList();
-
-            if (debugLogging)
-                Debug.Log("[CharacterSelectScreen] Returned from character creation");
         }
 
         // ── Delete ────────────────────────────────────────────────────────────
@@ -237,9 +219,6 @@ namespace CrabSystem
 
             if (success)
             {
-                if (debugLogging)
-                    Debug.Log($"[CharacterSelectScreen] Deleted: {metadata.characterName}");
-
                 await RefreshCharacterList();
             }
             else

@@ -13,9 +13,6 @@ namespace CrabSystem
     [CreateAssetMenu(fileName = "StatePermissionMatrix", menuName = "StateMachine/Permission Matrix")]
     public class StatePermissionMatrix : ScriptableObject
     {
-        [Header("Debug")]
-        [SerializeField] protected bool debugPermissions = false;
-
         // ===== POSTURE CONSTRAINS MOVEMENT =====
 
         // Check if current posture allows a desired lower body movement.
@@ -29,18 +26,12 @@ namespace CrabSystem
                     bool proneAllowed = desiredMovement == LowerBodyState.Crawling ||
                                        desiredMovement == LowerBodyState.Idle;
 
-                    if (!proneAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Prone blocks {desiredMovement}");
-
                     return proneAllowed;
 
                 case PostureState.Crouching:
                     // Can't sprint or dash while crouching
                     bool crouchBlocked = desiredMovement == LowerBodyState.Sprinting ||
                                         desiredMovement == LowerBodyState.Dashing;
-
-                    if (crouchBlocked && debugPermissions)
-                        Debug.Log($"[Permissions] Crouching blocks {desiredMovement}");
 
                     return !crouchBlocked;
 
@@ -53,18 +44,12 @@ namespace CrabSystem
                     bool swimAllowed = desiredMovement == LowerBodyState.Swimming ||
                                       desiredMovement == LowerBodyState.Idle;
 
-                    if (!swimAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Swimming blocks {desiredMovement}");
-
                     return swimAllowed;
 
                 case PostureState.Climbing:
                     // Only climbing movement
                     bool climbAllowed = desiredMovement == LowerBodyState.Climbing ||
                                        desiredMovement == LowerBodyState.Idle;
-
-                    if (!climbAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Climbing blocks {desiredMovement}");
 
                     return climbAllowed;
 
@@ -75,9 +60,6 @@ namespace CrabSystem
                                        desiredMovement == LowerBodyState.Sprinting ||
                                        desiredMovement == LowerBodyState.Idle;
 
-                    if (!mountAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Mounted blocks {desiredMovement}");
-
                     return mountAllowed;
 
                 case PostureState.KnockedDown:
@@ -85,9 +67,6 @@ namespace CrabSystem
                 case PostureState.Ragdoll:
                     // No movement allowed in these states
                     bool forcedBlocked = desiredMovement != LowerBodyState.Idle;
-
-                    if (forcedBlocked && debugPermissions)
-                        Debug.Log($"[Permissions] {posture} blocks all movement");
 
                     return !forcedBlocked;
 
@@ -109,18 +88,12 @@ namespace CrabSystem
                     // Can't attack mid-dash/dodge (evasive maneuvers)
                     bool evasiveBlocked = desiredAction != UpperBodyState.Idle;
 
-                    if (evasiveBlocked && debugPermissions)
-                        Debug.Log($"[Permissions] {movement} blocks {desiredAction}");
-
                     return !evasiveBlocked;
 
                 case LowerBodyState.Climbing:
                     // Can only use arms for climbing
                     bool climbAllowed = desiredAction == UpperBodyState.Climbing ||
                                        desiredAction == UpperBodyState.Idle;
-
-                    if (!climbAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Climbing blocks {desiredAction}");
 
                     return climbAllowed;
 
@@ -131,9 +104,6 @@ namespace CrabSystem
                                         desiredAction == UpperBodyState.MeleeRecovery ||
                                         desiredAction == UpperBodyState.Blocking;
 
-                    if (sprintBlocked && debugPermissions)
-                        Debug.Log($"[Permissions] Sprinting blocks {desiredAction}");
-
                     return !sprintBlocked;
 
                 case LowerBodyState.Stumbling:
@@ -141,9 +111,6 @@ namespace CrabSystem
                     // Can't act while stumbling/knocked down
                     bool stumblingBlocked = desiredAction != UpperBodyState.Idle &&
                                            desiredAction != UpperBodyState.KnockedDown;
-
-                    if (stumblingBlocked && debugPermissions)
-                        Debug.Log($"[Permissions] {movement} blocks {desiredAction}");
 
                     return !stumblingBlocked;
 
@@ -169,9 +136,6 @@ namespace CrabSystem
                 case UpperBodyState.MeleeRecovery:
                     bool meleeRestricted = desiredMovement == LowerBodyState.Dashing;
 
-                    if (meleeRestricted && debugPermissions)
-                        Debug.Log($"[Permissions] {action} blocks {desiredMovement}");
-
                     return !meleeRestricted;
 
                 // Guard up: walk and run, no sprint or dash. A slower guard walk is a speed modifier for
@@ -180,9 +144,6 @@ namespace CrabSystem
                 case UpperBodyState.Parrying:
                     bool guardRestricted = desiredMovement == LowerBodyState.Sprinting ||
                                            desiredMovement == LowerBodyState.Dashing;
-
-                    if (guardRestricted && debugPermissions)
-                        Debug.Log($"[Permissions] Guard blocks {desiredMovement}");
 
                     return !guardRestricted;
 
@@ -193,17 +154,11 @@ namespace CrabSystem
                                         desiredMovement == LowerBodyState.Backstepping ||
                                         desiredMovement == LowerBodyState.Idle;
 
-                    if (!aimingAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Aiming restricts to slow movement");
-
                     return aimingAllowed;
 
                 case UpperBodyState.CastingChannel:
                     // Can't move while channeling
                     bool channelLocked = desiredMovement != LowerBodyState.Idle;
-
-                    if (channelLocked && debugPermissions)
-                        Debug.Log($"[Permissions] Channeling locks movement");
 
                     return !channelLocked;
 
@@ -212,18 +167,12 @@ namespace CrabSystem
                     bool carryingAllowed = desiredMovement == LowerBodyState.Walking ||
                                           desiredMovement == LowerBodyState.Idle;
 
-                    if (!carryingAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Carrying restricts to walking");
-
                     return carryingAllowed;
 
                 case UpperBodyState.Stunned:
                 case UpperBodyState.KnockedDown:
                     // Can't move while stunned/knocked down
                     bool forcedLocked = desiredMovement != LowerBodyState.Idle;
-
-                    if (forcedLocked && debugPermissions)
-                        Debug.Log($"[Permissions] {action} locks movement");
 
                     return !forcedLocked;
 
@@ -248,9 +197,6 @@ namespace CrabSystem
                                        desiredAction == UpperBodyState.ThrowingItem ||
                                        desiredAction == UpperBodyState.Idle;
 
-                    if (!proneAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Prone blocks {desiredAction}");
-
                     return proneAllowed;
 
                 case PostureState.Crouching:
@@ -263,18 +209,12 @@ namespace CrabSystem
                     bool swimAllowed = desiredAction == UpperBodyState.Idle ||
                                       desiredAction == UpperBodyState.ThrowingItem;
 
-                    if (!swimAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Swimming blocks {desiredAction}");
-
                     return swimAllowed;
 
                 case PostureState.Climbing:
                     // Only climbing actions
                     bool climbAllowed = desiredAction == UpperBodyState.Climbing ||
                                        desiredAction == UpperBodyState.Idle;
-
-                    if (!climbAllowed && debugPermissions)
-                        Debug.Log($"[Permissions] Climbing blocks {desiredAction}");
 
                     return climbAllowed;
 
@@ -285,9 +225,6 @@ namespace CrabSystem
                     bool forcedBlocked = desiredAction != UpperBodyState.Idle &&
                                         desiredAction != UpperBodyState.KnockedDown &&
                                         desiredAction != UpperBodyState.Stunned;
-
-                    if (forcedBlocked && debugPermissions)
-                        Debug.Log($"[Permissions] {posture} blocks all actions");
 
                     return !forcedBlocked;
 
@@ -305,24 +242,18 @@ namespace CrabSystem
             // Can't change posture while mid-swing
             if (upperBody == UpperBodyState.MeleeSwing)
             {
-                if (debugPermissions)
-                    Debug.Log("[Permissions] Can't change posture during MeleeSwing");
                 return false;
             }
 
             // Can't change posture while dashing
             if (lowerBody == LowerBodyState.Dashing || lowerBody == LowerBodyState.Dodging)
             {
-                if (debugPermissions)
-                    Debug.Log($"[Permissions] Can't change posture during {lowerBody}");
                 return false;
             }
 
             // Can't change posture while channeling
             if (upperBody == UpperBodyState.CastingChannel)
             {
-                if (debugPermissions)
-                    Debug.Log("[Permissions] Can't change posture while channeling");
                 return false;
             }
 

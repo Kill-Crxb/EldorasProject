@@ -33,9 +33,6 @@ namespace CrabSystem
         [Tooltip("Which save provider to use. Swap to RemoteSaveProvider for server migration.")]
         [SerializeField] private SaveProviderType providerType = SaveProviderType.Local;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
-
         // Username of the currently logged-in account. Empty string if not logged in.
         public string ActiveAccountName { get; private set; } = string.Empty;
 
@@ -53,9 +50,6 @@ namespace CrabSystem
             SaveProvider = CreateProvider();
 
             IsInitialized = true;
-
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Initialized — provider: {SaveProvider.GetType().Name}");
         }
 
         public void LateInitialize()
@@ -67,9 +61,6 @@ namespace CrabSystem
         public void Shutdown()
         {
             Logout();
-
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Shutdown");
         }
 
         public ValidationResult Validate()
@@ -95,9 +86,6 @@ namespace CrabSystem
             string hash = HashPassword(password);
             bool success = await SaveProvider.RegisterAccount(username, hash);
 
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Register '{username}': {(success ? "SUCCESS" : "FAILED — username taken")}");
-
             return success;
         }
 
@@ -114,16 +102,11 @@ namespace CrabSystem
 
             if (!valid)
             {
-                if (debugLogging)
-                    Debug.Log($"[{ManagerName}] Login '{username}': FAILED — invalid credentials");
                 return false;
             }
 
             ActiveAccountName = username;
             IsLoggedIn = true;
-
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Login '{username}': SUCCESS");
 
             return true;
         }
@@ -132,9 +115,6 @@ namespace CrabSystem
         public void Logout()
         {
             if (!IsLoggedIn) return;
-
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Logout '{ActiveAccountName}'");
 
             ActiveAccountName = string.Empty;
             IsLoggedIn = false;
@@ -163,15 +143,6 @@ namespace CrabSystem
                 sb.Append(b.ToString("x2"));
 
             return sb.ToString();
-        }
-
-        [ContextMenu("Debug: Print Session State")]
-        private void DebugPrintState()
-        {
-            Debug.Log($"=== ACCOUNT MANAGER ===\n" +
-                      $"IsLoggedIn:        {IsLoggedIn}\n" +
-                      $"ActiveAccountName: {ActiveAccountName}\n" +
-                      $"Provider:          {SaveProvider?.GetType().Name ?? "null"}");
         }
     }
 

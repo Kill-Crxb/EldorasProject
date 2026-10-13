@@ -179,19 +179,6 @@ namespace CrabSystem
         private void DebugClearAll()
         {
             ClearAll();
-            Debug.Log($"[ContainerContents] Cleared all items from {containerId}");
-        }
-
-        [ContextMenu("Print Items")]
-        private void DebugPrintItems()
-        {
-            Debug.Log($"=== {displayName} ({containerId}) ===");
-            Debug.Log($"Grid: {gridWidth}x{gridHeight}");
-            Debug.Log($"Items: {items.Count}");
-            foreach (var item in items)
-            {
-                Debug.Log($"  - {item.definitionId} ({item.rarity}) x{item.stackCount} at ({item.gridX}, {item.gridY})");
-            }
         }
     }
 

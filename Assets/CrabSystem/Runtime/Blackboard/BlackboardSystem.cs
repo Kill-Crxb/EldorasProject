@@ -82,12 +82,6 @@ namespace CrabSystem
             // Create runtime blackboard
             blackboard = new Blackboard();
             blackboard.Initialize(schema, debugLogging, brain.name);
-
-            if (debugLogging)
-            {
-                Debug.Log($"[BlackboardSystem] Initialized on {brain.EntityName} with schema: {schema.schemaId}");
-                Debug.Log($"[BlackboardSystem] Memory footprint: {blackboard.GetMemoryFootprint()} bytes");
-            }
         }
 
         public void UpdateModule()
@@ -102,17 +96,13 @@ namespace CrabSystem
         {
             if (blackboard == null)
             {
-                Debug.Log($"[BlackboardSystem] Blackboard not initialized on {name}");
                 return;
             }
 
             if (schema == null)
             {
-                Debug.Log($"[BlackboardSystem] No schema assigned on {name}");
                 return;
             }
-
-            Debug.Log($"=== Blackboard Facts ({name}) ===");
 
             foreach (var keyDef in schema.keys)
             {
@@ -122,17 +112,14 @@ namespace CrabSystem
                 {
                     case BlackboardValueType.Bool:
                         bool boolVal = blackboard.GetBool(hash);
-                        Debug.Log($"  {keyDef.keyName} (Bool): {boolVal}");
                         break;
 
                     case BlackboardValueType.Float:
                         float floatVal = blackboard.GetFloat(hash);
-                        Debug.Log($"  {keyDef.keyName} (Float): {floatVal:F2}");
                         break;
 
                     case BlackboardValueType.Int:
                         int intVal = blackboard.GetInt(hash);
-                        Debug.Log($"  {keyDef.keyName} (Int): {intVal}");
                         break;
                 }
             }
@@ -151,9 +138,6 @@ namespace CrabSystem
             {
                 blackboard.Initialize(schema, debugLogging, brain?.name ?? name);
             }
-
-            if (debugLogging)
-                Debug.Log($"[BlackboardSystem] Cleared all facts on {name}");
         }
 
         private void OnValidate()

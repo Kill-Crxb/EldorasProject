@@ -23,9 +23,6 @@ namespace CrabSystem
             instance = this;
             BuildResourceLookup();
             IsInitialized = true;
-
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Initialized with {resourceDefinitions.Count} resources");
         }
 
         public void LateInitialize()
@@ -35,8 +32,6 @@ namespace CrabSystem
 
         public void Shutdown()
         {
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Shutdown");
         }
 
         public ValidationResult Validate()
@@ -74,9 +69,6 @@ namespace CrabSystem
             BuildResourceLookup();
             ValidateStatReferences();
             ConfigVersion++;
-
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Hot-reloaded (v{ConfigVersion})");
         }
 
         private static readonly Type[] dependencies = new[] { typeof(StatsManager) };
@@ -87,9 +79,6 @@ namespace CrabSystem
 
         [Header("Settings")]
         [SerializeField] private bool enableHotReload = true;
-
-        [Header("Debug")]
-        [SerializeField] private bool debugLogging = false;
 
         private readonly Dictionary<string, ResourceDefinition> resourceById = new();
 
@@ -159,9 +148,6 @@ namespace CrabSystem
 
             BuildResourceLookup();
             ConfigVersion++;
-
-            if (debugLogging)
-                Debug.Log($"[{ManagerName}] Registered resource '{def.resourceId}'");
         }
 
         public void UnregisterResource(string resourceId)

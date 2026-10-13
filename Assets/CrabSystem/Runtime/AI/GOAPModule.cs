@@ -159,8 +159,6 @@ namespace CrabSystem
                     goalPool.Add(goal);
                 }
             }
-
-            Debug.Log($"[GOAPModule] Goal pool set: {goalPool.Count} goals");
         }
 
         // Add a single goal to the pool
@@ -169,23 +167,18 @@ namespace CrabSystem
             if (goal != null && !goalPool.Contains(goal))
             {
                 goalPool.Add(goal);
-                Debug.Log($"[GOAPModule] Added goal: {goal.goalName}");
             }
         }
 
         // Remove a goal from the pool
         public void RemoveGoal(GOAPGoal goal)
         {
-            if (goalPool.Remove(goal))
-            {
-                Debug.Log($"[GOAPModule] Removed goal: {goal.goalName}");
-            }
+            goalPool.Remove(goal);
         }
 
         public void ClearGoals()
         {
             goalPool.Clear();
-            Debug.Log("[GOAPModule] Goal pool cleared");
         }
 
         // Get current goal count (for debugging)
@@ -201,13 +194,6 @@ namespace CrabSystem
             // Create and initialize context
             context = new GOAPContext();
             context.Initialize(brain);
-
-            if (debugMode)
-            {
-                Debug.Log($"[GOAPModule] Initialized on {brain.EntityName} with {goalPool.Count} goals");
-                Debug.Log($"  Selection Mode: {selectionMode}");
-                Debug.Log($"  Anti-Thrashing: {useGoalCommitment} (Min Duration: {minimumGoalDuration}s)");
-            }
         }
 
         public void UpdateModule()
@@ -229,9 +215,6 @@ namespace CrabSystem
             {
                 if (CurrentGoal != null && CurrentGoal.requiresTarget)
                 {
-                    if (debugMode)
-                        Debug.Log($"[GOAPModule] Lost target, clearing current goal");
-
                     ClearCurrentGoal();
                 }
 
@@ -242,7 +225,6 @@ namespace CrabSystem
             if (context.IsActionLocked)
             {
                 if (debugMode && Time.frameCount % 60 == 0) // Log once per second
-                    Debug.Log($"[GOAPModule] Entity action-locked, skipping goal evaluation");
                 return;
             }
 
@@ -308,8 +290,6 @@ namespace CrabSystem
             // No valid goals?
             if (evaluatedGoals.Count == 0)
             {
-                if (debugMode)
-                    Debug.Log($"[GOAPModule] No valid goals available");
                 return;
             }
 
@@ -393,9 +373,6 @@ namespace CrabSystem
             // Check if goal is complete
             if (activeGoal.IsComplete(context))
             {
-                if (debugMode)
-                    Debug.Log($"[GOAPModule] Goal completed: {activeGoal.goalName}");
-
                 // If this was an interrupt, resume previous goal
                 if (activeGoal == interruptGoal)
                 {
@@ -442,9 +419,6 @@ namespace CrabSystem
             if (currentGoal != null)
             {
                 currentGoal.OnEnd(context);
-
-                if (debugMode)
-                    Debug.Log($"[GOAPModule] Goal transition: {currentGoal.goalName} → {newGoal.goalName}");
             }
 
             currentGoal = newGoal;
@@ -519,9 +493,6 @@ namespace CrabSystem
 
         private void TriggerInterrupt(GOAPGoal interrupt)
         {
-            if (debugMode)
-                Debug.Log($"[GOAPModule] INTERRUPT: {interrupt.goalName}");
-
             // Push current goal to stack if we want to resume
             if (resumeAfterInterrupt && currentGoal != null)
             {
@@ -543,9 +514,6 @@ namespace CrabSystem
         // Complete interrupt and resume previous goal
         private void CompleteInterrupt()
         {
-            if (debugMode)
-                Debug.Log($"[GOAPModule] Interrupt completed: {interruptGoal.goalName}");
-
             interruptGoal.OnEnd(context);
             interruptGoal = null;
 
@@ -558,18 +526,12 @@ namespace CrabSystem
                 {
                     GOAPGoal resumeGoal = goalStack.Pop();
 
-                    if (debugMode)
-                        Debug.Log($"[GOAPModule] Resuming goal: {resumeGoal.goalName}");
-
                     currentGoal = resumeGoal;
                     goalStartTime = Now;
                     resumeGoal.OnStart(context);
                 }
                 else
                 {
-                    if (debugMode)
-                        Debug.Log($"[GOAPModule] Interrupt too long ({interruptDuration:F2}s), selecting new goal");
-
                     goalStack.Clear();
                     SelectNewGoal();
                 }
