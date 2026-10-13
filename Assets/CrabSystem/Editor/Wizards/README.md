@@ -5,8 +5,8 @@ outside this folder is modified.
 
 | Menu | What it does |
 |---|---|
-| **Tools → Crab → Wizards → Weapon…** | Creates a weapon's whole data chain in one pass. |
-| **Tools → Crab → Wizards → Weapon Asset Report** | Inventory of every weapon-side asset, who references it, and what is already broken. Never deletes. |
+| **Dashboard → Weapons → Weapon wizard** | Creates a weapon's whole data chain in one pass. |
+| **Dashboard → Weapons → Weapon asset report** | Inventory of every weapon-side asset, who references it, and what is already broken. Never deletes. |
 
 `CrabWizardGUI.cs` is the shared chrome — title, sections, a validation box, folder creation, id
 and asset-name conversion. The next wizard should use it rather than growing its own HelpBox soup.

@@ -46,12 +46,6 @@ namespace CrabSystem
         Vector2 scroll;
         bool idEdited;
 
-        [MenuItem("Tools/Crab/Wizards/Weapon…")]
-        static void Open()
-        {
-            WeaponWizard window = GetWindow<WeaponWizard>("Weapon Wizard");
-            window.minSize = new Vector2(420, 500);
-        }
 
         // Internal so the dashboard's Weapons tab can host it.
         internal void OnGUI()

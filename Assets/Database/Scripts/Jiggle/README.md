@@ -1,4 +1,8 @@
-# Porphi breast jiggle — staged
+# Porphi breast jiggle
+
+> **13 Oct:** the set-up commands (`PorphiJiggleSetup.cs`, Tools → Crab → Jiggle) were retired with the other
+> one-shot builders; git history has them. The springs and colliders they made are on `Porphi.prefab`; this page
+> still explains the settings.
 
 Magica Cloth 2 **BoneSpring** on `Breast_01_L` / `Breast_01_R`, applied to
 `Assets/Database/Characters/MC/Porphi.prefab` by an editor menu command.

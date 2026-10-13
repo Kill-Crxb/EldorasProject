@@ -38,12 +38,6 @@ namespace CrabSystem
             "m_GameObject", "m_Enabled", "m_EditorHideFlags", "m_Script", "m_Name", "m_EditorClassIdentifier",
         };
 
-        [MenuItem("Tools/Crab/Wizards/Weapon Asset Report")]
-        static void Open()
-        {
-            WeaponAssetReport window = GetWindow<WeaponAssetReport>("Weapon Assets");
-            window.minSize = new Vector2(520, 400);
-        }
 
         // Internal so the dashboard's Weapons tab can host it.
         internal void OnGUI()
