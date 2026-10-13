@@ -89,6 +89,7 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
 
         damage.OnDamageApplied += HandleDamageApplied;
         damage.OnDeath += HandleDeath;
+        damage.OnRevived += ResetReactions;
 
         if (statuses != null)
         {
@@ -105,6 +106,7 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
         {
             damage.OnDamageApplied -= HandleDamageApplied;
             damage.OnDeath -= HandleDeath;
+            damage.OnRevived -= ResetReactions;
         }
 
         if (statuses != null)
@@ -144,7 +146,7 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
         if (Time.time - lastReactionTime < minTimeBetweenReactions) return;
 
         lastReactionTime = Time.time;
-        SetTrigger(trigger);
+        anim.SetTrigger(trigger);
         OnReactionPlayed?.Invoke(trigger);
     }
 
@@ -175,8 +177,8 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
         if (isDead) return;
         isDead = true;
 
-        SetBool(isDeadParam, true);
-        SetTrigger(deathParam);
+        anim.SetBool(isDeadParam, true);
+        anim.SetTrigger(deathParam);
     }
 
     private void SetHitDirection(Vector3 worldDirection)
@@ -184,40 +186,18 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
         if (worldDirection.sqrMagnitude < 0.0001f) return;
 
         Vector3 local = facing.InverseTransformDirection(worldDirection.normalized);
-        SetFloat(hitDirXParam, local.x);
-        SetFloat(hitDirZParam, local.z);
-    }
-
-    // ── Guarded animator writes (a missing parameter logs once, not every frame) ──
-
-    private void SetTrigger(string parameterName)
-    {
-        if (string.IsNullOrEmpty(parameterName)) return;
-        if (!anim.HasParameter(parameterName)) return;
-        anim.SetTrigger(parameterName);
-    }
-
-    private void SetBool(string parameterName, bool value)
-    {
-        if (string.IsNullOrEmpty(parameterName)) return;
-        if (!anim.HasParameter(parameterName)) return;
-        anim.SetBool(parameterName, value);
-    }
-
-    private void SetFloat(string parameterName, float value)
-    {
-        if (string.IsNullOrEmpty(parameterName)) return;
-        if (!anim.HasParameter(parameterName)) return;
-        anim.SetFloat(parameterName, value);
+        anim.SetFloat(hitDirXParam, local.x);
+        anim.SetFloat(hitDirZParam, local.z);
     }
 
     // ── Respawn ───────────────────────────────────────────────────────────
 
-    // Call when the entity is brought back — clears the death pose and the rate limit.
+    // Brought back (DamageSystem.OnRevived): clears the death pose and the rate limit. AnimationSystem skips
+    // parameters the controller lacks, so these writes need no guard.
     public void ResetReactions()
     {
         isDead = false;
         lastReactionTime = -999f;
-        SetBool(isDeadParam, false);
+        anim.SetBool(isDeadParam, false);
     }
 }

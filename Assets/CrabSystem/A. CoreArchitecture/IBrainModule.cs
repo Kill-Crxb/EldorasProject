@@ -11,7 +11,7 @@ public interface IBrainModule
 
     int InitOrder => 1000;
 
-    // Declined on every entity that isn't the player: switched off and never initialized.
+    // Declined on every entity this machine does not drive (ControllerBrain.IsLocal): switched off, never initialized.
     bool PlayerOnly => false;
 
     void Initialize(ControllerBrain brain);

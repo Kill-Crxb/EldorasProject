@@ -118,6 +118,8 @@ public struct BlackboardKey
     //   CannotBlock   Defense abilities
     //   CannotDodge   Movement abilities
     public static readonly int CannotAct          = "CannotAct".GetHashCode();
+    // Written by DamageSystem only: true from death until Revive.
+    public static readonly int IsDead             = "IsDead".GetHashCode();
     public static readonly int CannotMove         = "CannotMove".GetHashCode();
     public static readonly int CannotJump         = "CannotJump".GetHashCode();
     public static readonly int CannotSprint       = "CannotSprint".GetHashCode();

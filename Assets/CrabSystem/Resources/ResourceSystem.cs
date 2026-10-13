@@ -404,6 +404,17 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
         SetResourceValue(state, state.max);
     }
 
+    // Respawn: every pool to its ceiling, regen delays cleared.
+    public void RefillAll()
+    {
+        foreach (var state in states)
+        {
+            state.regenReadyAt = 0f;
+            state.unitProgress = 0f;
+            SetResourceValue(state, state.max);
+        }
+    }
+
     public IReadOnlyDictionary<ResourceDefinition, float> GetAllResources()
     {
         var result = new Dictionary<ResourceDefinition, float>(resources.Count);

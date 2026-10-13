@@ -38,6 +38,12 @@ MonoBehaviour:
     defaultBool: 0
     defaultFloat: 0
     defaultInt: 0
+  - keyName: IsDead
+    type: 0
+    description: '"Dead until respawned (written by DamageSystem)"'
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
   - keyName: CannotCast
     type: 0
     description: '"Unable to cast spells or draw elements"'

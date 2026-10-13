@@ -87,6 +87,8 @@ public class DamageSystem : MonoBehaviour, IBrainModule
     public event Action<float> OnHealthChanged;
     public event Action<float, float> OnHealthChangedDetailed;
     public event Action OnDeath;
+    // Back from death (RespawnModule). Pools are refilled before it fires.
+    public event Action OnRevived;
     // Victim side, right after OnDeath. The killer may be null.
     public event Action<ControllerBrain> OnKilledBy;
     // Attacker side — this entity landed a killing hit on the victim passed in.
@@ -370,10 +372,21 @@ public class DamageSystem : MonoBehaviour, IBrainModule
         if (isDead) return;
         isDead = true;
         Killer = incomingAttacker;
+        blackboard?.SetBool(BlackboardKey.IsDead, true);
 
         OnDeath?.Invoke();
         OnKilledBy?.Invoke(Killer);
         if (Killer != null && Killer.Damage != null) Killer.Damage.RaiseKill(brain);
+    }
+
+    // Death is a state, so it ends: the caller refills the pools first, so health is above 0 when listeners run.
+    public void Revive()
+    {
+        if (!isDead) return;
+        isDead = false;
+        Killer = null;
+        blackboard?.SetBool(BlackboardKey.IsDead, false);
+        OnRevived?.Invoke();
     }
 
     private void RaiseKill(ControllerBrain victim)
