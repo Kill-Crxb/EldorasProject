@@ -7,6 +7,16 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.crxb.crabsystem": {
+      "version": "file:com.crxb.crabsystem",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.inputsystem": "1.20.0",
+        "com.unity.ugui": "2.6.0",
+        "com.unity.render-pipelines.universal": "17.6.0"
+      }
+    },
     "com.pudinkiller.vfx-mesh-lab": {
       "version": "https://github.com/PudinKiller/VFXMeshLab.git",
       "depth": 0,
