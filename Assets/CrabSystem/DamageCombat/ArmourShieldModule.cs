@@ -30,8 +30,9 @@ public class ArmourShieldModule : MonoBehaviour, IBrainModule
     // Amount absorbed, and whether that emptied the shield. For feedback (VFX shopping list: absorb / break).
     public event Action<float, bool> OnShieldHit;
 
-    // Until the entity clock lands (CrabSystem_Standard §9).
-    private static float Now => Time.time;
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
 
     public void Initialize(ControllerBrain controllerBrain)
     {

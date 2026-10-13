@@ -117,8 +117,9 @@ public class GuardModule : MonoBehaviour, IBrainModule
     public event Action OnGuardBreak;                // the posture bar filled
     public event Action<float> OnGuardFlanked;       // a hit landed outside the guard arc; its angle off facing
 
-    // Until the entity clock lands (CrabSystem_Standard §9).
-    private static float Now => Time.time;
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
 
     public void Initialize(ControllerBrain controllerBrain)
     {
@@ -245,7 +246,7 @@ public class GuardModule : MonoBehaviour, IBrainModule
         {
             if (cost.drain <= 0f) continue;
 
-            float amount = cost.drain * Time.deltaTime;
+            float amount = cost.drain * Delta;
             if (!resources.HasResource(cost.resource, amount))
             {
                 Lower();

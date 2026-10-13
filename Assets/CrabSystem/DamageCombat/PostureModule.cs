@@ -25,6 +25,11 @@ public class PostureModule : MonoBehaviour, IBrainModule, IBarSource
     private float brokenUntil = -999f;
 
     private IStatProvider stats;
+    private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
 
     public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
     public float Current => current;
@@ -32,10 +37,11 @@ public class PostureModule : MonoBehaviour, IBrainModule, IBarSource
     public float Max => Mathf.Max(1f, maxPosture + DialIds.Read(stats, DialIds.MaxPosture));
     public float Fraction => Mathf.Clamp01(current / Max);
     public float BreakSeconds => breakSeconds;
-    public bool IsBroken => Time.time < brokenUntil;
+    public bool IsBroken => Now < brokenUntil;
 
     public void Initialize(ControllerBrain brain)
     {
+        this.brain = brain;
         stats = brain.Stats;
     }
 
@@ -53,10 +59,10 @@ public class PostureModule : MonoBehaviour, IBrainModule, IBarSource
         }
 
         current = Mathf.Min(current, Max);
-        if (current <= 0f || Time.time < recoverAt) return;
+        if (current <= 0f || Now < recoverAt) return;
 
         float recovery = Mathf.Max(0f, recoveryPerSecond + DialIds.Read(stats, DialIds.PostureRecovery));
-        current = Mathf.Max(0f, current - recovery * Time.deltaTime);
+        current = Mathf.Max(0f, current - recovery * Delta);
     }
 
     // True when this fills the bar: the caller breaks the guard. A broken fighter takes no more.
@@ -66,10 +72,10 @@ public class PostureModule : MonoBehaviour, IBrainModule, IBarSource
 
         float max = Max;
         current = Mathf.Min(max, current + amount);
-        recoverAt = Time.time + recoveryDelay;
+        recoverAt = Now + recoveryDelay;
         if (current < max) return false;
 
-        brokenUntil = Time.time + breakSeconds;
+        brokenUntil = Now + breakSeconds;
         return true;
     }
 }

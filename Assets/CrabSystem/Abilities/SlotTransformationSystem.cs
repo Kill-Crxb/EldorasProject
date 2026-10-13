@@ -21,6 +21,10 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
     // ── Cached refs ───────────────────────────────────────────────────────
 
     private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
     private HotbarSystem hotbarSystem;
     private AbilitySystem abilitySystem;
     private IResourceProvider resourceProvider;
@@ -98,15 +102,15 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
                 if (!string.IsNullOrEmpty(def.resourceId))
                     resourceDefCache[def.resourceId] = def;
 
-        nextUpdateTime = Time.time + UpdateInterval;
+        nextUpdateTime = Now + UpdateInterval;
     }
 
     public void UpdateModule()
     {
         if (!IsEnabled || hotbarSystem == null) return;
 
-        if (Time.time < nextUpdateTime) return;
-        nextUpdateTime = Time.time + UpdateInterval;
+        if (Now < nextUpdateTime) return;
+        nextUpdateTime = Now + UpdateInterval;
 
         TickExpiringOverrides();
         EvaluateReactiveTransforms();
@@ -189,8 +193,8 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
         {
             ability   = ability,
             type      = type,
-            expiresAt = duration >= 0f ? Time.time + duration : -1f,
-            appliedAt = Time.time,
+            expiresAt = duration >= 0f ? Now + duration : -1f,
+            appliedAt = Now,
             priority  = priority,
         };
 
@@ -243,7 +247,7 @@ public class SlotTransformationSystem : MonoBehaviour, IBrainModule
 
         foreach (var kvp in activeOverrides)
         {
-            if (kvp.Value.expiresAt >= 0f && Time.time >= kvp.Value.expiresAt)
+            if (kvp.Value.expiresAt >= 0f && Now >= kvp.Value.expiresAt)
             {
                 expired ??= new List<string>();
                 expired.Add(kvp.Key);

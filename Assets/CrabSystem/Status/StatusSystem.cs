@@ -45,6 +45,10 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     public bool IsEnabled { get => isEnabled; set => isEnabled = value; }
 
     private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
     private IStatProvider stats;
     private Blackboard blackboard;
     private DamageSystem damage;
@@ -109,7 +113,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
         if (!IsEnabled) return;
         if (active.Count == 0) return;
 
-        float deltaTime = Time.deltaTime;
+        float deltaTime = Delta;
 
         for (int i = active.Count - 1; i >= 0; i--)
         {
@@ -297,7 +301,7 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     private float DiminishStep(StatusDefinition definition)
     {
         if (definition.control == ControlCategory.None) return 1f;
-        if (!diminishing.TryGetValue(definition.control, out var dr) || Time.time - dr.last > drWindow) return 1f;
+        if (!diminishing.TryGetValue(definition.control, out var dr) || Now - dr.last > drWindow) return 1f;
         return dr.count < drSteps.Length ? drSteps[dr.count] : 0f;
     }
 
@@ -305,8 +309,8 @@ public class StatusSystem : MonoBehaviour, IBrainModule
     {
         if (definition.control == ControlCategory.None) return;
 
-        bool inWindow = diminishing.TryGetValue(definition.control, out var dr) && Time.time - dr.last <= drWindow;
-        diminishing[definition.control] = (inWindow ? dr.count + 1 : 1, Time.time);
+        bool inWindow = diminishing.TryGetValue(definition.control, out var dr) && Now - dr.last <= drWindow;
+        diminishing[definition.control] = (inWindow ? dr.count + 1 : 1, Now);
     }
 
     private float ControlScale(StatusDefinition definition, ControllerBrain source)

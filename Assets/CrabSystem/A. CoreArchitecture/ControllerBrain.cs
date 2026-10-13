@@ -71,6 +71,9 @@ public class ControllerBrain : MonoBehaviour
 
     public bool IsGrounded => feetDetection != null && feetDetection.IsGrounded;
 
+    // Gameplay time for this character; modules read it instead of Time (EntityClock).
+    public EntityClock Clock { get; } = new EntityClock(UnityEngine.Time.time);
+
     void Awake()
     {
         ResolveRootReferences();
@@ -216,6 +219,7 @@ public class ControllerBrain : MonoBehaviour
     void Update()
     {
         if (!IsInitialized) return;
+        Clock.Advance(UnityEngine.Time.deltaTime);
         for (int i = 0; i < updateModules.Length; i++)
             if (ShouldRun(updateModules[i])) updateModules[i].UpdateModule();
     }

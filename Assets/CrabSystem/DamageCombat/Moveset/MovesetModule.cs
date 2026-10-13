@@ -16,6 +16,10 @@ public class MovesetModule : MonoBehaviour, IBrainModule
     [IdRef(IdKind.EquipmentSlot)] [SerializeField] private string weaponSlotId = "mainwep";
 
     private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
     private AbilitySystem abilities;
     private CombatStanceModule stance;
     private EquipmentSystem equipment;
@@ -185,7 +189,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         if (stepInFlight != null) return true;
 
         WeaponMoveset moveset = ActiveMoveset;
-        return moveset != null && Time.time - stepEndedAt <= moveset.chainGrace;
+        return moveset != null && Now - stepEndedAt <= moveset.chainGrace;
     }
 
     private AbilityDefinition StepAt(MovesetChain requested, int step)
@@ -229,7 +233,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         buffered = true;
         bufferedChain = requested;
         bufferedStep = step;
-        bufferedAt = Time.time;
+        bufferedAt = Now;
     }
 
     private void TrackStepInFlight()
@@ -238,7 +242,7 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         if (abilities.CurrentAbility == stepInFlight) return;
 
         stepInFlight = null;
-        stepEndedAt = Time.time;
+        stepEndedAt = Now;
 
         if (!Interrupted()) return;
 
@@ -261,12 +265,12 @@ public class MovesetModule : MonoBehaviour, IBrainModule
         // Still held: the lifetime starts when the fighter is free again.
         if (Stunned())
         {
-            bufferedAt = Time.time;
+            bufferedAt = Now;
             return;
         }
 
         // Counted from whichever came later, the press or the step ending, so a long step can't age it out.
-        bool expired = stepInFlight == null && Time.time - Mathf.Max(bufferedAt, stepEndedAt) > bufferLifetime;
+        bool expired = stepInFlight == null && Now - Mathf.Max(bufferedAt, stepEndedAt) > bufferLifetime;
         if (expired)
         {
             buffered = false;

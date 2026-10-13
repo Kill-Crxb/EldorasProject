@@ -103,7 +103,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     public MovePhase CurrentPhase => currentAbility != null ? movePhase : MovePhase.None;
     public bool IsArmored => currentAbility != null && currentAbility.HasArmorAt(CurrentMoveFrame);
     public bool IsInvincible => isInvincible;
-    public float TellFor => currentAbility != null && told ? Time.time - toldAt : -1f;
+    public float TellFor => currentAbility != null && told ? Now - toldAt : -1f;
     // From the clip's ChainOpen to the move's end: MovesetModule may start the string's next step.
     public bool ChainOpen => currentAbility != null && chainOpen;
     public StrikeHandler Strikes => strikes;
@@ -247,8 +247,9 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
         TickTimedInvuln();
     }
 
-    // Until the entity clock lands (CrabSystem_Standard §9).
-    private static float Delta => Time.deltaTime;
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
 
     // Animation events drive every move (decided 5 Oct): strikes, phases and the end come from the
     // clip, so timing is tuned by editing the clip. This counter only measures — frames at 60 fps since
@@ -712,7 +713,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     {
         SetFact(BlackboardKey.MoveRooted, !ability.castWhileMoving);
         currentlyCastingAbility = ability.abilityId;
-        castStartTime = Time.time;
+        castStartTime = Now;
         OnAbilityCastStart?.Invoke(ability.abilityId);
     }
 
@@ -728,7 +729,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
         var ability = state.definition;
 
-        if (Time.time - castStartTime >= Modifiers.CastTime(ability))
+        if (Now - castStartTime >= Modifiers.CastTime(ability))
         {
             ExecuteAbility(ability);
             currentlyCastingAbility = null;
@@ -885,7 +886,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
     private void Tell()
     {
         told = true;
-        toldAt = Time.time;
+        toldAt = Now;
         OnTell?.Invoke(currentAbility);
     }
 
@@ -921,13 +922,13 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
 
     private void StartTimedInvuln(float seconds)
     {
-        invulnUntil = Time.time + seconds;
+        invulnUntil = Now + seconds;
         SetInvincible(true);
     }
 
     private void TickTimedInvuln()
     {
-        if (invulnUntil <= 0f || Time.time < invulnUntil) return;
+        if (invulnUntil <= 0f || Now < invulnUntil) return;
         SetInvincible(false);
     }
 
@@ -980,7 +981,7 @@ public class AbilitySystem : MonoBehaviour, IBrainModule, IAbilityProvider, ICom
             var state = kvp.Value;
             if (state.cooldown == null) continue;
 
-            state.cooldown.Tick(Time.deltaTime);
+            state.cooldown.Tick(Delta);
             OnAbilityCooldownChanged?.Invoke(kvp.Key, state.cooldown.CurrentTime);
 
             if (state.cooldown.IsFinished)

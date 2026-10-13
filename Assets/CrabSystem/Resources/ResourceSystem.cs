@@ -43,6 +43,10 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
     [SerializeField] private List<ResourceState> states = new();
 
     private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
     private IStatProvider stats;
     private DamageSystem damage;
     private readonly Dictionary<string, ResourceState> resources = new();
@@ -98,7 +102,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
         // The dead don't regenerate. DamageSystem.IsDead is the one death flag (Audit 4 S4).
         if (damage != null && damage.IsDead) return;
 
-        float delta = Time.deltaTime;
+        float delta = Delta;
 
         for (int i = 0; i < states.Count; i++) TickRegen(states[i], delta);
     }
@@ -213,7 +217,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
         var def = state.definition;
         if (def == null) return;
         if (state.current >= state.max - EPSILON) return;
-        if (Time.time < state.regenReadyAt) return;
+        if (Now < state.regenReadyAt) return;
 
         if (def.regenSource == null) TickFlatRegen(state, def, delta);
         else TickBudgetedRegen(state, def, delta);
@@ -287,7 +291,7 @@ public class ResourceSystem : MonoBehaviour, IResourceProvider, IHealthProvider,
         float delay = state.definition.regenDelay + Dial(state.definition.regenDelayStatId);
         if (delay <= 0f) return;
 
-        state.regenReadyAt = Time.time + delay;
+        state.regenReadyAt = Now + delay;
     }
 
     #endregion

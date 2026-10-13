@@ -40,6 +40,10 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     public static IReadOnlyList<AIControlSource> Active => active;
 
     private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
     private PerceptionModule perception;
     private Vector2 moveDirection;
     private Vector2 lookDirection;
@@ -130,7 +134,7 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
         Home = brain.transform.position;
 
         DamageSystem damage = brain.GetModule<DamageSystem>();
-        if (damage != null) damage.OnDamageApplied += (packet, applied) => DamagedAt = Time.time;
+        if (damage != null) damage.OnDamageApplied += (packet, applied) => DamagedAt = Now;
 
         AbilitySystem abilities = brain.GetModule<AbilitySystem>();
         if (abilities != null) abilities.OnHitLanded += HandleHitLanded;
@@ -152,7 +156,7 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
     // Our hit landed on a guard.
     private void HandleHitLanded(AbilityDefinition ability, ControllerBrain target)
     {
-        if (target != null && target.Damage != null && target.Damage.LastHitGuarded) GuardedAt = Time.time;
+        if (target != null && target.Damage != null && target.Damage.LastHitGuarded) GuardedAt = Now;
     }
 
     // The target's attack ended without hitting us while we were close: a whiff we can punish.
@@ -172,11 +176,11 @@ public class AIControlSource : MonoBehaviour, IBrainModule, IMovementControlSour
         if (move != null && trackedMove == null && IsAttack(move))
         {
             trackedMove = move;
-            trackedMoveStart = Time.time;
+            trackedMoveStart = Now;
         }
         if (move != null || trackedMove == null) return;
 
-        if (DamagedAt < trackedMoveStart) TargetWhiffedAt = Time.time;
+        if (DamagedAt < trackedMoveStart) TargetWhiffedAt = Now;
         trackedMove = null;
     }
 

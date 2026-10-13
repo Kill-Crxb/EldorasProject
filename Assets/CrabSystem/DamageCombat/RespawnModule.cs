@@ -12,6 +12,10 @@ public class RespawnModule : MonoBehaviour, IBrainModule
     [SerializeField] private float respawnDelay = 3f;
 
     private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
     private DamageSystem damage;
     private ResourceSystem resources;
     private Vector3 spawnPosition;
@@ -50,12 +54,12 @@ public class RespawnModule : MonoBehaviour, IBrainModule
 
     public void UpdateModule()
     {
-        if (respawnAt < 0f || Time.time < respawnAt) return;
+        if (respawnAt < 0f || Now < respawnAt) return;
         respawnAt = -1f;
         Respawn();
     }
 
-    private void HandleDeath() => respawnAt = Time.time + respawnDelay;
+    private void HandleDeath() => respawnAt = Now + respawnDelay;
 
     private void HandleLoaded()
     {

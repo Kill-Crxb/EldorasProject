@@ -36,6 +36,10 @@ public class TriggerModule : MonoBehaviour, IBrainModule
     public bool IsEnabled { get; set; } = true;
 
     private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
     private AbilitySystem abilities;
     private ResourceSystem resources;
     private DamageSystem damage;
@@ -140,7 +144,7 @@ public class TriggerModule : MonoBehaviour, IBrainModule
         foreach (string key in firing)
         {
             TalentTrigger trigger = triggers[key];
-            if (trigger.InternalCooldown > 0f) readyAt[key] = Time.time + trigger.InternalCooldown;
+            if (trigger.InternalCooldown > 0f) readyAt[key] = Now + trigger.InternalCooldown;
             Run(trigger, target);
         }
         inEffect = false;
@@ -149,7 +153,7 @@ public class TriggerModule : MonoBehaviour, IBrainModule
     private bool Passes(string key, TalentTrigger trigger, TriggerEvent happened, AbilityDefinition ability, StatusDefinition status)
     {
         if (trigger.Event != happened) return false;
-        if (readyAt.TryGetValue(key, out float ready) && Time.time < ready) return false;
+        if (readyAt.TryGetValue(key, out float ready) && Now < ready) return false;
         if (trigger.FilterAbility && (ability == null || !trigger.Ability.Matches(ability, abilities.Modifiers))) return false;
         if (trigger.Event == TriggerEvent.StatusGained && trigger.Status != null && (status == null || status.id != trigger.Status.id)) return false;
         return trigger.Dc <= 1 || DiceRoll.Die(20) >= trigger.Dc;

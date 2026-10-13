@@ -44,6 +44,10 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
     }
 
     private ControllerBrain brain;
+
+    // Gameplay time (EntityClock).
+    private float Now => brain.Clock.Now;
+    private float Delta => brain.Clock.Delta;
     private AnimationSystem anim;
     private DamageSystem damage;
     private StatusSystem statuses;
@@ -143,9 +147,9 @@ public class HitReactionSystem : MonoBehaviour, IBrainModule
     {
         if (!isEnabled || isDead) return;
         if (!reactionByStatus.TryGetValue(instance.Definition, out string trigger)) return;
-        if (Time.time - lastReactionTime < minTimeBetweenReactions) return;
+        if (Now - lastReactionTime < minTimeBetweenReactions) return;
 
-        lastReactionTime = Time.time;
+        lastReactionTime = Now;
         anim.SetTrigger(trigger);
         OnReactionPlayed?.Invoke(trigger);
     }
