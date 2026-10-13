@@ -1,6 +1,6 @@
 # Validate
 
-`Tools > CrabSystem > Validate` runs the CrabSystem Standard's review checklist (`claude/CrabSystem_Standard.md`, section 13) over `Assets/CrabSystem` and writes `Logs/CrabSystem_Validate.md` (project root, next to `Assets/`).
+`Tools > CrabSystem > Validate` runs the CrabSystem Standard's review checklist (`claude/CrabSystem_Standard.md`, section 13) over CrabSystem's own scripts (wherever the package sits) and writes `Logs/CrabSystem_Validate.md` (project root, next to `Assets/`).
 
 Read-only. A hit is a prompt to look, not proof of a defect. A rule broken on purpose should carry a short comment saying why.
 

@@ -47,12 +47,33 @@ The framework names a few things in code. Each lives in one constants class, and
   Hit-state statuses load by name from `Resources/Statuses/HitStates/`.
 - **Socket names** are set on each model prefab (SocketEventRelay); there are no defaults.
 
-## Using it in another project
+## Installing
 
-1. Copy this folder into `Assets/`, or into `Packages/com.crxb.crabsystem/` as an embedded package.
-   The dependencies in `package.json` must be installed, plus TextMesh Pro's essentials.
-2. Layers: `Tools > CrabSystem > Create Default Layer Config`, then `Tools > CrabSystem > Layer Manager`
-   and Apply. Code names layers only through `CrabLayers`; `Validate Ids` reports any that are missing.
-3. Make a variant of each starter prefab and fill its slots.
-4. `Runtime/Input/PlayerInputControls` is the framework's player input. The project-wide input actions
+CrabSystem is a UPM package (`com.crxb.crabsystem`). Pick one:
+
+- **Git** (other projects): Package Manager > + > *Add package from git URL*, then
+  `https://github.com/Kill-Crxb/CrabSystem.git#v0.2.0`. Pin a tag; `#main` follows the latest.
+  The same line can go straight into `Packages/manifest.json` under `dependencies`.
+- **Embedded** (the project CrabSystem is developed in): this folder sits at
+  `Packages/com.crxb.crabsystem/`, editable in place.
+- **Local folder**: Package Manager > + > *Add package from disk*, pick `package.json`.
+
+The dependencies in `package.json` install with it. Tests run from Window > General > Test Runner once
+`"testables": ["com.crxb.crabsystem"]` is in the project's `manifest.json`.
+
+## Setting up a project
+
+1. Open `Tools > CrabSystem > Dashboard` and the **Project Setup** tab. It checks URP, the Input System,
+   TextMesh Pro's essentials, the layers in `CrabLayers`, the `CrabResources` folders, a stat schema entry for
+   every `StatIds` / `DialIds` id and a damage config with the `physical` type. Each missing piece has a fix
+   button; fixes only add.
+2. **Project Settings > CrabSystem** says where this project keeps its starter data, items, talents, staging
+   and downloaded packs. The editor tools read these instead of fixed paths.
+3. Make a variant of each starter prefab, fill its slots (assign the damage config on the Manager_Brain
+   variant's DamageManager), and put the variants in the scenes.
+4. `Runtime/Input/PlayerInputControls` is the framework's player input. Its wrapper code is committed and
+   generation is off, because a git package is read-only; to change the bindings, edit the actions in the
+   embedded copy, tick *Generate C# Class*, apply, then untick it. The project-wide input actions
    (Project Settings > Input System) belong to the game.
+
+Still to come: a starter character prefab, so a blank project has someone to play.
