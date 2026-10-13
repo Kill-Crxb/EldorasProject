@@ -646,7 +646,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2697442398413963925}
-  - component: {fileID: 1308777025419997190}
   m_Layer: 9
   m_Name: Item_System
   m_TagString: Untagged
@@ -671,23 +670,6 @@ Transform:
   - {fileID: 4524248886955762679}
   m_Father: {fileID: 4521560391780592432}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1308777025419997190
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2286522021773105049}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af30251ff49b456409c54f87033e8507, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ItemSystem
-  hasInventory: 1
-  dropsLoot: 1
-  inventorySystem: {fileID: 2103388209631032583}
-  lootSystem: {fileID: 0}
-  debugSystem: 0
 --- !u!1 &2289597579882949774
 GameObject:
   m_ObjectHideFlags: 0

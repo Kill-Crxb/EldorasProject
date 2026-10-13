@@ -68,8 +68,7 @@ namespace CrabSystem
         private bool isDead;
         private ControllerBrain incomingAttacker;
 
-        // Stat_Resolution.md §4. Defense = 5 + Avoidance + armour's to-hit bonus.
-        private const float BaseDefense = 5f;
+        // Stat_Resolution.md §4. Defense = config base + Avoidance + armour's to-hit bonus.
         private const string AccuracyStat = StatIds.Finesse;
         private const string AvoidanceStat = StatIds.Avoidance;
         private const string ArmourDefenseStat = StatIds.ArmourDefense;
@@ -167,7 +166,7 @@ namespace CrabSystem
 
         public CombatDamagePacket CalculateDamage(CombatAttackData attackData)
         {
-            var config = DamageManager.Instance?.ActiveConfig?.GetConfig(attackData.damageType);
+            var config = DamageManager.Instance?.ActiveConfig?.Find(attackData.damageType);
 
             // The config's attacker stats are rolled as dice (Might 6 → 1d6). A tick carries none —
             // it was paid for when the effect landed.
@@ -307,7 +306,7 @@ namespace CrabSystem
             }
 
             hit.accuracy = packet.accuracy;
-            hit.defense = BaseDefense + Stat(AvoidanceStat) + Stat(ArmourDefenseStat);
+            hit.defense = BaseDefense() + Stat(AvoidanceStat) + Stat(ArmourDefenseStat);
             hit.advantage = packet.advantage;
             hit.counter = InStartup();
             if (hit.counter) hit.accuracy += counterHitAccuracy;
@@ -330,7 +329,7 @@ namespace CrabSystem
             if (hit.counter) hit.rolled += counterHitDamage;
 
             // Contact always costs something: the hit is worth at least 1. The armour shield then takes what
-            // it can of a physical hit (Combat_Framework §6.1); everything else goes past it.
+            // it can of a type it absorbs (Combat_Framework §6.1); everything else goes past it.
             float worth = hit.rolled > 0f ? Mathf.Max(1f, hit.rolled) : 0f;
             hit.applied = AbsorbByShield(worth, packet.damageType);
             hit.soak = worth - hit.applied;
@@ -346,10 +345,17 @@ namespace CrabSystem
             return self.CurrentPhase == MovePhase.Startup;
         }
 
-        private float AbsorbByShield(float amount, DamageType type)
+        private float AbsorbByShield(float amount, string typeId)
         {
-            if (shield == null || type != DamageType.Physical) return amount;
-            return shield.Absorb(amount);
+            if (shield == null) return amount;
+            var type = DamageManager.Instance?.ActiveConfig?.Find(typeId);
+            return type != null && type.absorbedByShield ? shield.Absorb(amount) : amount;
+        }
+
+        private static float BaseDefense()
+        {
+            var config = DamageManager.Instance?.ActiveConfig;
+            return config != null ? config.baseDefense : 0f;
         }
 
         // Each config stat rolled as its own die, scaled by its paired multiplier first.

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -21,14 +22,17 @@ namespace CrabSystem
         // presentation may read wall-clock time and unseeded randomness.
         static readonly string[] EditorFolders = { "/Editor/" };
         static readonly string[] DiagnosticFolders = { "/Editor/", "/DebugTools/", "/Debugging/" };
-        static readonly string[] PresentationFolders = { "/Editor/", "/DebugTools/", "/Debugging/", "/UIWindows/", "/Juice/", "/VFX/", "/Rendering/", "/Animation/CharacterFeel/" };
+        static readonly string[] PresentationFolders = { "/Editor/", "/DebugTools/", "/Debugging/", "/UIWindows/", "/Juice/", "/VFX/", "/Rendering/", "/Animation/CharacterFeel/", "/DamageNumbers/" };
+
+        // Physics-step movement and the camera stay on Time by design (EntityClock); views animate on real time.
+        static readonly string[] ClockExemptFolders = PresentationFolders.Concat(new[] { "/MovementLocomotion/", "/Camera/", "/Hotbar/" }).ToArray();
 
         struct Rule
         {
             public string Name;
             public Regex Pattern;
             public string[] SkipFolders;
-            public string SkipFile;
+            public string[] SkipFiles;
         }
 
         public struct Hit
@@ -46,9 +50,10 @@ namespace CrabSystem
             new Rule { Name = "Debug.Log in production", Pattern = new Regex(@"\bDebug\.Log\s*\("), SkipFolders = DiagnosticFolders },
             new Rule { Name = "Scene search in gameplay", Pattern = new Regex(@"\b(FindObjectOfType|FindFirstObjectByType|FindAnyObjectByType|FindObjectsOfType|FindObjectsByType|GetComponentInChildren|GetComponentsInChildren)\b"), SkipFolders = EditorFolders },
             new Rule { Name = "Third-party asset in framework", Pattern = new Regex(@"\b(MoreMountains|MagicaCloth\w*)\b"), SkipFolders = new string[0] },
-            new Rule { Name = "Literal stat id", Pattern = new Regex(@"""(core|atr|def|cmb|character|mov|mag|res|act)\.[a-z_]+"""), SkipFolders = EditorFolders },
-            new Rule { Name = "Literal fact key", Pattern = new Regex(@"(""[A-Z]\w+""\s*\.GetHashCode\(\)|new\s+BlackboardKey\s*\(\s*""\w+""\s*\))"), SkipFolders = EditorFolders, SkipFile = "BlackboardKey.cs" },
-            new Rule { Name = "Unseeded random / wall clock in gameplay", Pattern = new Regex(@"\b(UnityEngine\.)?Random\.(Range|value)\b|\bTime\.time\b"), SkipFolders = PresentationFolders },
+            new Rule { Name = "Literal stat id", Pattern = new Regex(@"""(core|atr|def|cmb|character|mov|mag|res|act)\.[a-z_]+"""), SkipFolders = EditorFolders, SkipFiles = new[] { "StatIds.cs", "DialIds.cs" } },
+            new Rule { Name = "Literal fact key", Pattern = new Regex(@"(BlackboardKey\.Hash\(\s*""\w+""|new\s+BlackboardKey\s*\(\s*""\w+""\s*\))"), SkipFolders = EditorFolders, SkipFiles = new[] { "BlackboardKey.cs" } },
+            new Rule { Name = "Unstable key hash", Pattern = new Regex(@"(""\w+""|\w*([Kk]ey|[Ff]act|[Kk]eyName))\s*\.GetHashCode\(\)"), SkipFolders = new string[0] },
+            new Rule { Name = "Unseeded random / wall clock in gameplay", Pattern = new Regex(@"\b(UnityEngine\.)?Random\.(Range|value|insideUnit\w+)\b|\bTime\.time\b"), SkipFolders = ClockExemptFolders, SkipFiles = new[] { "EntityClock.cs", "ControllerBrain.cs" } },
         };
 
         static readonly Regex Subscribe = new Regex(@"\.(On\w+)\s*\+=");
@@ -106,7 +111,7 @@ namespace CrabSystem
 
         static bool Skips(string path, Rule rule)
         {
-            if (rule.SkipFile != null && path.EndsWith("/" + rule.SkipFile)) return true;
+            if (rule.SkipFiles != null && rule.SkipFiles.Any(file => path.EndsWith("/" + file))) return true;
 
             foreach (string folder in rule.SkipFolders)
                 if (path.Contains(folder)) return true;

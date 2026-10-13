@@ -30,7 +30,7 @@ namespace CrabSystem
 
         public static float Range(float min, float max) => min + (max - min) * Value();
 
-        // Max exclusive, like UnityEngine.Random.Range(int, int).
+        // Max exclusive, matching Unity's int Range.
         public static int Range(int min, int max) => max <= min ? min : rng.Next(min, max);
 
         public static Vector2 InsideUnitCircle()

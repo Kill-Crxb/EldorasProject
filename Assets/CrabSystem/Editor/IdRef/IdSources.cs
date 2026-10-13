@@ -69,6 +69,7 @@ namespace CrabSystem
                 case IdKind.Scene: return EditorBuildSettings.scenes.Select(s => Path.GetFileNameWithoutExtension(s.path));
                 case IdKind.AnimatorParam: return AnimatorParameters();
                 case IdKind.Layer: return UnityEditorInternal.InternalEditorUtility.layers;
+                case IdKind.DamageType: return Assets<DamageTypeDefinition>().Select(d => d.id);
             }
 
             Debug.LogError($"[IdSources] No source for id kind {kind}.");

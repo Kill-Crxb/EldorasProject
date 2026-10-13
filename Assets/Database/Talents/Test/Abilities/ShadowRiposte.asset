@@ -94,7 +94,7 @@ MonoBehaviour:
     baseDamage: 0
     weaponSlotId: mainwep
     requiresSuppliedDice: 0
-    damageType: 0
+    damageType: physical
     baseDamageMultiplier: 1
     finalDamageMultiplier: 1
     requiredCasterFacts: []

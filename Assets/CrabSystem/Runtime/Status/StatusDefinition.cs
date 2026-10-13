@@ -99,7 +99,7 @@ namespace CrabSystem
         [Tooltip("Each tick deals tickDamage, rolled once per stack, as an unrolled tick hit from whoever applied it.")]
         public bool tickDealsDamage;
         public DiceRoll tickDamage = DiceRoll.D4();
-        public DamageType tickDamageType = DamageType.Poison;
+        [IdRef(IdKind.DamageType)] public string tickDamageType = DamageTypeIds.Physical;
 
         [Tooltip("Each tick heals tickHeal, rolled once per stack.")]
         public bool tickHeals;

@@ -30,7 +30,7 @@ namespace CrabSystem
         public bool requiresSuppliedDice = false;
 
         [Header("Damage Type")]
-        public DamageType damageType = DamageType.Physical;
+        [IdRef(IdKind.DamageType)] public string damageType = DamageTypeIds.Physical;
 
         [Header("Multipliers")]
         [Tooltip("Multiplier applied to base damage (before external modifiers)")]

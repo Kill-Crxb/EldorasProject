@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Earth
   icon: {fileID: 0}
   drawTrigger: DrawElement
-  damageType: 11
+  damageType: earth
   castAbility: {fileID: 11400000, guid: 2d914bd5a2e464d4b94af0bca9330c90, type: 2}
   tierNames:
   - Pebble

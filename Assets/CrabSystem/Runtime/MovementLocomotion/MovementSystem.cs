@@ -29,10 +29,6 @@ namespace CrabSystem
         [Header("Core Handlers")]
         [SerializeField] private LocomotionHandler locomotionHandler;
 
-        [Header("Optional Modules")]
-        [Tooltip("Feet detection module for grounded state (optional - will auto-discover)")]
-        [SerializeField] private FeetDetectionModule feetDetection;
-
         [Header("Gait States")]
         [Tooltip("With a gait-aware locomotion handler, IsRunning and IsSprinting come from the gait " +
                  "the player chose, gated only by actually moving. This is the speed (m/s) at which " +
@@ -99,19 +95,11 @@ namespace CrabSystem
         /// <summary>Does the current upper-body state allow this movement? True with no state machine.</summary>
         public bool Permits(LowerBodyState state) => stateMachine == null || stateMachine.CanPerformMovement(state);
 
-        /// <summary>
-        /// Grounded state from the locomotion handler when it owns grounding, otherwise from
-        /// FeetDetectionModule, otherwise the Brain fallback.
-        ///
-        /// A sweep-based handler already runs a downward capsule cast every step and knows the ground
-        /// normal and distance, not just a bool — asking a trigger volume the same question in
-        /// parallel gives two answers that disagree on stairs, slopes and anything moving. The
-        /// handler flag decides which source is authoritative, so handlers that do NOT own grounding
-        /// keep the existing behaviour untouched.
-        /// </summary>
+        // A sweep-based handler that owns grounding is authoritative: it knows the ground normal, and a trigger volume
+        // asked in parallel disagrees on stairs and slopes. Otherwise the brain's FeetDetectionModule answers.
         public bool IsGrounded => locomotionHandler != null && locomotionHandler.ProvidesGrounding
             ? locomotionHandler.IsGrounded
-            : feetDetection?.IsGrounded ?? brain?.IsGrounded ?? false;
+            : brain != null && brain.IsGrounded;
 
         // Locomotion state passthrough
         public bool IsMoving => locomotionHandler?.IsMoving ?? false;
@@ -162,17 +150,6 @@ namespace CrabSystem
             if (stateMachine == null)
                 Debug.LogWarning("[MovementSystem] No StateMachineModule found — movement permission checks disabled");
 
-            // Auto-discover feet detection if not assigned
-            if (feetDetection == null)
-            {
-                feetDetection = GetComponent<FeetDetectionModule>();
-
-                if (feetDetection == null)
-                {
-                    Debug.LogWarning("[MovementSystem] No FeetDetectionModule found - will use Brain.IsGrounded fallback");
-                }
-            }
-
             // Validate locomotion handler
             if (locomotionHandler == null)
             {
@@ -198,7 +175,6 @@ namespace CrabSystem
             if (showDebugInfo)
             {
                 Debug.Log($"[MovementSystem] Initialized on {brain.EntityName}");
-                Debug.Log($"  Feet Detection: {(feetDetection != null ? "Active" : "Using Brain fallback")}");
                 Debug.Log($"  Locomotion: {locomotionHandler.GetType().Name}");
                 Debug.Log($"  Active Control: {activeControlSource?.SourceName ?? "NONE"}");
             }

@@ -52,7 +52,7 @@ MonoBehaviour:
     baseDamage: 0
     weaponSlotId: 
     requiresSuppliedDice: 1
-    damageType: 11
+    damageType: earth
     baseDamageMultiplier: 1
     finalDamageMultiplier: 1
     requiredCasterFacts: []

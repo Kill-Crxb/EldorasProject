@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Aether
   icon: {fileID: 0}
   drawTrigger: DrawElement
-  damageType: 8
+  damageType: aether
   castAbility: {fileID: 11400000, guid: a4655f3e5d867d24799056cbce1c6fd6, type: 2}
   tierNames:
   - Mote

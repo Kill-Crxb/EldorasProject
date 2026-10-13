@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Nature
   icon: {fileID: 0}
   drawTrigger: DrawElement
-  damageType: 14
+  damageType: nature
   castAbility: {fileID: 11400000, guid: 91dbcaa46dc6304408b73a4d5abdf9c9, type: 2}
   tierNames:
   - Seed

@@ -52,7 +52,7 @@ MonoBehaviour:
     baseDamage: 0
     weaponSlotId: 
     requiresSuppliedDice: 1
-    damageType: 10
+    damageType: water
     baseDamageMultiplier: 1
     finalDamageMultiplier: 1
     requiredCasterFacts: []

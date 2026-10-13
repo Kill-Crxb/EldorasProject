@@ -55,7 +55,7 @@ namespace CrabSystem.Magic
         [Header("Damage")]
         [Tooltip("The packet's damage type for spells of this school. Must match the damageType on " +
                  "castAbility's DamageEffect — they are two halves of the same decision.")]
-        public DamageType damageType = DamageType.Fire;
+        [IdRef(IdKind.DamageType)] public string damageType = DamageTypeIds.Physical;
 
         [Tooltip("The CastPrimitiveSpell for this school. One per element, because DamageEffect's " +
                  "damage type lives on the shared asset and cannot vary per cast. See the class " +

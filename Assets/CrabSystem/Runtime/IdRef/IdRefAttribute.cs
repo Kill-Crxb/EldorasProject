@@ -21,7 +21,8 @@ namespace CrabSystem
         Model,
         Scene,
         AnimatorParam,
-        Layer
+        Layer,
+        DamageType
     }
 
     public class IdRefAttribute : PropertyAttribute

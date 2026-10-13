@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Fire
   icon: {fileID: 0}
   drawTrigger: DrawElement
-  damageType: 3
+  damageType: fire
   castAbility: {fileID: 11400000, guid: 1ee2ec45d0c6bb545843c4fa93be4158, type: 2}
   tierNames:
   - Ember

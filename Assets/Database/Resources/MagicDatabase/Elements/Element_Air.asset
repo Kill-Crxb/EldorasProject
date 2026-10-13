@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Air
   icon: {fileID: 0}
   drawTrigger: DrawElement
-  damageType: 9
+  damageType: wind
   castAbility: {fileID: 11400000, guid: 42f58b13a9d6d7f44bcd52cac9231dfc, type: 2}
   tierNames:
   - Gust

@@ -190,7 +190,7 @@ namespace CrabSystem
         public float fallbackDamage = 10f;
 
         [Tooltip("Damage type for the fallback path, and for hits on legacy destructibles.")]
-        public DamageType fallbackDamageType = DamageType.Physical;
+        [IdRef(IdKind.DamageType)] public string fallbackDamageType = DamageTypeIds.Physical;
 
         // =========================================================================
         // Presentation

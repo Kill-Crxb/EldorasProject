@@ -42,7 +42,7 @@ namespace CrabSystem
         public float weaponDamageMultiplier = 1f;
 
         [Header("Damage Type")]
-        public DamageType damageType = DamageType.Physical;
+        [IdRef(IdKind.DamageType)] public string damageType = DamageTypeIds.Physical;
 
         [Header("Source")]
         public DamageSource source = DamageSource.Other;
@@ -67,7 +67,7 @@ namespace CrabSystem
                 comboMultiplier = 1f,
                 weaponDamageMultiplier = 1f,
                 heavyAttackMultiplier = 2.0f,
-                damageType = DamageType.Physical
+                damageType = DamageTypeIds.Physical
             };
         }
 

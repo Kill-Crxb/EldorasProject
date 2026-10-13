@@ -33,7 +33,7 @@ MonoBehaviour:
   tickDamage:
     diceCount: 1
     diceFaces: 4
-  tickDamageType: 6
+  tickDamageType: poison
   tickHeals: 1
   tickHeal:
     diceCount: 2

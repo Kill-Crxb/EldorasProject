@@ -24,6 +24,7 @@ namespace CrabSystem
 
         [Header("Progression")]
         [SerializeField] private int currentLevel = 1;
+        [Tooltip("Cap for a character without a TalentModule. With one, TalentRules.levelCap is the cap, so talents and levels agree.")]
         [SerializeField] private int maxLevel = 20;
         [SerializeField] private int currentXP;
 
@@ -60,6 +61,8 @@ namespace CrabSystem
         {
             brain = controllerBrain;
             stats = brain.Stats;
+            var talentRules = brain.GetModule<TalentModule>()?.Rules;
+            if (talentRules != null) maxLevel = talentRules.levelCap;
             xpToNextLevel = CalculateXPForLevel(currentLevel + 1);
             PublishLevel();
         }

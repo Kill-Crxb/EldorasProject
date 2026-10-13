@@ -10,15 +10,13 @@ namespace CrabSystem
 {
     public class CameraEventListener : MonoBehaviour
     {
-        [SerializeField] private CameraModule cameraModule;
+        private CameraModule cameraModule;
 
-        private void Awake()
+        // Start, not Awake: the brain builds its module cache in its own Awake.
+        private void Start()
         {
-            if (cameraModule == null)
-                cameraModule = GetComponentInParent<CameraModule>();
-
-            if (cameraModule == null)
-                Debug.LogError("[CameraEventListener] No CameraModule assigned or found in parents.", this);
+            cameraModule = GetComponentInParent<ControllerBrain>()?.GetModule<CameraModule>();
+            if (cameraModule == null) Debug.LogError("[CameraEventListener] no CameraModule on this brain", this);
         }
 
         private void OnEnable()

@@ -85,10 +85,10 @@ namespace CrabSystem
             }
 
             // Update UI at intervals (not every frame for performance)
-            if (Time.time - lastUpdateTime >= updateInterval)
+            if (Time.unscaledTime - lastUpdateTime >= updateInterval)
             {
                 UpdateDebugUI();
-                lastUpdateTime = Time.time;
+                lastUpdateTime = Time.unscaledTime;
             }
         }
 

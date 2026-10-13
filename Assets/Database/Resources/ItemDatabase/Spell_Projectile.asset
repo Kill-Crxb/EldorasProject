@@ -49,7 +49,7 @@ MonoBehaviour:
   hitEnvironment: 1
   weaponData: {fileID: 0}
   fallbackDamage: 10
-  fallbackDamageType: 0
+  fallbackDamageType: physical
   visualPrefab: {fileID: 0}
   tint: {r: 1, g: 1, b: 1, a: 1}
   tintProperty: _BaseColor

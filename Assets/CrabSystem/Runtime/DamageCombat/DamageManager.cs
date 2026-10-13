@@ -140,20 +140,6 @@ namespace CrabSystem
         public DamageCalculationConfig ActiveConfig => activeConfig;
 
         /// <summary>
-        /// Get configuration for a specific damage type
-        /// </summary>
-        public DamageTypeConfig GetDamageTypeConfig(DamageType damageType)
-        {
-            if (activeConfig == null)
-            {
-                Debug.LogError("[DamageManager] No active config! Returning default.");
-                return new DamageTypeConfig { damageType = damageType };
-            }
-
-            return activeConfig.GetConfig(damageType);
-        }
-
-        /// <summary>
         /// Set the active damage config (e.g., switch between PvE and PvP configs)
         /// </summary>
         public void SetActiveConfig(DamageCalculationConfig config)
@@ -229,7 +215,7 @@ namespace CrabSystem
 
                     if (!stats.HasStat(statId))
                     {
-                        Debug.LogError($"[{ManagerName}] {damageType.damageType} damage " +
+                        Debug.LogError($"[{ManagerName}] {damageType.id} damage " +
                                      $"references unknown attacker stat: {statId}");
                         allValid = false;
                     }
@@ -242,7 +228,7 @@ namespace CrabSystem
 
                     if (!stats.HasStat(statId))
                     {
-                        Debug.LogError($"[{ManagerName}] {damageType.damageType} mitigation " +
+                        Debug.LogError($"[{ManagerName}] {damageType.id} mitigation " +
                                      $"references unknown defender stat: {statId}");
                         allValid = false;
                     }
@@ -274,34 +260,6 @@ namespace CrabSystem
     #endregion
 
     #region Context Menu Helpers
-
-        [ContextMenu("Print Active Config")]
-        private void PrintActiveConfig()
-        {
-            if (!Application.isPlaying)
-            {
-                Debug.LogWarning("[DamageManager] Can only print in Play Mode");
-                return;
-            }
-
-            if (activeConfig == null)
-            {
-                Debug.Log("[DamageManager] No active config");
-                return;
-            }
-
-            Debug.Log("=== DamageManager: Active Config ===");
-            Debug.Log($"Config: {activeConfig.name}");
-            Debug.Log($"Damage Types: {activeConfig.damageTypes.Count}");
-
-            foreach (var damageType in activeConfig.damageTypes)
-            {
-                Debug.Log($"\n  {damageType.damageType} Damage:");
-                Debug.Log($"    Attacker Stats: {string.Join(", ", damageType.attackerStatIds)}");
-                Debug.Log($"    Defender Stats: {string.Join(", ", damageType.defenderStatIds)}");
-                Debug.Log($"    Can Crit: {damageType.canCrit}");
-            }
-        }
 
         [ContextMenu("Validate Damage Formulas")]
         private void ContextValidateDamageFormulas()

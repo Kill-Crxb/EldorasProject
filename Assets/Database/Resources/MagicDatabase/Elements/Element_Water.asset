@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Water
   icon: {fileID: 0}
   drawTrigger: DrawElement
-  damageType: 10
+  damageType: water
   castAbility: {fileID: 11400000, guid: 115f2976e718bee4399c8a9b13a04270, type: 2}
   tierNames:
   - Droplet

@@ -52,7 +52,7 @@ MonoBehaviour:
     baseDamage: 0
     weaponSlotId: 
     requiresSuppliedDice: 1
-    damageType: 3
+    damageType: fire
     baseDamageMultiplier: 1
     finalDamageMultiplier: 1
     requiredCasterFacts: []
@@ -61,7 +61,7 @@ MonoBehaviour:
   - duration: 0
     tickInterval: 0
     damagePerTick: 0
-    damageType: 3
+    damageType: fire
     tickDice:
       diceCount: 1
       diceFaces: 4

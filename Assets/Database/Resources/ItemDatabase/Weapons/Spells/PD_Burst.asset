@@ -80,7 +80,7 @@ MonoBehaviour:
   hitEnvironment: 1
   weaponData: {fileID: 0}
   fallbackDamage: 2
-  fallbackDamageType: 0
+  fallbackDamageType: physical
   visualPrefab: {fileID: 1253314321967309013, guid: 635d833f15e3a584e9b921144bed5376, type: 3}
   tint: {r: 1, g: 1, b: 1, a: 1}
   tintProperty: _BaseColor

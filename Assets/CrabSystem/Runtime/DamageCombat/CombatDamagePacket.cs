@@ -21,7 +21,7 @@ namespace CrabSystem
         public readonly float finalDamage;
 
         [Header("Damage Type")]
-        public readonly DamageType damageType;
+        public readonly string damageType;
 
         [Header("Source Information")]
         public readonly Transform attacker;
@@ -51,7 +51,7 @@ namespace CrabSystem
         public CombatDamagePacket(
             float baseDamage,
             float finalDamage,
-            DamageType damageType,
+            string damageType,
             Transform attacker,
             string attackerId,
             Vector3 hitPoint,
@@ -92,7 +92,7 @@ namespace CrabSystem
             return new CombatDamagePacket(
                 baseDamage: damage,
                 finalDamage: damage,
-                damageType: DamageType.Physical,
+                damageType: DamageTypeIds.Physical,
                 attacker: attacker,
                 attackerId: attacker?.name ?? "Unknown",
                 hitPoint: hitPoint,
@@ -100,40 +100,5 @@ namespace CrabSystem
                 attackDirection: direction
             );
         }
-    }
-
-    /// <summary>
-    /// Types of damage in the game.
-    /// Different damage types interact with different defensive stats.
-    /// </summary>
-    public enum DamageType
-    {
-        Physical,   // Reduced by Armor
-        Magical,    // Reduced by Magic Resistance
-        True,        // Ignores all defenses
-        Fire,       // Magical fire damage
-        Lightning,  // Magical lightning damage
-        Ice,        // Magical ice damage
-        Poison,     // DoT damage type
-        Holy,       // Divine damage
-        Aether,
-        Wind,
-        Water,
-        Earth,
-        Magma,
-        Crystal,
-        Nature,
-
-        /// <summary>
-        /// The other face of Aether. Radiant is Holy above; raw Aether is undifferentiated.
-        ///
-        /// Only AUTHORED spells can name a face — primitive casting throws Aether and nothing else,
-        /// which is the whole difference between the two tiers: not power, precision. An enemy that
-        /// shrugs off raw Aether but folds to Shadow is a legible reason to go and learn the spell.
-        ///
-        /// APPENDED, never inserted — DamageType serializes by index on every ability asset in the
-        /// game.
-        /// </summary>
-        Shadow
     }
 }
