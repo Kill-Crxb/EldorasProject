@@ -23,7 +23,7 @@ namespace NinjaGame.Magic
     ///   Stream     ticks while channelled         Faint    (d4)
     ///   Field      ticks while it lingers         Faint    (d4)
     /// </summary>
-    [CreateAssetMenu(fileName = "Form_", menuName = "NinjaGame/Magic/Form Definition")]
+    [CreateAssetMenu(fileName = "Form_", menuName = "CrabSystem/Magic/Form Definition")]
     public class FormDefinition : ScriptableObject
     {
         [Header("Identity")]

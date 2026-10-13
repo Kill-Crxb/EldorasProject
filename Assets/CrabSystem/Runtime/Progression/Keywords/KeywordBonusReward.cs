@@ -4,7 +4,7 @@ namespace NinjaGame.Progression
 {
     // "Ambushing gains 1d4", "Sinister hits apply Sundered": adds to a keyword while held — to-hit, bonus dice, flat
     // damage, a status to inflict. Scaled by the talent's rank when perRank is on (the status isn't).
-    [CreateAssetMenu(fileName = "Reward_KeywordBonus", menuName = "NinjaGame/Rewards/Keyword Bonus")]
+    [CreateAssetMenu(fileName = "Reward_KeywordBonus", menuName = "CrabSystem/Rewards/Keyword Bonus")]
     public class KeywordBonusReward : Reward
     {
         [SerializeField] private KeywordDefinition keyword;

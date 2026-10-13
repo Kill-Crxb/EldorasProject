@@ -21,7 +21,7 @@ namespace NinjaGame.Progression
     // cooldown) and KeywordBonusReward (accuracy, dice, flat damage).
     //
     // Keywords live in a Resources folder named Keywords so a character can look one up by id.
-    [CreateAssetMenu(fileName = "Keyword_", menuName = "NinjaGame/Talents/Keyword")]
+    [CreateAssetMenu(fileName = "Keyword_", menuName = "CrabSystem/Talents/Keyword")]
     public class KeywordDefinition : ScriptableObject
     {
         [Tooltip("Lower case; also the tag abilities carry, e.g. sinister.")]

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "New Dialogue", menuName = "NinjaGame/Dialogue/Dialogue Database")]
+[CreateAssetMenu(fileName = "New Dialogue", menuName = "CrabSystem/Dialogue/Dialogue Database")]
 public class DialogueDatabase : ScriptableObject
 {
     [TextArea(2, 5)]

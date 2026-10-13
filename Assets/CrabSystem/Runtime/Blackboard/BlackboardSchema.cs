@@ -31,7 +31,7 @@ using System.Collections.Generic;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 18, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "BlackboardSchema", menuName = "NinjaGame/Blackboard/Schema")]
+[CreateAssetMenu(fileName = "BlackboardSchema", menuName = "CrabSystem/Blackboard/Schema")]
 public class BlackboardSchema : ScriptableObject
 {
     [System.Serializable]

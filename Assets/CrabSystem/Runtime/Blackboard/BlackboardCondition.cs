@@ -43,7 +43,7 @@ using UnityEngine;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 18, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "Condition", menuName = "NinjaGame/Blackboard/Condition")]
+[CreateAssetMenu(fileName = "Condition", menuName = "CrabSystem/Blackboard/Condition")]
 public class BlackboardCondition : ScriptableObject
 {
     [Header("Value Source")]

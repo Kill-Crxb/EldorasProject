@@ -4,7 +4,7 @@ namespace NinjaGame.Progression
 {
     // Resist ("Frightened on you lasts 2 s less"), Immune ("can't be Charmed") and Intensify ("your Sundered lasts
     // 3 s longer and lands an extra stack"): flat changes to the statuses a filter picks, held while the reward is.
-    [CreateAssetMenu(fileName = "Reward_StatusModifier", menuName = "NinjaGame/Rewards/Status Modifier")]
+    [CreateAssetMenu(fileName = "Reward_StatusModifier", menuName = "CrabSystem/Rewards/Status Modifier")]
     public class StatusModifierReward : Reward
     {
         [SerializeField] private StatusFilter filter;

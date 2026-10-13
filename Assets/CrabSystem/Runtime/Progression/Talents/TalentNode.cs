@@ -6,7 +6,7 @@ namespace NinjaGame.Progression
     // What a talent gives. Shared by every tree that places it (generics live in the library tree), so position
     // and prerequisites are on the placement, not here. Held under talent:{nodeId}, so taking a generic in a
     // second slot is refused rather than stacked (Talent_Trees §7).
-    [CreateAssetMenu(fileName = "TalentNode", menuName = "NinjaGame/Talents/Node")]
+    [CreateAssetMenu(fileName = "TalentNode", menuName = "CrabSystem/Talents/Node")]
     public class TalentNode : ScriptableObject
     {
         public string nodeId;

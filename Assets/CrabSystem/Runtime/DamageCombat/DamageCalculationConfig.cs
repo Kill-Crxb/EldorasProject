@@ -18,7 +18,7 @@ namespace NinjaGame.Stats
     /// 
     /// Used by DamageModule for Stage 2 & 3 calculations (Phase 1.7 integration)
     /// </summary>
-    [CreateAssetMenu(fileName = "Damage Calculation Config", menuName = "NinjaGame/Stats/Damage Calculation Config")]
+    [CreateAssetMenu(fileName = "Damage Calculation Config", menuName = "CrabSystem/Stats/Damage Calculation Config")]
     public class DamageCalculationConfig : ScriptableObject
     {
 

@@ -34,14 +34,15 @@ public class SocketEventRelay : MonoBehaviour, IModelPart
     [Tooltip("The model's own sheath. Leave empty on a model without one.")]
     [SerializeField] private Transform sheath;
 
+    // Socket names belong to the model, so each model prefab sets them; an empty one leaves the part where it is.
     [Header("Rest pose (named sockets on ModelSocketProvider)")]
-    [SerializeField] private string armedBladeSocket = "Katana_Close";
-    [SerializeField] private string armedSheathSocket = "Hand_L_Socket";
-    [SerializeField] private string unarmedBladeSocket = "Katana_Close";
-    [SerializeField] private string unarmedSheathSocket = "Put_Socket_Katana";
+    [SerializeField] private string armedBladeSocket;
+    [SerializeField] private string armedSheathSocket;
+    [SerializeField] private string unarmedBladeSocket;
+    [SerializeField] private string unarmedSheathSocket;
 
     [Tooltip("Where the blade rests while the guard is up. Empty = it stays at the armed rest socket.")]
-    [SerializeField] private string guardBladeSocket = "Hand_R_Socket";
+    [SerializeField] private string guardBladeSocket;
 
     [Header("Command format")]
     [SerializeField] private string commandPrefix = "To_";

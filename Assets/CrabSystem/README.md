@@ -32,6 +32,19 @@ a game makes a prefab variant of each, fills the slots there, and puts the varia
 - `SceneLoader`, `MenuUi`: the menu scene's loader, login and character creation.
 - `EventSystem`: already nested in Manager_Brain.
 
+## What a game provides
+
+The framework names a few things in code. Each lives in one constants class, and
+`Tools > CrabSystem > Validate Ids` checks the game has them.
+
+- **Stats** (`StatIds`, `DialIds`): the stat model the combat and creation code runs on. The game's
+  stat schemas must define every id.
+- **Layers** (`CrabLayers`): Hurtbox, Terrain, StaticProp.
+- **Resources folders** (`CrabResources`): `AbilityDatabase`, `ItemDatabase`, `StatDatabase` and
+  `Keywords` under any `Resources/` folder, or assign the definitions on Manager_Brain instead.
+  Hit-state statuses load by name from `Resources/Statuses/HitStates/`.
+- **Socket names** are set on each model prefab (SocketEventRelay); there are no defaults.
+
 ## Using it in another project
 
 1. Copy this folder into `Assets/`, or into `Packages/com.crxb.crabsystem/` as an embedded package.
@@ -39,4 +52,5 @@ a game makes a prefab variant of each, fills the slots there, and puts the varia
 2. Layers: `Tools > CrabSystem > Create Default Layer Config`, then `Tools > CrabSystem > Layer Manager`
    and Apply. Code names layers only through `CrabLayers`; `Validate Ids` reports any that are missing.
 3. Make a variant of each starter prefab and fill its slots.
-4. The input actions in `Runtime/Input` are defaults; a game can swap in its own.
+4. `Runtime/Input/PlayerInputControls` is the framework's player input. The project-wide input actions
+   (Project Settings > Input System) belong to the game.

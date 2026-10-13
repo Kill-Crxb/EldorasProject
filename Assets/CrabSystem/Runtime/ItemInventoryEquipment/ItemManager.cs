@@ -55,7 +55,7 @@ public class ItemManager : MonoBehaviour, IGameManager
 
     // Any folder named "Resources" anywhere under Assets is a resources root, so the
     // database folder is found by this name alone, wherever it sits in the project.
-    private const string DatabaseFolder = "ItemDatabase";
+    private const string DatabaseFolder = CrabResources.Items;
 
     [Header("Item Definitions")]
     [Tooltip("All item definitions to load at startup. These define what items exist in the game.")]

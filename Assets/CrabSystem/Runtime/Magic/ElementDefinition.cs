@@ -32,7 +32,7 @@ namespace NinjaGame.Magic
     ///       any modifier gets a chance to run. Assign the Projectile form's data as a default;
     ///       SpellcraftSystem swaps it for the Form the sequence actually chose.
     /// </summary>
-    [CreateAssetMenu(fileName = "Element_", menuName = "NinjaGame/Magic/Element Definition")]
+    [CreateAssetMenu(fileName = "Element_", menuName = "CrabSystem/Magic/Element Definition")]
     public class ElementDefinition : ScriptableObject
     {
         [Header("Identity")]

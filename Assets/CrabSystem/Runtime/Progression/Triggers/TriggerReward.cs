@@ -5,7 +5,7 @@ namespace NinjaGame.Progression
     // "On a perfect dodge, regain 3 stamina", "on kill, Dash Thrust is ready 5 s sooner", "on hit, 1 in 4: your
     // light attack becomes Shadow Riposte for 3 s, once": an event, its filters and chance, and the effects it fires.
     // Held by the character's TriggerModule while the reward is.
-    [CreateAssetMenu(fileName = "Reward_Trigger", menuName = "NinjaGame/Rewards/Trigger")]
+    [CreateAssetMenu(fileName = "Reward_Trigger", menuName = "CrabSystem/Rewards/Trigger")]
     public class TriggerReward : Reward
     {
         [Header("When")]

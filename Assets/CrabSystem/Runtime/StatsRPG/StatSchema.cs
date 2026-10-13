@@ -7,7 +7,7 @@ namespace NinjaGame.Stats
     /// A named set of stat definitions. Entities load one or more schemas by asset name.
     /// A stat is a plain number with an authored range — no formulas, no derivation.
     /// </summary>
-    [CreateAssetMenu(fileName = "New Stat Schema", menuName = "NinjaGame/Stats/Stat Schema")]
+    [CreateAssetMenu(fileName = "New Stat Schema", menuName = "CrabSystem/Stats/Stat Schema")]
     public class StatSchema : ScriptableObject
     {
         [Header("Persistence")]

@@ -15,7 +15,7 @@ using UnityEngine;
 /// NEVER mutated at runtime. Per-cast variation lives in ProjectileRuntime, which is a
 /// struct copied by value at launch. Nothing in flight can reach this asset.
 /// </summary>
-[CreateAssetMenu(fileName = "ProjectileData_", menuName = "NinjaGame/Projectile Data")]
+[CreateAssetMenu(fileName = "ProjectileData_", menuName = "CrabSystem/Projectile Data")]
 public class ProjectileData : ScriptableObject
 {
     // =========================================================================

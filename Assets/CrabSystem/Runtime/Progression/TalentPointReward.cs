@@ -9,7 +9,7 @@ namespace NinjaGame.Progression
     /// reward now is still worth it — the balance data is the slow part, and the day the
     /// talent module lands it starts paying out with no change here.
     /// </summary>
-    [CreateAssetMenu(fileName = "Reward_TalentPoint", menuName = "NinjaGame/Rewards/Talent Point")]
+    [CreateAssetMenu(fileName = "Reward_TalentPoint", menuName = "CrabSystem/Rewards/Talent Point")]
     public class TalentPointReward : Reward
     {
         [Tooltip("Tree these points may be spent in, e.g. 'spirit'.")]

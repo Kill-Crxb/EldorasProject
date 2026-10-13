@@ -12,7 +12,7 @@ public class StatsManager : MonoBehaviour, IGameManager
 
     // Any folder named "Resources" anywhere under Assets is a resources root, so the
     // database folder is found by this name alone, wherever it sits in the project.
-    private const string DatabaseFolder = "StatDatabase";
+    private const string DatabaseFolder = CrabResources.Stats;
 
     [Header("Schemas")]
     [Tooltip("Optional. Everything in Resources/StatDatabase is registered regardless.")]

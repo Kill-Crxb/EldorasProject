@@ -12,7 +12,7 @@ public class AbilityManager : MonoBehaviour, IGameManager
 {
     // Any folder named "Resources" anywhere under Assets is a resources root, so the
     // database folder is found by this name alone, wherever it sits in the project.
-    private const string DatabaseFolder = "AbilityDatabase";
+    private const string DatabaseFolder = CrabResources.Abilities;
 
     private static AbilityManager instance;
     public static AbilityManager Instance => instance;

@@ -156,7 +156,7 @@ namespace NinjaGame.Magic
     /// is nothing, and it means a mis-ordered or half-filled table reports which row is missing
     /// instead of throwing IndexOutOfRange or silently returning the wrong element.
     /// </summary>
-    [CreateAssetMenu(fileName = "SpellGrammar", menuName = "NinjaGame/Magic/Spell Grammar")]
+    [CreateAssetMenu(fileName = "SpellGrammar", menuName = "CrabSystem/Magic/Spell Grammar")]
     public class SpellGrammar : ScriptableObject
     {
         [Header("Slot 1 — School")]

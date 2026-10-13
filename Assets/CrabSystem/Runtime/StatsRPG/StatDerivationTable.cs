@@ -15,7 +15,7 @@ namespace NinjaGame.Stats
     /// talent point or extra dice — and the same reward can be reused by a talent node.
     /// This is balance data, not code.
     /// </summary>
-    [CreateAssetMenu(fileName = "New Derivation Table", menuName = "NinjaGame/Stats/Stat Derivation Table")]
+    [CreateAssetMenu(fileName = "New Derivation Table", menuName = "CrabSystem/Stats/Stat Derivation Table")]
     public class StatDerivationTable : ScriptableObject
     {
         [SerializeField] private List<StatDerivation> derivations = new();

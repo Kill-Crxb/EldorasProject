@@ -18,7 +18,7 @@ using UnityEngine;
 /// Anything genuinely reactive — Thorns answering a hit — is a small hand-written reader of
 /// a stat, not a behaviour object hanging off this asset.
 /// </summary>
-[CreateAssetMenu(fileName = "Status_", menuName = "NinjaGame/Status/Status Definition")]
+[CreateAssetMenu(fileName = "Status_", menuName = "CrabSystem/Status/Status Definition")]
 public class StatusDefinition : ScriptableObject
 {
     [Header("Identity")]

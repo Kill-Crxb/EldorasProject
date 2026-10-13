@@ -10,7 +10,7 @@ using UnityEngine;
 // bonuses (KeywordBonusReward).
 public class KeywordModule : MonoBehaviour, IBrainModule, IHitModifier
 {
-    private const string KeywordFolder = "Keywords";
+    private const string KeywordFolder = CrabResources.Keywords;
 
     public bool IsEnabled { get; set; } = true;
 

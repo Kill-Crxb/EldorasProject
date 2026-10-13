@@ -9,7 +9,7 @@ namespace NinjaGame.Progression
     //
     // 10 Oct (Crxb): character level is the XP level again; each level pays points into one pool spent across
     // all slotted trees. Trees are 5 wide by 7 tall, each row opening after 5 more points in that tree.
-    [CreateAssetMenu(fileName = "TalentRules", menuName = "NinjaGame/Talents/Rules")]
+    [CreateAssetMenu(fileName = "TalentRules", menuName = "CrabSystem/Talents/Rules")]
     public class TalentRules : ScriptableObject
     {
         [Header("Points")]

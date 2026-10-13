@@ -4,7 +4,7 @@ using UnityEngine;
 /// Reads a stat value for a blackboard condition.
 /// Stats are addressed by string id because a schema can hold dozens of them.
 /// </summary>
-[CreateAssetMenu(fileName = "StatValue", menuName = "NinjaGame/Blackboard/Value Sources/Stat")]
+[CreateAssetMenu(fileName = "StatValue", menuName = "CrabSystem/Blackboard/Value Sources/Stat")]
 public class StatValueSource : ValueSourceDefinition
 {
     [Header("Stat Query")]

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "New Resource", menuName = "NinjaGame/Resources/Resource Definition")]
+[CreateAssetMenu(fileName = "New Resource", menuName = "CrabSystem/Resources/Resource Definition")]
 public class ResourceDefinition : ScriptableObject
 {
     [Header("Identity")]

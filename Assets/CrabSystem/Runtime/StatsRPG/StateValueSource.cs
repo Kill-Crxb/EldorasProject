@@ -37,7 +37,7 @@ using UnityEngine;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 18, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "StateValue", menuName = "NinjaGame/Blackboard/Value Sources/State")]
+[CreateAssetMenu(fileName = "StateValue", menuName = "CrabSystem/Blackboard/Value Sources/State")]
 public class StateValueSource : ValueSourceDefinition
 {
     [Header("State Query")]

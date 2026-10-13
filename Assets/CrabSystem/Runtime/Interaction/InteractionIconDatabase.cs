@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-[CreateAssetMenu(fileName = "InteractionIconDatabase", menuName = "NinjaGame/Interaction/Icon Database")]
+[CreateAssetMenu(fileName = "InteractionIconDatabase", menuName = "CrabSystem/Interaction/Icon Database")]
 public class InteractionIconDatabase : ScriptableObject
 {
     [SerializeField] private IconEntry[] icons;

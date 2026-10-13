@@ -39,7 +39,7 @@ using System.Collections.Generic;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 18, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "CompositeValue", menuName = "NinjaGame/Blackboard/Value Sources/Composite")]
+[CreateAssetMenu(fileName = "CompositeValue", menuName = "CrabSystem/Blackboard/Value Sources/Composite")]
 public class CompositeValueSource : ValueSourceDefinition
 {
     [Header("Source Combination")]

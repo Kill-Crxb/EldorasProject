@@ -3,7 +3,7 @@ using UnityEngine;
 namespace NinjaGame.Progression
 {
     // "Basic attacks gain Sinister": gives the abilities a filter picks a keyword, for this character, while held.
-    [CreateAssetMenu(fileName = "Reward_KeywordGrant", menuName = "NinjaGame/Rewards/Keyword Grant")]
+    [CreateAssetMenu(fileName = "Reward_KeywordGrant", menuName = "CrabSystem/Rewards/Keyword Grant")]
     public class KeywordGrantReward : Reward
     {
         [SerializeField] private KeywordDefinition keyword;

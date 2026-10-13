@@ -4729,6 +4729,7 @@ MonoBehaviour:
   armedSheathSocket: Hand_L_Socket
   unarmedBladeSocket: Put_Socket_Blade
   unarmedSheathSocket: Put_Socket_Katana
+  guardBladeSocket: Hand_R_Socket
   commandPrefix: To_
   bladePart: Blade
   sheathPart: Sheath

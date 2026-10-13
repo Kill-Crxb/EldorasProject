@@ -11,7 +11,7 @@ namespace NinjaGame.Progression
     ///
     /// Inert until something on the entity implements IRollModifier.
     /// </summary>
-    [CreateAssetMenu(fileName = "Reward_RollBonus", menuName = "NinjaGame/Rewards/Roll Bonus")]
+    [CreateAssetMenu(fileName = "Reward_RollBonus", menuName = "CrabSystem/Rewards/Roll Bonus")]
     public class RollBonusReward : Reward
     {
         [Tooltip("Roll this modifies, e.g. 'weapon', 'crit'.")]

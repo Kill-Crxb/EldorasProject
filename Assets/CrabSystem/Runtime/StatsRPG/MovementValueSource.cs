@@ -16,7 +16,7 @@ using UnityEngine;
 /// "TooFastToCast".
 /// </summary>
 [CreateAssetMenu(fileName = "MovementValue",
-                 menuName = "NinjaGame/Blackboard/Value Sources/Movement")]
+                 menuName = "CrabSystem/Blackboard/Value Sources/Movement")]
 public class MovementValueSource : ValueSourceDefinition
 {
     [Header("Movement Query")]

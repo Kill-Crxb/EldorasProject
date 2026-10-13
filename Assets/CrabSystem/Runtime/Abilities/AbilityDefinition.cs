@@ -108,7 +108,7 @@ public class ResourceCostEntry
 /// - AbilityDefinition.LegacyExecute.cs: Legacy execution methods
 /// - AbilityDefinition.Validation.cs: Editor validation
 /// </summary>
-[CreateAssetMenu(fileName = "New Ability", menuName = "NinjaGame/Ability Definition")]
+[CreateAssetMenu(fileName = "New Ability", menuName = "CrabSystem/Ability Definition")]
 public partial class AbilityDefinition : ScriptableObject
 {
     // ========================================

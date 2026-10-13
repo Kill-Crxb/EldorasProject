@@ -54,11 +54,11 @@ public partial class AbilityDefinition
 
     static string HitStatePath(HitState state) => state switch
     {
-        HitState.Flinch => "Statuses/HitStates/Status_Flinched",
-        HitState.Stagger => "Statuses/HitStates/Status_Staggered",
-        HitState.Knockdown => "Statuses/HitStates/Status_Prone",
-        HitState.Launch => "Statuses/HitStates/Status_Launched",
-        HitState.GuardBreak => "Statuses/HitStates/Status_GuardBroken",
+        HitState.Flinch => CrabResources.HitStates + "/Status_Flinched",
+        HitState.Stagger => CrabResources.HitStates + "/Status_Staggered",
+        HitState.Knockdown => CrabResources.HitStates + "/Status_Prone",
+        HitState.Launch => CrabResources.HitStates + "/Status_Launched",
+        HitState.GuardBreak => CrabResources.HitStates + "/Status_GuardBroken",
         _ => null
     };
 }

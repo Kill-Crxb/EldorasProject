@@ -7,7 +7,7 @@ namespace NinjaGame.Progression
     /// that is 2.5, and it keeps climbing as Spirit does, because the breakpoint is
     /// re-evaluated whenever the driving stat changes.
     /// </summary>
-    [CreateAssetMenu(fileName = "Reward_StatRate", menuName = "NinjaGame/Rewards/Stat Rate")]
+    [CreateAssetMenu(fileName = "Reward_StatRate", menuName = "CrabSystem/Rewards/Stat Rate")]
     public class StatRateReward : Reward
     {
         [Tooltip("Stat ids this adds to, e.g. 'cmb.initiative'.")]

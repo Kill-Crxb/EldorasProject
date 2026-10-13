@@ -5,7 +5,7 @@ namespace NinjaGame.Progression
 {
     // A class: a grid of placed talents the player spends points into (Talent_Trees §6–§8). The resource budget
     // and level track were dropped on 10 Oct (Crxb) — trees are their talents.
-    [CreateAssetMenu(fileName = "TalentTree", menuName = "NinjaGame/Talents/Tree")]
+    [CreateAssetMenu(fileName = "TalentTree", menuName = "CrabSystem/Talents/Tree")]
     public class TalentTree : ScriptableObject
     {
         public string treeId;

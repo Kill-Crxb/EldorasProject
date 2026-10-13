@@ -4,7 +4,7 @@ namespace NinjaGame.Progression
 {
     // "Dodge costs 2 less stamina", "Techniques cool down 1 s faster": flat changes to the abilities a filter picks,
     // held while the reward is.
-    [CreateAssetMenu(fileName = "Reward_AbilityModifier", menuName = "NinjaGame/Rewards/Ability Modifier")]
+    [CreateAssetMenu(fileName = "Reward_AbilityModifier", menuName = "CrabSystem/Rewards/Ability Modifier")]
     public class AbilityModifierReward : Reward
     {
         [SerializeField] private AbilityFilter filter;

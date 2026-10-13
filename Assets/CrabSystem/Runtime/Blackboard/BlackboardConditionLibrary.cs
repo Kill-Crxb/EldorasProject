@@ -45,7 +45,7 @@ using System.Collections.Generic;
 /// Phase 1.3: Semantic Bridge System
 /// Created: January 20, 2026
 /// </summary>
-[CreateAssetMenu(fileName = "ConditionLibrary", menuName = "NinjaGame/Blackboard/Condition Library")]
+[CreateAssetMenu(fileName = "ConditionLibrary", menuName = "CrabSystem/Blackboard/Condition Library")]
 public class BlackboardConditionLibrary : ScriptableObject
 {
     [Header("Universal Condition Library")]

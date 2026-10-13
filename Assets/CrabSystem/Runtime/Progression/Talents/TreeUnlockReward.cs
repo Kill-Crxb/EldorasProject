@@ -3,7 +3,7 @@ using UnityEngine;
 namespace NinjaGame.Progression
 {
     // Makes a tree known, so an empty slot can take it. A tree once slotted stays known.
-    [CreateAssetMenu(fileName = "Reward_TreeUnlock", menuName = "NinjaGame/Rewards/Tree Unlock")]
+    [CreateAssetMenu(fileName = "Reward_TreeUnlock", menuName = "CrabSystem/Rewards/Tree Unlock")]
     public class TreeUnlockReward : Reward
     {
         [SerializeField] private TalentTree tree;

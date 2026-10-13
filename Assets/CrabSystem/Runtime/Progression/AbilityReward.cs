@@ -7,7 +7,7 @@ namespace NinjaGame.Progression
     /// a talent node or an item — RuntimeAbilityManager already tracks abilities by source,
     /// so withdrawing the reward removes exactly the one it added.
     /// </summary>
-    [CreateAssetMenu(fileName = "Reward_Ability", menuName = "NinjaGame/Rewards/Ability")]
+    [CreateAssetMenu(fileName = "Reward_Ability", menuName = "CrabSystem/Rewards/Ability")]
     public class AbilityReward : Reward
     {
         [SerializeField] private AbilityDefinition ability;

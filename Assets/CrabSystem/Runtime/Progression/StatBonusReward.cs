@@ -3,7 +3,7 @@ using UnityEngine;
 namespace NinjaGame.Progression
 {
     /// <summary>A flat amount added to one or more stats. "+1 Armor and Evasion".</summary>
-    [CreateAssetMenu(fileName = "Reward_StatBonus", menuName = "NinjaGame/Rewards/Stat Bonus")]
+    [CreateAssetMenu(fileName = "Reward_StatBonus", menuName = "CrabSystem/Rewards/Stat Bonus")]
     public class StatBonusReward : Reward
     {
         [Tooltip("Stat ids this adds to, e.g. 'scr.armor'.")]
