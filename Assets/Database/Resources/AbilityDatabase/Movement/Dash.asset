@@ -32,7 +32,7 @@ MonoBehaviour:
   customForbiddenFacts: []
   resourceCosts:
   - resource: {fileID: 11400000, guid: 4cc10ff0880b2ba42a52ff48a27f66ce, type: 2}
-    cost: 4
+    cost: 5
     drain: 0
     refund: 0
   - resource: {fileID: 11400000, guid: becee4767d3a4ce38e7662c4cf7d13d5, type: 2}
@@ -90,9 +90,7 @@ MonoBehaviour:
   range: 0
   requiresLineOfSight: 0
   damageEffects: []
-  damageOverTimeEffects: []
   healEffects: []
-  healOverTimeEffects: []
   knockbackEffects: []
   movementEffects:
   - movementType: 0
