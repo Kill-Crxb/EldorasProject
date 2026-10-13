@@ -4,6 +4,9 @@ Character framework for Unity 6 / URP. A `ControllerBrain` on each character dis
 `IBrainModule` components, initialises them by `InitOrder`, and hands out providers. Game content
 (abilities, items, characters, configs) lives outside this folder, in the game's own Database.
 
+**Documentation:** [`Documentation~/index.md`](Documentation~/index.md) covers setup, architecture, every
+system, the standard and design decisions.
+
 ## Layout
 
 - `Runtime/` — the `CrabSystem` assembly. One folder per subsystem; `Core` holds the brain,
@@ -52,7 +55,7 @@ The framework names a few things in code. Each lives in one constants class, and
 CrabSystem is a UPM package (`com.crxb.crabsystem`). Pick one:
 
 - **Git** (other projects): Package Manager > + > *Add package from git URL*, then
-  `https://github.com/Kill-Crxb/CrabSystem.git#v0.2.0`. Pin a tag; `#main` follows the latest.
+  `https://github.com/Kill-Crxb/CrabSystem.git#v0.2.1`. Pin a tag; `#main` follows the latest.
   The same line can go straight into `Packages/manifest.json` under `dependencies`.
 - **Embedded** (the project CrabSystem is developed in): this folder sits at
   `Packages/com.crxb.crabsystem/`, editable in place.

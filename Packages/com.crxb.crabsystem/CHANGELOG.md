@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 — 2026-10-13
+
+- `Documentation~`: getting started, architecture, every system, the standard, design decisions, a genre fit table, a `CLAUDE.md` template for game projects and an outside-the-editor compile check.
+
 ## 0.2.0 — 2026-10-13
 
 - Moved to `Packages/com.crxb.crabsystem` as a UPM package, installable by git URL.
