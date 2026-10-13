@@ -37,8 +37,6 @@ namespace CrabSystem
         [IdRef(IdKind.AnimatorParam)] [SerializeField] private string staggerParam = "Stagger";
         [IdRef(IdKind.AnimatorParam)] [SerializeField] private string deathParam = "Death";
         [IdRef(IdKind.AnimatorParam)] [SerializeField] private string isDeadParam = "IsDead";
-        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitDirXParam = "HitDirX";
-        [IdRef(IdKind.AnimatorParam)] [SerializeField] private string hitDirZParam = "HitDirZ";
 
         public bool IsEnabled
         {
@@ -55,7 +53,6 @@ namespace CrabSystem
         private DamageSystem damage;
         private StatusSystem statuses;
         private Blackboard blackboard;
-        private Transform facing;
 
         private readonly Dictionary<StatusDefinition, string> reactionByStatus = new();
 
@@ -76,7 +73,6 @@ namespace CrabSystem
             damage = brain.Damage;
             statuses = brain.GetModule<StatusSystem>();
             blackboard = brain.Blackboard;
-            facing = brain.EntityRoot != null ? brain.EntityRoot : transform;
 
             if (damage == null)
             {
@@ -94,7 +90,6 @@ namespace CrabSystem
 
             MapReactions();
 
-            damage.OnDamageApplied += HandleDamageApplied;
             damage.OnDeath += HandleDeath;
             damage.OnRevived += ResetReactions;
 
@@ -111,7 +106,6 @@ namespace CrabSystem
         {
             if (damage != null)
             {
-                damage.OnDamageApplied -= HandleDamageApplied;
                 damage.OnDeath -= HandleDeath;
                 damage.OnRevived -= ResetReactions;
             }
@@ -170,15 +164,6 @@ namespace CrabSystem
             anim.CrossFade(RestState, restFadeSeconds, layer);
         }
 
-        // Direction only, for when the directional reactions land (Known Issues B28).
-        private void HandleDamageApplied(CombatDamagePacket packet, float applied)
-        {
-            if (!isEnabled || isDead) return;
-            if (packet.source == DamageSource.Tick || applied <= 0f) return;
-
-            SetHitDirection(packet.attackDirection);
-        }
-
         private void HandleDeath()
         {
             if (isDead) return;
@@ -186,15 +171,6 @@ namespace CrabSystem
 
             anim.SetBool(isDeadParam, true);
             anim.SetTrigger(deathParam);
-        }
-
-        private void SetHitDirection(Vector3 worldDirection)
-        {
-            if (worldDirection.sqrMagnitude < 0.0001f) return;
-
-            Vector3 local = facing.InverseTransformDirection(worldDirection.normalized);
-            anim.SetFloat(hitDirXParam, local.x);
-            anim.SetFloat(hitDirZParam, local.z);
         }
 
         // ── Respawn ───────────────────────────────────────────────────────────

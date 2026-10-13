@@ -189,17 +189,10 @@ namespace CrabSystem
             if (currentModel == null)
                 return;
 
+            // A model with nothing to hold (a dummy, a creature) needs no socket map; HandleItemEquipped warns when an item
+            // actually has nowhere to go.
             socketProvider = currentModel.GetComponent<ModelSocketProvider>();
-            if (socketProvider == null)
-            {
-                Debug.LogWarning($"[ModelModule] Model '{currentModelId}' has no ModelSocketProvider. Add the component and map slots to sockets.");
-                return;
-            }
-
-            socketCache = socketProvider.GetAllSockets();
-
-            if (socketCache.Count == 0)
-                Debug.LogWarning($"[ModelModule] Model '{currentModelId}' has no slot-socket mappings in ModelSocketProvider.");
+            if (socketProvider != null) socketCache = socketProvider.GetAllSockets();
         }
 
         // Gets a socket transform by slot ID.
@@ -289,9 +282,11 @@ namespace CrabSystem
             if (item.Definition.equippedPrefab == null)
                 return;
 
-            // A model with no socket map can't hold anything, and CacheSocketsFromProvider already said so.
             if (socketProvider == null)
+            {
+                Debug.LogWarning($"[ModelModule] Model '{currentModelId}' has no ModelSocketProvider, so '{item.Definition.displayName}' can't be shown. Add one and map slots to sockets.");
                 return;
+            }
 
             var socket = GetSocket(slot.slotId);
             if (socket == null)
