@@ -275,7 +275,7 @@ namespace CrabSystem
             if (readyWaitTime < 2f) return;
 
             warnedNotReady = true;
-            Debug.LogError($"[AnimationLayerController] '{name}' still has no animator layers after 2s. Either the Brain has no EntityAnimator or its Animator has no controller assigned.", this);
+            Debug.LogError($"[AnimationLayerController] '{transform.root.name}' still has no animator layers after 2s. Either the Brain has no EntityAnimator or its Animator has no controller assigned.", this);
         }
 
         private string[] LayerNames()

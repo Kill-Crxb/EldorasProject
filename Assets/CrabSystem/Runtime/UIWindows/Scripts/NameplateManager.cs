@@ -24,15 +24,21 @@ namespace CrabSystem
         private ControllerBrain playerBrain;
         private readonly List<NPCNameplate> registeredNameplates = new List<NPCNameplate>();
 
-        public ControllerBrain PlayerBrain => playerBrain;
+        // The player spawns after this object starts, so it's looked up the first time someone asks.
+        public ControllerBrain PlayerBrain
+        {
+            get
+            {
+                if (playerBrain == null) playerBrain = ManagerBrain.Instance?.GetManager<SaveManager>()?.PlayerBrain;
+                return playerBrain;
+            }
+        }
 
         void Awake()
         {
             if (instance != null && instance != this) { Destroy(gameObject); return; }
             instance = this;
         }
-
-        void Start() => ResolvePlayerBrain();
 
         public void SpawnNameplate(ControllerBrain npcBrain)
         {
@@ -53,34 +59,14 @@ namespace CrabSystem
             }
 
             Register(nameplate);
-            nameplate.Initialize(npcBrain, playerBrain);
-        }
-
-        public void ResolvePlayerBrain()
-        {
-            foreach (var brain in FindObjectsByType<ControllerBrain>())
-            {
-                if (brain.EntityType != EntityType.Player) continue;
-                SetPlayerBrain(brain);
-                return;
-            }
-            Debug.LogWarning("[NameplateManager] No player brain found.");
-        }
-
-        public void SetPlayerBrain(ControllerBrain brain)
-        {
-            playerBrain = brain;
-            foreach (var nameplate in registeredNameplates)
-            {
-                if (nameplate != null) nameplate.SetTargetPlayer(playerBrain);
-            }
+            nameplate.Initialize(npcBrain, PlayerBrain);
         }
 
         public void Register(NPCNameplate nameplate)
         {
             if (nameplate == null || registeredNameplates.Contains(nameplate)) return;
             registeredNameplates.Add(nameplate);
-            if (playerBrain != null) nameplate.SetTargetPlayer(playerBrain);
+            if (PlayerBrain != null) nameplate.SetTargetPlayer(PlayerBrain);
         }
 
         public void Unregister(NPCNameplate nameplate) => registeredNameplates.Remove(nameplate);

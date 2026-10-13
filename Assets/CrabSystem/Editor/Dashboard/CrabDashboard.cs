@@ -37,6 +37,17 @@ namespace CrabSystem
             window.minSize = new Vector2(900, 500);
         }
 
+        // A floating window dragged off every monitor can't be grabbed again, and Unity remembers where it was.
+        // This puts it back in the middle of the main editor window.
+        [MenuItem("Tools/CrabSystem/Dashboard (Bring Back)", priority = 1)]
+        static void BringBack()
+        {
+            var window = GetWindow<CrabDashboard>("Crab Dashboard");
+            Rect main = EditorGUIUtility.GetMainWindowPosition();
+            Vector2 size = Vector2.Min(Vector2.Max(window.position.size, window.minSize), main.size);
+            window.position = new Rect(main.center - size / 2f, size);
+        }
+
         void OnEnable()
         {
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
