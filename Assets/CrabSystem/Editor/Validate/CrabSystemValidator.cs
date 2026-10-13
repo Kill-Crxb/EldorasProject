@@ -31,7 +31,7 @@ namespace CrabSystem
             public string SkipFile;
         }
 
-        struct Hit
+        public struct Hit
         {
             public string Rule;
             public string Path;
@@ -57,12 +57,19 @@ namespace CrabSystem
         [MenuItem("Tools/CrabSystem/Validate")]
         static void Validate()
         {
+            List<Hit> hits = Scan();
+            WriteReport(hits);
+            Debug.Log($"[CrabSystemValidator] {hits.Count} findings in {Root}. Report: {ReportPath}");
+        }
+
+        // Also read by the dashboard's Health tab.
+        public static List<Hit> Scan()
+        {
             var hits = new List<Hit>();
             foreach (string path in Directory.GetFiles(Root, "*.cs", SearchOption.AllDirectories))
                 ScanFile(path.Replace('\\', '/'), hits);
 
-            WriteReport(hits);
-            Debug.Log($"[CrabSystemValidator] {hits.Count} findings in {Root}. Report: {ReportPath}");
+            return hits;
         }
 
         static void ScanFile(string path, List<Hit> hits)

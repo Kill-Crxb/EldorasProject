@@ -24,7 +24,7 @@ namespace CrabSystem
 
         private static readonly Dictionary<Type, bool> typeHasIds = new();
 
-        private struct Finding
+        public struct Finding
         {
             public UnityEngine.Object Asset;
             public string Where;
@@ -33,11 +33,31 @@ namespace CrabSystem
             public string Note;
         }
 
+        public class Result
+        {
+            public readonly List<Finding> Findings = new();
+            public readonly List<string> MissingScripts = new();
+            public int CheckedFields;
+        }
+
         [MenuItem("Tools/CrabSystem/Validate Ids")]
         public static void Run()
         {
-            var findings = new List<Finding>();
-            var missingScripts = new List<string>();
+            Result result = Collect();
+            WriteReport(result.Findings, result.MissingScripts, result.CheckedFields);
+
+            foreach (var f in result.Findings)
+                Debug.LogError($"[Validate Ids] {f.Kind} '{f.Value}' {f.Note}: {f.Where}", f.Asset);
+
+            Debug.Log($"[Validate Ids] {result.CheckedFields} id fields checked, {result.Findings.Count} missing; {result.MissingScripts.Count} assets with missing scripts. Report: {ReportPath}");
+        }
+
+        // Also read by the dashboard's Health tab.
+        public static Result Collect()
+        {
+            var result = new Result();
+            List<Finding> findings = result.Findings;
+            List<string> missingScripts = result.MissingScripts;
             int checkedFields = 0;
 
             foreach (string path in AssetPaths("t:Prefab"))
@@ -67,12 +87,8 @@ namespace CrabSystem
             checkedFields += CheckConstants(typeof(DialIds), IdKind.Stat, findings);
             checkedFields += CheckConstants(typeof(CrabLayers), IdKind.Layer, findings);
 
-            WriteReport(findings, missingScripts, checkedFields);
-
-            foreach (var f in findings)
-                Debug.LogError($"[Validate Ids] {f.Kind} '{f.Value}' {f.Note}: {f.Where}", f.Asset);
-
-            Debug.Log($"[Validate Ids] {checkedFields} id fields checked, {findings.Count} missing; {missingScripts.Count} assets with missing scripts. Report: {ReportPath}");
+            result.CheckedFields = checkedFields;
+            return result;
         }
 
         // A missing script can sit on a child object or inside a sub-asset (a volume profile's
@@ -90,7 +106,7 @@ namespace CrabSystem
         private static readonly string[] ThirdPartyRoots =
             { "Assets/ThirdParty/" };
 
-        private static bool IsThirdParty(string path) => ThirdPartyRoots.Any(root => path.StartsWith(root));
+        public static bool IsThirdParty(string path) => ThirdPartyRoots.Any(root => path.StartsWith(root));
 
         private static IEnumerable<string> AssetPaths(string filter)
         {

@@ -45,7 +45,8 @@ namespace CrabSystem
             window.minSize = new Vector2(520, 400);
         }
 
-        void OnGUI()
+        // Internal so the dashboard's Weapons tab can host it.
+        internal void OnGUI()
         {
             CrabWizardGUI.Title("Weapon assets", "Every weapon-side asset, who references it, and what is already broken. Nothing is deleted here.");
 

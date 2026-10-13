@@ -53,7 +53,8 @@ namespace CrabSystem
             window.minSize = new Vector2(420, 500);
         }
 
-        void OnGUI()
+        // Internal so the dashboard's Weapons tab can host it.
+        internal void OnGUI()
         {
             scroll = EditorGUILayout.BeginScrollView(scroll);
 
