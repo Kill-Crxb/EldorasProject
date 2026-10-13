@@ -68,9 +68,9 @@ public class DamageSystem : MonoBehaviour, IBrainModule
 
     // Stat_Resolution.md §4. Defense = 5 + Avoidance + armour's to-hit bonus.
     private const float BaseDefense = 5f;
-    private const string AccuracyStat = "cmb.finesse";
-    private const string AvoidanceStat = "def.avoidance";
-    private const string ArmourDefenseStat = "atr.arm_def";
+    private const string AccuracyStat = StatIds.Finesse;
+    private const string AvoidanceStat = StatIds.Avoidance;
+    private const string ArmourDefenseStat = StatIds.ArmourDefense;
 
     // Public accessors
     public ControllerBrain Brain => brain;

@@ -15,10 +15,25 @@ using UnityEngine;
 public static class IdSources
 {
     private static readonly Dictionary<IdKind, string[]> cache = new();
+    private static Dictionary<string, string> statRenames;
 
     static IdSources()
     {
         EditorApplication.projectChanged += cache.Clear;
+        EditorApplication.projectChanged += ClearRenames;
+    }
+
+    private static void ClearRenames() => statRenames = null;
+
+    // A stat's former id -> its current id (StatEntry.formerIds); null when the id was never a stat's.
+    public static string RenamedStat(string id)
+    {
+        statRenames ??= Assets<StatSchema>().SelectMany(s => s.Entries)
+            .Where(e => e?.formerIds != null)
+            .SelectMany(e => e.formerIds.Where(f => !string.IsNullOrEmpty(f)).Select(f => (former: f, current: e.id)))
+            .GroupBy(p => p.former)
+            .ToDictionary(g => g.Key, g => g.First().current);
+        return statRenames.GetValueOrDefault(id);
     }
 
     public static string[] Get(IdKind kind)

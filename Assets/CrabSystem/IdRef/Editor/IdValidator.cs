@@ -27,6 +27,7 @@ public static class IdValidator
         public string Where;
         public IdKind Kind;
         public string Value;
+        public string Note;
     }
 
     [MenuItem("Tools/CrabSystem/Validate Ids")]
@@ -59,10 +60,13 @@ public static class IdValidator
             checkedFields += Walk(asset, asset.GetType(), path, asset, findings, 0);
         }
 
+        checkedFields += CheckConstants(typeof(StatIds), findings);
+        checkedFields += CheckConstants(typeof(DialIds), findings);
+
         WriteReport(findings, missingScripts, checkedFields);
 
         foreach (var f in findings)
-            Debug.LogError($"[Validate Ids] {f.Kind} '{f.Value}' doesn't exist: {f.Where}", f.Asset);
+            Debug.LogError($"[Validate Ids] {f.Kind} '{f.Value}' {f.Note}: {f.Where}", f.Asset);
 
         Debug.Log($"[Validate Ids] {checkedFields} id fields checked, {findings.Count} missing; {missingScripts.Count} assets with missing scripts. Report: {ReportPath}");
     }
@@ -136,9 +140,28 @@ public static class IdValidator
         {
             count++;
             if (string.IsNullOrEmpty(id) || IdSources.Exists(kind, id)) continue;
-            findings.Add(new Finding { Asset = asset, Where = where, Kind = kind, Value = id });
+            findings.Add(new Finding { Asset = asset, Where = where, Kind = kind, Value = id, Note = MissingNote(kind, id) });
         }
 
+        return count;
+    }
+
+    // A renamed stat still works through its former id, but the asset should be moved to the new one.
+    private static string MissingNote(IdKind kind, string id)
+    {
+        string current = kind == IdKind.Stat ? IdSources.RenamedStat(id) : null;
+        return current != null ? $"was renamed to '{current}'" : "doesn't exist";
+    }
+
+    // Code names stat ids only through StatIds and DialIds, so every constant there must be a live stat.
+    private static int CheckConstants(Type holder, List<Finding> findings)
+    {
+        int count = 0;
+        foreach (FieldInfo field in holder.GetFields(BindingFlags.Public | BindingFlags.Static))
+        {
+            if (!field.IsLiteral || field.FieldType != typeof(string)) continue;
+            count += CheckIds(field.GetValue(null), IdKind.Stat, $"{holder.Name}.{field.Name}", null, findings);
+        }
         return count;
     }
 
@@ -198,7 +221,7 @@ public static class IdValidator
             sb.AppendLine($"## {group.Key} ({group.Count()})");
             sb.AppendLine();
             foreach (var f in group.OrderBy(f => f.Where))
-                sb.AppendLine($"- `{f.Value}` — {f.Where}");
+                sb.AppendLine($"- `{f.Value}` {f.Note} — {f.Where}");
             sb.AppendLine();
         }
 

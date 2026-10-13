@@ -27,6 +27,8 @@ public class StatsManager : MonoBehaviour, IGameManager
 
     private readonly Dictionary<string, StatSchema> schemasByName = new();
     private readonly Dictionary<string, StatEntry> entriesById = new();
+    // Old id -> current id, from each entry's formerIds.
+    private readonly Dictionary<string, string> currentIdByFormer = new();
 
     #endregion
 
@@ -86,6 +88,7 @@ public class StatsManager : MonoBehaviour, IGameManager
     {
         schemasByName.Clear();
         entriesById.Clear();
+        currentIdByFormer.Clear();
 
         Register(globalSchemas);
         Register(Resources.LoadAll<StatSchema>(DatabaseFolder));
@@ -124,7 +127,20 @@ public class StatsManager : MonoBehaviour, IGameManager
 
                 if (!entriesById.TryAdd(entry.id, entry))
                     Debug.LogError($"[{ManagerName}] Duplicate stat id '{entry.id}' in '{schema.name}'");
+                RegisterFormerIds(entry, schema);
             }
+        }
+    }
+
+    private void RegisterFormerIds(StatEntry entry, StatSchema schema)
+    {
+        if (entry.formerIds == null) return;
+
+        foreach (string former in entry.formerIds)
+        {
+            if (string.IsNullOrEmpty(former)) continue;
+            if (!currentIdByFormer.TryAdd(former, entry.id))
+                Debug.LogError($"[{ManagerName}] Former id '{former}' is claimed by two stats ('{currentIdByFormer[former]}', '{entry.id}' in '{schema.name}').");
         }
     }
 
@@ -139,7 +155,14 @@ public class StatsManager : MonoBehaviour, IGameManager
 
     public StatEntry GetEntry(string statId)
     {
-        return string.IsNullOrEmpty(statId) ? null : entriesById.GetValueOrDefault(statId);
+        return string.IsNullOrEmpty(statId) ? null : entriesById.GetValueOrDefault(Resolve(statId));
+    }
+
+    // A live id is returned as is; a former id becomes the stat it was renamed to.
+    public string Resolve(string statId)
+    {
+        if (string.IsNullOrEmpty(statId) || entriesById.ContainsKey(statId)) return statId;
+        return currentIdByFormer.GetValueOrDefault(statId, statId);
     }
 
     public bool HasStat(string statId) => GetEntry(statId) != null;

@@ -32,7 +32,7 @@ public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable
 
     #region State
 
-    private const string LevelStatId = "character.level";
+    private const string LevelStatId = StatIds.Level;
     private const string LevelSourceKey = "rpg";
 
     private ControllerBrain brain;

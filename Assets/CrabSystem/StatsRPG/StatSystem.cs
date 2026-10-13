@@ -107,7 +107,15 @@ public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
     public float GetValue(string statId, float defaultValue = 0f)
     {
         if (string.IsNullOrEmpty(statId)) return defaultValue;
-        return values.TryGetValue(statId, out float value) ? value : defaultValue;
+        return values.TryGetValue(Live(statId), out float value) ? value : defaultValue;
+    }
+
+    // Every id that comes in passes here: a stat renamed in its schema still answers to its former ids, so saves and
+    // assets naming the old one keep working (StatEntry.formerIds). The loaded id is the fast path.
+    private string Live(string statId)
+    {
+        if (values.ContainsKey(statId) || StatsManager.Instance == null) return statId;
+        return StatsManager.Instance.Resolve(statId);
     }
 
     /// <summary>
@@ -117,6 +125,7 @@ public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
     public void SetValue(string statId, float value)
     {
         if (string.IsNullOrEmpty(statId)) return;
+        statId = Live(statId);
 
         if (!baseValues.ContainsKey(statId))
         {
@@ -134,12 +143,12 @@ public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
         Recalculate(statId);
     }
 
-    public bool HasStat(string statId) => !string.IsNullOrEmpty(statId) && values.ContainsKey(statId);
+    public bool HasStat(string statId) => !string.IsNullOrEmpty(statId) && values.ContainsKey(Live(statId));
 
     public IEnumerable<string> GetStatIds() => values.Keys;
 
     /// <summary>True when this stat comes from elsewhere and is not part of the save.</summary>
-    public bool IsDerived(string statId) => derivedIds.Contains(statId);
+    public bool IsDerived(string statId) => !string.IsNullOrEmpty(statId) && derivedIds.Contains(Live(statId));
 
     #endregion
 
@@ -153,6 +162,7 @@ public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
     public void AddContribution(string statId, string sourceKey, float amount)
     {
         if (string.IsNullOrEmpty(statId) || string.IsNullOrEmpty(sourceKey)) return;
+        statId = Live(statId);
 
         if (!values.ContainsKey(statId))
         {
@@ -172,6 +182,8 @@ public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
 
     public void RemoveContribution(string statId, string sourceKey)
     {
+        if (string.IsNullOrEmpty(statId)) return;
+        statId = Live(statId);
         if (!contributions.TryGetValue(statId, out var sources)) return;
         if (!sources.Remove(sourceKey)) return;
 
@@ -192,7 +204,8 @@ public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
     /// <summary>What the character owns, before anything is added to it.</summary>
     public float GetBaseValue(string statId)
     {
-        return baseValues.TryGetValue(statId, out float value) ? value : 0f;
+        if (string.IsNullOrEmpty(statId)) return 0f;
+        return baseValues.TryGetValue(Live(statId), out float value) ? value : 0f;
     }
 
     private void Recalculate(string statId)
@@ -252,9 +265,11 @@ public class StatSystem : MonoBehaviour, IBrainModule, IStatProvider, ISaveable
         // than restoring a number the sources are about to recalculate anyway.
         foreach (var pair in data.stats)
         {
-            if (derivedIds.Contains(pair.id)) continue;
+            if (string.IsNullOrEmpty(pair.id)) continue;
+            string id = Live(pair.id);
+            if (derivedIds.Contains(id)) continue;
 
-            SetValue(pair.id, pair.value);
+            SetValue(id, pair.value);
         }
     }
 

@@ -203,10 +203,10 @@ public class DamageEffect
         var stats = attacker?.Brain?.Stats;
         if (stats == null) return 0f;
 
-        float bonus = stats.GetValue("cmb.bonus_damage");
+        float bonus = stats.GetValue(StatIds.BonusDamage);
         if (weapon == null) return bonus;
 
-        int extraDice = Mathf.RoundToInt(stats.GetValue("cmb.bonus_dice"));
+        int extraDice = Mathf.RoundToInt(stats.GetValue(StatIds.BonusDice));
         for (int i = 0; i < extraDice; i++)
             bonus += weapon.damageDice.Roll();
 

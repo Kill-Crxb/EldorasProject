@@ -330,10 +330,10 @@ public class StatusSystem : MonoBehaviour, IBrainModule
 
     private static (string save, string dc) SaveStats(SaveType save) => save switch
     {
-        SaveType.Toughness => ("def.toughness", "cmb.efficacy"),
-        SaveType.Alteration => ("def.alteration", "cmb.arcana"),
-        SaveType.Dexterity => ("def.dexterity", "cmb.initiative"),
-        _ => ("def.preparation", "cmb.cunning"),
+        SaveType.Toughness => (StatIds.Toughness, StatIds.Efficacy),
+        SaveType.Alteration => (StatIds.Alteration, StatIds.Arcana),
+        SaveType.Dexterity => (StatIds.Dexterity, StatIds.Initiative),
+        _ => (StatIds.Preparation, StatIds.Cunning),
     };
 
     // Sleep, charm, pacify: any damage that reaches the bearer ends them.

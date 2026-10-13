@@ -19,7 +19,7 @@ public class ResourceDefinition : ScriptableObject
 
     [Header("Stat Integration")]
 
-    [IdRef(IdKind.Stat)] public string maxStatId = "character.max_health";
+    [IdRef(IdKind.Stat)] public string maxStatId = StatIds.MaxHealth;
 
     [Header("Constraints")]
 

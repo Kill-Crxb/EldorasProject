@@ -49,6 +49,8 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     // The player's saveables, found once per brain and sorted by LoadOrder (B6, Audit 2 S2–S4).
     private readonly List<ISaveable> saveables = new List<ISaveable>();
     private readonly HashSet<ISaveable> dirty = new HashSet<ISaveable>();
+    // Files a newer build wrote. Never written this session, so the newer data survives (VersionLoadable).
+    private readonly HashSet<string> newerSaveIds = new HashSet<string>();
     private bool pendingLoad = false;
 
     // Only a character that finished loading is saved on shutdown. Saving a half-loaded one would
@@ -252,6 +254,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
     private async Task LoadModulesInOrder(string characterId)
     {
+        newerSaveIds.Clear();
         foreach (var module in saveables)
             await LoadModuleData(characterId, module.GetSaveId(), module);
     }
@@ -260,6 +263,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     {
         string json = await provider.Load(characterId, saveId);
         if (string.IsNullOrEmpty(json)) return;
+        if (!VersionLoadable(saveId, json, module)) return;
 
         try
         {
@@ -269,6 +273,25 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
         {
             Debug.LogError($"[{ManagerName}] Failed to load '{saveId}': {e.Message}");
         }
+    }
+
+    // A file written by a newer build is left alone: loading it into older fields would drop what they can't hold, and
+    // the next save would write the loss back. Older files load and the module migrates them. A file with no version
+    // field (some modules never wrote one) reads as 0 and loads.
+    private bool VersionLoadable(string saveId, string json, ISaveable module)
+    {
+        int saved = JsonUtility.FromJson<SaveVersionPeek>(json)?.version ?? 0;
+        if (saved <= module.GetSaveVersion()) return true;
+
+        newerSaveIds.Add(saveId);
+        Debug.LogError($"[{ManagerName}] '{saveId}' was saved by a newer version ({saved} > {module.GetSaveVersion()}); not loaded, and not written this session.", this);
+        return false;
+    }
+
+    [Serializable]
+    private class SaveVersionPeek
+    {
+        public int version;
     }
 
     #region Save
@@ -291,7 +314,10 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
         dirty.Clear();
         foreach (var module in saveables)
+        {
+            if (newerSaveIds.Contains(module.GetSaveId())) continue;
             provider.SaveNow(ActiveCharacterId, module.GetSaveId(), module.GetSaveData());
+        }
 
         provider.SaveNow(ActiveCharacterId, "metadata", BuildMetadataJson());
     }
@@ -335,6 +361,7 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
     private async Task SaveModule(ISaveable module)
     {
         string saveId = module.GetSaveId();
+        if (newerSaveIds.Contains(saveId)) return;
         try
         {
             await SaveFile(saveId, module.GetSaveData());
@@ -499,15 +526,10 @@ public class SaveManager : MonoBehaviour, IGameManager, IManagerDependency, IUpd
 
     private static StatBaseOverride[] DefaultBaseStats()
     {
-        return new StatBaseOverride[]
-        {
-            new StatBaseOverride { statId = "core.mind", baseValue = 3 },
-            new StatBaseOverride { statId = "core.body", baseValue = 3 },
-            new StatBaseOverride { statId = "core.spirit", baseValue = 3 },
-            new StatBaseOverride { statId = "core.resilience", baseValue = 3 },
-            new StatBaseOverride { statId = "core.endurance", baseValue = 3 },
-            new StatBaseOverride { statId = "core.insight", baseValue = 3 },
-        };
+        var overrides = new StatBaseOverride[StatIds.Cores.Length];
+        for (int i = 0; i < overrides.Length; i++)
+            overrides[i] = new StatBaseOverride { statId = StatIds.Cores[i], baseValue = 3 };
+        return overrides;
     }
 
     // Mirrors StatSystem's save shape. JsonUtility cannot serialise a Dictionary,

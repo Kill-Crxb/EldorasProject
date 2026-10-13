@@ -10,7 +10,7 @@ using UnityEngine;
 public class StatusTrace : MonoBehaviour
 {
     [SerializeField] private float rescanInterval = 1f;
-    [SerializeField] private string[] watchedStats = { "atr.arm", "atr.arm_dice", "atr.arm_def", "def.avoidance" };
+    [SerializeField] private string[] watchedStats = { StatIds.Armour, StatIds.ArmourDice, StatIds.ArmourDefense, StatIds.Avoidance };
 
     private readonly HashSet<StatusSystem> tracked = new();
     private float nextScan;

@@ -41,8 +41,12 @@ namespace NinjaGame.Stats
     [System.Serializable]
     public class StatEntry
     {
-        [Tooltip("Stable unique id, e.g. 'core.body'. Never change after shipping.")]
+        [Tooltip("Stable unique id, e.g. 'core.body'. To rename it, put the old id in formerIds.")]
         public string id;
+
+        [Tooltip("Ids this stat used to have. Saves and assets still naming an old id read and write this stat, so a " +
+                 "rename can't silently zero it (the SecondryStats incident). Validate Ids lists what still uses them.")]
+        public List<string> formerIds = new();
 
         [Tooltip("Name shown in UI.")]
         public string displayName;

@@ -13,7 +13,8 @@ public interface ISaveable
     string GetSaveData();
     void LoadSaveData(string json);
 
-    // Increment when the serialised fields change.
+    // Increment when the serialised fields change, and write it as a top-level "version" field. SaveManager skips
+    // (and never overwrites) a file whose version is higher than this: it came from a newer build.
     int GetSaveVersion();
 
     // Lower loads first: stats before anything derived from them, inventory before equipment.

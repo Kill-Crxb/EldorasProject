@@ -19,8 +19,8 @@ public class ArmourShieldModule : MonoBehaviour, IBrainModule
 
     [SerializeField] private SoakBar shield = new SoakBar();
 
-    private const string ArmourDiceStat = "atr.arm_dice";
-    private const string ArmourStat = "atr.arm";
+    private const string ArmourDiceStat = StatIds.ArmourDice;
+    private const string ArmourStat = StatIds.Armour;
 
     private ControllerBrain brain;
 

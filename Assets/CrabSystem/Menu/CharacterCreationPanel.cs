@@ -108,13 +108,8 @@ public class CharacterCreationPanel : MonoBehaviour
 
     // ── Stats ─────────────────────────────────────────────────────────────
 
-    // Index order is the display order, and the only place stat ids are written down.
-    private static readonly string[] StatIds =
-    {
-        "core.mind", "core.body", "core.spirit", "core.resilience", "core.endurance", "core.insight"
-    };
-
-    private const int StatCount = 6;
+    // StatIds.Cores order is the display order.
+    private static readonly int StatCount = StatIds.Cores.Length;
 
     private readonly int[] stats = new int[StatCount];
     private TextMeshProUGUI[] statTexts;
@@ -271,7 +266,7 @@ public class CharacterCreationPanel : MonoBehaviour
         var overrides = new StatBaseOverride[StatCount];
 
         for (int i = 0; i < StatCount; i++)
-            overrides[i] = new StatBaseOverride { statId = StatIds[i], baseValue = stats[i] };
+            overrides[i] = new StatBaseOverride { statId = StatIds.Cores[i], baseValue = stats[i] };
 
         return overrides;
     }

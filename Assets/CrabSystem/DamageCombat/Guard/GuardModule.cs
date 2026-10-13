@@ -72,7 +72,7 @@ public class GuardModule : MonoBehaviour, IBrainModule
     [SerializeField] private int parriedStunFrames = 36;
 
     private const string StaminaId = "stamina";
-    private const string DeflectionStat = "def.deflection";
+    private const string DeflectionStat = StatIds.Deflection;
     private const string DeflectSideParam = "DeflectSide";
     private const string BlockedHitTrigger = "BlockedHit";
     private const string ParriedTrigger = "Parried";
