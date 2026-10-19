@@ -214,6 +214,9 @@ namespace CrabSystem
             float distance = Vector3.Distance(actor.transform.position, brain.transform.position);
             if (distance > interactionRange) return false;
 
+            IInteractionGate gate = brain.GetProvider<IInteractionGate>();
+            if (gate != null && !gate.Allows(actor)) return false;
+
             if (isLocked)
             {
                 if (HasRequiredKey(actor)) Unlock();

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace CrabSystem
 {
-    public enum BarKind { Armour, Guard, Posture, Resource }
+    public enum BarKind { Armour, Guard, Posture, Resource, Experience }
 
     // One of the player's HUD bars: a resource (health, mana, stamina — any ResourceDefinition) or one of the
     // three combat bars (Combat_Framework §3.5). Binds to the player brain when the game has loaded. Use a
@@ -138,6 +138,7 @@ namespace CrabSystem
         {
             if (bar == BarKind.Resource) return FindResource(brain);
             if (bar == BarKind.Posture) return brain.GetModule<PostureModule>();
+            if (bar == BarKind.Experience) return brain.GetModule<RPGSystem>();
 
             if (bar == BarKind.Guard)
             {

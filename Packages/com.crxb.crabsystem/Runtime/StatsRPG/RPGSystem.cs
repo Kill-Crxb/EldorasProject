@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace CrabSystem
 {
-    public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable
+    public class RPGSystem : MonoBehaviour, IBrainModule, ISaveable, IBarSource
     {
         public int InitOrder => 140;
 
@@ -41,6 +41,10 @@ namespace CrabSystem
         public int MaxLevel => maxLevel;
         public int CurrentXP => currentXP;
         public int XPToNextLevel => xpToNextLevel;
+
+        // The XP bar (BarView, Experience): progress toward the next level, full at the cap.
+        float IBarSource.Current => currentLevel >= maxLevel ? 1f : currentXP;
+        float IBarSource.Max => currentLevel >= maxLevel ? 1f : xpToNextLevel;
 
         public event Action<int, int> OnLevelChanged;
         public event Action<int> OnXPChanged;

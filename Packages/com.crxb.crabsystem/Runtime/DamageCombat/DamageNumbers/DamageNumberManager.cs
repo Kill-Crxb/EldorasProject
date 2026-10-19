@@ -99,6 +99,13 @@ namespace CrabSystem
             instance.ShowHit(target.LastHit, applied, worldPos);
         }
 
+        // A line with no hit behind it: loot and progression ("+30 XP", "Level up").
+        public static void Say(string text, Vector3 worldPos, Color color, float scale)
+        {
+            if (instance == null) return;
+            instance.Show(text, worldPos, scale, color);
+        }
+
         private void ShowHit(HitResolution hit, float applied, Vector3 pos)
         {
             if (hit.grade == HitGrade.Evaded) { Show("Evaded", pos, wordScale, evadeColor); return; }
