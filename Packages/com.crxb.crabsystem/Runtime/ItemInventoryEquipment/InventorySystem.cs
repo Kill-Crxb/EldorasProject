@@ -290,33 +290,73 @@ namespace CrabSystem
 
         public void SetContents(ContainerContents contents) { currentContents = contents; }
 
+        // By-id calls count and move stacks: a stackable item (maxStackSize > 1) fills existing stacks
+        // first, then new instances each holding up to a full stack. Coins arrive as one stack.
         bool IInventoryProvider.HasItem(string itemId)
             => inventoryItems.Any(i => i.definitionId == itemId);
 
         int IInventoryProvider.GetItemCount(string itemId)
-            => inventoryItems.Count(i => i.definitionId == itemId);
+        {
+            int total = 0;
+            foreach (var item in inventoryItems)
+                if (item.definitionId == itemId) total += item.stackCount;
+            return total;
+        }
 
         bool IInventoryProvider.AddItem(string itemId, int quantity)
         {
-            for (int i = 0; i < quantity; i++)
+            int left = FillStacks(itemId, quantity);
+            while (left > 0)
             {
                 var instance = new ItemInstance(itemId, ItemRarity.Common);
+                if (instance.Definition == null) return false;
+                instance.stackCount = Mathf.Min(left, StackLimit(instance.Definition));
                 if (!AddItem(instance)) return false;
+                left -= instance.stackCount;
             }
             return true;
         }
 
         bool IInventoryProvider.RemoveItem(string itemId, int quantity)
         {
-            int removed = 0;
-            for (int i = inventoryItems.Count - 1; i >= 0 && removed < quantity; i--)
+            if (((IInventoryProvider)this).GetItemCount(itemId) < quantity) return false;
+
+            int left = quantity;
+            for (int i = inventoryItems.Count - 1; i >= 0 && left > 0; i--)
             {
-                if (inventoryItems[i].definitionId != itemId) continue;
-                RemoveItem(inventoryItems[i].instanceId);
-                removed++;
+                ItemInstance item = inventoryItems[i];
+                if (item.definitionId != itemId) continue;
+
+                int taken = Mathf.Min(left, item.stackCount);
+                left -= taken;
+                item.stackCount -= taken;
+                if (item.stackCount == 0) RemoveItem(item.instanceId);
             }
-            return removed == quantity;
+            RaiseChanged();
+            return true;
         }
+
+        // Tops up existing stacks of the item and returns what didn't fit.
+        private int FillStacks(string itemId, int quantity)
+        {
+            int left = quantity;
+            foreach (var item in inventoryItems)
+            {
+                if (left <= 0) break;
+                if (item.definitionId != itemId || item.Definition == null) continue;
+
+                int room = StackLimit(item.Definition) - item.stackCount;
+                if (room <= 0) continue;
+
+                int added = Mathf.Min(room, left);
+                item.stackCount += added;
+                left -= added;
+            }
+            if (left != quantity) RaiseChanged();
+            return left;
+        }
+
+        private static int StackLimit(ItemDefinition definition) => Mathf.Max(1, definition.maxStackSize);
 
         void IInventoryProvider.ClearInventory() => ClearInventory();
     }
