@@ -64,15 +64,22 @@ MonoBehaviour:
     defaultColors: []
   - modelId: katana_girl_v1
     displayName: Katana Girl
-    playable: 1
+    playable: 0
     prefab: {fileID: 4006998765510790250, guid: b6803f15aeb7d5763b66302cba00a232, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 0
     defaultColors: []
   - modelId: shield_girl_v1
     displayName: Shield Girl
-    playable: 1
+    playable: 0
     prefab: {fileID: 8541777861642692679, guid: 7557f6d9c36bd95b19a4ff7ccfbb6b7b, type: 3}
+    thumbnailSprite: {fileID: 0}
+    allowColorCustomization: 0
+    defaultColors: []
+  - modelId: highelf_base
+    displayName: High Elf_Base
+    playable: 1
+    prefab: {fileID: 6677783087573472876, guid: 1f710e122b26a1097b99b8b2d4779cae, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 0
     defaultColors: []

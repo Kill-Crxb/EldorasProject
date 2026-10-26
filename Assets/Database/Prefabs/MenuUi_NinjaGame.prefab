@@ -148,6 +148,10 @@ PrefabInstance:
       propertyPath: modelDatabase
       value: 
       objectReference: {fileID: 11400000, guid: 983aec507e8af7a46a88ad5f7caabbb3, type: 2}
+    - target: {fileID: 5970377281621278325, guid: cf092286ed478fa8eac6de043a61c0c0, type: 3}
+      propertyPath: sliderRowPrefab
+      value: 
+      objectReference: {fileID: 5710184387381677946, guid: 5e31105c9963b1bdbb816387e5481b2e, type: 3}
     - target: {fileID: 6405810529189336601, guid: cf092286ed478fa8eac6de043a61c0c0, type: 3}
       propertyPath: m_Name
       value: MenuUi_NinjaGame
