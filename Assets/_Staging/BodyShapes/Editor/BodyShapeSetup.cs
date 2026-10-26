@@ -1,7 +1,6 @@
 using CrabSystem;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
 
 // Tools → Characters → Body Shapes. Staging: retire once body shapes graduate.
 //
@@ -9,9 +8,6 @@ using UnityEngine.UI;
 // an option per step and marked as a slider. Shape keys are locked to the steps so clothing can be made per
 // step and shown by the same option. The model is then listed in the model database as playable. Groups that
 // already exist are left alone, so clothing added to their options survives a rerun.
-//
-// Build Slider Row: a variant of the package's AppearanceRow with a stepped Slider after the previous button,
-// set as the slider row on every creation panel prefab under Assets.
 
 public static class BodyShapeSetup
 {
@@ -19,8 +15,6 @@ public static class BodyShapeSetup
     private static readonly int[] Steps = { 0, 25, 50, 75, 100 };
 
     private const string GroupPrefix = "shape_";
-    private const string SliderRowPath = "Assets/_Staging/BodyShapes/AppearanceSliderRow.prefab";
-    private const float SliderWidth = 160f;
 
     [MenuItem("Tools/Characters/Body Shapes/Set Up Selected Model")]
     private static void SetUpSelectedModel()
@@ -41,24 +35,6 @@ public static class BodyShapeSetup
             Debug.LogError($"[BodyShapeSetup] No new shape keys on {path}. Check the FBX was exported with shape keys.");
 
         RegisterModel(AssetDatabase.LoadAssetAtPath<GameObject>(path));
-    }
-
-    [MenuItem("Tools/Characters/Body Shapes/Build Slider Row")]
-    private static void BuildSliderRow()
-    {
-        var source = AssetDatabase.LoadAssetAtPath<GameObject>(CrabPackage.AssetRoot + "/Runtime/Menu/AppearanceRow.prefab");
-        if (source == null)
-        {
-            Debug.LogError("[BodyShapeSetup] AppearanceRow.prefab not found in the CrabSystem package.");
-            return;
-        }
-
-        var instance = (GameObject)PrefabUtility.InstantiatePrefab(source);
-        AddSlider(instance.GetComponent<AppearanceRowView>());
-        var saved = PrefabUtility.SaveAsPrefabAsset(instance, SliderRowPath);
-        Object.DestroyImmediate(instance);
-
-        AssignToPanels(saved.GetComponent<AppearanceRowView>());
     }
 
     // ── Shape groups ──────────────────────────────────────────────────────────
@@ -171,49 +147,6 @@ public static class BodyShapeSetup
 
         so.ApplyModifiedPropertiesWithoutUndo();
         AssetDatabase.SaveAssets();
-    }
-
-    // ── Slider row ────────────────────────────────────────────────────────────
-
-    private static void AddSlider(AppearanceRowView row)
-    {
-        var resources = new DefaultControls.Resources
-        {
-            standard = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"),
-            background = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd"),
-            knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd")
-        };
-
-        var slider = DefaultControls.CreateSlider(resources);
-        slider.transform.SetParent(row.transform, false);
-
-        Transform previous = row.transform.Find("Previous");
-        if (previous != null) slider.transform.SetSiblingIndex(previous.GetSiblingIndex() + 1);
-
-        var layout = slider.AddComponent<LayoutElement>();
-        layout.preferredWidth = SliderWidth;
-        layout.flexibleWidth = 1f;
-
-        var so = new SerializedObject(row);
-        so.FindProperty("slider").objectReferenceValue = slider.GetComponent<Slider>();
-        so.ApplyModifiedPropertiesWithoutUndo();
-    }
-
-    private static void AssignToPanels(AppearanceRowView sliderRow)
-    {
-        foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" }))
-        {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            var asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (asset.GetComponentInChildren<CharacterCreationPanel>(true) == null) continue;
-
-            var root = PrefabUtility.LoadPrefabContents(path);
-            var so = new SerializedObject(root.GetComponentInChildren<CharacterCreationPanel>(true));
-            so.FindProperty("sliderRowPrefab").objectReferenceValue = sliderRow;
-            so.ApplyModifiedPropertiesWithoutUndo();
-            PrefabUtility.SaveAsPrefabAsset(root, path);
-            PrefabUtility.UnloadPrefabContents(root);
-        }
     }
 
     private static SerializedProperty Append(SerializedProperty array)

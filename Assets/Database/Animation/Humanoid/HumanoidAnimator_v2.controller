@@ -3007,7 +3007,7 @@ AnimatorController:
   - serializedVersion: 5
     m_Name: Actions Upper
     m_StateMachine: {fileID: -6824073342889240177}
-    m_Mask: {fileID: 31900000, guid: e68327ce99ed4eedafe48dd723c3fb59, type: 2}
+    m_Mask: {fileID: 31900000, guid: 142a22760aae7114f82e9cfc781709d0, type: 2}
     m_Motions:
     - serializedVersion: 2
       m_State: {fileID: -1416550809573173113}
