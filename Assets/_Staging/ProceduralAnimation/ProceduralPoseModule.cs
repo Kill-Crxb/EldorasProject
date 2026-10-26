@@ -41,10 +41,22 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
     [Tooltip("Hold the legs too. Off keeps the legs smooth if planted feet slide during a held pose.")]
     [SerializeField] private bool snapLegs = true;
 
+    [Tooltip("Hold the hips with the rest of the pose. Off lets the hips turn smoothly under a held spine, which wobbles the chest when the hips swing.")]
+    [SerializeField] private bool snapBody = true;
+
+    [Tooltip("Hold bone rotations (on) or humanoid muscles (off). Muscles read back wrong under a masked override layer here, so they pull the arms off a block or cast on the move.")]
+    [SerializeField] private bool snapBones = true;
+
     [Tooltip("Graph output order on the Animator. Below Animation Rigging's 1000, so rig constraints see the posed body.")]
     [SerializeField] private ushort outputOrder = 900;
 
     private static readonly string[] LegMuscles = { "Upper Leg", "Lower Leg", "Foot", "Toes" };
+
+    private static readonly HumanBodyBones[] LegBones =
+    {
+        HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot, HumanBodyBones.LeftToes,
+        HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, HumanBodyBones.RightToes
+    };
 
     private readonly PostureLayer posture = new PostureLayer();
     private ControllerBrain brain;
@@ -57,14 +69,24 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
     private NativeArray<int> humanStream;
     private NativeArray<MuscleHandle> snapMuscles;
     private NativeArray<float> snapHeld;
+    private NativeArray<Vector3> snapBodyPosition;
+    private NativeArray<Quaternion> snapBodyRotation;
+    private NativeArray<TransformStreamHandle> snapBoneHandles;
+    private NativeArray<Quaternion> snapBoneRotation;
+    private NativeArray<Vector3> snapHipsPosition;
     private NativeArray<float> snapState;
     private NativeArray<float> snapControl;
+    private NativeArray<float> snapProbe;
     private bool warnedNotHuman;
+    private bool wasFrozen;
     private bool subscribed;
 
     public bool IsEnabled { get; set; } = true;
 
     public PostureLayer Posture => posture;
+
+    // SnapTrace reads this once a frame and clears the evaluation count. Empty until the graph is built.
+    public NativeArray<float> SnapProbe => snapProbe;
 
     public void Initialize(ControllerBrain controllerBrain)
     {
@@ -88,6 +110,13 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
         snapControl[0] = 1f / snapFramesPerSecond;
         snapControl[1] = masterWeight * snapWeight;
         snapControl[2] = boundAnimator.speed;
+        snapControl[3] = snapBody ? 1f : 0f;
+        snapControl[5] = snapBones ? 1f : 0f;
+
+        // Key on the frame a hit-stop starts or ends, so the freeze shows the impact pose, not one up to a step old.
+        bool frozen = boundAnimator.speed <= 0f;
+        snapControl[4] = frozen != wasFrozen ? 1f : 0f;
+        wasFrozen = frozen;
 
         WarnIfNotHuman();
     }
@@ -176,14 +205,28 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
         snapMuscles = new NativeArray<MuscleHandle>(SnapMuscles(), Allocator.Persistent);
         snapHeld = new NativeArray<float>(snapMuscles.Length, Allocator.Persistent);
         snapState = new NativeArray<float>(2, Allocator.Persistent);
-        snapControl = new NativeArray<float>(3, Allocator.Persistent);
+        snapBodyPosition = new NativeArray<Vector3>(1, Allocator.Persistent);
+        snapBodyRotation = new NativeArray<Quaternion>(1, Allocator.Persistent);
+        snapControl = new NativeArray<float>(6, Allocator.Persistent);
+        snapBoneHandles = new NativeArray<TransformStreamHandle>(BoneHandles(animator), Allocator.Persistent);
+        snapBoneRotation = new NativeArray<Quaternion>(snapBoneHandles.Length, Allocator.Persistent);
+        snapHipsPosition = new NativeArray<Vector3>(1, Allocator.Persistent);
+        snapProbe = new NativeArray<float>(6, Allocator.Persistent);
         warnedNotHuman = false;
 
         graph = PlayableGraph.Create($"{animator.name}.ProceduralPose");
         graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
 
         var postureJob = new PostureLayerJob { muscles = postureMuscles, offsets = postureOffsets, humanStream = humanStream };
-        var snapJob = new SnapLayerJob { muscles = snapMuscles, control = snapControl, held = snapHeld, state = snapState };
+        var snapJob = new SnapLayerJob
+        {
+            muscles = snapMuscles, control = snapControl, held = snapHeld,
+            heldBodyPosition = snapBodyPosition, heldBodyRotation = snapBodyRotation, state = snapState,
+            bones = snapBoneHandles, heldBoneRotation = snapBoneRotation, heldHipsPosition = snapHipsPosition,
+            probe = snapProbe,
+            probeDownUp = new MuscleHandle(HumanPartDof.LeftArm, ArmDof.ArmDownUp),
+            probeFrontBack = new MuscleHandle(HumanPartDof.LeftArm, ArmDof.ArmFrontBack)
+        };
         var posturePlayable = AnimationScriptPlayable.Create(graph, postureJob);
         var snapPlayable = AnimationScriptPlayable.Create(graph, snapJob, 1);
         graph.Connect(posturePlayable, 0, snapPlayable, 0);
@@ -210,6 +253,21 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
         return kept.ToArray();
     }
 
+    // The hips first (SnapLayerJob holds its position too), then every other mapped humanoid bone.
+    private TransformStreamHandle[] BoneHandles(Animator animator)
+    {
+        var handles = new List<TransformStreamHandle> { animator.BindStreamTransform(animator.GetBoneTransform(HumanBodyBones.Hips)) };
+
+        for (var bone = HumanBodyBones.Spine; bone < HumanBodyBones.LastBone; bone++)
+        {
+            Transform t = animator.GetBoneTransform(bone);
+            if (t == null || (!snapLegs && System.Array.IndexOf(LegBones, bone) >= 0)) continue;
+            handles.Add(animator.BindStreamTransform(t));
+        }
+
+        return handles.ToArray();
+    }
+
     private static bool IsLeg(string muscleName)
     {
         foreach (string part in LegMuscles)
@@ -234,7 +292,13 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
         if (humanStream.IsCreated) humanStream.Dispose();
         if (snapMuscles.IsCreated) snapMuscles.Dispose();
         if (snapHeld.IsCreated) snapHeld.Dispose();
+        if (snapBodyPosition.IsCreated) snapBodyPosition.Dispose();
+        if (snapBodyRotation.IsCreated) snapBodyRotation.Dispose();
+        if (snapBoneHandles.IsCreated) snapBoneHandles.Dispose();
+        if (snapBoneRotation.IsCreated) snapBoneRotation.Dispose();
+        if (snapHipsPosition.IsCreated) snapHipsPosition.Dispose();
         if (snapState.IsCreated) snapState.Dispose();
         if (snapControl.IsCreated) snapControl.Dispose();
+        if (snapProbe.IsCreated) snapProbe.Dispose();
     }
 }

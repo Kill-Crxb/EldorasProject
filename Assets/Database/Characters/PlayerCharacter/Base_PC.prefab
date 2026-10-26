@@ -3187,6 +3187,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7629904441140047123}
   - component: {fileID: 1237957184530180202}
+  - component: {fileID: 5943780735370843804}
   m_Layer: 8
   m_Name: PostureModle
   m_TagString: Untagged
@@ -3227,7 +3228,21 @@ MonoBehaviour:
   snapWeight: 1
   snapFramesPerSecond: 16
   snapLegs: 1
+  snapBody: 1
   outputOrder: 900
+--- !u!114 &5943780735370843804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5128260236974451473}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13dc6c07f3eb9dda9a45c5e20d50d5b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SnapTrace
+  jump: 0.08
 --- !u!1 &5233172507755713470
 GameObject:
   m_ObjectHideFlags: 0
