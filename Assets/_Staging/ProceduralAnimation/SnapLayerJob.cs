@@ -1,3 +1,4 @@
+using Unity.Burst;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -16,7 +17,9 @@ using UnityEngine.Animations;
 // control: [0] step seconds, [1] weight, [2] Animator speed, [3] key now.
 // state: [0] time since the last key, [1] primed.
 // bones: [0] is the hips; the rest are the other humanoid bones being held.
+// Burst-compiled, so no Quaternion.Slerp (a native call): rotations blend with Nlerp.
 
+[BurstCompile]
 public struct SnapLayerJob : IAnimationJob
 {
     [ReadOnly] public NativeArray<TransformStreamHandle> bones;
@@ -42,7 +45,7 @@ public struct SnapLayerJob : IAnimationJob
         if (weight <= 0f) return;
 
         for (int i = 0; i < bones.Length; i++)
-            bones[i].SetLocalRotation(stream, Quaternion.Slerp(bones[i].GetLocalRotation(stream), heldRotation[i], weight));
+            bones[i].SetLocalRotation(stream, Nlerp(bones[i].GetLocalRotation(stream), heldRotation[i], weight));
 
         bones[0].SetLocalPosition(stream, Vector3.Lerp(bones[0].GetLocalPosition(stream), heldHipsPosition[0], weight));
     }
@@ -56,5 +59,20 @@ public struct SnapLayerJob : IAnimationJob
         heldHipsPosition[0] = bones[0].GetLocalPosition(stream);
         for (int i = 0; i < bones.Length; i++)
             heldRotation[i] = bones[i].GetLocalRotation(stream);
+    }
+
+    // Normalised lerp along the shorter arc. Matches slerp at weight 0 and 1, which is where snap normally sits.
+    private static Quaternion Nlerp(Quaternion from, Quaternion to, float t)
+    {
+        float dot = from.x * to.x + from.y * to.y + from.z * to.z + from.w * to.w;
+        float sign = dot < 0f ? -1f : 1f;
+
+        float x = from.x + (to.x * sign - from.x) * t;
+        float y = from.y + (to.y * sign - from.y) * t;
+        float z = from.z + (to.z * sign - from.z) * t;
+        float w = from.w + (to.w * sign - from.w) * t;
+        float length = Mathf.Sqrt(x * x + y * y + z * z + w * w);
+
+        return new Quaternion(x / length, y / length, z / length, w / length);
     }
 }

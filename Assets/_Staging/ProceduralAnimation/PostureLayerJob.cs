@@ -1,10 +1,12 @@
+using Unity.Burst;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Animations;
 
 // Adds the posture's muscle offsets to the pose the Animator produced. Offsets arrive already weighted, so at
-// weight 0 the pose passes through untouched.
+// weight 0 the pose passes through untouched. Burst-compiled.
 
+[BurstCompile]
 public struct PostureLayerJob : IAnimationJob
 {
     [ReadOnly] public NativeArray<MuscleHandle> muscles;
