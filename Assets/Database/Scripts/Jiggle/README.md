@@ -1,4 +1,14 @@
-# Porphi breast jiggle
+# Breast and butt jiggle
+
+> **26 Oct:** Porphi is retired as a model, but her two BoneSpring cloths (`BreastCloth`, `ButtCloth` on
+> `Assets/Database/Characters/MC/Porphi.prefab`) are the reference settings. **Tools → Characters → Jiggle → Copy Porphi
+> Jiggle To Selected Model** (`Assets/_Staging/BodyShapes/Editor/JiggleCopy.cs`) copies both onto another model
+> prefab unchanged and points them at its bones (`Breast1.L/R`, `Butt1.L/R` on the High Elf base); the inertia anchor
+> is matched through the humanoid avatar. Rerun it after a re-export. The High Elf's breast chain is 73% of Porphi's,
+> so the copied distances read a little looser there (see `claude/Tuning_Points.md`). The rest of this page explains
+> the settings, written when they were tuned on Porphi.
+
+## Porphi breast jiggle
 
 > **13 Oct:** the set-up commands (`PorphiJiggleSetup.cs`, Tools → Crab → Jiggle) were retired with the other
 > one-shot builders; git history has them. The springs and colliders they made are on `Porphi.prefab`; this page
