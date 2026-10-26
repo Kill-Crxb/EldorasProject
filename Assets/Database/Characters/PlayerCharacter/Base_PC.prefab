@@ -234,7 +234,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 168f8c90f484def40b792522832b58ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraEventListener
-  cameraModule: {fileID: 8623906753414368579}
 --- !u!114 &5392573869111801634
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -745,6 +744,7 @@ Transform:
   - {fileID: 511181326039161770}
   - {fileID: 884539008515504798}
   - {fileID: 8826001346750792700}
+  - {fileID: 6893292411118544550}
   m_Father: {fileID: 505027778239189661}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7834155014174466237
@@ -781,7 +781,6 @@ MonoBehaviour:
   startingPostureState: 0
   permissions: {fileID: 11400000, guid: 2d275b9a1d8b86a4e9518a9cebb76efd, type: 2}
   debugStateMachine: 0
-  debugTransitions: 0
   showDebugUI: 0
 --- !u!1 &1981481828185004338
 GameObject:
@@ -1433,7 +1432,6 @@ MonoBehaviour:
   transitionDelay: 0
   animatorBool: IsUnarmed
   blackboardFact: IsUnarmed
-  debugLogging: 0
 --- !u!1 &2224644085284311166
 GameObject:
   m_ObjectHideFlags: 0
@@ -1743,7 +1741,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatusSystem
   isEnabled: 1
-  debugStatuses: 0
   activeDebug: []
   drWindow: 15
   drSteps:
@@ -2092,8 +2089,6 @@ MonoBehaviour:
   staggerParam: Stagger
   deathParam: Death
   isDeadParam: IsDead
-  hitDirXParam: HitDirX
-  hitDirZParam: HitDirZ
 --- !u!1 &3638272781167918597
 GameObject:
   m_ObjectHideFlags: 0
@@ -2182,7 +2177,6 @@ MonoBehaviour:
   movesetBarId: mouse
   movesetSlotIndex: 0
   blockSlotIndex: 1
-  debugLogging: 0
 --- !u!114 &3195358102234684433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2195,7 +2189,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e8748d2745680e47bd70209bf755150, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotTransformationSystem
-  debugLogging: 0
 --- !u!1 &3672393865144785899
 GameObject:
   m_ObjectHideFlags: 0
@@ -2472,7 +2465,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MovementSystem
   isEnabled: 1
   locomotionHandler: {fileID: 9019367723485862209}
-  feetDetection: {fileID: 6975317991593524323}
   moveEnterSpeed: 1
   moveExitSpeed: 0.5
   runEnterSpeed: 4.5
@@ -2970,7 +2962,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem
   isEnabled: 1
-  loadoutModule: {fileID: 0}
   abilities:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
   - {fileID: 11400000, guid: d2a2c77dd656fa26a90cec8c9b87b943, type: 2}
@@ -2978,7 +2969,6 @@ MonoBehaviour:
   weaponSlotId: mainwep
   hitShakeAmplitude: 0.04
   hitConfirmCancel: 0
-  debugLogging: 0
 --- !u!114 &4019244290200516456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3054,6 +3044,7 @@ MonoBehaviour:
   detectionLayer:
     serializedVersion: 2
     m_Bits: 16384
+  useRange: 2.2
   iconDatabase: {fileID: 11400000, guid: d8a540aef20b2d947a22ebf4f9b8c914, type: 2}
   iconPromptPrefab: {fileID: 8394886397911090469, guid: ab517d13f65eefe4b99e1f2a3aabfef8, type: 3}
   isLocked: 0
@@ -3495,6 +3486,52 @@ MonoBehaviour:
   noiseAngle: 1.5
   noiseSpeed: 0.35
   suppressFactKey: CannotAct
+--- !u!1 &7245617748383407543
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8826001346750792700}
+  - component: {fileID: 2227026038709287771}
+  m_Layer: 0
+  m_Name: RespawnModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8826001346750792700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7245617748383407543}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8373627434070198267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2227026038709287771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7245617748383407543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0298d65968e24c598c89041ed52c2150, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RespawnModule
+  isEnabled: 1
+  respawnDelay: 3
 --- !u!1 &7539060194227579230
 GameObject:
   m_ObjectHideFlags: 0
@@ -3555,7 +3592,6 @@ MonoBehaviour:
   - barId: bottomRight
     keybinds: 0
   cameraProviderComponent: {fileID: 0}
-  stubAIControlSource: {fileID: 0}
 --- !u!1 &7591293930480927091
 GameObject:
   m_ObjectHideFlags: 0
@@ -3618,6 +3654,54 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1616716048078368275}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7652216421571755032
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6893292411118544550}
+  - component: {fileID: 3910448124277676195}
+  m_Layer: 8
+  m_Name: ProceduralPoseModule
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6893292411118544550
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7652216421571755032}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8373627434070198267}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3910448124277676195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7652216421571755032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4b1d52ae7162c4e291b0c4cca49d609, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProceduralPoseModule
+  masterWeight: 1
+  postureWeight: 1
+  posture: {fileID: 11400000, guid: e039c730723b5366d92ddeb8900d7b54, type: 2}
+  outputOrder: 900
 --- !u!1 &7735802069001566543
 GameObject:
   m_ObjectHideFlags: 0
@@ -4004,7 +4088,6 @@ MonoBehaviour:
   drawSpeedParameter: DrawSpeed
   drawSocketId: hand_r
   drawFallbackAnchor: 1
-  debugLogging: 0
 --- !u!114 &7490256370504864037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4544,7 +4627,6 @@ MonoBehaviour:
   ledgeProbeRadius: 0.1
   ledgeClearance: 0.6
   drawGizmos: 1
-  debugLogging: 0
 --- !u!4 &6979331757379263292 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4255086557555516549, guid: e1e2480bb0d2a5d4fb2ab52b81b0ec14, type: 3}
@@ -4750,49 +4832,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 584848072400741313, guid: 8437011707b27caa7a3d5c656bc345f3, type: 3}
   m_PrefabInstance: {fileID: 8639487581279846768}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &7245617748383407543
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8826001346750792700}
-  - component: {fileID: 2227026038709287771}
-  m_Layer: 0
-  m_Name: RespawnModule
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8826001346750792700
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7245617748383407543}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8373627434070198267}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2227026038709287771
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7245617748383407543}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0298d65968e24c598c89041ed52c2150, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RespawnModule
-  isEnabled: 1
-  respawnDelay: 3

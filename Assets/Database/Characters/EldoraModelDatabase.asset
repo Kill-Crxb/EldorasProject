@@ -77,9 +77,9 @@ MonoBehaviour:
     allowColorCustomization: 0
     defaultColors: []
   - modelId: highelf_base
-    displayName: High Elf_Base
+    displayName: High Elf Base
     playable: 1
-    prefab: {fileID: 6677783087573472876, guid: 1f710e122b26a1097b99b8b2d4779cae, type: 3}
+    prefab: {fileID: 3450741115092202460, guid: ecd5408150adb2b30a89b773c0c1ce75, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 0
     defaultColors: []
