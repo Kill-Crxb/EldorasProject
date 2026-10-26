@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9813e83fcfc7a87a9e36d19264da528, type: 3}
   m_Name: PostureProfile_TestHunch
   m_EditorClassIdentifier: Assembly-CSharp::PostureProfile
+  fadeSeconds: 0.25
   spineFrontBack: -0.3
   spineLeftRight: 0
   spineTwist: 0

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using CrabSystem;
 using Unity.Collections;
 using UnityEngine;
@@ -14,8 +15,11 @@ using UnityEngine.Playables;
 // the way Animation Rigging does. Parameters, cross-fades, AbilitySystem.HitStop, clip events, root motion and
 // OnAnimatorIK all stay with the controller. Master weight 0, or removing this module, leaves the pose untouched.
 //
-// Layers so far: posture. Snap (12 fps hold) and gait come next, each with its own weight under the master.
-// The graph follows brain.EntityAnimator, so a model swap rebuilds it.
+// Graph: posture → snap → Animator. Each layer has its own weight under the master; gait comes later.
+//
+// Posture sources: the worn model's ModelPosture (base stance), statuses and equipped items listed in the
+// PostureBindings table. They stack and fade (PostureLayer). The graph follows brain.EntityAnimator, so a model
+// swap rebuilds it and picks up the new model's base posture.
 
 public class ProceduralPoseModule : MonoBehaviour, IBrainModule
 {
@@ -24,24 +28,50 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
 
     [Header("Posture")]
     [Range(0f, 1f)] [SerializeField] private float postureWeight = 1f;
-    [SerializeField] private PostureProfile posture;
+
+    [Tooltip("Statuses and items that bring a posture with them. Optional.")]
+    [SerializeField] private PostureBindings bindings;
+
+    [Header("Snap")]
+    [Range(0f, 1f)] [SerializeField] private float snapWeight = 1f;
+
+    [Tooltip("Held poses per second. 12 = on twos at 24 (decided 2026-10-26).")]
+    [Min(1f)] [SerializeField] private float snapFramesPerSecond = 12f;
+
+    [Tooltip("Hold the legs too. Off keeps the legs smooth if planted feet slide during a held pose.")]
+    [SerializeField] private bool snapLegs = true;
 
     [Tooltip("Graph output order on the Animator. Below Animation Rigging's 1000, so rig constraints see the posed body.")]
     [SerializeField] private ushort outputOrder = 900;
 
+    private static readonly string[] LegMuscles = { "Upper Leg", "Lower Leg", "Foot", "Toes" };
+
+    private readonly PostureLayer posture = new PostureLayer();
     private ControllerBrain brain;
+    private StatusSystem statuses;
+    private EquipmentSystem equipment;
     private Animator boundAnimator;
     private PlayableGraph graph;
-    private NativeArray<MuscleHandle> muscles;
-    private NativeArray<float> offsets;
+    private NativeArray<MuscleHandle> postureMuscles;
+    private NativeArray<float> postureOffsets;
     private NativeArray<int> humanStream;
+    private NativeArray<MuscleHandle> snapMuscles;
+    private NativeArray<float> snapHeld;
+    private NativeArray<float> snapState;
+    private NativeArray<float> snapControl;
     private bool warnedNotHuman;
+    private bool subscribed;
 
     public bool IsEnabled { get; set; } = true;
+
+    public PostureLayer Posture => posture;
 
     public void Initialize(ControllerBrain controllerBrain)
     {
         brain = controllerBrain;
+        statuses = brain.GetModule<StatusSystem>();
+        equipment = brain.GetModule<EquipmentSystem>();
+        Subscribe();
     }
 
     public void UpdateModule()
@@ -51,15 +81,78 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
 
         if (!graph.IsValid()) return;
 
-        WritePosture();
+        // Presentation fade, like the camera: plain frame time, not the entity clock.
+        posture.Tick(Time.deltaTime);
+        posture.Write(postureOffsets, masterWeight * postureWeight);
+
+        snapControl[0] = 1f / snapFramesPerSecond;
+        snapControl[1] = masterWeight * snapWeight;
+        snapControl[2] = boundAnimator.speed;
+
         WarnIfNotHuman();
+    }
+
+    private void OnEnable()
+    {
+        Subscribe();
     }
 
     private void OnDisable()
     {
+        Unsubscribe();
         DestroyGraph();
         boundAnimator = null;
     }
+
+    // ── Posture sources ───────────────────────────────────────────────────────
+
+    private void Subscribe()
+    {
+        if (subscribed || brain == null) return;
+        subscribed = true;
+
+        if (statuses != null)
+        {
+            statuses.OnStatusApplied += HandleStatusApplied;
+            statuses.OnStatusRemoved += HandleStatusRemoved;
+        }
+
+        if (equipment != null)
+            equipment.OnEquipmentChanged += HandleEquipmentChanged;
+    }
+
+    private void Unsubscribe()
+    {
+        if (!subscribed) return;
+        subscribed = false;
+
+        if (statuses != null)
+        {
+            statuses.OnStatusApplied -= HandleStatusApplied;
+            statuses.OnStatusRemoved -= HandleStatusRemoved;
+        }
+
+        if (equipment != null)
+            equipment.OnEquipmentChanged -= HandleEquipmentChanged;
+    }
+
+    private void HandleStatusApplied(StatusInstance status)
+    {
+        if (bindings != null) posture.Set(status, bindings.ForStatus(status.Definition.id));
+    }
+
+    private void HandleStatusRemoved(StatusInstance status)
+    {
+        posture.Clear(status);
+    }
+
+    private void HandleEquipmentChanged(EquipmentSlotDefinition slot, ItemInstance item)
+    {
+        if (bindings == null) return;
+        posture.Set(slot, item != null ? bindings.ForItem(item.definitionId) : null);
+    }
+
+    // ── Graph ─────────────────────────────────────────────────────────────────
 
     private void Rebuild(Animator animator)
     {
@@ -74,36 +167,55 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
             return;
         }
 
-        muscles = new NativeArray<MuscleHandle>(PostureProfile.Muscles(), Allocator.Persistent);
-        offsets = new NativeArray<float>(muscles.Length, Allocator.Persistent);
+        var model = animator.GetComponentInParent<ModelPosture>(true);
+        posture.Set(this, model != null ? model.Posture : null);
+
+        postureMuscles = new NativeArray<MuscleHandle>(PostureProfile.Muscles(), Allocator.Persistent);
+        postureOffsets = new NativeArray<float>(postureMuscles.Length, Allocator.Persistent);
         humanStream = new NativeArray<int>(1, Allocator.Persistent);
+        snapMuscles = new NativeArray<MuscleHandle>(SnapMuscles(), Allocator.Persistent);
+        snapHeld = new NativeArray<float>(snapMuscles.Length, Allocator.Persistent);
+        snapState = new NativeArray<float>(2, Allocator.Persistent);
+        snapControl = new NativeArray<float>(3, Allocator.Persistent);
         warnedNotHuman = false;
 
         graph = PlayableGraph.Create($"{animator.name}.ProceduralPose");
         graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
 
-        var job = new PostureLayerJob { muscles = muscles, offsets = offsets, humanStream = humanStream };
-        var posturePlayable = AnimationScriptPlayable.Create(graph, job);
+        var postureJob = new PostureLayerJob { muscles = postureMuscles, offsets = postureOffsets, humanStream = humanStream };
+        var snapJob = new SnapLayerJob { muscles = snapMuscles, control = snapControl, held = snapHeld, state = snapState };
+        var posturePlayable = AnimationScriptPlayable.Create(graph, postureJob);
+        var snapPlayable = AnimationScriptPlayable.Create(graph, snapJob, 1);
+        graph.Connect(posturePlayable, 0, snapPlayable, 0);
+        snapPlayable.SetInputWeight(0, 1f);
 
         var output = AnimationPlayableOutput.Create(graph, "ProceduralPose", animator);
         output.SetAnimationStreamSource(AnimationStreamSource.PreviousInputs);
         output.SetSortingOrder(outputOrder);
-        output.SetSourcePlayable(posturePlayable);
+        output.SetSourcePlayable(snapPlayable);
 
         graph.Play();
     }
 
-    private void WritePosture()
+    private MuscleHandle[] SnapMuscles()
     {
-        float weight = posture != null ? masterWeight * postureWeight : 0f;
-        if (posture != null)
-        {
-            posture.Write(offsets, weight);
-            return;
-        }
+        var all = new MuscleHandle[MuscleHandle.muscleHandleCount];
+        MuscleHandle.GetMuscleHandles(all);
+        if (snapLegs) return all;
 
-        for (int i = 0; i < offsets.Length; i++)
-            offsets[i] = 0f;
+        var kept = new List<MuscleHandle>();
+        foreach (var muscle in all)
+            if (!IsLeg(muscle.name)) kept.Add(muscle);
+
+        return kept.ToArray();
+    }
+
+    private static bool IsLeg(string muscleName)
+    {
+        foreach (string part in LegMuscles)
+            if (muscleName.Contains(part)) return true;
+
+        return false;
     }
 
     private void WarnIfNotHuman()
@@ -111,14 +223,18 @@ public class ProceduralPoseModule : MonoBehaviour, IBrainModule
         if (warnedNotHuman || humanStream[0] != -1) return;
 
         warnedNotHuman = true;
-        Debug.LogError($"[ProceduralPoseModule] The layered stream on '{boundAnimator.name}' is not humanoid, so muscles can't be edited from it. The layering test failed: see Procedural_Animation_Theory.md.", boundAnimator);
+        Debug.LogError($"[ProceduralPoseModule] The layered stream on '{boundAnimator.name}' is not humanoid, so muscles can't be edited from it.", boundAnimator);
     }
 
     private void DestroyGraph()
     {
         if (graph.IsValid()) graph.Destroy();
-        if (muscles.IsCreated) muscles.Dispose();
-        if (offsets.IsCreated) offsets.Dispose();
+        if (postureMuscles.IsCreated) postureMuscles.Dispose();
+        if (postureOffsets.IsCreated) postureOffsets.Dispose();
         if (humanStream.IsCreated) humanStream.Dispose();
+        if (snapMuscles.IsCreated) snapMuscles.Dispose();
+        if (snapHeld.IsCreated) snapHeld.Dispose();
+        if (snapState.IsCreated) snapState.Dispose();
+        if (snapControl.IsCreated) snapControl.Dispose();
     }
 }
