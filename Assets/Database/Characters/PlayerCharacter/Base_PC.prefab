@@ -3224,6 +3224,10 @@ MonoBehaviour:
   masterWeight: 1
   postureWeight: 1
   bindings: {fileID: 0}
+  gaitWeight: 0
+  gaitCycle: {fileID: 11400000, guid: 545c59483b2484c76959901b590c4260, type: 2}
+  gaitStartSpeed: 0.2
+  gaitFullSpeed: 0.8
   snapWeight: 1
   snapFramesPerSecond: 16
   snapLegs: 1
