@@ -62,7 +62,7 @@ MonoBehaviour:
   visionAngle: 90
   requireLineOfSight: 1
   modelPool:
-  - katana_girl_v1
+  - highelf_base
   randomizeModel: 0
   useGenericName: 1
   genericName: target_dummy

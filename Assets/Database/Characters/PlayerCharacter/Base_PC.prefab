@@ -2553,7 +2553,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 505027778239189661}
-  - component: {fileID: 5083078098294365350}
   - component: {fileID: 6886851733066875004}
   - component: {fileID: 1266624835431053629}
   - component: {fileID: 6932874620575338751}
@@ -2585,31 +2584,6 @@ Transform:
   - {fileID: 8603754712718877181}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!143 &5083078098294365350
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4161431986582699676}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Height: 1.65
-  m_Radius: 0.15
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!54 &6886851733066875004
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2762,7 +2736,7 @@ CapsuleCollider:
   m_Radius: 0.2
   m_Height: 1.65
   m_Direction: 1
-  m_Center: {x: 0, y: 0.9, z: 0}
+  m_Center: {x: 0, y: 0.845, z: 0}
 --- !u!114 &7110330038080698383
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3224,10 +3198,39 @@ MonoBehaviour:
   masterWeight: 1
   postureWeight: 1
   bindings: {fileID: 0}
-  gaitWeight: 0
+  gaitWeight: 1
   gaitCycle: {fileID: 11400000, guid: 545c59483b2484c76959901b590c4260, type: 2}
+  runCycle: {fileID: 11400000, guid: bb2eeaea9f8e5e730b260c975f2c0f72, type: 2}
+  sprintCycle: {fileID: 0}
+  walkCycleSpeed: 2.5
+  runCycleSpeed: 5
+  sprintCycleSpeed: 9
+  strideStretch: 0.4
+  maxStrideStretch: 1.4
   gaitStartSpeed: 0.2
   gaitFullSpeed: 0.8
+  plantWeight: 1
+  slipStart: 0.06
+  slipEnd: 0.18
+  probeUp: 0.5
+  probeDown: 0.6
+  maxBodyDrop: 0.4
+  plantFadeSeconds: 0.08
+  stopPitchPerDeceleration: 1.2
+  maxStopPitch: 15
+  stopSpringFrequency: 2.5
+  stopSpringDamping: 0.35
+  stepDistance: 0.12
+  stepSeconds: 0.25
+  stepHeight: 0.08
+  leanPerAcceleration: 1.5
+  maxLean: 10
+  bankPerTurn: 2
+  maxBank: 10
+  leanSmoothingSeconds: 0.15
+  load: 0
+  strideAtFullLoad: 0.85
+  bobAtFullLoad: 1.4
   snapWeight: 1
   snapFramesPerSecond: 16
   snapLegs: 1
@@ -3769,8 +3772,6 @@ GameObject:
   - component: {fileID: 6362899735677902103}
   - component: {fileID: 8533212509412184466}
   - component: {fileID: 8015027088072117089}
-  - component: {fileID: 8864560930632009551}
-  - component: {fileID: 286315546897631567}
   - component: {fileID: 8734367000896655479}
   - component: {fileID: 3727851993734903918}
   m_Layer: 8
@@ -3879,58 +3880,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &8864560930632009551
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8039031460109264433}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08476def340128145835bbb518091b96, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FootIKSystem
-  useMotorSettings: 1
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  maxGroundAngle: 40
-  probeUp: 0.5
-  probeDown: 0.6
-  probeRadius: 0.08
-  footHeight: 0.1
-  maxBodyDrop: -0.15
-  bodySmoothing: 10
-  positionWeight: 1
-  rotationWeight: 1
-  weightFadeSpeed: 6
-  footWeightFadeSpeed: 8
-  targetSmoothing: 15
-  plantDistance: 0.12
-  liftDistance: 0.35
-  speedFadeStart: 2.5
-  speedFadeEnd: 5
-  lockWhileStationary: 1
-  lockSpeedThreshold: 0.15
-  lockReleaseAngle: 50
-  lockReleaseDistance: 0.35
-  leftFootCurve: 
-  rightFootCurve: 
---- !u!114 &286315546897631567
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8039031460109264433}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b24bcfd639c19b046a1aa136ea999e7f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FootIKDebugger
-  drawGizmos: 1
-  targetGizmoRadius: 0.06
 --- !u!114 &8734367000896655479
 MonoBehaviour:
   m_ObjectHideFlags: 0

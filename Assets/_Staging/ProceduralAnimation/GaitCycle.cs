@@ -30,6 +30,11 @@ public class GaitCycle : ScriptableObject
     [SerializeField] private bool[] leftPlanted = new bool[0];
     [SerializeField] private bool[] rightPlanted = new bool[0];
 
+    [Tooltip("Each ankle's height above the cycle's lowest ankle point, per sample, metres. A running foot lands heel up, so " +
+             "a planted ankle sits higher than when standing flat.")]
+    [SerializeField] private float[] leftLift = new float[0];
+    [SerializeField] private float[] rightLift = new float[0];
+
     public AnimationClip Source => source;
     public float StrideLegLengths => strideLegLengths;
     public float BakedLegLength => bakedLegLength;
@@ -39,10 +44,12 @@ public class GaitCycle : ScriptableObject
     public Vector3[] HipsPositions => hipsPositions;
     public bool[] LeftPlanted => leftPlanted;
     public bool[] RightPlanted => rightPlanted;
+    public float[] LeftLift => leftLift;
+    public float[] RightLift => rightLift;
 
     // Editor bake only (GaitBakeWindow); SOs are never written at runtime.
     public void Set(AnimationClip clip, float stride, float legLength, HumanBodyBones[] boneOrder, Quaternion[] poses,
-                    Vector3[] hips, bool[] left, bool[] right)
+                    Vector3[] hips, bool[] left, bool[] right, float[] leftLifts, float[] rightLifts)
     {
         source = clip;
         strideLegLengths = stride;
@@ -52,6 +59,8 @@ public class GaitCycle : ScriptableObject
         hipsPositions = hips;
         leftPlanted = left;
         rightPlanted = right;
+        leftLift = leftLifts;
+        rightLift = rightLifts;
     }
 
     // Upper leg plus lower leg, in world metres. The same measure the bake used, so strides and hips heights scale by it.
