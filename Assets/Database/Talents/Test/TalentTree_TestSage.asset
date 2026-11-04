@@ -102,21 +102,26 @@ MonoBehaviour:
   ownedKeywords: []
   placements:
   - node: {fileID: -5676631915368688124}
-    tier: 1
-    column: 1
-    requires: []
+    position: {x: -140, y: 660}
+    size: 0
+    isEntry: 1
+    pointsRequired: 0
     exclusiveWith: {fileID: 0}
   - node: {fileID: -8665446851269897353}
-    tier: 1
-    column: 3
-    requires: []
+    position: {x: 140, y: 660}
+    size: 0
+    isEntry: 1
+    pointsRequired: 0
     exclusiveWith: {fileID: 0}
   - node: {fileID: -2266786109285579497}
-    tier: 2
-    column: 1
-    requires:
-    - {fileID: -5676631915368688124}
+    position: {x: -140, y: 550}
+    size: 0
+    isEntry: 0
+    pointsRequired: 5
     exclusiveWith: {fileID: 0}
+  edges:
+  - a: {fileID: -5676631915368688124}
+    b: {fileID: -2266786109285579497}
   sockets: []
 --- !u!114 &1665380770086440949
 MonoBehaviour:

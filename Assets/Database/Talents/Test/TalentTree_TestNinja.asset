@@ -688,155 +688,228 @@ MonoBehaviour:
   ownedKeywords: []
   placements:
   - node: {fileID: -1503263753304523074}
-    tier: 1
-    column: 0
-    requires: []
+    position: {x: -280, y: 660}
+    size: 0
+    isEntry: 1
+    pointsRequired: 0
     exclusiveWith: {fileID: 0}
   - node: {fileID: 7247169536476172366}
-    tier: 1
-    column: 2
-    requires: []
+    position: {x: 0, y: 660}
+    size: 0
+    isEntry: 1
+    pointsRequired: 0
     exclusiveWith: {fileID: 0}
   - node: {fileID: 3052822561496849657}
-    tier: 1
-    column: 4
-    requires: []
+    position: {x: 280, y: 660}
+    size: 0
+    isEntry: 1
+    pointsRequired: 0
     exclusiveWith: {fileID: 0}
   - node: {fileID: -4740066769979255366}
-    tier: 2
-    column: 0
-    requires:
-    - {fileID: -1503263753304523074}
+    position: {x: -280, y: 550}
+    size: 0
+    isEntry: 0
+    pointsRequired: 5
     exclusiveWith: {fileID: 0}
   - node: {fileID: -7480510254585055531}
-    tier: 2
-    column: 2
-    requires: []
+    position: {x: 0, y: 550}
+    size: 0
+    isEntry: 0
+    pointsRequired: 5
     exclusiveWith: {fileID: 0}
   - node: {fileID: -56180463629774743}
-    tier: 2
-    column: 4
-    requires: []
+    position: {x: 280, y: 550}
+    size: 0
+    isEntry: 0
+    pointsRequired: 5
     exclusiveWith: {fileID: 0}
   - node: {fileID: 8188033921242398470}
-    tier: 3
-    column: 2
-    requires:
-    - {fileID: -7480510254585055531}
+    position: {x: 0, y: 440}
+    size: 0
+    isEntry: 0
+    pointsRequired: 10
     exclusiveWith: {fileID: 0}
   - node: {fileID: -1047273023404269666}
-    tier: 3
-    column: 0
-    requires: []
+    position: {x: -280, y: 440}
+    size: 0
+    isEntry: 0
+    pointsRequired: 10
     exclusiveWith: {fileID: 0}
   - node: {fileID: -1894097721532134295}
-    tier: 4
-    column: 2
-    requires: []
+    position: {x: 0, y: 330}
+    size: 0
+    isEntry: 0
+    pointsRequired: 15
     exclusiveWith: {fileID: 0}
   - node: {fileID: 83550181094756025}
-    tier: 5
-    column: 1
-    requires: []
+    position: {x: -140, y: 220}
+    size: 0
+    isEntry: 0
+    pointsRequired: 20
     exclusiveWith: {fileID: 0}
   - node: {fileID: 6564520954952257924}
-    tier: 6
-    column: 3
-    requires: []
+    position: {x: 140, y: 110}
+    size: 0
+    isEntry: 0
+    pointsRequired: 25
     exclusiveWith: {fileID: 0}
   - node: {fileID: 3764692103475491776}
-    tier: 1
-    column: 1
-    requires: []
+    position: {x: -140, y: 660}
+    size: 0
+    isEntry: 1
+    pointsRequired: 0
     exclusiveWith: {fileID: 0}
   - node: {fileID: -6493505385558228605}
-    tier: 1
-    column: 3
-    requires: []
+    position: {x: 140, y: 660}
+    size: 0
+    isEntry: 1
+    pointsRequired: 0
     exclusiveWith: {fileID: 0}
   - node: {fileID: -5515895476472225450}
-    tier: 2
-    column: 1
-    requires:
-    - {fileID: 3764692103475491776}
+    position: {x: -140, y: 550}
+    size: 0
+    isEntry: 0
+    pointsRequired: 5
     exclusiveWith: {fileID: 0}
   - node: {fileID: -8329278747715684867}
-    tier: 2
-    column: 3
-    requires:
-    - {fileID: -6493505385558228605}
+    position: {x: 140, y: 550}
+    size: 0
+    isEntry: 0
+    pointsRequired: 5
     exclusiveWith: {fileID: 0}
   - node: {fileID: -5060891883288003617}
-    tier: 3
-    column: 1
-    requires: []
+    position: {x: -140, y: 440}
+    size: 0
+    isEntry: 0
+    pointsRequired: 10
     exclusiveWith: {fileID: 0}
   - node: {fileID: 6693148948766231500}
-    tier: 3
-    column: 3
-    requires:
-    - {fileID: -8329278747715684867}
+    position: {x: 140, y: 440}
+    size: 0
+    isEntry: 0
+    pointsRequired: 10
     exclusiveWith: {fileID: 0}
   - node: {fileID: -4888916472848730218}
-    tier: 4
-    column: 0
-    requires: []
+    position: {x: -280, y: 330}
+    size: 0
+    isEntry: 0
+    pointsRequired: 15
     exclusiveWith: {fileID: 0}
   - node: {fileID: 2948387399179999930}
-    tier: 4
-    column: 4
-    requires: []
+    position: {x: 280, y: 330}
+    size: 1
+    isEntry: 0
+    pointsRequired: 15
     exclusiveWith: {fileID: 0}
   - node: {fileID: -7091262238432350602}
-    tier: 3
-    column: 4
-    requires: []
+    position: {x: 280, y: 440}
+    size: 0
+    isEntry: 0
+    pointsRequired: 10
     exclusiveWith: {fileID: 0}
   - node: {fileID: -1116331846568129315}
-    tier: 4
-    column: 1
-    requires: []
+    position: {x: -140, y: 330}
+    size: 1
+    isEntry: 0
+    pointsRequired: 15
     exclusiveWith: {fileID: 0}
   - node: {fileID: 8960998308739260210}
-    tier: 4
-    column: 3
-    requires: []
+    position: {x: 140, y: 330}
+    size: 1
+    isEntry: 0
+    pointsRequired: 15
     exclusiveWith: {fileID: 0}
   - node: {fileID: -8353409662259804461}
-    tier: 5
-    column: 0
-    requires: []
+    position: {x: -280, y: 220}
+    size: 1
+    isEntry: 0
+    pointsRequired: 20
     exclusiveWith: {fileID: 0}
   - node: {fileID: 268943039458126995}
-    tier: 5
-    column: 3
-    requires: []
+    position: {x: 140, y: 220}
+    size: 1
+    isEntry: 0
+    pointsRequired: 20
     exclusiveWith: {fileID: 0}
   - node: {fileID: 3409516118443727336}
-    tier: 6
-    column: 1
-    requires: []
+    position: {x: -140, y: 110}
+    size: 1
+    isEntry: 0
+    pointsRequired: 25
     exclusiveWith: {fileID: 0}
   - node: {fileID: -4091035983274107239}
-    tier: 6
-    column: 4
-    requires: []
+    position: {x: 280, y: 110}
+    size: 1
+    isEntry: 0
+    pointsRequired: 25
     exclusiveWith: {fileID: 0}
   - node: {fileID: 1442940413955802927}
-    tier: 6
-    column: 0
-    requires: []
+    position: {x: -280, y: 110}
+    size: 1
+    isEntry: 0
+    pointsRequired: 25
     exclusiveWith: {fileID: 0}
   - node: {fileID: 8564494997345161486}
-    tier: 7
-    column: 1
-    requires: []
+    position: {x: -140, y: 0}
+    size: 2
+    isEntry: 0
+    pointsRequired: 30
     exclusiveWith: {fileID: 3250938957782573270}
   - node: {fileID: 3250938957782573270}
-    tier: 7
-    column: 3
-    requires: []
+    position: {x: 140, y: 0}
+    size: 2
+    isEntry: 0
+    pointsRequired: 30
     exclusiveWith: {fileID: 8564494997345161486}
+  edges:
+  - a: {fileID: -1503263753304523074}
+    b: {fileID: -4740066769979255366}
+  - a: {fileID: 7247169536476172366}
+    b: {fileID: -7480510254585055531}
+  - a: {fileID: 3052822561496849657}
+    b: {fileID: -56180463629774743}
+  - a: {fileID: -7480510254585055531}
+    b: {fileID: 8188033921242398470}
+  - a: {fileID: -4740066769979255366}
+    b: {fileID: -1047273023404269666}
+  - a: {fileID: 8188033921242398470}
+    b: {fileID: -1894097721532134295}
+  - a: {fileID: -1116331846568129315}
+    b: {fileID: 83550181094756025}
+  - a: {fileID: 268943039458126995}
+    b: {fileID: 6564520954952257924}
+  - a: {fileID: 3764692103475491776}
+    b: {fileID: -5515895476472225450}
+  - a: {fileID: -6493505385558228605}
+    b: {fileID: -8329278747715684867}
+  - a: {fileID: -5515895476472225450}
+    b: {fileID: -5060891883288003617}
+  - a: {fileID: -8329278747715684867}
+    b: {fileID: 6693148948766231500}
+  - a: {fileID: -1047273023404269666}
+    b: {fileID: -4888916472848730218}
+  - a: {fileID: -7091262238432350602}
+    b: {fileID: 2948387399179999930}
+  - a: {fileID: -56180463629774743}
+    b: {fileID: -7091262238432350602}
+  - a: {fileID: -5060891883288003617}
+    b: {fileID: -1116331846568129315}
+  - a: {fileID: 6693148948766231500}
+    b: {fileID: 8960998308739260210}
+  - a: {fileID: -4888916472848730218}
+    b: {fileID: -8353409662259804461}
+  - a: {fileID: 8960998308739260210}
+    b: {fileID: 268943039458126995}
+  - a: {fileID: 83550181094756025}
+    b: {fileID: 3409516118443727336}
+  - a: {fileID: 268943039458126995}
+    b: {fileID: -4091035983274107239}
+  - a: {fileID: -8353409662259804461}
+    b: {fileID: 1442940413955802927}
+  - a: {fileID: 3409516118443727336}
+    b: {fileID: 8564494997345161486}
+  - a: {fileID: 6564520954952257924}
+    b: {fileID: 3250938957782573270}
   sockets:
   - keyword: {fileID: 11400000, guid: d8cfd24c5b8ace5978ae3b775b7d2620, type: 2}
     label: 

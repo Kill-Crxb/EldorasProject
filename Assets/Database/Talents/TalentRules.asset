@@ -15,8 +15,7 @@ MonoBehaviour:
   slots: 3
   pointsPerLevel: 2
   levelCap: 30
-  tierGates: 00000000050000000a0000000f00000014000000190000001e000000i
-  columns: 5
+  keystoneFloor: 30
   trees:
   - {fileID: 11400000, guid: d8a4077cad9cdb9c390c318d126adeee, type: 2}
   - {fileID: 11400000, guid: 83200d6ea37e771d9b2c304a9667e6a0, type: 2}
