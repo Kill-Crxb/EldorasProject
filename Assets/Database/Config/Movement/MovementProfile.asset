@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 127180e868c11384e889ef675e54fd13, type: 3}
   m_Name: MovementProfile
   m_EditorClassIdentifier: Assembly-CSharp::MovementProfile
-  walkSpeed: 2.5
+  walkSpeed: 2
   runSpeed: 5
   sprintSpeed: 9
   startInWalkMode: 0
@@ -21,6 +21,7 @@ MonoBehaviour:
   airSpeedCap: 2.5
   maxHorizontalSpeed: 22
   maxRiseSpeed: 18
+  rootMotionContactGap: 0.3
   groundFriction: 5
   momentumFriction: 1.2
   stopSpeed: 1.5
@@ -71,4 +72,3 @@ MonoBehaviour:
   airStrafeSpeed: 3
   airStrafeAccel: 12
   airStrafeReturn: 6
-  rootMotionContactGap: 0.3

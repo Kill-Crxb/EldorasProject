@@ -45,8 +45,8 @@ Material:
     - _BaseRounding: 0.131
     - _Blend: 0
     - _CastShadows: 1
-    - _CloudContrast: 2.6
-    - _CloudCoverage: -0.74
+    - _CloudContrast: 2.46
+    - _CloudCoverage: -0.788
     - _CloudScale: 0.0015
     - _Cull: 1
     - _DebugHeightRamp: 0
@@ -54,12 +54,12 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EdgeCutoff: 0.171
-    - _EdgeHardness: 0.451
+    - _EdgeHardness: 0
     - _FadeDither: 1
-    - _FadeEnd: 900
-    - _FadeStart: 800
-    - _HeightEndY: -1.5
-    - _HeightStartY: -44.6
+    - _FadeEnd: 3500
+    - _FadeStart: 2500
+    - _HeightEndY: -1.69
+    - _HeightStartY: -136.5
     - _Octave1Amount: 0.5
     - _Octave1Scale: 4
     - _Octave2Amount: 0.3
@@ -72,7 +72,7 @@ Material:
     - _Octave5Scale: 64
     - _Opacity: 1
     - _PeakBaseY: 0
-    - _PeakErosion: 0.703
+    - _PeakErosion: 0.483
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Solidity: 1
@@ -87,7 +87,7 @@ Material:
     - _ZWriteControl: 0
     m_Colors:
     - _CloudColor: {r: 0.7294118, g: 0.7411765, b: 0.76470596, a: 1}
-    - _CloudScale: {r: 0.0025, g: 0.0025, b: 0, a: 0}
+    - _CloudScale: {r: 0.0005, g: 0.0005, b: 0, a: 0}
     - _TintColor: {r: 0.372864, g: 0.4113341, b: 0.5377358, a: 1}
     - _WindDirection: {r: 1, g: 0.3, b: 0, a: 0}
   m_BuildTextureStacks: []
