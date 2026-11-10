@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b4e8ea395f059e1d85ce3f74f3c5bc9, type: 3}
+  m_Name: Trait_RingedEye
+  m_EditorClassIdentifier: Assembly-CSharp::CrabSystem.TraitDefinition
+  traitId: ringed_eye
+  displayName: Ringed Eye
+  description: Your eyes are the Ringed Eye.
+  icon: {fileID: 0}
+  border: {fileID: 0}
+  borderTint: {r: 1, g: 1, b: 1, a: 1}
+  revealLevel: 0
+  rewards:
+  - {fileID: 11400000, guid: 6c6e0998ead341229bf90cfe2417a38e, type: 2}

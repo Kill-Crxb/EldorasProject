@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 124d91b370d8138a58b2090efb995afc, type: 3}
+  m_Name: TraitCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::CrabSystem.TraitCatalog
+  traits:
+  - {fileID: 11400000, guid: 1cfcc0c315794a89a93806c02bbbea5e, type: 2}
+  - {fileID: 11400000, guid: 8ee0ea676eda4725ad30533465b3d8ed, type: 2}
+  - {fileID: 11400000, guid: 584f317ddcd944cab7d186c040d7f124, type: 2}
+  - {fileID: 11400000, guid: 88dc12abc0d14c3e99ef0b6e2fff4e5f, type: 2}
+  - {fileID: 11400000, guid: 79e10d5517924e358d53bb60f0d8223a, type: 2}
+  - {fileID: 11400000, guid: 2d2113e96e834029aca0e1f07ce41012, type: 2}
+  - {fileID: 11400000, guid: 56e9c35af42b47028c4c068f1a055a5a, type: 2}
+  - {fileID: 11400000, guid: a5f459bf66ae484c9f545b0ae56575e6, type: 2}
+  - {fileID: 11400000, guid: 444b6fdd92774b44aa0a340113b6ff1f, type: 2}
+  - {fileID: 11400000, guid: b5406d3c3b05406ba8a7ba28149edf75, type: 2}
+  - {fileID: 11400000, guid: 540bbd0ca36c43529590c1ad847f54bd, type: 2}
