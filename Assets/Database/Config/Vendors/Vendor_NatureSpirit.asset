@@ -22,35 +22,17 @@ MonoBehaviour:
   stock:
   - item: {fileID: 11400000, guid: 63b04390197656fd49668f4a6e31d25d, type: 2}
     restocks: 1
-  - item: {fileID: 11400000, guid: aa9de724f5624e5faa820e9a0c1ce953, type: 2}
+  - item: {fileID: 11400000, guid: cabaa76c300639df7893eb5d21a23190, type: 2}
     restocks: 1
-  - item: {fileID: 11400000, guid: cd074c44be29410885ab0cfaceb5abac, type: 2}
+  - item: {fileID: 11400000, guid: 669c1df44f1e18f4f9bf46ce0cddfbdf, type: 2}
     restocks: 1
-  - item: {fileID: 11400000, guid: 04347ad462e944528dcdadfd4a47c5d8, type: 2}
+  - item: {fileID: 11400000, guid: a0b29449cb8da0e4fa4a7d03576fbc6e, type: 2}
     restocks: 1
-  - item: {fileID: 11400000, guid: e5197495c7eb456997cc83d4857b6aca, type: 2}
+  - item: {fileID: 11400000, guid: 06720d911401c1fb3ba8cf50b53f3215, type: 2}
     restocks: 1
-  - item: {fileID: 0}
+  - item: {fileID: 11400000, guid: 7db397e33d2226e56b0443872d293d12, type: 2}
     restocks: 1
-  - item: {fileID: 0}
+  - item: {fileID: 11400000, guid: acf47c17886b88191a8d1a8aa1c91e89, type: 2}
     restocks: 1
-  - item: {fileID: 0}
-    restocks: 1
-  - item: {fileID: 0}
-    restocks: 1
-  - item: {fileID: 0}
-    restocks: 1
-  - item: {fileID: 0}
-    restocks: 1
-  - item: {fileID: 0}
-    restocks: 1
-  - item: {fileID: 0}
-    restocks: 1
-  - item: {fileID: 0}
-    restocks: 1
-  - item: {fileID: 11400000, guid: 005fbb2e07bfb50bb8212346bfae362c, type: 2}
-    restocks: 1
-  - item: {fileID: 11400000, guid: 8542ed2d8db0c2aa4b6ece5ef7c9ab27, type: 2}
-    restocks: 1
-  - item: {fileID: 11400000, guid: 62e2d623642af3b9eac0f75d59cdc00d, type: 2}
+  - item: {fileID: 11400000, guid: bf28030c3f30cd49d95a7ffd40ea2515, type: 2}
     restocks: 1
