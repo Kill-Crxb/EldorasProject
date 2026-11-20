@@ -130,16 +130,28 @@ Shader "Crab/FlatToon Skin Layers (Staging)"
         _TatTint ("Tattoo Tint", Color) = (1,1,1,1)
         [NoScaleOffset] _Cloth0Tex ("Lining", 2D) = "black" {}
         _Cloth0Tint ("Lining Tint (alpha = on)", Color) = (1,1,1,0)
+        _Cloth0Params ("Lining Settings (x filter, y cloth shade, z spec, w ink)", Vector) = (0,1,1,1)
         [NoScaleOffset] _Cloth1Tex ("Underwear", 2D) = "black" {}
         _Cloth1Tint ("Underwear Tint (alpha = on)", Color) = (1,1,1,0)
+        _Cloth1Params ("Underwear Settings (x filter, y cloth shade, z spec, w ink)", Vector) = (0,1,1,1)
         [NoScaleOffset] _Cloth2Tex ("Sheer", 2D) = "black" {}
         _Cloth2Tint ("Sheer Tint (alpha = on)", Color) = (1,1,1,0)
+        _Cloth2Params ("Sheer Settings (x filter, y cloth shade, z spec, w ink)", Vector) = (1,1,1,1)
+        _SheerEdgeStart ("Sheer Edge Start (0 face-on, 1 silhouette)", Range(0,1)) = 0.5
+        _SheerEdgeSoftness ("Sheer Edge Softness", Range(0, 0.5)) = 0.02
+        _SheerEdgeDensity ("Sheer Edge Density (1 = off)", Range(1, 8)) = 3
+        _SheerEdgeFadeNear ("Sheer Edge Fade Near (m)", Float) = 4
+        _SheerEdgeFadeFar ("Sheer Edge Fade Far (m)", Float) = 12
         [NoScaleOffset] _Cloth3Tex ("Overlay", 2D) = "black" {}
         _Cloth3Tint ("Overlay Tint (alpha = on)", Color) = (1,1,1,0)
+        _Cloth3Params ("Overlay Settings (x filter, y cloth shade, z spec, w ink)", Vector) = (0,1,1,1)
         [NoScaleOffset] _Cloth4Tex ("Clothes", 2D) = "black" {}
         _Cloth4Tint ("Clothes Tint (alpha = on)", Color) = (1,1,1,0)
+        _Cloth4Params ("Clothes Settings (x filter, y cloth shade, z spec, w ink)", Vector) = (0,1,1,1)
         [NoScaleOffset] _Cloth5Tex ("Accessories", 2D) = "black" {}
         _Cloth5Tint ("Accessories Tint (alpha = on)", Color) = (1,1,1,0)
+        _Cloth5Params ("Accessories Settings (x filter, y cloth shade, z spec, w ink)", Vector) = (0,1,1,1)
+        _ClothShadeColor ("Cloth Shade Tint (multiply)", Color) = (0.62, 0.62, 0.68, 1)
 
         [Header(Stealth Fade)][Space(4)]
         _Fade ("Fade (1 visible, 0 gone, driven at runtime)", Range(0,1)) = 1
@@ -263,9 +275,21 @@ Shader "Crab/FlatToon Skin Layers (Staging)"
             half4  _Cloth0Tint;
             half4  _Cloth1Tint;
             half4  _Cloth2Tint;
+            half   _SheerEdgeStart;
+            half   _SheerEdgeSoftness;
+            half   _SheerEdgeDensity;
+            float  _SheerEdgeFadeNear;
+            float  _SheerEdgeFadeFar;
             half4  _Cloth3Tint;
             half4  _Cloth4Tint;
             half4  _Cloth5Tint;
+            half4  _Cloth0Params;
+            half4  _Cloth1Params;
+            half4  _Cloth2Params;
+            half4  _Cloth3Params;
+            half4  _Cloth4Params;
+            half4  _Cloth5Params;
+            half4  _ClothShadeColor;
             half   _Fade;
             half4  _FadeRimColor;
             half   _FadeRimSize;
@@ -411,12 +435,6 @@ Shader "Crab/FlatToon Skin Layers (Staging)"
                 half4 albedo = ToonBaseAlbedo(IN.uv);
                 ToonClip(albedo.a, IN.positionCS.xy);
 
-                // Layers paint onto the albedo before any lighting, so a tattoo or a strap
-                // takes the same terminator, shadow and rim as the skin under it.
-                #ifdef _SKIN_LAYERS
-                    albedo.rgb = ToonSkinLayers(albedo.rgb, IN.uv, IN.uv2, IN.regionMask);
-                #endif
-
                 // Double-sided geometry needs the normal flipped on back faces or the far
                 // side of a hair card shades as though it faced away.
                 half facing = IS_FRONT_VFACE(cullFace, 1.0h, -1.0h);
@@ -424,6 +442,18 @@ Shader "Crab/FlatToon Skin Layers (Staging)"
                 float3 tangentWS = normalize(IN.tangentWS);
                 float3 viewDirWS = GetWorldSpaceNormalizeViewDir(IN.positionWS);
                 float2 screenUV = GetNormalizedScreenSpaceUV(IN.positionCS);
+
+                // Layers paint onto the albedo before any lighting, so a tattoo or a strap
+                // takes the same terminator, shadow and rim as the skin under it.
+                ClothSurface cloth = BareSkin(albedo.rgb);
+
+                #ifdef _SKIN_LAYERS
+                    half ndotv = saturate(dot(normalWS, viewDirWS));
+                    half3 marked = ToonSkinMarkings(albedo.rgb, IN.uv, IN.uv2, IN.regionMask);
+                    cloth = ToonClothLayers(marked, IN.uv, ndotv, SheerBandFade(IN.positionWS), OutlinePixels(IN.positionWS));
+                #endif
+
+                albedo.rgb = cloth.albedo;
 
                 half occlusion = 1.0h;
 
@@ -520,7 +550,8 @@ Shader "Crab/FlatToon Skin Layers (Staging)"
                     directRamp = ApplyHalftone(directRamp, pattern);
                 #endif
 
-                half3 shadeTint = _ShadeColor.rgb;
+                half3 shadeTint = lerp(_ShadeColor.rgb, _ClothShadeColor.rgb, cloth.shadeMix);
+                specular *= cloth.specular;
 
                 half3 color = CompositeToon(albedo.rgb, shadeTint, directRamp, ToonAmbient());
                 color += specular;
@@ -540,6 +571,9 @@ Shader "Crab/FlatToon Skin Layers (Staging)"
                     float2 emissionUV = TRANSFORM_TEX(IN.uv, _EmissionMap);
                     color += SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, emissionUV).rgb * _EmissionColor.rgb;
                 #endif
+
+                // Ink goes on after lighting, like the outline it stands in for.
+                color = lerp(color, cloth.inkColor, cloth.ink);
 
                 // Stealth reads as a cloak rather than a plain fade: the silhouette edge
                 // brightens as the body dithers away. Zero at _Fade = 1.
@@ -648,6 +682,12 @@ Shader "Crab/FlatToon Skin Layers (Staging)"
             {
                 half4 albedo = ToonBaseAlbedo(IN.uv);
                 ToonClip(albedo.a, IN.positionCS.xy);
+
+                // Where cloth covers the silhouette, the line takes the cloth's colour. Face-on
+                // sheer opacity and no ink: the hull has no edge band or painted edges.
+                #ifdef _SKIN_LAYERS
+                    albedo.rgb = ToonClothLayers(albedo.rgb, IN.uv, 1.0h, 0.0h, 0.0h).albedo;
+                #endif
 
                 half3 outlineColor = _OutlineColor.rgb;
 

@@ -1,5 +1,53 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-3987443584955524460
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb652b03c8fcfe1da67961085533f87, type: 3}
+  m_Name: AnimeCompositeFeature
+  m_EditorClassIdentifier: Assembly-CSharp::AnimeCompositeFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 0d004816d463e74e6b7b13298b066ea4, type: 3}
+  injectionPoint: 550
+--- !u!114 &-686475078459631294
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9398ba85f085861a19888fbe389304a0, type: 3}
+  m_Name: ToonOutlineFeature
+  m_EditorClassIdentifier: Assembly-CSharp::ToonOutlineFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 3bb96ae08421dede4a5b872c9400ff9c, type: 3}
+  settings:
+    injectionPoint: 400
+    outlineColor: {r: 0, g: 0, b: 0, a: 1}
+    thickness: 1.4
+    edgeSoftness: 0.5
+    characterIdMin: 0.5
+    target: 0
+    characterThickness: 1.2
+    colorFromSurface: 0.6
+    surfaceDarkness: 0.35
+    depthStrength: 1
+    depthThreshold: 0.02
+    depthGrazingBias: 12
+    normalStrength: 1
+    normalThreshold: 0.4
+    idStrength: 1
+    idThreshold: 0.02
+    fadeStart: 40
+    fadeEnd: 120
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26,8 +74,9 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 7200000, guid: b9a23f869c4fd45f19c5ada54dd82176, type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
-  m_RendererFeatureMap: ad6b866f10d7b46c
-  m_UseNativeRenderPass: 1
+  - {fileID: -686475078459631294}
+  - {fileID: -3987443584955524460}
+  m_RendererFeatureMap: ad6b866f10d7b46c425941a18d2679f694dad0942fc1a9c8l
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 3
@@ -55,9 +104,10 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
+  m_TileOnlyMode: 0
 --- !u!114 &7833122117494664109
 MonoBehaviour:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}

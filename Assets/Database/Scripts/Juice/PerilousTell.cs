@@ -34,6 +34,7 @@ public class PerilousTell : MonoBehaviour, IBrainModule
     private ControllerBrain brain;
     private AbilitySystem abilities;
     private readonly List<Renderer> renderers = new List<Renderer>();
+    private readonly HashSet<Renderer> hadBlock = new HashSet<Renderer>();
     private MaterialPropertyBlock block;
     private AbilityDefinition glowingMove;
     private float fadeStart = -1f;
@@ -90,9 +91,9 @@ public class PerilousTell : MonoBehaviour, IBrainModule
         CollectWeapon();
         if (renderers.Count == 0) return;
 
+        FlashBlocks.Remember(renderers, hadBlock);
         glowingMove = move;
         fadeStart = -1f;
-        block.SetColor(ColorId, glowColor);
         Write(1f);
     }
 
@@ -108,19 +109,12 @@ public class PerilousTell : MonoBehaviour, IBrainModule
 
     private void Write(float value)
     {
-        block.SetFloat(FlashId, value);
-        foreach (Renderer r in renderers)
-        {
-            if (r != null) r.SetPropertyBlock(block);
-        }
+        FlashBlocks.Write(renderers, block, FlashId, value, ColorId, glowColor);
     }
 
     private void Clear()
     {
-        foreach (Renderer r in renderers)
-        {
-            if (r != null) r.SetPropertyBlock(null);
-        }
+        FlashBlocks.Release(renderers, hadBlock, block, FlashId);
         renderers.Clear();
         glowingMove = null;
     }

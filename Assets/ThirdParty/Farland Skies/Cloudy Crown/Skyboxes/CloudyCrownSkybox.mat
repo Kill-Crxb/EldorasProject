@@ -44,11 +44,11 @@ Material:
     m_Floats:
     - _CloudsHeight: 0
     - _CloudsOffset: 0.2
-    - _CloudsRotationSpeed: 1
+    - _CloudsRotationSpeed: 0
     - _Exposure: 1
     - _MoonSize: 1
     - _StarsExtinction: 2
-    - _StarsTwinklingSpeed: 4
+    - _StarsTwinklingSpeed: 0
     - _SunSize: 1
     m_Colors:
     - _BottomColor: {r: 0.773, g: 0.455, b: 0.682, a: 1}

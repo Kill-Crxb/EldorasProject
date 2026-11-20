@@ -6,7 +6,8 @@ using CrabSystem;
 //
 // Written through a MaterialPropertyBlock so no material is instanced. A renderer holding a
 // block falls out of the SRP batcher, so the block is cleared the moment the flash reaches 0 —
-// the cost exists only while flashing.
+// the cost exists only while flashing. A renderer that already had a block (a tinted hair mesh)
+// keeps it, with the flash at 0 (FlashBlocks).
 //
 // Renderers are collected at runtime, on the first flash, not assigned: ModelModule spawns and
 // swaps the model, so there is nothing to assign in the prefab. A swap re-collects.
@@ -29,6 +30,7 @@ public class HitFlash : MonoBehaviour, IBrainModule
     private ControllerBrain brain;
     private ModelModule model;
     private readonly List<Renderer> renderers = new List<Renderer>();
+    private readonly HashSet<Renderer> hadBlock = new HashSet<Renderer>();
     private MaterialPropertyBlock block;
 
     private float startTime;
@@ -62,6 +64,7 @@ public class HitFlash : MonoBehaviour, IBrainModule
     {
         if (!isEnabled || seconds <= 0f) return;
         if (!collected) Collect();
+        if (!flashing) FlashBlocks.Remember(renderers, hadBlock);
 
         startTime = Time.unscaledTime;
         duration = seconds;
@@ -86,22 +89,16 @@ public class HitFlash : MonoBehaviour, IBrainModule
 
     private void Write(float value)
     {
-        block.SetFloat(FlashId, value);
-        for (int i = 0; i < renderers.Count; i++)
-        {
-            if (renderers[i] == null) continue;
-            renderers[i].SetPropertyBlock(block);
-        }
+        FlashBlocks.Write(renderers, block, FlashId, value);
     }
 
+    // Only a running flash has anything to undo: clearing outside one would wipe blocks that aren't ours.
     private void Clear()
     {
+        if (!flashing) return;
+
         flashing = false;
-        for (int i = 0; i < renderers.Count; i++)
-        {
-            if (renderers[i] == null) continue;
-            renderers[i].SetPropertyBlock(null);
-        }
+        FlashBlocks.Release(renderers, hadBlock, block, FlashId);
     }
 
     private void Collect()
