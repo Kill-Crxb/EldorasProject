@@ -45,3 +45,6 @@ MonoBehaviour:
   dropsOnDeath: 1
   isTradeable: 1
   isDestructible: 1
+  facts:
+  - WearingArmour
+  - ArmourMedium

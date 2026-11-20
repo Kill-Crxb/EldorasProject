@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: HighElfFace
+  m_Shader: {fileID: 4800000, guid: 3620285fe31842d484de41a5bbe5466d, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _IrisTex:
+        m_Texture: {fileID: 2800000, guid: 75da94f3323f178c89bb35594661ebe1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LineTex:
+        m_Texture: {fileID: 2800000, guid: 959fa44830a91f4ef8b8e00f7b872c26, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WhiteTex:
+        m_Texture: {fileID: 2800000, guid: 785c191b43078d9d3bcc80d55600e7c2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ExpressionCell: 0
+    - _Grid: 4
+    - _IrisCell: 0
+    - _ShadeSoftness: 0
+    - _ShadeStrength: 0
+    - _ShadeThreshold: -1
+    - _ZOffset: 0.002
+    m_Colors:
+    - _IrisLook: {r: 0, g: 0, b: 0, a: 0}
+    - _IrisRange: {r: 0.01, g: 0.005, b: 0, a: 0}
+    - _IrisTint: {r: 1, g: 1, b: 1, a: 1}
+    - _LineTint: {r: 1, g: 1, b: 1, a: 1}
+    - _ShadeColor: {r: 0.62, g: 0.62, b: 0.68, a: 1}
+    - _WhiteTint: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

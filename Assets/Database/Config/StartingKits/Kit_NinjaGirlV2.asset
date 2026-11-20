@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc1dbc76c6fb4cc8ae6973531ee558a2, type: 3}
+  m_Name: Kit_NinjaGirlV2
+  m_EditorClassIdentifier: 
+  displayName: Ninja Girl V2
+  items:
+  - {fileID: 11400000, guid: 669c1df44f1e18f4f9bf46ce0cddfbdf, type: 2}
+  - {fileID: 11400000, guid: a0b29449cb8da0e4fa4a7d03576fbc6e, type: 2}
+  - {fileID: 11400000, guid: cabaa76c300639df7893eb5d21a23190, type: 2}

@@ -8,6 +8,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5970377281621278325, guid: cf092286ed478fa8eac6de043a61c0c0, type: 3}
+      propertyPath: startingKits.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5970377281621278325, guid: cf092286ed478fa8eac6de043a61c0c0, type: 3}
+      propertyPath: startingKits.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: d8f3cc5dd2805e0debd1002f1c52c067, type: 2}
+    - target: {fileID: 5970377281621278325, guid: cf092286ed478fa8eac6de043a61c0c0, type: 3}
+      propertyPath: startingKits.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: e859a545811c4232780f34d31562ab55, type: 2}
+    - target: {fileID: 5970377281621278325, guid: cf092286ed478fa8eac6de043a61c0c0, type: 3}
+      propertyPath: startingKits.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 9d30de1da47033fe7b4fcd9fe30b01de, type: 2}
+    - target: {fileID: 5970377281621278325, guid: cf092286ed478fa8eac6de043a61c0c0, type: 3}
+      propertyPath: defaultKit
+      value: 
+      objectReference: {fileID: 11400000, guid: d8f3cc5dd2805e0debd1002f1c52c067, type: 2}
     - target: {fileID: 3424966025541721818, guid: cf092286ed478fa8eac6de043a61c0c0, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

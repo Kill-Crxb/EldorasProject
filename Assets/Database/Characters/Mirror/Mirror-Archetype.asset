@@ -30,17 +30,12 @@ MonoBehaviour:
     baseValue: 10
   - statId: core.insight
     baseValue: 10
+  statPackage: {fileID: 0}
   baseLevel: 30
   mainHandWeaponId: 
   offHandWeaponId: 
+  gear: []
   abilities: []
-  loadoutConfig:
-    basicAttackSlot: {fileID: 0}
-    qSlot: {fileID: 0}
-    zSlot: {fileID: 0}
-    xSlot: {fileID: 0}
-    cSlot: {fileID: 0}
-    vSlot: {fileID: 0}
   combatBehaviorClassName: 
   aiSystemType: 2
   goapGoals: []
@@ -53,7 +48,7 @@ MonoBehaviour:
     reflexes: 5
     intelligence: 5
     courage: 5
-  patrolMode: 0
+  patrolMode: 2
   patrolWaypoints: []
   wanderRadius: 10
   wanderCheckInterval: 30
@@ -64,6 +59,7 @@ MonoBehaviour:
   modelPool:
   - highelf_base
   randomizeModel: 0
+  looks: []
   useGenericName: 1
   genericName: target_dummy
   namePrefix: []

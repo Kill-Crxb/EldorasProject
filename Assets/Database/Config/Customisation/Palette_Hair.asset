@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 202a9d64494c844eb93508c28c309464, type: 3}
+  m_Name: Palette_Hair
+  m_EditorClassIdentifier: Assembly-CSharp::ColourPalette
+  colours:
+  - id: hairblack
+    displayName: Black
+    colour: {r: 0, g: 0, b: 0, a: 1}
+  - id: hairblonde
+    displayName: Blonde
+    colour: {r: 0.9843137, g: 0.90588236, b: 0.6313726, a: 1}
+  - id: hairwhite
+    displayName: White
+    colour: {r: 1, g: 1, b: 1, a: 1}
+  - id: hairbrown
+    displayName: Brown
+    colour: {r: 0.4339623, g: 0.22069752, b: 0.13305448, a: 1}
+  - id: hairginger
+    displayName: Ginger
+    colour: {r: 0.7735849, g: 0.2700753, b: 0.0693307, a: 1}
+  - id: hairdarkred
+    displayName: Red
+    colour: {r: 0.5660378, g: 0.11757782, b: 0.11480955, a: 1}
+  - id: hairpurple
+    displayName: Purple
+    colour: {r: 0.25472897, g: 0.11098256, b: 0.5471698, a: 1}
+  - id: hairblue
+    displayName: Blue
+    colour: {r: 0.20358667, g: 0.29342222, b: 0.7075472, a: 1}
+  - id: hairgreen
+    displayName: Green
+    colour: {r: 0.13737096, g: 0.46226418, b: 0.1462009, a: 1}

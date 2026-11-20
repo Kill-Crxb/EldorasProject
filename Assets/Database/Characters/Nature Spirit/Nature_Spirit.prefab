@@ -306,7 +306,6 @@ MonoBehaviour:
   startingPostureState: 0
   permissions: {fileID: 11400000, guid: 2d275b9a1d8b86a4e9518a9cebb76efd, type: 2}
   debugStateMachine: 0
-  debugTransitions: 0
   showDebugUI: 0
 --- !u!114 &2222687627415912962
 MonoBehaviour:
@@ -517,8 +516,6 @@ MonoBehaviour:
   staggerParam: Stagger
   deathParam: Death
   isDeadParam: IsDead
-  hitDirXParam: HitDirX
-  hitDirZParam: HitDirZ
 --- !u!1 &2861197667363816764
 GameObject:
   m_ObjectHideFlags: 0
@@ -831,7 +828,6 @@ MonoBehaviour:
   movesetBarId: mouse
   movesetSlotIndex: 0
   blockSlotIndex: 1
-  debugLogging: 0
 --- !u!114 &3195358102234684433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -844,7 +840,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e8748d2745680e47bd70209bf755150, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotTransformationSystem
-  debugLogging: 0
 --- !u!1 &3745729482882961474
 GameObject:
   m_ObjectHideFlags: 0
@@ -891,7 +886,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatusSystem
   isEnabled: 1
-  debugStatuses: 0
   activeDebug: []
   drWindow: 15
   drSteps:
@@ -993,7 +987,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MovementSystem
   isEnabled: 0
   locomotionHandler: {fileID: 8236127985093274160}
-  feetDetection: {fileID: 6975317991593524323}
   moveEnterSpeed: 1
   moveExitSpeed: 0.5
   runEnterSpeed: 4
@@ -1448,14 +1441,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem
   isEnabled: 1
-  loadoutModule: {fileID: 0}
   abilities:
   - {fileID: 11400000, guid: 534a32d88f6d12d4cab519ba340495a0, type: 2}
   - {fileID: 11400000, guid: fa062b12d2388ce45940626299755e19, type: 2}
   weaponSlotId: mainwep
   hitShakeAmplitude: 0.04
   hitConfirmCancel: 0
-  debugLogging: 0
 --- !u!114 &4019244290200516456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1537,6 +1528,7 @@ MonoBehaviour:
   detectionLayer:
     serializedVersion: 2
     m_Bits: 16384
+  useRange: 2.2
   iconDatabase: {fileID: 11400000, guid: d8a540aef20b2d947a22ebf4f9b8c914, type: 2}
   iconPromptPrefab: {fileID: 8394886397911090469, guid: ab517d13f65eefe4b99e1f2a3aabfef8, type: 3}
   isLocked: 0
@@ -1932,6 +1924,7 @@ GameObject:
   - component: {fileID: 4497134370858846888}
   - component: {fileID: 3298957820611229660}
   - component: {fileID: 3758023515325582047}
+  - component: {fileID: 1856212796905407954}
   m_Layer: 12
   m_Name: Damage_System
   m_TagString: Untagged
@@ -1997,6 +1990,19 @@ CapsuleCollider:
   m_Height: 1.75
   m_Direction: 1
   m_Center: {x: 0, y: 0.875, z: 0}
+--- !u!114 &1856212796905407954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9088032853651258063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7948b1a099884d3cb5885617d986210, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CrabSystem::CrabSystem.WeaponTraitModule
+  isEnabled: 1
 --- !u!1 &9129261168006451030
 GameObject:
   m_ObjectHideFlags: 0

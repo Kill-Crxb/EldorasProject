@@ -256,7 +256,7 @@ public class ClothingSetup : EditorWindow
     }
 
     // The top bone of each chain the clothing brought, the one hanging off the body's skeleton.
-    private static List<Transform> OwnRoots(SkinnedMeshRenderer copy, HashSet<string> skeleton)
+    internal static List<Transform> OwnRoots(SkinnedMeshRenderer copy, HashSet<string> skeleton)
     {
         var roots = new List<Transform>();
         foreach (var bone in copy.bones)
@@ -483,9 +483,10 @@ public class ClothingSetup : EditorWindow
     }
 
     // A replaced mesh leaves a missing reference wherever it was listed; a variant left with nothing goes too.
-    private static void DropMissing(SerializedProperty option)
+    internal static void DropMissing(SerializedProperty option)
     {
         DropNulls(option.FindPropertyRelative("show"));
+        DropMissingShapes(option.FindPropertyRelative("shapes"));
 
         var variants = option.FindPropertyRelative("variants");
         for (int i = variants.arraySize - 1; i >= 0; i--)
@@ -528,7 +529,7 @@ public class ClothingSetup : EditorWindow
         AddObjects(show, copies);
     }
 
-    private static void FollowBodyShapes(SerializedProperty groups, List<SkinnedMeshRenderer> copies)
+    internal static void FollowBodyShapes(SerializedProperty groups, List<SkinnedMeshRenderer> copies)
     {
         for (int g = 0; g < groups.arraySize; g++)
         {
@@ -544,9 +545,7 @@ public class ClothingSetup : EditorWindow
     // Entries left pointing at a replaced mesh are dropped first, so a rerun doesn't pile them up.
     private static void FollowOption(SerializedProperty shapes, List<SkinnedMeshRenderer> copies)
     {
-        for (int i = shapes.arraySize - 1; i >= 0; i--)
-            if (shapes.GetArrayElementAtIndex(i).FindPropertyRelative("renderer").objectReferenceValue == null)
-                shapes.DeleteArrayElementAtIndex(i);
+        DropMissingShapes(shapes);
 
         int existing = shapes.arraySize;
         for (int i = 0; i < existing; i++)
@@ -558,6 +557,13 @@ public class ClothingSetup : EditorWindow
             foreach (var copy in copies)
                 AddShape(shapes, copy, shape, weight);
         }
+    }
+
+    private static void DropMissingShapes(SerializedProperty shapes)
+    {
+        for (int i = shapes.arraySize - 1; i >= 0; i--)
+            if (shapes.GetArrayElementAtIndex(i).FindPropertyRelative("renderer").objectReferenceValue == null)
+                shapes.DeleteArrayElementAtIndex(i);
     }
 
     private static void AddShape(SerializedProperty shapes, SkinnedMeshRenderer renderer, string shape, float weight)
@@ -611,7 +617,7 @@ public class ClothingSetup : EditorWindow
         ResetOption(none, "None");
     }
 
-    private static void ResetOption(SerializedProperty option, string displayName)
+    internal static void ResetOption(SerializedProperty option, string displayName)
     {
         option.FindPropertyRelative("displayName").stringValue = displayName;
         option.FindPropertyRelative("show").arraySize = 0;

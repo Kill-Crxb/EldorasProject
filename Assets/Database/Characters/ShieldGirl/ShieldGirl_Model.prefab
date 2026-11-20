@@ -17134,28 +17134,47 @@ MonoBehaviour:
   - groupId: body
     displayName: Body
     chosenAtCreation: 0
+    slider: 0
     unequippedOptionId: squire
+    tints: 
+    tintProperty: _BaseColor
     options:
     - optionId: none
       displayName: None
       show: []
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: armour
       displayName: Knight Armour
       show:
       - {fileID: 1227487469852925672}
       - {fileID: 4818486877280489016}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: squire
       displayName: Squire
       show:
       - {fileID: 6467748685938466432}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: sportswear
       displayName: Sportswear
       show:
       - {fileID: 7245672719163464277}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: uniform
       displayName: School Uniform
       show:
@@ -17163,60 +17182,105 @@ MonoBehaviour:
       - {fileID: 7040101752666500449}
       - {fileID: 3967603369762338670}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
   - groupId: legs
     displayName: Legs
     chosenAtCreation: 0
+    slider: 0
     unequippedOptionId: none
+    tints: 
+    tintProperty: _BaseColor
     options:
     - optionId: none
       displayName: None
       show: []
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: armour
       displayName: Knight Armour
       show:
       - {fileID: 5399585802426392713}
       - {fileID: 6283150188549895460}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: sportswear
       displayName: Sportswear
       show:
       - {fileID: 3628403826474288412}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: uniform
       displayName: School Uniform
       show:
       - {fileID: 6775871969630673642}
       - {fileID: 375505522538171316}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
   - groupId: feet
     displayName: Feet
     chosenAtCreation: 0
+    slider: 0
     unequippedOptionId: none
+    tints: 
+    tintProperty: _BaseColor
     options:
     - optionId: none
       displayName: None
       show: []
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: armour
       displayName: Knight Armour
       show:
       - {fileID: 6864251414609543353}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: sportswear
       displayName: Sportswear
       show:
       - {fileID: 3069633326720103071}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: uniform
       displayName: School Uniform
       show:
       - {fileID: 6420656179282680118}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
   - groupId: hair_style
     displayName: Hair style
     chosenAtCreation: 1
+    slider: 0
     unequippedOptionId: 
+    tints: 
+    tintProperty: _BaseColor
     options:
     - optionId: ss
       displayName: Knight
@@ -17224,67 +17288,100 @@ MonoBehaviour:
       - {fileID: 2482279488210579373}
       - {fileID: 4794577841601263946}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
     - optionId: kg
       displayName: Katana
       show:
       - {fileID: 866052883211401627}
       - {fileID: 2818734748909104562}
       swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
   - groupId: hair_colour
     displayName: Hair colour
     chosenAtCreation: 1
+    slider: 0
     unequippedOptionId: 
+    tints: hair_style
+    tintProperty: _BaseColor
     options:
-    - optionId: 1
-      displayName: Colour 1
+    - optionId: hairblack
+      displayName: Black
       show: []
-      swaps:
-      - renderer: {fileID: 7671332399192058888}
-        slot: 0
-        material: {fileID: 2100000, guid: e118918d485edfa52af3aa73d5e21e57, type: 2}
-      - renderer: {fileID: 3937607242327789506}
-        slot: 0
-        material: {fileID: 2100000, guid: 93db4156af13d811391740eab3d5badb, type: 2}
-    - optionId: 2
-      displayName: Colour 2
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 0, g: 0, b: 0, a: 1}
+    - optionId: hairblonde
+      displayName: Blonde
       show: []
-      swaps:
-      - renderer: {fileID: 7671332399192058888}
-        slot: 0
-        material: {fileID: 2100000, guid: 9971c3ece312c8ce1b0ae7fa7c9ee72a, type: 2}
-      - renderer: {fileID: 3937607242327789506}
-        slot: 0
-        material: {fileID: 2100000, guid: 82a673d21be1842e392305e20faa2de9, type: 2}
-    - optionId: 3
-      displayName: Colour 3
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 0.9843137, g: 0.90588236, b: 0.6313726, a: 1}
+    - optionId: hairwhite
+      displayName: White
       show: []
-      swaps:
-      - renderer: {fileID: 7671332399192058888}
-        slot: 0
-        material: {fileID: 2100000, guid: 9340b0f112844f6d5b3689b435e775c0, type: 2}
-      - renderer: {fileID: 3937607242327789506}
-        slot: 0
-        material: {fileID: 2100000, guid: 24bbf7966d8b7e912a0850e31edae3e4, type: 2}
-    - optionId: 4
-      displayName: Colour 4
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 1, g: 1, b: 1, a: 1}
+    - optionId: hairbrown
+      displayName: Brown
       show: []
-      swaps:
-      - renderer: {fileID: 7671332399192058888}
-        slot: 0
-        material: {fileID: 2100000, guid: 99877eeda974206799bd0128fbb04a8c, type: 2}
-      - renderer: {fileID: 3937607242327789506}
-        slot: 0
-        material: {fileID: 2100000, guid: 3941f03d5a755b6f6a995a1c47e8de50, type: 2}
-    - optionId: 5
-      displayName: Colour 5
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 0.4339623, g: 0.22069752, b: 0.13305448, a: 1}
+    - optionId: hairginger
+      displayName: Ginger
       show: []
-      swaps:
-      - renderer: {fileID: 7671332399192058888}
-        slot: 0
-        material: {fileID: 2100000, guid: a93d69893092a38dc99f6a2dc130cd60, type: 2}
-      - renderer: {fileID: 3937607242327789506}
-        slot: 0
-        material: {fileID: 2100000, guid: 311cb4c6da4dd7444867396f008a99a9, type: 2}
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 0.7735849, g: 0.2700753, b: 0.0693307, a: 1}
+    - optionId: hairdarkred
+      displayName: Red
+      show: []
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 0.5660378, g: 0.11757782, b: 0.11480955, a: 1}
+    - optionId: hairpurple
+      displayName: Purple
+      show: []
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 0.25472897, g: 0.11098256, b: 0.5471698, a: 1}
+    - optionId: hairblue
+      displayName: Blue
+      show: []
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 0.20358667, g: 0.29342222, b: 0.7075472, a: 1}
+    - optionId: hairgreen
+      displayName: Green
+      show: []
+      swaps: []
+      shapes: []
+      variants: []
+      layers: []
+      tint: {r: 0.13737096, g: 0.46226418, b: 0.1462009, a: 1}
   skins:
   - show: {fileID: 3859486721681242368}
     whenWearing:

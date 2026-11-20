@@ -18,19 +18,22 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 5921712e82ea0cc41b5e72ab6db1e2f1, type: 3}
   worldPrefab: {fileID: 0}
   equippedPrefab: {fileID: 0}
+  appearanceGroup: 
+  appearanceOption: 
   category: {fileID: 11400000, guid: 199d3e92c68fb99498c953aec2079d49, type: 2}
   subType: {fileID: 11400000, guid: cf83400ed7c8fac9167763278334eaaf, type: 2}
   gridWidth: 2
   gridHeight: 2
   weaponData: {fileID: 0}
   moveset: {fileID: 0}
+  reach: 1.5
   stats:
-  - statId: atr.arm_dice
-    amount: 1
-  - statId: atr.arm
-    amount: 2
   - statId: equip.load
     amount: 1
+  - statId: atr.arm_dice
+    amount: 1
+  facts: []
+  rewards: []
   rarity: 0
   maxStackSize: 1
   tags:

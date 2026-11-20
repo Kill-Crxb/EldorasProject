@@ -56,7 +56,7 @@ MonoBehaviour:
     reflexes: 5
     intelligence: 5
     courage: 5
-  patrolMode: 0
+  patrolMode: 2
   patrolWaypoints: []
   wanderRadius: 10
   wanderCheckInterval: 30

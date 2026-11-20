@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: EldoraModelDatabase
   m_EditorClassIdentifier: 
   models:
-  - modelId: female_base_v1
-    displayName: Female Base
-    playable: 0
-    prefab: {fileID: 4914216904076781778, guid: 1c2fb1e89bad3d2479cf88916b4744fd, type: 3}
+  - modelId: porphi-elf
+    displayName: Porphi-Elf
+    playable: 1
+    prefab: {fileID: 5094023949816461874, guid: 4a9f5dd7788fd30eebe4bbc89da58153, type: 3}
     thumbnailSprite: {fileID: 0}
-    allowColorCustomization: 1
+    allowColorCustomization: 0
     defaultColors: []
   - modelId: nature_spirit_v1
     displayName: The Nature Spirit
@@ -59,27 +59,6 @@ MonoBehaviour:
     displayName: Ghost
     playable: 0
     prefab: {fileID: 8634052093233245924, guid: bd6c4a1d0dfe90d6f900a38c45b8bb2c, type: 3}
-    thumbnailSprite: {fileID: 0}
-    allowColorCustomization: 0
-    defaultColors: []
-  - modelId: katana_girl_v1
-    displayName: Katana Girl
-    playable: 0
-    prefab: {fileID: 4006998765510790250, guid: b6803f15aeb7d5763b66302cba00a232, type: 3}
-    thumbnailSprite: {fileID: 0}
-    allowColorCustomization: 0
-    defaultColors: []
-  - modelId: shield_girl_v1
-    displayName: Shield Girl
-    playable: 0
-    prefab: {fileID: 8541777861642692679, guid: 7557f6d9c36bd95b19a4ff7ccfbb6b7b, type: 3}
-    thumbnailSprite: {fileID: 0}
-    allowColorCustomization: 0
-    defaultColors: []
-  - modelId: highelf_base
-    displayName: High Elf Base
-    playable: 1
-    prefab: {fileID: 5094023949816461874, guid: 003cd68a0d67e0f6db8b66da22f3e673, type: 3}
     thumbnailSprite: {fileID: 0}
     allowColorCustomization: 0
     defaultColors: []

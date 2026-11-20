@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using CrabSystem;
 using UnityEditor;
 using UnityEngine;
@@ -8,6 +9,12 @@ using UnityEngine;
 // an option per step and marked as a slider. Shape keys are locked to the steps so clothing can be made per
 // step and shown by the same option. The model is then listed in the model database as playable. Groups that
 // already exist are left alone, so clothing added to their options survives a rerun.
+//
+// Follow Shapes On Selected Model: every mesh on the model carrying a key a slider drives joins that slider, so clothing
+// follows the body. Model Variant runs it after rebuilding the sliders.
+//
+// A staged family ("Chest 10%" … "Chest 100%", see StagedShapeKeys) becomes one group: Basis is step 0 and each
+// key is a step, pushed to 100 with the rest of the family at 0.
 
 public static class BodyShapeSetup
 {
@@ -19,12 +26,8 @@ public static class BodyShapeSetup
     [MenuItem("Tools/Characters/Body Shapes/Set Up Selected Model")]
     private static void SetUpSelectedModel()
     {
-        string path = Selection.activeGameObject != null ? AssetDatabase.GetAssetPath(Selection.activeGameObject) : "";
-        if (!path.EndsWith(".prefab"))
-        {
-            Debug.LogError("[BodyShapeSetup] Select a model prefab in the Project window.");
-            return;
-        }
+        string path = SelectedPrefabPath();
+        if (path == null) return;
 
         var root = PrefabUtility.LoadPrefabContents(path);
         int added = AddShapeGroups(root);
@@ -37,9 +40,42 @@ public static class BodyShapeSetup
         RegisterModel(AssetDatabase.LoadAssetAtPath<GameObject>(path));
     }
 
+    // Puts every mesh on the model that carries a key a slider drives into that slider, so clothing follows the body.
+    [MenuItem("Tools/Characters/Body Shapes/Follow Shapes On Selected Model")]
+    private static void FollowShapesOnSelectedModel()
+    {
+        string path = SelectedPrefabPath();
+        if (path == null) return;
+
+        var root = PrefabUtility.LoadPrefabContents(path);
+        FollowShapes(root);
+        PrefabUtility.SaveAsPrefabAsset(root, path);
+        PrefabUtility.UnloadPrefabContents(root);
+    }
+
+    private static string SelectedPrefabPath()
+    {
+        string path = Selection.activeGameObject != null ? AssetDatabase.GetAssetPath(Selection.activeGameObject) : "";
+        if (path.EndsWith(".prefab")) return path;
+
+        Debug.LogError("[BodyShapeSetup] Select a model prefab in the Project window.");
+        return null;
+    }
+
     // ── Shape groups ──────────────────────────────────────────────────────────
 
-    private static int AddShapeGroups(GameObject root)
+    public static void FollowShapes(GameObject root)
+    {
+        var appearance = root.GetComponent<ModelAppearance>();
+        if (appearance == null) return;
+
+        var so = new SerializedObject(appearance);
+        var renderers = new List<SkinnedMeshRenderer>(root.GetComponentsInChildren<SkinnedMeshRenderer>(true));
+        ClothingSetup.FollowBodyShapes(so.FindProperty("groups"), renderers);
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    public static int AddShapeGroups(GameObject root)
     {
         var appearance = root.GetComponent<ModelAppearance>();
         if (appearance == null) appearance = root.AddComponent<ModelAppearance>();
@@ -64,10 +100,12 @@ public static class BodyShapeSetup
         for (int i = 0; i < mesh.blendShapeCount; i++)
         {
             string shape = mesh.GetBlendShapeName(i);
-            string groupId = GroupPrefix + shape.ToLowerInvariant().Replace(' ', '_');
+            string family = StagedShapeKeys.Family(shape);
+            string groupId = GroupPrefix + (family ?? shape).ToLowerInvariant().Replace(' ', '_');
             if (HasGroup(groups, groupId)) continue;
 
-            WriteGroup(Append(groups), groupId, shape, renderer);
+            if (family == null) WriteGroup(Append(groups), groupId, shape, renderer);
+            else WriteStagedGroup(Append(groups), groupId, family, renderer);
             added++;
         }
 
@@ -76,30 +114,73 @@ public static class BodyShapeSetup
 
     private static void WriteGroup(SerializedProperty group, string groupId, string shape, SkinnedMeshRenderer renderer)
     {
+        var options = WriteGroupHeader(group, groupId, DisplayName(shape), Steps.Length);
+
+        for (int i = 0; i < Steps.Length; i++)
+        {
+            var shapes = WriteOptionHeader(options.GetArrayElementAtIndex(i), Steps[i], 1);
+            WriteShape(shapes.GetArrayElementAtIndex(0), renderer, shape, Steps[i]);
+        }
+    }
+
+    private static void WriteStagedGroup(SerializedProperty group, string groupId, string family, SkinnedMeshRenderer renderer)
+    {
+        List<int> percents = StagedPercents(renderer.sharedMesh, family);
+        var options = WriteGroupHeader(group, groupId, DisplayName(family), percents.Count + 1);
+
+        WriteStagedOption(options.GetArrayElementAtIndex(0), 0, family, percents, renderer);
+        for (int i = 0; i < percents.Count; i++)
+            WriteStagedOption(options.GetArrayElementAtIndex(i + 1), percents[i], family, percents, renderer);
+    }
+
+    private static void WriteStagedOption(SerializedProperty option, int step, string family, List<int> percents, SkinnedMeshRenderer renderer)
+    {
+        var shapes = WriteOptionHeader(option, step, percents.Count);
+
+        for (int i = 0; i < percents.Count; i++)
+            WriteShape(shapes.GetArrayElementAtIndex(i), renderer, StagedShapeKeys.Name(family, percents[i]), percents[i] == step ? 100 : 0);
+    }
+
+    private static List<int> StagedPercents(Mesh mesh, string family)
+    {
+        var percents = new List<int>();
+        for (int i = 0; i < mesh.blendShapeCount; i++)
+        {
+            string shape = mesh.GetBlendShapeName(i);
+            if (StagedShapeKeys.Family(shape) == family) percents.Add(StagedShapeKeys.Percent(shape));
+        }
+
+        percents.Sort();
+        return percents;
+    }
+
+    private static SerializedProperty WriteGroupHeader(SerializedProperty group, string groupId, string displayName, int optionCount)
+    {
         group.FindPropertyRelative("groupId").stringValue = groupId;
-        group.FindPropertyRelative("displayName").stringValue = DisplayName(shape);
+        group.FindPropertyRelative("displayName").stringValue = displayName;
         group.FindPropertyRelative("chosenAtCreation").boolValue = true;
         group.FindPropertyRelative("slider").boolValue = true;
         group.FindPropertyRelative("unequippedOptionId").stringValue = "";
 
         var options = group.FindPropertyRelative("options");
-        options.arraySize = Steps.Length;
-
-        for (int i = 0; i < Steps.Length; i++)
-            WriteOption(options.GetArrayElementAtIndex(i), Steps[i], shape, renderer);
+        options.arraySize = optionCount;
+        return options;
     }
 
-    private static void WriteOption(SerializedProperty option, int weight, string shape, SkinnedMeshRenderer renderer)
+    private static SerializedProperty WriteOptionHeader(SerializedProperty option, int step, int shapeCount)
     {
-        option.FindPropertyRelative("optionId").stringValue = weight.ToString();
-        option.FindPropertyRelative("displayName").stringValue = weight.ToString();
+        option.FindPropertyRelative("optionId").stringValue = step.ToString();
+        option.FindPropertyRelative("displayName").stringValue = step.ToString();
         option.FindPropertyRelative("show").arraySize = 0;
         option.FindPropertyRelative("swaps").arraySize = 0;
 
         var shapes = option.FindPropertyRelative("shapes");
-        shapes.arraySize = 1;
+        shapes.arraySize = shapeCount;
+        return shapes;
+    }
 
-        var entry = shapes.GetArrayElementAtIndex(0);
+    private static void WriteShape(SerializedProperty entry, SkinnedMeshRenderer renderer, string shape, int weight)
+    {
         entry.FindPropertyRelative("renderer").objectReferenceValue = renderer;
         entry.FindPropertyRelative("shape").stringValue = shape;
         entry.FindPropertyRelative("weight").floatValue = weight;
@@ -122,7 +203,7 @@ public static class BodyShapeSetup
 
     // ── Model database ────────────────────────────────────────────────────────
 
-    private static void RegisterModel(GameObject prefab)
+    public static void RegisterModel(GameObject prefab)
     {
         string[] guids = AssetDatabase.FindAssets("t:ModelDatabase", new[] { "Assets" });
         if (guids.Length != 1)

@@ -26,7 +26,6 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _BASE_LIGHT
-  - _OUTLINE_TINT
   - _SHADOWTEXMODE_ANCHORED
   - _SKIN_LAYERS
   m_InvalidKeywords: []
@@ -198,14 +197,14 @@ Material:
     - _IsFace: 0
     - _LightColorInfluence: 0
     - _Metallic: 0
-    - _ObjectID: 0
+    - _ObjectID: 0.6
     - _OcclusionStrength: 1
     - _OutlineFadeFar: 150
     - _OutlineFadeNear: 40
     - _OutlineSilhouetteBias: 1
     - _OutlineTintDarkness: 0
-    - _OutlineTintStrength: 0.8
-    - _OutlineWidth: 0.0104
+    - _OutlineTintStrength: 0
+    - _OutlineWidth: 0
     - _OutlineZOffset: 0.25
     - _Parallax: 0.005
     - _QueueOffset: 0
@@ -225,6 +224,10 @@ Material:
     - _ShadowTexMode: 2
     - _ShadowTexScale: 32
     - _ShadowTexSoftness: 0.05
+    - _SheerAngleStrength: 1
+    - _SheerEdgeDensity: 3
+    - _SheerEdgeSoftness: 0.02
+    - _SheerEdgeStart: 0.5
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -237,7 +240,7 @@ Material:
     - _UseBaseSDF: 0
     - _UseEmission: 0
     - _UseHairSpecular: 0
-    - _UseOutlineTint: 1
+    - _UseOutlineTint: 0
     - _UseRamp: 0
     - _UseRim: 0
     - _UseShadowTex: 0
