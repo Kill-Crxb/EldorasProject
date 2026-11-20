@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fff5e71058744bdbaa196579e478f194, type: 3}
+  m_Name: Reward_Feat_Featherweight_Run_When
+  m_EditorClassIdentifier: Assembly-CSharp::CrabSystem.ConditionalReward
+  displayName: 
+  conditions:
+  - kind: 0
+    subject: 0
+    fact: WieldingLight
+    status: {fileID: 0}
+    behindAngle: 120
+    not: 0
+  - kind: 0
+    subject: 0
+    fact: IsUnarmed
+    status: {fileID: 0}
+    behindAngle: 120
+    not: 1
+  reward: {fileID: 11400000, guid: 496e0fe658eb40b6813d7225b3ad17ee, type: 2}

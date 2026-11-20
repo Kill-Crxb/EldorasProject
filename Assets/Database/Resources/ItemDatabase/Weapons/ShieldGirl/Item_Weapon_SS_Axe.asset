@@ -24,9 +24,23 @@ MonoBehaviour:
   subType: {fileID: 11400000, guid: 75cd0f09c4ebb74ab8337b781be3b5b2, type: 2}
   gridWidth: 1
   gridHeight: 2
-  weaponData: {fileID: 11400000, guid: f1c7642795390ad439818e9f715f1f0c, type: 2}
+  weaponData: {fileID: 11400000, guid: f3bd008e5a7fce0f79e3492e614c00c2, type: 2}
   moveset: {fileID: 11400000, guid: 181942ccc5bbba9618fc740f9e166850, type: 2}
-  stats: []
+  reach: 1.5
+  stats:
+  - statId: cmb.guard_pressure
+    amount: 2
+  - statId: equip.load
+    amount: 2
+  - statId: cmb.block_advantage
+    amount: -4
+  facts:
+  - WieldingMedium
+  - WieldingBreak
+  - StunThrough
+  rewards:
+  - {fileID: 11400000, guid: c96edcad028710691aa6cb77afd5260b, type: 2}
+  - {fileID: 11400000, guid: fabe271c1e1ca21ff8ad2776939f0f00, type: 2}
   rarity: 0
   maxStackSize: 1
   tags:

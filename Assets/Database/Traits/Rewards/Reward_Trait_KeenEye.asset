@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: CrabSystem::CrabSystem.Progression.StatBonusReward
   displayName: 
   targetStatIds:
-  - core.insight
+  - cmb.cunning
   amount: 1

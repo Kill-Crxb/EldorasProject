@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f90d2f14f6c9924e9ae4c233d5acbf4, type: 3}
+  m_Name: Status_Berserk
+  m_EditorClassIdentifier: Assembly-CSharp::StatusDefinition
+  id: berserk
+  displayName: Berserk
+  icon: {fileID: 0}
+  description: +1 damage on every hit per stack.
+  beneficial: 1
+  tags: []
+  control: 0
+  save: 0
+  saveDowngrade: {fileID: 0}
+  breaksOnDamage: 0
+  duration: 6
+  durationFrames: 0
+  stacking: 1
+  maxStacks: 5
+  contributions:
+  - statId: cmb.bonus_damage
+    amountPerStack: 1
+  blackboardFlags: []
+  auraVfx: {fileID: 0}
+  auraAnchor: 3

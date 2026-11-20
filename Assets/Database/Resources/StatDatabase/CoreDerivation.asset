@@ -21,12 +21,16 @@ MonoBehaviour:
     - threshold: 5
       rewards:
       - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+      - {fileID: 11400000, guid: 2019bba8782b1292f9ef4e6de9a854c0, type: 2}
     - threshold: 7
       rewards:
       - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
     - threshold: 9
       rewards:
       - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 10
+      rewards:
+      - {fileID: 11400000, guid: d4ec78cf1924bad4280920ca369950b3, type: 2}
     - threshold: 11
       rewards:
       - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
@@ -36,12 +40,16 @@ MonoBehaviour:
     - threshold: 15
       rewards:
       - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+      - {fileID: 11400000, guid: e1a1007489ffdc56e9aedc413ddb8562, type: 2}
     - threshold: 17
       rewards:
       - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
     - threshold: 19
       rewards:
       - {fileID: 11400000, guid: fdae2ed48e714006a5f28a53f2e95ad4, type: 2}
+    - threshold: 20
+      rewards:
+      - {fileID: 11400000, guid: 576e38d8eabedd80fae2fd806ae8bcb8, type: 2}
   - sourceStatId: core.body
     breakpoints:
     - threshold: 3
@@ -50,12 +58,16 @@ MonoBehaviour:
     - threshold: 5
       rewards:
       - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+      - {fileID: 11400000, guid: 79ac3e455e5cac54f80235e23dd9f284, type: 2}
     - threshold: 7
       rewards:
       - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
     - threshold: 9
       rewards:
       - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 10
+      rewards:
+      - {fileID: 11400000, guid: 235a0bea781dce35b99af4fae7084bb5, type: 2}
     - threshold: 11
       rewards:
       - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
@@ -65,12 +77,16 @@ MonoBehaviour:
     - threshold: 15
       rewards:
       - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+      - {fileID: 11400000, guid: f12c785025ae4332e9df3b8213d92faf, type: 2}
     - threshold: 17
       rewards:
       - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
     - threshold: 19
       rewards:
       - {fileID: 11400000, guid: 16e7c7b7fd6649c78407b6a3b8050a8d, type: 2}
+    - threshold: 20
+      rewards:
+      - {fileID: 11400000, guid: 0e43626ecd3c59b92b59ad92c4f1d6cd, type: 2}
   - sourceStatId: core.spirit
     breakpoints:
     - threshold: 3
@@ -79,12 +95,16 @@ MonoBehaviour:
     - threshold: 5
       rewards:
       - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+      - {fileID: 11400000, guid: 573e654aee4af4b5c8455e22dbcf3a3c, type: 2}
     - threshold: 7
       rewards:
       - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
     - threshold: 9
       rewards:
       - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 10
+      rewards:
+      - {fileID: 11400000, guid: 2e39a2eb415f798edad0124f8079b127, type: 2}
     - threshold: 11
       rewards:
       - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
@@ -94,12 +114,16 @@ MonoBehaviour:
     - threshold: 15
       rewards:
       - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+      - {fileID: 11400000, guid: 89214e8f8dd709a0eacbe275c3c7aef2, type: 2}
     - threshold: 17
       rewards:
       - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
     - threshold: 19
       rewards:
       - {fileID: 11400000, guid: f84bb4de304f463680f6bba148f95fe3, type: 2}
+    - threshold: 20
+      rewards:
+      - {fileID: 11400000, guid: aa9a6062790b240418603f2a9aec5b2e, type: 2}
   - sourceStatId: core.endurance
     breakpoints:
     - threshold: 3
@@ -108,12 +132,16 @@ MonoBehaviour:
     - threshold: 5
       rewards:
       - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+      - {fileID: 11400000, guid: 9bab9ba933b025f188391f0bc656f542, type: 2}
     - threshold: 7
       rewards:
       - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
     - threshold: 9
       rewards:
       - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 10
+      rewards:
+      - {fileID: 11400000, guid: 6ed2db5db0bb58d04b995329357e3aad, type: 2}
     - threshold: 11
       rewards:
       - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
@@ -123,12 +151,16 @@ MonoBehaviour:
     - threshold: 15
       rewards:
       - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+      - {fileID: 11400000, guid: 6026385d7093ae8f2b7463ed57d96696, type: 2}
     - threshold: 17
       rewards:
       - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
     - threshold: 19
       rewards:
       - {fileID: 11400000, guid: 1fa1c79d65254119967ab83c126f9365, type: 2}
+    - threshold: 20
+      rewards:
+      - {fileID: 11400000, guid: 86b8ce8b03be8571cb32cfb596d54b9f, type: 2}
   - sourceStatId: core.resilience
     breakpoints:
     - threshold: 3
@@ -137,12 +169,16 @@ MonoBehaviour:
     - threshold: 5
       rewards:
       - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+      - {fileID: 11400000, guid: d77766a7487550e069f5769beb174765, type: 2}
     - threshold: 7
       rewards:
       - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
     - threshold: 9
       rewards:
       - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 10
+      rewards:
+      - {fileID: 11400000, guid: ead0fa487241d1a4093464a5e9b8ec96, type: 2}
     - threshold: 11
       rewards:
       - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
@@ -152,12 +188,16 @@ MonoBehaviour:
     - threshold: 15
       rewards:
       - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+      - {fileID: 11400000, guid: 533d2bbb7773e14cb8bd0dcdc86d20f5, type: 2}
     - threshold: 17
       rewards:
       - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
     - threshold: 19
       rewards:
       - {fileID: 11400000, guid: 20ece1c4c86c4a6cbff74a7504c031c0, type: 2}
+    - threshold: 20
+      rewards:
+      - {fileID: 11400000, guid: 5d2f1bcf8ebe87b718eae5dada1234ae, type: 2}
   - sourceStatId: core.insight
     breakpoints:
     - threshold: 3
@@ -166,12 +206,16 @@ MonoBehaviour:
     - threshold: 5
       rewards:
       - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+      - {fileID: 11400000, guid: 0d60db618ed114d2f91648495520fafb, type: 2}
     - threshold: 7
       rewards:
       - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
     - threshold: 9
       rewards:
       - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 10
+      rewards:
+      - {fileID: 11400000, guid: 442fbf2454b18d42d987012c8ba43060, type: 2}
     - threshold: 11
       rewards:
       - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
@@ -181,12 +225,16 @@ MonoBehaviour:
     - threshold: 15
       rewards:
       - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+      - {fileID: 11400000, guid: 019d4df89b90dd81486b6b5d422dbe19, type: 2}
     - threshold: 17
       rewards:
       - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
     - threshold: 19
       rewards:
       - {fileID: 11400000, guid: 7cb276f4b4b245fa98d36b30ec98f971, type: 2}
+    - threshold: 20
+      rewards:
+      - {fileID: 11400000, guid: cd327c45186f040a694ca8fc9e574464, type: 2}
   - sourceStatId: character.level
     breakpoints: []
   - sourceStatId: equip.load

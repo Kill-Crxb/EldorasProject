@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c52b15ff419e4980a66e60123518c6ed, type: 3}
+  m_Name: Feat_AbilityScoreImprovement_Body
+  m_EditorClassIdentifier: Assembly-CSharp::CrabSystem.FeatDefinition
+  featId: asi_body
+  displayName: Ability Score Improvement (Body)
+  description: 'Might +1 and Deflection +1. Can be granted more than once.'
+  icon: {fileID: 0}
+  category: 1
+  repeatable: 1
+  rewards:
+  - {fileID: 11400000, guid: 863cde12383b4c3391d9c91c6c1c03a8, type: 2}

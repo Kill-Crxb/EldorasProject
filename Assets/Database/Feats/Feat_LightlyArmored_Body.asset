@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c52b15ff419e4980a66e60123518c6ed, type: 3}
+  m_Name: Feat_LightlyArmored_Body
+  m_EditorClassIdentifier: Assembly-CSharp::CrabSystem.FeatDefinition
+  featId: lightly_armored_body
+  displayName: Lightly Armored (Body)
+  description: 'Deflection +1. Worn armour counts 1 less load.'
+  icon: {fileID: 0}
+  category: 1
+  repeatable: 0
+  rewards:
+  - {fileID: 11400000, guid: 494c6b2e227047b4aca9c4f63831c5dd, type: 2}
+  - {fileID: 11400000, guid: 2c7f8d31ecbd4c6981ab2764d64853c7, type: 2}

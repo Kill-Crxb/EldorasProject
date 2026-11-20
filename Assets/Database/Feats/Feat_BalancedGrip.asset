@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c52b15ff419e4980a66e60123518c6ed, type: 3}
+  m_Name: Feat_BalancedGrip
+  m_EditorClassIdentifier: Assembly-CSharp::CrabSystem.FeatDefinition
+  featId: balanced_grip
+  displayName: Balanced Grip
+  description: 'Medium weapon drawn: +1 to hit, blocking costs 1 less stamina.'
+  icon: {fileID: 0}
+  category: 5
+  repeatable: 0
+  rewards:
+  - {fileID: 11400000, guid: 4f5f1af00dc74781befd7bacbcfc03e8, type: 2}
+  - {fileID: 11400000, guid: 79012951a18242af904e21312d888372, type: 2}

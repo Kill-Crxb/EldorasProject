@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c52b15ff419e4980a66e60123518c6ed, type: 3}
+  m_Name: Feat_Observant_Mind
+  m_EditorClassIdentifier: Assembly-CSharp::CrabSystem.FeatDefinition
+  featId: observant_mind
+  displayName: Observant (Mind)
+  description: 'Alteration +1, Preparation +1.'
+  icon: {fileID: 0}
+  category: 1
+  repeatable: 0
+  rewards:
+  - {fileID: 11400000, guid: 14d58a4113b44dfb91219e6903b93bb7, type: 2}
+  - {fileID: 11400000, guid: 53697587ccd346d2ac17e830e0247eb9, type: 2}

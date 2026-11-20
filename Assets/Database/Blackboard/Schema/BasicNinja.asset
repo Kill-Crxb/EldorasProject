@@ -62,3 +62,87 @@ MonoBehaviour:
     defaultBool: 0
     defaultFloat: 0
     defaultInt: 0
+  - keyName: WieldingLight
+    type: 0
+    description: Light-row weapon equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: WieldingMedium
+    type: 0
+    description: Medium-row weapon equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: WieldingHeavy
+    type: 0
+    description: Heavy-row weapon equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: WieldingEdge
+    type: 0
+    description: Edge-family weapon equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: WieldingReach
+    type: 0
+    description: Reach-family weapon equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: WieldingBreak
+    type: 0
+    description: Break-family weapon equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: WearingArmour
+    type: 0
+    description: Body armour equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: ArmourLight
+    type: 0
+    description: Light body armour equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: ArmourMedium
+    type: 0
+    description: Medium body armour equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: ArmourHeavy
+    type: 0
+    description: Heavy body armour equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: HasShield
+    type: 0
+    description: Shield equipped (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: NoParry
+    type: 0
+    description: Weapon can't parry; the guard only blocks (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: Disadvantaged
+    type: 0
+    description: Hits roll with disadvantage (Sapped status)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0
+  - keyName: StunThrough
+    type: 0
+    description: Hits that empty an armour shield still cause their hit state (item fact)
+    defaultBool: 0
+    defaultFloat: 0
+    defaultInt: 0

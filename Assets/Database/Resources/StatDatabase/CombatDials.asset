@@ -126,3 +126,31 @@ MonoBehaviour:
     defaultValue: 0
     minValue: -999
     maxValue: 999
+  - id: cmb.guard_pressure
+    displayName: Guard Pressure
+    shortName: GPR
+    description: Extra stamina a defender pays to block your hits (Break weapons).
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.strike_arc
+    displayName: Strike Arc
+    shortName: ARC
+    description: Degrees added to the arc of every strike you make (weapon width).
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.proc_dc
+    displayName: Proc DC
+    shortName: PDC
+    description: Added to the DC of your weapon traits' procs; negative fires them more often (Keen).
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
+  - id: cmb.block_advantage
+    displayName: Block Advantage
+    shortName: BLK
+    description: Frames added to your moves' advantage when blocked. Negative is more punishable (Break weapons).
+    defaultValue: 0
+    minValue: -999
+    maxValue: 999
