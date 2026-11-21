@@ -12,6 +12,8 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _MACRO_TINT
+  - _USE_ENV_RAMP
   - _TERRAIN_ROOT_BLEND
   m_InvalidKeywords:
   - _ALPHATEST_ON
@@ -28,6 +30,14 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _MacroMap:
+        m_Texture: {fileID: 2800000, guid: 13d2187f3cd177b578849e3e130078c5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EnvRamp:
+        m_Texture: {fileID: 2800000, guid: 9c1f3e88674c9726298e46f9e45fb706, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BaseMap:
         m_Texture: {fileID: 2800000, guid: 1fe6bd4e1c8db254d9e8a4f2a2632e82, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -90,6 +100,13 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _LightColorInfluence: 0
+    - _ShadeThreshold: 0
+    - _IndirectStrength: 0.3
+    - _MacroStrength: 0.5
+    - _MacroScale: 0.02
+    - _UseMacro: 1
+    - _UseEnvRamp: 1
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 1
     - _AlphaToMask: 1
@@ -149,7 +166,7 @@ Material:
     - _ColorNoiseSpeed: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _NoiseColor: {r: 0.69183433, g: 0.8207547, b: 0.39101994, a: 1}
-    - _ShadeColor: {r: 0.62, g: 0.62, b: 0.68, a: 1}
+    - _ShadeColor: {r: 0.58, g: 0.6, b: 0.72, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _WindDirection: {r: 1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

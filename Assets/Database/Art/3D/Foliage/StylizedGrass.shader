@@ -26,10 +26,32 @@ Shader "Custom/Stylized Terrain Grass"
         _RootBlendHeight ("Root Blend Height", Range(0.01, 1)) = 0.25
         _RootBlendStrength ("Root Blend Strength", Range(0,1)) = 1.0
 
-        [Header(Received Shadows)]
-        _ShadeColor ("Shade Tint (multiply)", Color) = (0.62, 0.62, 0.68, 1)
-        _ShadeSoftness ("Shadow Edge Softness", Range(0.0, 0.5)) = 0.015
+        [Header(Lighting  match these to the terrain material)]
+        _ShadeColor ("Shade Tint", Color) = (0.58, 0.6, 0.72, 1)
+        [Toggle(_USE_ENV_RAMP)] _UseEnvRamp ("Use Environment Ramp", Float) = 0
+        [NoScaleOffset] _EnvRamp ("Environment Ramp (RGBA, sRGB off, Clamp)", 2D) = "white" {}
+        _ShadeThreshold ("Terminator Position (no ramp)", Range(-1, 1)) = 0.0
+        _ShadeSoftness ("Terminator / Shadow Softness", Range(0.0, 0.5)) = 0.015
         _ShadowStrength ("Cast Shadow Strength", Range(0,1)) = 1.0
+        _LightColorInfluence ("Light Color Influence", Range(0, 1)) = 0.0
+        _IndirectMinColor ("Indirect Floor Color", Color) = (0.05, 0.05, 0.07, 1)
+        _IndirectStrength ("Ambient Hue Pickup", Range(0, 1)) = 0.3
+
+        [Header(Macro Tint  same map and values as the terrain)]
+        [Toggle(_MACRO_TINT)] _UseMacro ("Enable Macro Tint", Float) = 0
+        [NoScaleOffset] _MacroMap ("Macro Map (grey = neutral, sRGB off)", 2D) = "gray" {}
+        _MacroScale ("Macro Tiling (per metre)", Float) = 0.02
+        _MacroStrength ("Macro Strength", Range(0, 1)) = 0.5
+
+        // Read by the shared lighting include, never by grass.
+        [HideInInspector] _Bands ("Bands", Float) = 1
+        [HideInInspector] _AdditionalLightScale ("Additional Light Scale", Float) = 0
+        [HideInInspector] _IsFace ("Is Face", Float) = 0
+        [HideInInspector] _FaceShadowLift ("Face Shadow Lift", Float) = 0.5
+        [HideInInspector] _ShadowPosOffset ("Shadow Test Offset", Float) = 0
+        [HideInInspector] _ShadowTexAmount ("Pattern Coverage", Float) = 0
+        [HideInInspector] _ShadowTexSoftness ("Pattern Softness", Float) = 0
+        [HideInInspector] _ShadowTexBlend ("Pattern Blend", Float) = 0
 
         [Header(Wind)]
         _WindDirection ("Wind Direction", Vector) = (1,0,0,0)
@@ -78,6 +100,8 @@ Shader "Custom/Stylized Terrain Grass"
             #pragma multi_compile_instancing
 
             #pragma shader_feature_local_fragment _TERRAIN_ROOT_BLEND
+            #pragma shader_feature_local_fragment _USE_ENV_RAMP
+            #pragma shader_feature_local_fragment _MACRO_TINT
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
@@ -87,6 +111,11 @@ Shader "Custom/Stylized Terrain Grass"
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
+            TEXTURE2D(_EnvRamp);  SAMPLER(sampler_EnvRamp);
+            TEXTURE2D(_MacroMap); SAMPLER(sampler_MacroMap);
+
+            // Set by a zone volume; alpha 0 (never set) keeps the material's Shade Tint.
+            half4 _ZoneShadeTint;
 
             // Globals, pushed by TerrainColorGlobals on the Terrain object. Not in
             // UnityPerMaterial - globals in there break the SRP Batcher.
@@ -122,8 +151,22 @@ Shader "Custom/Stylized Terrain Grass"
                 float _Cutoff;
 
                 half4 _ShadeColor;
+                half _ShadeThreshold;
                 half _ShadeSoftness;
                 half _ShadowStrength;
+                half _LightColorInfluence;
+                half4 _IndirectMinColor;
+                half _IndirectStrength;
+                float _MacroScale;
+                half _MacroStrength;
+                half _Bands;
+                half _AdditionalLightScale;
+                half _IsFace;
+                half _FaceShadowLift;
+                float _ShadowPosOffset;
+                half _ShadowTexAmount;
+                half _ShadowTexSoftness;
+                half _ShadowTexBlend;
 
                 half _RootBlendHeight;
                 half _RootBlendStrength;
@@ -141,6 +184,9 @@ Shader "Custom/Stylized Terrain Grass"
                 float _GustSpeed;
 
             CBUFFER_END
+
+            #define CRAB_TOON_ENV
+            #include "Packages/com.crxb.crabsystem/Runtime/Rendering/Shaders/CrabToonLighting.hlsl"
 
 
             struct Attributes
@@ -323,10 +369,19 @@ Shader "Custom/Stylized Terrain Grass"
                     grass.rgb = lerp(grass.rgb, SampleTerrainColor(IN.positionWS), rootWeight * _RootBlendStrength);
                 #endif
 
-                // Grass is still unlit - the sun does not shade it - but it has to sit in
-                // the same shadows as the ground under it or the field reads as floating.
-                // Stepping the filtered attenuation keeps the shadow edge as hard as the
-                // terminator on characters and props, which is what CrabToonLighting does.
+                // Same macro tint as the terrain, at the same world scale, so a field
+                // and the ground under it shift colour together. Undisplaced position, so
+                // the tint does not swim in the wind.
+                #ifdef _MACRO_TINT
+                    half3 macro = SAMPLE_TEXTURE2D(_MacroMap, sampler_MacroMap, IN.positionWS.xz * _MacroScale).rgb;
+                    grass.rgb *= lerp(half3(1, 1, 1), macro * 2.0h, _MacroStrength);
+                #endif
+
+                // Lit as the ground it stands on: the terrain's soft environment ramp with
+                // the normal straight up, so a blade takes the same shade, zone tint and
+                // ambient hue as the patch of terrain under it. Blade normals would shade
+                // every card differently and the field would sparkle.
+                //
                 // Per fragment, not per vertex: TransformWorldToShadowCoord picks a
                 // cascade, and interpolating a vertex-side choice across a blade samples
                 // the wrong cascade near a boundary - concentric rings of wrong shade
@@ -338,8 +393,9 @@ Shader "Custom/Stylized Terrain Grass"
                 // going unshadowed.
                 float4 shadowCoord = TransformWorldToShadowCoord(IN.windPositionWS);
                 Light mainLight = GetMainLight(shadowCoord, IN.windPositionWS, half4(1, 1, 1, 1));
-                half castLit = smoothstep(0.5h - _ShadeSoftness, 0.5h + _ShadeSoftness + 1e-4h, mainLight.shadowAttenuation);
-                grass.rgb *= lerp(_ShadeColor.rgb, half3(1, 1, 1), lerp(1.0h, castLit, _ShadowStrength));
+                half4 mainRamp = ToonEnvLightContribution(mainLight, float3(0, 1, 0), 1.0h);
+                half3 shadeTint = lerp(_ShadeColor.rgb, _ZoneShadeTint.rgb, _ZoneShadeTint.a);
+                grass.rgb = CompositeToonEnv(grass.rgb, shadeTint, mainRamp, half3(0, 0, 0), ToonAmbient());
 
                 return grass;
             }
